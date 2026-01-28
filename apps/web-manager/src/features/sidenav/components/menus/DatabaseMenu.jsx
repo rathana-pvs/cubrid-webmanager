@@ -15,7 +15,7 @@ import {
     setPlanDump,
     setRenameDB
 } from "@/features/sidenav/sideNavSlice.js";
-import {setBackupDB, setCopyDB, setRestoreDB} from "../../sideNavSlice";
+import { setBackupDB, setCopyDB, setCreateDB, setRestoreDB } from '../../sideNavSlice';
 
 const  DatabaseMenu = ({node, clientX, clientY, open, onClose}) =>{
     const {startDatabase, stopDatabase} = useDatabaseOperation()
@@ -33,6 +33,14 @@ const  DatabaseMenu = ({node, clientX, clientY, open, onClose}) =>{
                     await startDatabase(node);
                 }
                 dispatch(setBuffering(false));
+            }
+        },
+
+        {
+            label: "Create Database",
+            key: nanoid(4),
+            onClick: async () => {
+                dispatch(setCreateDB({open: true, node}));
             }
         },
         {

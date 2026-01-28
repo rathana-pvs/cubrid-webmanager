@@ -3,7 +3,7 @@
     border-radius: 4px;
     border: 1px solid var(--app-color-border);
     padding: 12px;
-    margin: 12px 0;
+    margin-top: 12px;
     position: relative;
     width: 100%;
 }

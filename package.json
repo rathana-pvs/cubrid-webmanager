@@ -37,7 +37,8 @@
     "selfsigned": "^3.0.1",
     "tsuml2": "^0.17.1",
     "uuid": "^11.1.0",
-    "xml2js": "^0.6.2"
+    "xml2js": "^0.6.2",
+    "yup": "^1.7.1"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",

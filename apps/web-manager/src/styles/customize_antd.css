@@ -11,9 +11,9 @@
 /*!*    fonts-weight: bold !important;*!*/
 /*!*}*!*/
 
-/*!*.ant-form-item{*!*/
-/*!*    margin-bottom: 0 !important;*!*/
-/*!*}*!*/
+/*.ant-form-item{*/
+/*    margin-bottom: 2px !important;*/
+/*}*/
 /*!*.ant-form-item-explain-error{*!*/
 /*!*    !*fonts-size: 13px;*!*!*/
 /*!*    color: var(--danger-color);*!*/
@@ -311,10 +311,10 @@
     transition: all 0.2s ease;
 }
 
-.ant-btn:hover,
-.ant-btn:focus {
-    box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.15); /* 2px 6px → converted */
-}
+/*.ant-btn:hover,*/
+/*.ant-btn:focus {*/
+/*    box-shadow: 0 0.125rem 0.375rem rgba(0, 0, 0, 0.15); !* 2px 6px → converted *!*/
+/*}*/
 
 .ant-btn:active {
     box-shadow: 0 0.0625rem 0.125rem rgba(0, 0, 0, 0.1); /* 1px 2px → converted */
@@ -403,5 +403,5 @@
     text-align: left !important;
 }
 .ant-form-item{
-    margin-bottom: 8px !important;
+    margin-bottom: 2px !important;
 }

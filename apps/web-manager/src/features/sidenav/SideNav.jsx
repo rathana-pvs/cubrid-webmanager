@@ -5,7 +5,7 @@ import {
 } from '@ant-design/icons';
 import {Radio} from 'antd';
 import styles from './styles/SideNav.module.css'
-import IconButton from "/src/components/common/Button/IconButton.jsx";
+import IconButton from "@/components/common/Button/IconButton.jsx";
 import SideNavHost from "./components/SideNavHost.jsx";
 import SideNavTree from "./components/SideNavTree.jsx";
 import VerticalResize from "@/components/common/VerticalResize/VerticalResize.jsx";
@@ -26,6 +26,7 @@ import RestoreDB from "./components/modal/DatabaseManagement/RestoreDB";
 import CopyDB from "./components/modal/DatabaseManagement/CopyDB";
 import AddVolume from "./components/modal/DatabaseSpace/AddVolume";
 import SetAutoVolume from "./components/modal/DatabaseSpace/SetAutoVolume";
+import CreateDB from './components/modal/CreateDB/CreateDB';
 
 
 const SideNav = () => {
@@ -49,6 +50,7 @@ const SideNav = () => {
             <CopyDB/>
             <AddVolume/>
             <SetAutoVolume/>
+            <CreateDB/>
         <div className={styles.layout}>
             <div className={styles.top__menu}>
                 <div className={styles.mode__view}>
