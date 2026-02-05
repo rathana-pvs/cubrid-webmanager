@@ -12,8 +12,8 @@ import {
   setParamDump,
   setPlanDump,
   setRenameDB,
+  setBackupDB, setCopyDB, setRestoreDB, setUnloadDB
 } from '@/features/sidenav/sideNavSlice.js';
-import { setBackupDB, setCopyDB, setRestoreDB } from '../../sideNavSlice';
 
 const DatabaseMenu = ({ node, clientX, clientY, open, onClose }) => {
   const { startDatabase, stopDatabase } = useDatabaseOperation();
@@ -42,6 +42,9 @@ const DatabaseMenu = ({ node, clientX, clientY, open, onClose }) => {
         {
           label: 'Database Unload',
           key: nanoid(4),
+          onClick: () => {
+            dispatch(setUnloadDB({open:true, node}));
+          }
           // disabled: true
         },
         {

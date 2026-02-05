@@ -18,6 +18,7 @@ const initialState = {
   copyDB: { open: false },
   addVolume: { open: false },
   autoVolume: { open: false },
+  unloadDB: {open: false}
 };
 
 const sideNavSlice = createSlice({
@@ -75,6 +76,9 @@ const sideNavSlice = createSlice({
     setAutoVolume: (state, action) => {
       state.autoVolume = action.payload;
     },
+    setUnloadDB: (state, action) => {
+      state.unloadDB = action.payload;
+    }
   },
 });
 
@@ -96,5 +100,6 @@ export const {
   setCopyDB,
   setAddVolume,
   setAutoVolume,
+  setUnloadDB
 } = sideNavSlice.actions;
 export default sideNavSlice.reducer;

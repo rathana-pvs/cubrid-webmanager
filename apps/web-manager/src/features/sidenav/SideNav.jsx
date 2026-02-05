@@ -23,6 +23,7 @@ import RestoreDB from './components/modal/DatabaseManagement/RestoreDB';
 import CopyDB from './components/modal/DatabaseManagement/CopyDB';
 import AddVolume from './components/modal/DatabaseSpace/AddVolume';
 import SetAutoVolume from './components/modal/DatabaseSpace/SetAutoVolume';
+import UnloadDB from './components/modal/UnloadDB/UnloadDB';
 
 const SideNav = () => {
   const [width, setWidth] = React.useState(0);
@@ -45,6 +46,7 @@ const SideNav = () => {
       <CopyDB />
       <AddVolume />
       <SetAutoVolume />
+      <UnloadDB/>
       <div className={styles.layout}>
         <div className={styles.top__menu}>
           <div className={styles.mode__view}>
