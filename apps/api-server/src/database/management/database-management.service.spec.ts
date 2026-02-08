@@ -5,8 +5,8 @@ import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.servic
 import { DatabaseError } from '@error/database/database-error';
 import { HostError } from '@error/index';
 import { CmsError } from '@error/cms/cms-error';
-import { UnloadDatabaseRequest } from '@api-interfaces';
-import { UnloadDatabaseCmsResponse } from '@type/cms-response';
+import { UnloadDatabaseRequest, LoadDatabaseRequest } from '@api-interfaces';
+import { UnloadDatabaseCmsResponse, LoadDatabaseCmsResponse } from '@type/cms-response';
 import * as common from '@common';
 
 // Mock the checkCmsTokenError and checkCmsStatusError functions
@@ -395,6 +395,251 @@ describe('DatabaseManagementService', () => {
       });
 
       await expect(service.getUnloadInfo(mockUserId, mockHostUid)).rejects.toThrow(CmsError);
+    });
+  });
+
+  describe('loadDatabase', () => {
+    const baseRequest: LoadDatabaseRequest = {
+      checkoption: 'both',
+      period: 'none',
+      user: 'dba',
+      estimated: 'none',
+      oiduse: 'yes',
+      statisticsuse: 'yes',
+      nolog: 'no',
+      schema: '/path/to/schema',
+      object: '/path/to/object',
+      index: 'none',
+      errorcontrolfile: 'none',
+      ignoreclassfile: 'none',
+    };
+
+    const mockSuccessResponse: LoadDatabaseCmsResponse = {
+      __EXEC_TIME: '100 ms',
+      note: 'none',
+      status: 'success',
+      task: 'loaddb',
+      line: [
+        '',
+        'Start schema loading.',
+        'Total       14 statements executed.',
+        'Schema loading from /path/to/schema finished.',
+        'Start object loading.',
+        'Total 0 object(s) inserted, 0 object(s) failed.',
+      ],
+    };
+
+    it('should successfully load database', async () => {
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+
+      const result = await service.loadDatabase(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        baseRequest
+      );
+
+      expect(hostService.findHostInternal).toHaveBeenCalledWith(mockUserId, mockHostUid);
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        `https://${mockHost.address}:${mockHost.port}/cm_api`,
+        expect.objectContaining({
+          task: 'loaddb',
+          token: mockHost.token,
+          dbname: mockDbname,
+          checkoption: baseRequest.checkoption,
+          period: baseRequest.period,
+          user: baseRequest.user,
+          estimated: baseRequest.estimated,
+          oiduse: baseRequest.oiduse,
+          statisticsuse: baseRequest.statisticsuse,
+          nolog: baseRequest.nolog,
+          schema: baseRequest.schema,
+          object: baseRequest.object,
+          index: baseRequest.index,
+          errorcontrolfile: baseRequest.errorcontrolfile,
+          ignoreclassfile: baseRequest.ignoreclassfile,
+        })
+      );
+      expect(common.checkCmsTokenError).toHaveBeenCalledWith(mockSuccessResponse);
+      expect(common.checkCmsStatusError).toHaveBeenCalledWith(mockSuccessResponse);
+      expect(result).toEqual({});
+    });
+
+    it('should include all request fields in CMS request', async () => {
+      const fullRequest: LoadDatabaseRequest = {
+        checkoption: 'both',
+        period: 'none',
+        user: 'dba',
+        estimated: 'none',
+        oiduse: 'yes',
+        statisticsuse: 'no',
+        nolog: 'yes',
+        schema: '/path/to/schema',
+        object: '/path/to/object',
+        index: 'none',
+        errorcontrolfile: '/path/to/error',
+        ignoreclassfile: '/path/to/ignore',
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+
+      await service.loadDatabase(mockUserId, mockHostUid, mockDbname, fullRequest);
+
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          checkoption: fullRequest.checkoption,
+          period: fullRequest.period,
+          user: fullRequest.user,
+          estimated: fullRequest.estimated,
+          oiduse: fullRequest.oiduse,
+          statisticsuse: fullRequest.statisticsuse,
+          nolog: fullRequest.nolog,
+          schema: fullRequest.schema,
+          object: fullRequest.object,
+          index: fullRequest.index,
+          errorcontrolfile: fullRequest.errorcontrolfile,
+          ignoreclassfile: fullRequest.ignoreclassfile,
+        })
+      );
+    });
+
+    it('should throw HostError when host is not found', async () => {
+      hostService.findHostInternal.mockRejectedValue(
+        HostError.NoSuchHost({ hostUid: mockHostUid })
+      );
+
+      await expect(
+        service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
+      ).rejects.toThrow(HostError);
+
+      expect(cmsClient.postAuthenticated).not.toHaveBeenCalled();
+    });
+
+    it('should throw CmsError when CMS request fails', async () => {
+      const cmsError = CmsError.RequestFailed({
+        status: 500,
+        data: { message: 'Internal server error' },
+      });
+
+      cmsClient.postAuthenticated.mockRejectedValue(cmsError);
+
+      await expect(
+        service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
+      ).rejects.toThrow(CmsError);
+    });
+
+    it('should throw DatabaseError when CMS token error is detected', async () => {
+      const invalidTokenResponse: LoadDatabaseCmsResponse = {
+        __EXEC_TIME: '0 ms',
+        note: 'Invalid token',
+        status: 'failed',
+        task: 'loaddb',
+        line: [],
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(invalidTokenResponse);
+      (common.checkCmsTokenError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('Invalid CMS token');
+      });
+
+      await expect(
+        service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
+      ).rejects.toThrow(DatabaseError);
+    });
+
+    it('should throw CmsError with line information when CMS status error occurs', async () => {
+      const failedResponse: LoadDatabaseCmsResponse = {
+        __EXEC_TIME: '0 ms',
+        note: 'Load failed',
+        status: 'failed',
+        task: 'loaddb',
+        line: [
+          'Error: Syntax error in schema file',
+          'Line 10: Invalid statement',
+          'Failed to load database',
+        ],
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(failedResponse);
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw CmsError.RequestFailed({
+          message: 'CMS request failed: Load failed',
+          response: failedResponse,
+        });
+      });
+
+      await expect(
+        service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
+      ).rejects.toThrow(CmsError);
+
+      // Verify that the error includes line information
+      try {
+        await service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest);
+      } catch (error) {
+        if (error instanceof CmsError) {
+          expect(error.additionalData?.message).toContain('Error: Syntax error in schema file');
+          expect(error.additionalData?.message).toContain('Line 10: Invalid statement');
+          expect(error.additionalData?.message).toContain('Failed to load database');
+        }
+      }
+    });
+
+    it('should handle empty line array in error response', async () => {
+      const failedResponse: LoadDatabaseCmsResponse = {
+        __EXEC_TIME: '0 ms',
+        note: 'Load failed',
+        status: 'failed',
+        task: 'loaddb',
+        line: [],
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(failedResponse);
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw CmsError.RequestFailed({
+          message: 'CMS request failed: Load failed',
+          response: failedResponse,
+        });
+      });
+
+      await expect(
+        service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
+      ).rejects.toThrow(CmsError);
+    });
+
+    it('should handle missing line property in error response', async () => {
+      const failedResponse: LoadDatabaseCmsResponse = {
+        __EXEC_TIME: '0 ms',
+        note: 'Load failed',
+        status: 'failed',
+        task: 'loaddb',
+        line: undefined as any,
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(failedResponse);
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw CmsError.RequestFailed({
+          message: 'CMS request failed: Load failed',
+          response: failedResponse,
+        });
+      });
+
+      await expect(
+        service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
+      ).rejects.toThrow(CmsError);
+    });
+
+    it('should rethrow non-CmsError exceptions', async () => {
+      const genericError = new Error('Generic error');
+
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw genericError;
+      });
+
+      await expect(
+        service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
+      ).rejects.toThrow('Generic error');
     });
   });
 });
