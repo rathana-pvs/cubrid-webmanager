@@ -66,7 +66,6 @@ const UnloadDB = ()=>{
           dispatch(setBuffering(false))
         })
 
-      console.log("Final Result:", temp);
       if(response.success){
         handleClose();
         setShowResult({open: true, data: response.result});
