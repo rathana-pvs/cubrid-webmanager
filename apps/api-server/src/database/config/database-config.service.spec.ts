@@ -3,6 +3,9 @@ import { DatabaseConfigService } from './database-config.service';
 import { HostService } from '@host';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
 import { CmsConfigService } from '@cms-config/cms-config.service';
+import { DatabaseError } from '@error/database/database-error';
+import { HostError } from '@error/index';
+import { CmsError } from '@error/cms/cms-error';
 import * as common from '@common';
 
 // Mock the checkCmsTokenError and checkCmsStatusError functions
@@ -144,6 +147,171 @@ describe('DatabaseConfigService', () => {
         })
       );
       expect(result).toEqual({ planlist: [] });
+    });
+  });
+
+  describe('getClassInfo', () => {
+    const mockRequest = {
+      dbstatus: 'off' as const,
+    };
+
+    const mockResponse = {
+      __EXEC_TIME: '2510 ms',
+      dbname: 'empty',
+      note: 'none',
+      status: 'success',
+      task: 'classinfo',
+      systemclass: [
+        {
+          class: [
+            {
+              classname: 'db_root',
+              owner: 'DBA',
+              virtual: 'normal',
+            },
+            {
+              classname: 'db_user',
+              owner: 'DBA',
+              virtual: 'normal',
+            },
+          ],
+        },
+      ],
+      userclass: [
+        {
+          class: [
+            {
+              classname: 'dba.test',
+              owner: 'DBA',
+              virtual: 'normal',
+            },
+            {
+              classname: 'dba.test2',
+              owner: 'DBA',
+              virtual: 'normal',
+            },
+          ],
+        },
+      ],
+    };
+
+    it('should successfully get class info', async () => {
+      cmsClient.postAuthenticated.mockResolvedValue(mockResponse);
+
+      const result = await service.getClassInfo(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        mockRequest
+      );
+
+      expect(hostService.findHostInternal).toHaveBeenCalledWith(mockUserId, mockHostUid);
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        `https://${mockHost.address}:${mockHost.port}/cm_api`,
+        expect.objectContaining({
+          task: 'classinfo',
+          token: mockHost.token,
+          dbname: mockDbname,
+          dbstatus: 'off',
+        })
+      );
+      expect(common.checkCmsTokenError).toHaveBeenCalledWith(mockResponse);
+      expect(common.checkCmsStatusError).toHaveBeenCalledWith(mockResponse);
+      expect(result).toEqual({
+        dbname: 'empty',
+        systemclass: mockResponse.systemclass,
+        userclass: mockResponse.userclass,
+      });
+    });
+
+    it('should successfully get class info with dbstatus on', async () => {
+      const requestWithOn = {
+        dbstatus: 'on' as const,
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(mockResponse);
+
+      const result = await service.getClassInfo(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        requestWithOn
+      );
+
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          task: 'classinfo',
+          dbname: mockDbname,
+          dbstatus: 'on',
+        })
+      );
+      expect(result).toEqual({
+        dbname: 'empty',
+        systemclass: mockResponse.systemclass,
+        userclass: mockResponse.userclass,
+      });
+    });
+
+    it('should throw HostError when host is not found', async () => {
+      hostService.findHostInternal.mockRejectedValue(
+        HostError.NoSuchHost({ hostUid: mockHostUid })
+      );
+
+      await expect(
+        service.getClassInfo(mockUserId, mockHostUid, mockDbname, mockRequest)
+      ).rejects.toThrow(HostError);
+
+      expect(cmsClient.postAuthenticated).not.toHaveBeenCalled();
+    });
+
+    it('should throw CmsError when CMS request fails', async () => {
+      const cmsError = CmsError.RequestFailed({
+        status: 500,
+        data: { message: 'Internal server error' },
+      });
+
+      cmsClient.postAuthenticated.mockRejectedValue(cmsError);
+
+      await expect(
+        service.getClassInfo(mockUserId, mockHostUid, mockDbname, mockRequest)
+      ).rejects.toThrow(CmsError);
+    });
+
+    it('should throw DatabaseError when CMS token error is detected', async () => {
+      const invalidTokenResponse = {
+        __EXEC_TIME: '0 ms',
+        note: 'Invalid token',
+        status: 'failed',
+        task: 'classinfo',
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(invalidTokenResponse);
+      (common.checkCmsTokenError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('Invalid CMS token');
+      });
+
+      await expect(
+        service.getClassInfo(mockUserId, mockHostUid, mockDbname, mockRequest)
+      ).rejects.toThrow(DatabaseError);
+    });
+
+    it('should throw DatabaseError when CMS status error is detected', async () => {
+      const failedResponse = {
+        __EXEC_TIME: '0 ms',
+        note: 'Class info failed',
+        status: 'failed',
+        task: 'classinfo',
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(failedResponse);
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('CMS status failed');
+      });
+
+      await expect(
+        service.getClassInfo(mockUserId, mockHostUid, mockDbname, mockRequest)
+      ).rejects.toThrow(DatabaseError);
     });
   });
 });

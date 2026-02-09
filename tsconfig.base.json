@@ -15,7 +15,7 @@
     "skipDefaultLibCheck": true,
     "baseUrl": ".",
     "paths": {
-      "@api-interfaces": ["libs/api-interfaces/src/index"],
+      "@api-interfaces": ["libs/api-interfaces/src"],
       "@api-interfaces/*": ["libs/api-interfaces/src/*"],
       "@auth": ["apps/api-server/src/auth/index"],
       "@auth/*": ["apps/api-server/src/auth/*"],

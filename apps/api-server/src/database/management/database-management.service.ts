@@ -1,4 +1,6 @@
 import {
+  CheckDatabaseRequest,
+  CheckDatabaseResponse,
   LoadDatabaseRequest,
   LoadDatabaseResponse,
   OptimizeDatabaseRequest,
@@ -18,12 +20,14 @@ import { DatabaseError } from '@error/database/database-error';
 import { HostService } from '@host';
 import { Injectable, Logger } from '@nestjs/common';
 import {
+  CheckDatabaseCmsRequest,
   LoadDatabaseCmsRequest,
   OptimizeDatabaseCmsRequest,
   UnloadDatabaseCmsRequest,
   UnloadInfoCmsRequest,
 } from '@type/cms-request';
 import {
+  CheckDatabaseCmsResponse,
   LoadDatabaseCmsResponse,
   OptimizeDatabaseCmsResponse,
   UnloadDatabaseCmsResponse,
@@ -268,6 +272,47 @@ export class DatabaseManagementService {
     const response = await this.cmsClient.postAuthenticated<
       OptimizeDatabaseCmsRequest,
       OptimizeDatabaseCmsResponse
+    >(url, cmsRequest);
+
+    checkCmsTokenError(response);
+    checkCmsStatusError(response);
+
+    // Success: return empty object
+    return {};
+  }
+
+  /**
+   * Check a database.
+   * Returns empty object on success.
+   *
+   * @param userId User ID from JWT
+   * @param hostUid Host UID
+   * @param dbname Database name
+   * @param request Client request containing repair option
+   * @returns CheckDatabaseResponse Empty object on success
+   * @throws DatabaseError If request fails or CMS status is fail
+   */
+  @HandleDatabaseErrors()
+  @HandleCmsStatusErrors()
+  async checkDatabase(
+    userId: string,
+    hostUid: string,
+    dbname: string,
+    request: CheckDatabaseRequest
+  ): Promise<CheckDatabaseResponse> {
+    const host = await this.hostService.findHostInternal(userId, hostUid);
+    const url = `https://${host.address}:${host.port}/cm_api`;
+
+    const cmsRequest: CheckDatabaseCmsRequest = {
+      task: 'checkdb',
+      token: host.token || '',
+      dbname: dbname,
+      repairdb: request.repairdb,
+    };
+
+    const response = await this.cmsClient.postAuthenticated<
+      CheckDatabaseCmsRequest,
+      CheckDatabaseCmsResponse
     >(url, cmsRequest);
 
     checkCmsTokenError(response);

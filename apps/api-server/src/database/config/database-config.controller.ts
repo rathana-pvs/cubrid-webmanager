@@ -10,6 +10,8 @@ import {
   RemoveAutoStartResponse,
   SetAutoAddVolRequest,
   SetAutoAddVolResponse,
+  ClassInfoRequest,
+  ClassInfoResponse,
 } from '@api-interfaces';
 import { validateRequiredFields } from '@util';
 import { DatabaseConfigService } from './database-config.service';
@@ -187,5 +189,37 @@ export class DatabaseConfigController {
       'DatabaseConfigController'
     );
     return await this.configService.setAutoAddVol(userId, hostUid, dbname, body);
+  }
+
+  /**
+   * Get class information for a database.
+   * Returns domain-only data (CMS envelope removed).
+   *
+   * @route POST /:hostUid/database/class-info/:dbname
+   * @param req Express request (contains authenticated user)
+   * @param hostUid Host unique identifier from path parameter
+   * @param dbname Database name from path parameter
+   * @param body Request body containing dbstatus
+   * @returns ClassInfoResponse Class information (system classes and user classes)
+   * @example
+   * // POST /host-uid/database/class-info/empty
+   * // Body: { "dbstatus": "off" }
+   */
+  @Post('class-info/:dbname')
+  async getClassInfo(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string,
+    @Body() body: ClassInfoRequest
+  ): Promise<ClassInfoResponse> {
+    const userId = req.user.sub;
+
+    validateRequiredFields(body, ['dbstatus'], 'database/class-info', this.logger);
+
+    Logger.log(
+      `Getting class info for database: ${dbname} on host: ${hostUid}`,
+      'DatabaseConfigController'
+    );
+    return await this.configService.getClassInfo(userId, hostUid, dbname, body);
   }
 }

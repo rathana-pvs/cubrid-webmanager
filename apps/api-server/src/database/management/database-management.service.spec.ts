@@ -5,8 +5,16 @@ import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.servic
 import { DatabaseError } from '@error/database/database-error';
 import { HostError } from '@error/index';
 import { CmsError } from '@error/cms/cms-error';
-import { UnloadDatabaseRequest, LoadDatabaseRequest } from '@api-interfaces';
-import { UnloadDatabaseCmsResponse, LoadDatabaseCmsResponse } from '@type/cms-response';
+import {
+  UnloadDatabaseRequest,
+  LoadDatabaseRequest,
+  CheckDatabaseRequest,
+} from '@api-interfaces';
+import {
+  UnloadDatabaseCmsResponse,
+  LoadDatabaseCmsResponse,
+  CheckDatabaseCmsResponse,
+} from '@type/cms-response';
 import * as common from '@common';
 
 // Mock the checkCmsTokenError and checkCmsStatusError functions
@@ -640,6 +648,107 @@ describe('DatabaseManagementService', () => {
       await expect(
         service.loadDatabase(mockUserId, mockHostUid, mockDbname, baseRequest)
       ).rejects.toThrow('Generic error');
+    });
+  });
+
+  describe('checkDatabase', () => {
+    const mockSuccessResponse: CheckDatabaseCmsResponse = {
+      __EXEC_TIME: '450 ms',
+      note: 'none',
+      status: 'success',
+      task: 'checkdb',
+    };
+
+    it('should successfully check database with repairdb "n"', async () => {
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      const request: CheckDatabaseRequest = { repairdb: 'n' };
+
+      const result = await service.checkDatabase(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        request
+      );
+
+      expect(hostService.findHostInternal).toHaveBeenCalledWith(mockUserId, mockHostUid);
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        `https://${mockHost.address}:${mockHost.port}/cm_api`,
+        {
+          task: 'checkdb',
+          token: mockHost.token,
+          dbname: mockDbname,
+          repairdb: 'n',
+        }
+      );
+      expect(common.checkCmsTokenError).toHaveBeenCalledWith(mockSuccessResponse);
+      expect(common.checkCmsStatusError).toHaveBeenCalledWith(mockSuccessResponse);
+      expect(result).toEqual({});
+    });
+
+    it('should successfully check database with repairdb "y"', async () => {
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      const request: CheckDatabaseRequest = { repairdb: 'y' };
+
+      const result = await service.checkDatabase(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        request
+      );
+
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          repairdb: 'y',
+        })
+      );
+      expect(result).toEqual({});
+    });
+
+    it('should throw HostError if host is not found', async () => {
+      hostService.findHostInternal.mockRejectedValue(
+        HostError.NoSuchHost({ hostUid: mockHostUid })
+      );
+      const request: CheckDatabaseRequest = { repairdb: 'n' };
+
+      await expect(
+        service.checkDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(HostError);
+    });
+
+    it('should throw CmsError if CMS request fails', async () => {
+      cmsClient.postAuthenticated.mockRejectedValue(
+        CmsError.RequestFailed({ message: 'CMS request failed' })
+      );
+      const request: CheckDatabaseRequest = { repairdb: 'n' };
+
+      await expect(
+        service.checkDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(CmsError);
+    });
+
+    it('should throw DatabaseError if CMS token error occurs', async () => {
+      (common.checkCmsTokenError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('Invalid CMS token');
+      });
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      const request: CheckDatabaseRequest = { repairdb: 'n' };
+
+      await expect(
+        service.checkDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(DatabaseError);
+    });
+
+    it('should throw DatabaseError if CMS status is fail', async () => {
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('CMS status failed');
+      });
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      const request: CheckDatabaseRequest = { repairdb: 'n' };
+
+      await expect(
+        service.checkDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(DatabaseError);
     });
   });
 });

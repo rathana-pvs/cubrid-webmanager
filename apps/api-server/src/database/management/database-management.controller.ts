@@ -1,5 +1,7 @@
 import { Body, Controller, Get, Logger, Param, Post, Request } from '@nestjs/common';
 import {
+  CheckDatabaseRequest,
+  CheckDatabaseResponse,
   LoadDatabaseRequest,
   LoadDatabaseResponse,
   OptimizeDatabaseRequest,
@@ -154,5 +156,34 @@ export class DatabaseManagementController {
 
     Logger.log(`Optimizing database: ${dbname} on host: ${hostUid}`, 'DatabaseManagementController');
     return await this.managementService.optimizeDatabase(userId, hostUid, dbname, body);
+  }
+
+  /**
+   * Check a database.
+   * Returns empty object on success.
+   *
+   * @route POST /:hostUid/database/check/:dbname
+   * @param req Express request (contains authenticated user)
+   * @param hostUid Host unique identifier from path parameter
+   * @param dbname Database name from path parameter
+   * @param body Request body containing repair option
+   * @returns CheckDatabaseResponse Empty object on success
+   * @example
+   * // POST /host-uid/database/check/test
+   * // Body: { "repairdb": "n" } (n = check only, y = check and repair)
+   */
+  @Post('check/:dbname')
+  async checkDatabase(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string,
+    @Body() body: CheckDatabaseRequest
+  ): Promise<CheckDatabaseResponse> {
+    const userId = req.user.sub;
+
+    validateRequiredFields(body, ['repairdb'], 'database/check', this.logger);
+
+    Logger.log(`Checking database: ${dbname} on host: ${hostUid}`, 'DatabaseManagementController');
+    return await this.managementService.checkDatabase(userId, hostUid, dbname, body);
   }
 }

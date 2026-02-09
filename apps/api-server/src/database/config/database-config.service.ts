@@ -8,6 +8,8 @@ import {
   RemoveAutoStartResponse,
   SetAutoAddVolRequest,
   SetAutoAddVolResponse,
+  ClassInfoRequest,
+  ClassInfoResponse,
 } from '@api-interfaces';
 import { CmsConfigService } from '@cms-config/cms-config.service';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
@@ -24,11 +26,13 @@ import {
   GetAutoExecQueryCmsRequest,
   SetAutoExecQueryCmsRequest,
   SetAutoAddVolCmsRequest,
+  ClassInfoCmsRequest,
 } from '@type/cms-request';
 import {
   GetAutoExecQueryCmsResponse,
   SetAutoExecQueryCmsResponse,
   SetAutoAddVolCmsResponse,
+  ClassInfoCmsResponse,
 } from '@type/cms-response';
 import { GetAllSysParamCmsResponse } from '@type/cms-response/get-all-sys-param-cms-response';
 import { parseConfigParams } from '@util';
@@ -335,5 +339,46 @@ export class DatabaseConfigService {
     checkCmsStatusError(response);
 
     return {};
+  }
+
+  /**
+   * Get class information for a database.
+   * Returns domain-only data (CMS envelope removed).
+   *
+   * @param userId User ID from JWT
+   * @param hostUid Host UID
+   * @param dbname Database name
+   * @param request Request containing dbstatus
+   * @returns ClassInfoResponse Class information (system classes and user classes)
+   * @throws DatabaseError If request fails or CMS status is fail
+   */
+  @HandleDatabaseErrors()
+  async getClassInfo(
+    userId: string,
+    hostUid: string,
+    dbname: string,
+    request: ClassInfoRequest
+  ): Promise<ClassInfoResponse> {
+    const host = await this.hostService.findHostInternal(userId, hostUid);
+    const url = `https://${host.address}:${host.port}/cm_api`;
+
+    const cmsRequest: ClassInfoCmsRequest = {
+      task: 'classinfo',
+      token: host.token || '',
+      dbname: dbname,
+      dbstatus: request.dbstatus,
+    };
+
+    const response = await this.cmsClient.postAuthenticated<
+      ClassInfoCmsRequest,
+      ClassInfoCmsResponse
+    >(url, cmsRequest);
+
+    checkCmsTokenError(response);
+    checkCmsStatusError(response);
+
+    const { __EXEC_TIME, note, status, task, ...dataOnly } = response;
+
+    return dataOnly;
   }
 }
