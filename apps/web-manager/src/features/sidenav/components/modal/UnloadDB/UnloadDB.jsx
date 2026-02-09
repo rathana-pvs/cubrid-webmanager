@@ -77,13 +77,23 @@ const UnloadDB = ()=>{
     }).catch(err => console.error("Validation Failed:", err));
   };
 
+  const resetState = ()=>{
+    form.resetFields()
+    setSelectedTables([])
+    setDisabledRef(true);
+    setCheckBox({})
+    setTables([])
+
+  }
   const handleClose = ()=>{
     dispatch(setUnloadDB({open: false}))
+    resetState()
   }
 
   const initialData = async () => {
+    const dbstatus = unloadDB.node.status === "active" ? "on" : "off"
     const response = await getTablesAPI(activeHost,
-      { dbname: unloadDB.node.dbname })
+      { dbname: unloadDB.node.dbname, dbstatus })
     if(response.success){
       const items = Array.isArray(response.result.userclass) ? response.result.userclass[0].class : [];
       setTables(items)
