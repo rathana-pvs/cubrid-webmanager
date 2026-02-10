@@ -9,11 +9,13 @@ import {
   UnloadDatabaseRequest,
   LoadDatabaseRequest,
   CheckDatabaseRequest,
+  CompactDatabaseRequest,
 } from '@api-interfaces';
 import {
   UnloadDatabaseCmsResponse,
   LoadDatabaseCmsResponse,
   CheckDatabaseCmsResponse,
+  CompactDatabaseCmsResponse,
 } from '@type/cms-response';
 import * as common from '@common';
 
@@ -748,6 +750,128 @@ describe('DatabaseManagementService', () => {
 
       await expect(
         service.checkDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe('compactDatabase', () => {
+    const mockSuccessResponseWithLog: CompactDatabaseCmsResponse = {
+      __EXEC_TIME: '539 ms',
+      note: 'none',
+      status: 'success',
+      task: 'compactdb',
+      log: [
+        {
+          line: [
+            '',
+            'Pass 1',
+            '',
+            'Class db_root',
+            '1 instances.',
+            '1154 objects processed.',
+          ],
+        },
+      ],
+    };
+
+    const mockSuccessResponseWithoutLog: CompactDatabaseCmsResponse = {
+      __EXEC_TIME: '539 ms',
+      note: 'none',
+      status: 'success',
+      task: 'compactdb',
+    };
+
+    it('should successfully compact database with verbose "y" and return log', async () => {
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponseWithLog);
+      const request: CompactDatabaseRequest = { verbose: 'y' };
+
+      const result = await service.compactDatabase(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        request
+      );
+
+      expect(hostService.findHostInternal).toHaveBeenCalledWith(mockUserId, mockHostUid);
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        `https://${mockHost.address}:${mockHost.port}/cm_api`,
+        {
+          task: 'compactdb',
+          token: mockHost.token,
+          dbname: mockDbname,
+          verbose: 'y',
+        }
+      );
+      expect(common.checkCmsTokenError).toHaveBeenCalledWith(mockSuccessResponseWithLog);
+      expect(common.checkCmsStatusError).toHaveBeenCalledWith(mockSuccessResponseWithLog);
+      expect(result).toEqual({
+        log: mockSuccessResponseWithLog.log,
+      });
+    });
+
+    it('should successfully compact database with verbose "n" and return empty object', async () => {
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponseWithoutLog);
+      const request: CompactDatabaseRequest = { verbose: 'n' };
+
+      const result = await service.compactDatabase(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        request
+      );
+
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          verbose: 'n',
+        })
+      );
+      expect(result).toEqual({});
+    });
+
+    it('should throw HostError if host is not found', async () => {
+      hostService.findHostInternal.mockRejectedValue(
+        HostError.NoSuchHost({ hostUid: mockHostUid })
+      );
+      const request: CompactDatabaseRequest = { verbose: 'y' };
+
+      await expect(
+        service.compactDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(HostError);
+    });
+
+    it('should throw CmsError if CMS request fails', async () => {
+      cmsClient.postAuthenticated.mockRejectedValue(
+        CmsError.RequestFailed({ message: 'CMS request failed' })
+      );
+      const request: CompactDatabaseRequest = { verbose: 'y' };
+
+      await expect(
+        service.compactDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(CmsError);
+    });
+
+    it('should throw DatabaseError if CMS token error occurs', async () => {
+      (common.checkCmsTokenError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('Invalid CMS token');
+      });
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponseWithLog);
+      const request: CompactDatabaseRequest = { verbose: 'y' };
+
+      await expect(
+        service.compactDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(DatabaseError);
+    });
+
+    it('should throw DatabaseError if CMS status is fail', async () => {
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('CMS status failed');
+      });
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponseWithLog);
+      const request: CompactDatabaseRequest = { verbose: 'y' };
+
+      await expect(
+        service.compactDatabase(mockUserId, mockHostUid, mockDbname, request)
       ).rejects.toThrow(DatabaseError);
     });
   });

@@ -2,6 +2,8 @@ import { Body, Controller, Get, Logger, Param, Post, Request } from '@nestjs/com
 import {
   CheckDatabaseRequest,
   CheckDatabaseResponse,
+  CompactDatabaseRequest,
+  CompactDatabaseResponse,
   LoadDatabaseRequest,
   LoadDatabaseResponse,
   OptimizeDatabaseRequest,
@@ -185,5 +187,34 @@ export class DatabaseManagementController {
 
     Logger.log(`Checking database: ${dbname} on host: ${hostUid}`, 'DatabaseManagementController');
     return await this.managementService.checkDatabase(userId, hostUid, dbname, body);
+  }
+
+  /**
+   * Compact a database.
+   * Returns log output if verbose is 'y', otherwise returns empty object.
+   *
+   * @route POST /:hostUid/database/compact/:dbname
+   * @param req Express request (contains authenticated user)
+   * @param hostUid Host unique identifier from path parameter
+   * @param dbname Database name from path parameter
+   * @param body Request body containing verbose option
+   * @returns CompactDatabaseResponse Log output if verbose is 'y', otherwise empty object
+   * @example
+   * // POST /host-uid/database/compact/test
+   * // Body: { "verbose": "y" } (y = include log output, n = exclude log output)
+   */
+  @Post('compact/:dbname')
+  async compactDatabase(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string,
+    @Body() body: CompactDatabaseRequest
+  ): Promise<CompactDatabaseResponse> {
+    const userId = req.user.sub;
+
+    validateRequiredFields(body, ['verbose'], 'database/compact', this.logger);
+
+    Logger.log(`Compacting database: ${dbname} on host: ${hostUid}`, 'DatabaseManagementController');
+    return await this.managementService.compactDatabase(userId, hostUid, dbname, body);
   }
 }

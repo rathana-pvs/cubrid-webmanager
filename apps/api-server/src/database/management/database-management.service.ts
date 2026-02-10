@@ -1,6 +1,8 @@
 import {
   CheckDatabaseRequest,
   CheckDatabaseResponse,
+  CompactDatabaseRequest,
+  CompactDatabaseResponse,
   LoadDatabaseRequest,
   LoadDatabaseResponse,
   OptimizeDatabaseRequest,
@@ -21,6 +23,7 @@ import { HostService } from '@host';
 import { Injectable, Logger } from '@nestjs/common';
 import {
   CheckDatabaseCmsRequest,
+  CompactDatabaseCmsRequest,
   LoadDatabaseCmsRequest,
   OptimizeDatabaseCmsRequest,
   UnloadDatabaseCmsRequest,
@@ -28,6 +31,7 @@ import {
 } from '@type/cms-request';
 import {
   CheckDatabaseCmsResponse,
+  CompactDatabaseCmsResponse,
   LoadDatabaseCmsResponse,
   OptimizeDatabaseCmsResponse,
   UnloadDatabaseCmsResponse,
@@ -319,6 +323,53 @@ export class DatabaseManagementService {
     checkCmsStatusError(response);
 
     // Success: return empty object
+    return {};
+  }
+
+  /**
+   * Compact a database.
+   * Returns log output if verbose is 'y', otherwise returns empty object.
+   *
+   * @param userId User ID from JWT
+   * @param hostUid Host UID
+   * @param dbname Database name
+   * @param request Client request containing verbose option
+   * @returns CompactDatabaseResponse Log output if verbose is 'y', otherwise empty object
+   * @throws DatabaseError If request fails or CMS status is fail
+   */
+  @HandleDatabaseErrors()
+  @HandleCmsStatusErrors()
+  async compactDatabase(
+    userId: string,
+    hostUid: string,
+    dbname: string,
+    request: CompactDatabaseRequest
+  ): Promise<CompactDatabaseResponse> {
+    const host = await this.hostService.findHostInternal(userId, hostUid);
+    const url = `https://${host.address}:${host.port}/cm_api`;
+
+    const cmsRequest: CompactDatabaseCmsRequest = {
+      task: 'compactdb',
+      token: host.token || '',
+      dbname: dbname,
+      verbose: request.verbose,
+    };
+
+    const response = await this.cmsClient.postAuthenticated<
+      CompactDatabaseCmsRequest,
+      CompactDatabaseCmsResponse
+    >(url, cmsRequest);
+
+    checkCmsTokenError(response);
+    checkCmsStatusError(response);
+
+    // Return log if present, otherwise return empty object
+    if (response.log) {
+      return {
+        log: response.log,
+      };
+    }
+
     return {};
   }
 }

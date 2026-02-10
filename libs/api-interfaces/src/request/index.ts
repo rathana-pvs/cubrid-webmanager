@@ -40,3 +40,4 @@ export * from './load-database-request';
 export * from './optimize-database-request';
 export * from './classinfo-request';
 export * from './check-database-request';
+export * from './compact-database-request';

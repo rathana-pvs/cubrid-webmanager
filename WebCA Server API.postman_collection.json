@@ -878,6 +878,41 @@
 						"description": "Check a database. Returns empty object on success.\n\n**URI:**\n```\nPOST /:hostUid/database/check/:dbname\n```\n**Example:**\n```\nPOST /host-uid-1/database/check/test\n```\n\n**Authentication:** Required\n**Headers:**\n```\nAuthorization: Bearer <JWT_TOKEN>\nContent-Type: application/json\n```\n\n**Path Parameters:**\n- `hostUid` - Host unique identifier\n- `dbname` - Database name\n\n**Request Body (Required Fields):**\n```json\n{\n  \"repairdb\": \"n\"\n}\n```\n\n**Request Body Field Descriptions:**\n- `repairdb` - Repair option (`y` = check and repair, `n` = check only)\n\n**Success Response (200 OK):**\n```json\n{}\n```\n\n**Error Response (400 Bad Request):**\n```json\n{\n  \"statusCode\": 400,\n  \"message\": \"Missing required fields: repairdb\",\n  \"error\": \"Bad Request\"\n}\n```\n\n**Error Response (404 Not Found):**\n```json\n{\n  \"statusCode\": 404,\n  \"message\": \"Database not found\",\n  \"error\": \"Not Found\"\n}\n```\n\n**Error Response (500 Internal Server Error):**\n```json\n{\n  \"statusCode\": 500,\n  \"message\": \"Failed to check database\",\n  \"error\": \"Internal Server Error\"\n}\n```"
 					},
 					"response": []
+				},
+				{
+					"name": "Compact Database",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"verbose\": \"y\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{hostUid}}/database/compact/{{dbname}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{hostUid}}",
+								"database",
+								"compact",
+								"{{dbname}}"
+							]
+						},
+						"description": "Compact a database. Returns log output if verbose is 'y', otherwise returns empty object.\n\n**URI:**\n```\nPOST /:hostUid/database/compact/:dbname\n```\n**Example:**\n```\nPOST /host-uid-1/database/compact/test\n```\n\n**Authentication:** Required\n**Headers:**\n```\nAuthorization: Bearer <JWT_TOKEN>\nContent-Type: application/json\n```\n\n**Path Parameters:**\n- `hostUid` - Host unique identifier\n- `dbname` - Database name\n\n**Request Body (Required Fields):**\n```json\n{\n  \"verbose\": \"y\"\n}\n```\n\n**Request Body Field Descriptions:**\n- `verbose` - Verbose option (`y` = include log output, `n` = exclude log output)\n\n**Success Response (200 OK) - With verbose \"y\":**\n```json\n{\n  \"log\": [\n    {\n      \"line\": [\n        \"\",\n        \"Pass 1\",\n        \"\",\n        \"Class db_root\",\n        \"1 instances.\",\n        \"1154 objects processed.\"\n      ]\n    }\n  ]\n}\n```\n\n**Success Response (200 OK) - With verbose \"n\":**\n```json\n{}\n```\n\n**Error Response (400 Bad Request):**\n```json\n{\n  \"statusCode\": 400,\n  \"message\": \"Missing required fields: verbose\",\n  \"error\": \"Bad Request\"\n}\n```\n\n**Error Response (404 Not Found):**\n```json\n{\n  \"statusCode\": 404,\n  \"message\": \"Database not found\",\n  \"error\": \"Not Found\"\n}\n```\n\n**Error Response (500 Internal Server Error):**\n```json\n{\n  \"statusCode\": 500,\n  \"message\": \"Failed to compact database\",\n  \"error\": \"Internal Server Error\"\n}\n```"
+					},
+					"response": []
 				}
 			],
 			"description": "Database management endpoints. All endpoints require JWT authentication."
