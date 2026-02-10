@@ -13,7 +13,7 @@ import {
   setPlanDump,
   setRenameDB,
 } from '@/features/sidenav/sideNavSlice.js';
-import { setBackupDB, setCopyDB, setRestoreDB } from '../../sideNavSlice';
+import { setBackupDB, setCopyDB, setCreateDB, setRestoreDB } from '../../sideNavSlice';
 
 const DatabaseMenu = ({ node, clientX, clientY, open, onClose }) => {
   const { startDatabase, stopDatabase } = useDatabaseOperation();
@@ -163,6 +163,14 @@ const DatabaseMenu = ({ node, clientX, clientY, open, onClose }) => {
       key: nanoid(4),
       icon: <ReloadOutlined />,
       disabled: true,
+    },
+    {
+      label: 'Create Database',
+      key: nanoid(4),
+      icon: <ReloadOutlined />,
+      onClick: () => {
+        dispatch(setCreateDB({ open: true, node }));
+      }
     },
   ];
 
