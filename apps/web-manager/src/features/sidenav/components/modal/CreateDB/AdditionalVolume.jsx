@@ -5,8 +5,16 @@ import React, { useEffect, useState } from 'react';
 import { nanoid } from 'nanoid';
 
 
-const AdditionalVolume = ({dbname, env, form})=>{
+const AdditionalVolume = ({dbname, env, form, onExvolChange})=>{
   const [exvol, setExvol] = useState([]);
+  const [volumeType, setVolumeType] = useState("data");
+
+  useEffect(() => {
+    if (onExvolChange) {
+      onExvolChange(exvol);
+    }
+  }, [exvol, onExvolChange]);
+
   const columns = [
     {
       title: 'Volume Name',
@@ -90,12 +98,34 @@ const AdditionalVolume = ({dbname, env, form})=>{
     })
     setExvol(newData)
   }
-  const handleAddVolume = ()=>{
-    setExvol(prevState => [...prevState, form.getFieldsValue()])
+  const getCount = (volumeType)=>{
+    const count = exvol.filter(item=>item.volume_type === volumeType ).length
+    return String(count + 1).padStart(3, '0');
   }
+  const handleAddVolume = ()=>{
+    setExvol(prevState => [...prevState, {...form.getFieldsValue(), key: nanoid(4)}])
+
+
+
+
+
+  }
+
+  useEffect(()=>{
+    const {CUBRID_DATABASES} = env;
+    form.setFieldsValue({
+      volume_name: `${dbname}_${volumeType}_x${getCount(volumeType)}`,
+      volume_type: volumeType,
+      volume_size: 512,
+      volume_path: `${CUBRID_DATABASES}/${dbname}`,
+    })
+  },[exvol, volumeType])
+
+
 
   useEffect(() => {
     const {CUBRID_DATABASES} = env;
+    form.setFieldValue('volume_type', volumeType);
     setExvol([
       {
         volume_name: `${dbname}_data_x001`,
@@ -112,12 +142,6 @@ const AdditionalVolume = ({dbname, env, form})=>{
         key: nanoid(4)
       }
     ])
-      form.setFieldsValue({
-        volume_name: `${dbname}_data_x002`,
-        volume_type: "data",
-        volume_size: 512,
-        volume_path: `${CUBRID_DATABASES}/${dbname}`
-      })
   }, [dbname])
 
 
@@ -137,7 +161,7 @@ const AdditionalVolume = ({dbname, env, form})=>{
       </Col>
       <Col span={24}>
         <Form.Item label="Volume Type" name="volume_type" labelCol={{span: 6}}>
-          <Select>
+          <Select onChange={(value)=>setVolumeType(value)}>
             <Select.Option value="data">data</Select.Option>
             <Select.Option value="temp">temp</Select.Option>
           </Select>

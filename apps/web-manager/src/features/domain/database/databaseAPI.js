@@ -144,3 +144,9 @@ export const setAutoVolumeAPI = async (host, data) => {
   const response = await getResponse(host, payload);
   return { result: response, success: true };
 };
+
+export const createDBAPI = async (host, payload) => {
+  const url = `/${host.uid}/database/create`;
+  const { data } = await axios.post(url, payload);
+  return { result: data, success: true };
+};

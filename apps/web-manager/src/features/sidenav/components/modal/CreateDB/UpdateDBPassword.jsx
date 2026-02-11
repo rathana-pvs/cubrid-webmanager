@@ -11,6 +11,15 @@ const UpdateDBPassword = ()=>{
       <div className={styles.db__layout}>
         <div className={"border__text"}>Set password</div>
         <Form.Item
+          label="Username"
+          name="username"
+          hasFeedback
+          labelCol={{span: 6}}
+          rules={[{require: true}]}
+        >
+          <Input/>
+        </Form.Item>
+        <Form.Item
           label="Password"
           name="password"
           hasFeedback

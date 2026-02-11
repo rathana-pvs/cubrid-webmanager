@@ -4,7 +4,7 @@ import { Checkbox, Col, Form, Input, Row, Select } from 'antd';
 
 
 
-const AutoVolumeExtension = ({dbname, form})=>{
+const AutoVolumeExtension = ({dbname, form, onChangeCheckBox})=>{
   const [addVolCheck, setAddVolCheck] = useState({
     data: false,
     index: false
@@ -14,6 +14,7 @@ const AutoVolumeExtension = ({dbname, form})=>{
   const handleAddVolCheckBox = (e)=>{
     const {name, checked} = e.target
     setAddVolCheck(prevState => ({...prevState, [name]: checked}))
+    onChangeCheckBox(e)
   }
 
   useEffect(() => {
@@ -42,7 +43,7 @@ const AutoVolumeExtension = ({dbname, form})=>{
             name="data_warn_outofspace"
             labelCol={{span: 6}}
           >
-            <Select>
+            <Select disabled={!addVolCheck.data}>
               {
                 Array.from({ length: 26 }, (_, i) => {
                   return <Select.Option key={i} value={(i+5)/100}>{i + 5}</Select.Option>
@@ -57,7 +58,7 @@ const AutoVolumeExtension = ({dbname, form})=>{
             name="data_ext_page"
             labelCol={{span: 6}}
           >
-            <Input/>
+            <Input  disabled={!addVolCheck.data}/>
           </Form.Item>
         </Col>
 
@@ -74,7 +75,7 @@ const AutoVolumeExtension = ({dbname, form})=>{
             name="index_warn_outofspace"
             labelCol={{span: 6}}
           >
-            <Select>
+            <Select disabled={!addVolCheck.index}>
               {
                 Array.from({ length: 26 }, (_, i) => {
                   return <Select.Option key={i} value={(i+5)/100}>{i + 5}</Select.Option>
@@ -89,7 +90,7 @@ const AutoVolumeExtension = ({dbname, form})=>{
             name="index_ext_page"
             labelCol={{span: 6}}
           >
-            <Input/>
+            <Input disabled={!addVolCheck.index}/>
           </Form.Item>
         </Col>
 

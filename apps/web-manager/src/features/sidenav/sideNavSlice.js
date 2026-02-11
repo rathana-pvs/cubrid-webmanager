@@ -76,7 +76,7 @@ const sideNavSlice = createSlice({
     setAutoVolume: (state, action) => {
       state.autoVolume = action.payload;
     },
-    createDB: (state, action) => {
+    setCreateDB: (state, action) => {
       state.createDB = action.payload;
     }
   },
