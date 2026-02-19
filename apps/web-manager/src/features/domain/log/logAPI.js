@@ -50,3 +50,12 @@ export const getLoadAccessLogAPI = async (host) => {
   const response = await getResponse(host, payload);
   return { result: response, success: true };
 };
+
+export const getAutoBackupDBErrLogAPI = async (host) => {
+  const payload = {
+    task: 'getautobackupdberrlog',
+  };
+
+  const response = await getResponse(host, payload);
+  return { result: response, success: true };
+};
