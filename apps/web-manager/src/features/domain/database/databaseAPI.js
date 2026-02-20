@@ -146,19 +146,26 @@ export const setAutoVolumeAPI = async (host, data) => {
 };
 
 export const getTablesAPI = async (host, payload) => {
-  const {dbname, ...res} = payload
-  const url = `/${host.uid}/database/class-info/${dbname}`
-  const {data} = await axios.post(url, res);
+  const { dbname, ...res } = payload;
+  const url = `/${host.uid}/database/class-info/${dbname}`;
+  const { data } = await axios.post(url, res);
 
   return { result: data, success: true };
 };
 
 export const unloadDBAPI = async (host, payload) => {
-  const {dbname, ...res} = payload
-  const url = `/${host.uid}/database/unload/${dbname}`
-  const {data} = await axios.post(url, res);
+  const { dbname, ...res } = payload;
+  const url = `/${host.uid}/database/unload/${dbname}`;
+  const { data } = await axios.post(url, res);
 
   return { result: data, success: true };
-}
+};
 
-
+export const lockDBAPI = async (host, data) => {
+  const payload = {
+    task: 'lockdb',
+    ...data,
+  };
+  const response = await getResponse(host, payload);
+  return { result: response, success: true };
+};
