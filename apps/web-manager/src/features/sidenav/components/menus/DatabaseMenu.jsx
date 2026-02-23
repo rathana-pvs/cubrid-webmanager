@@ -14,6 +14,7 @@ import {
   setRenameDB,
   setBackupDB, setCopyDB, setRestoreDB, setUnloadDB
 } from '@/features/sidenav/sideNavSlice.js';
+import { setTransactionInfo } from '../../sideNavSlice';
 
 const DatabaseMenu = ({ node, clientX, clientY, open, onClose }) => {
   const { startDatabase, stopDatabase } = useDatabaseOperation();
@@ -136,7 +137,9 @@ const DatabaseMenu = ({ node, clientX, clientY, open, onClose }) => {
         {
           label: 'Transaction Info',
           key: nanoid(4),
-          disabled: true,
+          onClick: ()=>{
+            dispatch(setTransactionInfo({ open: true, node }));
+          }
         },
         {
           label: 'Plan Dump',

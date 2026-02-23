@@ -405,3 +405,12 @@
 .ant-form-item{
     margin-bottom: 8px !important;
 }
+/* Custom highlight for the selected row */
+.ant-table-row-selected {
+    background-color: #e6f7ff !important; /* Light blue strip */
+    transition: background 0.3s ease;
+}
+
+.ant-table-row-selected:hover > td {
+    background-color: #bae7ff !important; /* Slightly darker on hover */
+}
