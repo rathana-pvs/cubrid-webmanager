@@ -160,13 +160,11 @@ export const unloadDBAPI = async (host, payload) => {
   return { result: data, success: true };
 };
 
-export const lockDBAPI = async (host, data) => {
-  const payload = {
-    task: 'lockdb',
-    ...data,
-  };
-  const response = await getResponse(host, payload);
-  return { result: response, success: true };
+export const lockDBAPI = async (host, dbname) => {
+  const url = `/${host.uid}/database/lock/${dbname}`;
+  const { data } = await axios.post(url);
+
+  return { result: data, success: true };
 }
 
 

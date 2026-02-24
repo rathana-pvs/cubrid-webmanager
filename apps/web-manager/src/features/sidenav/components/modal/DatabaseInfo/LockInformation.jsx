@@ -34,7 +34,7 @@ const LockInformation = (props) => {
   ];
 
   const refreshData = async () => {
-    const response = await lockDBAPI(activeHost, {dbname: lockInformation.node.dbname});
+    const response = await lockDBAPI(activeHost,  lockInformation.node.dbname);
     if(response.success) {
       const {dinterval, esc, lot, transaction} = response.result.lockinfo[0];
       setSettings({
