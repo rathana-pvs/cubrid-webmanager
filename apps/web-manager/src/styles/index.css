@@ -186,7 +186,12 @@ button.error:hover{
 }
 
 .full__width__tab .ant-tabs-tab {
-    flex: 1;            /* Forces both tabs to grow equally */
+    flex: 1; /* Forces both tabs to grow equally */
     justify-content: center; /* Ensures the label stays centered */
-    margin: 0 !important;    /* Removes default gaps between tabs */
+    margin: 0 !important; /* Removes default gaps between tabs */
+}
+.disabled{
+    pointer-events: none;
+    opacity: 0.7;
+    cursor: not-allowed;
 }

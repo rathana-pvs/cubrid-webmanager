@@ -25,6 +25,7 @@ import AddVolume from './components/modal/DatabaseSpace/AddVolume';
 import SetAutoVolume from './components/modal/DatabaseSpace/SetAutoVolume';
 import UnloadDB from './components/modal/UnloadDB/UnloadDB';
 import LockInformation from './components/modal/DatabaseInfo/LockInformation';
+import LoadDB from './components/modal/LoadDB/LoadDB';
 
 const SideNav = () => {
   const [width, setWidth] = React.useState(0);
@@ -49,6 +50,7 @@ const SideNav = () => {
       <SetAutoVolume />
       <UnloadDB/>
       <LockInformation />
+      <LoadDB/>
       <div className={styles.layout}>
         <div className={styles.top__menu}>
           <div className={styles.mode__view}>

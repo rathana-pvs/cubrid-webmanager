@@ -1,7 +1,6 @@
 import { getResponse } from '@/api/endPoint.js';
 import { isNotEmpty } from '@/lib/utils.js';
 import axios from '@/api/axiosInstant.js';
-import { data } from 'framer-motion/m';
 
 const getListDatabase = (data) => {
   const databases = [];
@@ -168,4 +167,20 @@ export const lockDBAPI = async (host, data) => {
   };
   const response = await getResponse(host, payload);
   return { result: response, success: true };
-};
+}
+
+
+export const getUnloadDBAPI = async (host) => {
+  const url = `/${host.uid}/database/unload-info`
+  const {data} = await axios.get(url);
+
+  return { result: data, success: true };
+}
+
+export const loadDBAPI = async (host, payload) => {
+  const {dbname, ...res} = payload
+  const url = `/${host.uid}/database/load/${dbname}`
+  const {data} = await axios.post(url, res);
+
+  return { result: data, success: true };
+}
