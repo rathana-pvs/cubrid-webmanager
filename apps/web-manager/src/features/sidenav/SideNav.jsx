@@ -2,11 +2,11 @@ import React from 'react';
 import { CloseCircleOutlined, ExpandAltOutlined, MinusSquareOutlined } from '@ant-design/icons';
 import { Radio } from 'antd';
 import styles from './styles/SideNav.module.css';
-import IconButton from '/src/components/common/Button/IconButton.jsx';
 import SideNavHost from './components/SideNavHost.jsx';
 import SideNavTree from './components/SideNavTree.jsx';
 import VerticalResize from '@/components/common/VerticalResize/VerticalResize.jsx';
 import { useSelector } from 'react-redux';
+import IconButton from '../../components/common/Button/IconButton';
 import ManageDBUser from '@/features/sidenav/components/modal/ManageDBUser.jsx';
 import BackupModal from '@/features/sidenav/components/modal/BackupModal/BackupModal.jsx';
 import QueryPlanModal from '@/features/sidenav/components/modal/QueryPlanModal/QueryPlanModal.jsx';
@@ -25,6 +25,8 @@ import AddVolume from './components/modal/DatabaseSpace/AddVolume';
 import SetAutoVolume from './components/modal/DatabaseSpace/SetAutoVolume';
 import UnloadDB from './components/modal/UnloadDB/UnloadDB';
 import AutoBackupLog from './components/modal/BackupModal/AutoBackupLog';
+import LoadDB from './components/modal/LoadDB/LoadDB';
+
 
 const SideNav = () => {
   const [width, setWidth] = React.useState(0);
@@ -49,6 +51,7 @@ const SideNav = () => {
       <SetAutoVolume />
       <UnloadDB/>
       <AutoBackupLog/>
+      <LoadDB/>
       <div className={styles.layout}>
         <div className={styles.top__menu}>
           <div className={styles.mode__view}>

@@ -11,6 +11,7 @@ import {
   CheckDatabaseRequest,
   CompactDatabaseRequest,
   RenameDatabaseRequest,
+  LockDatabaseRequest,
 } from '@api-interfaces';
 import {
   UnloadDatabaseCmsResponse,
@@ -18,6 +19,7 @@ import {
   CheckDatabaseCmsResponse,
   CompactDatabaseCmsResponse,
   RenameDatabaseCmsResponse,
+  LockDatabaseCmsResponse,
 } from '@type/cms-response';
 import * as common from '@common';
 
@@ -1215,6 +1217,272 @@ describe('DatabaseManagementService', () => {
 
       await expect(
         service.addVolDb(mockUserId, mockHostUid, mockDbname, mockRequest)
+      ).rejects.toThrow(DatabaseError);
+    });
+  });
+
+  describe('lockDatabase', () => {
+    const mockSuccessResponse: LockDatabaseCmsResponse = {
+      __EXEC_TIME: '34 ms',
+      note: 'none',
+      status: 'success',
+      task: 'lockdb',
+      lockinfo: [
+        {
+          dinterval: '1.00',
+          esc: '100000',
+          lot: [
+            {
+              entry: [
+                {
+                  lock_holders: [
+                    {
+                      count: '1',
+                      granted_mode: 'IS_LOCK',
+                      nsubgranules: '0',
+                      tran_index: '1',
+                    },
+                  ],
+                  num_b_holders: '0',
+                  num_holders: '1',
+                  num_waiters: '0',
+                  ob_type: 'Class = code',
+                  oid: '0|201|-32763',
+                },
+                {
+                  num_b_holders: 'missing',
+                  num_holders: 'inser',
+                  num_waiters: '=',
+                  ob_type: 'Instance of class ( 0|   193|   3) = db_user',
+                  oid: '0|833|2',
+                },
+                {
+                  lock_holders: [
+                    {
+                      count: '9',
+                      granted_mode: 'IX_LOCK',
+                      nsubgranules: '1',
+                      tran_index: '1',
+                    },
+                  ],
+                  num_b_holders: '0',
+                  num_holders: '1',
+                  num_waiters: '0',
+                  ob_type: 'Class = code',
+                  oid: '0|201|5',
+                },
+                {
+                  lock_holders: [
+                    {
+                      count: '2',
+                      granted_mode: 'IX_LOCK',
+                      nsubgranules: '0',
+                      tran_index: '1',
+                    },
+                  ],
+                  num_b_holders: '0',
+                  num_holders: '1',
+                  num_waiters: '0',
+                  ob_type: 'Root class',
+                  oid: '0|193|1',
+                },
+                {
+                  lock_holders: [
+                    {
+                      count: '3',
+                      granted_mode: 'IS_LOCK',
+                      nsubgranules: '1',
+                      tran_index: '1',
+                    },
+                  ],
+                  num_b_holders: '0',
+                  num_holders: '1',
+                  num_waiters: '0',
+                  ob_type: 'Class = db_user',
+                  oid: '0|193|3',
+                },
+                {
+                  num_b_holders: '4',
+                  num_holders: 'inser',
+                  num_waiters: '=',
+                  ob_type: 'Instance of class ( 0|   201|   5) = code',
+                  oid: '0|3457|7',
+                },
+              ],
+              maxnumlock: '10000',
+              numlocked: '6',
+            },
+          ],
+          transaction: [
+            {
+              '@uid': '',
+              host: '',
+              index: '0',
+              isolevel: 'COMMITTED READ',
+              pid: '0',
+              pname: '',
+              timeout: ':',
+            },
+            {
+              '@uid': 'DBA',
+              host: 'lgj1089-36',
+              index: '1',
+              isolevel: 'COMMITTED READ',
+              pid: '44371',
+              pname: 'csql',
+              timeout: ':',
+            },
+            {
+              '@uid': 'DBA',
+              host: 'lgj1089-36',
+              index: '2',
+              isolevel: 'COMMITTED READ',
+              pid: '44066',
+              pname: 'query_editor_cub_cas_1',
+              timeout: ':',
+            },
+            {
+              '@uid': 'DBA',
+              host: 'lgj1089-36',
+              index: '3',
+              isolevel: 'COMMITTED READ',
+              pid: '44725',
+              pname: 'lockdb',
+              timeout: ':',
+            },
+          ],
+        },
+      ],
+    };
+
+    it('should successfully get lock information', async () => {
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      const request: LockDatabaseRequest = {};
+
+      const result = await service.lockDatabase(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        request
+      );
+
+      expect(hostService.findHostInternal).toHaveBeenCalledWith(mockUserId, mockHostUid);
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        `https://${mockHost.address}:${mockHost.port}/cm_api`,
+        {
+          task: 'lockdb',
+          token: mockHost.token,
+          dbname: mockDbname,
+        }
+      );
+      expect(common.checkCmsTokenError).toHaveBeenCalledWith(mockSuccessResponse);
+      expect(common.checkCmsStatusError).toHaveBeenCalledWith(mockSuccessResponse);
+      expect(result).toEqual({
+        lockinfo: mockSuccessResponse.lockinfo,
+      });
+    });
+
+    it('should successfully get lock information (legacy format without lock_holders)', async () => {
+      // Legacy format: no lock_holders, has numallocated and sizelock
+      const legacyResponse: LockDatabaseCmsResponse = {
+        __EXEC_TIME: '48 ms',
+        note: 'none',
+        status: 'success',
+        task: 'lockdb',
+        lockinfo: [
+          {
+            dinterval: '1.00',
+            esc: '100000',
+            lot: [
+              {
+                entry: [
+                  {
+                    num_b_holders: '6',
+                    num_holders: 'inser',
+                    num_waiters: '=',
+                    ob_type: 'Instance of class ( 0|   208|   4) = public.code',
+                    oid: '0|4353|7',
+                  },
+                ],
+                maxnumlock: '-1',
+                numallocated: '1000',
+                numlocked: '16',
+                sizelock: '242K',
+              },
+            ],
+            transaction: [
+              {
+                '@uid': '',
+                host: '',
+                index: '0',
+                isolevel: 'COMMITTED READ',
+                pid: '0',
+                pname: '',
+                timeout: ':',
+              },
+            ],
+          },
+        ],
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue(legacyResponse);
+      const request: LockDatabaseRequest = {};
+
+      const result = await service.lockDatabase(
+        mockUserId,
+        mockHostUid,
+        mockDbname,
+        request
+      );
+
+      expect(result).toEqual({
+        lockinfo: legacyResponse.lockinfo,
+      });
+    });
+
+    it('should throw HostError if host is not found', async () => {
+      hostService.findHostInternal.mockRejectedValue(
+        HostError.NoSuchHost({ hostUid: mockHostUid })
+      );
+      const request: LockDatabaseRequest = {};
+
+      await expect(
+        service.lockDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(HostError);
+    });
+
+    it('should throw CmsError if CMS request fails', async () => {
+      cmsClient.postAuthenticated.mockRejectedValue(
+        CmsError.RequestFailed({ message: 'CMS request failed' })
+      );
+      const request: LockDatabaseRequest = {};
+
+      await expect(
+        service.lockDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(CmsError);
+    });
+
+    it('should throw DatabaseError if CMS token error occurs', async () => {
+      (common.checkCmsTokenError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('Invalid CMS token');
+      });
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      const request: LockDatabaseRequest = {};
+
+      await expect(
+        service.lockDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(DatabaseError);
+    });
+
+    it('should throw DatabaseError if CMS status is fail', async () => {
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
+        throw DatabaseError.InvalidParameter('CMS status failed');
+      });
+      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+      const request: LockDatabaseRequest = {};
+
+      await expect(
+        service.lockDatabase(mockUserId, mockHostUid, mockDbname, request)
       ).rejects.toThrow(DatabaseError);
     });
   });

@@ -47,3 +47,6 @@ export * from './compact-database-response';
 export * from './rename-database-response';
 export * from './get-add-vol-status-response';
 export * from './add-vol-db-response';
+export * from './lock-database-response';
+export * from './get-auto-exec-query-err-log-response';
+export * from './get-auto-backup-db-err-log-response';

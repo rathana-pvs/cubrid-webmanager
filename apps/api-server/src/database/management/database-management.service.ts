@@ -8,6 +8,8 @@ import {
   GetAddVolStatusResponse,
   LoadDatabaseRequest,
   LoadDatabaseResponse,
+  LockDatabaseRequest,
+  LockDatabaseResponse,
   OptimizeDatabaseRequest,
   OptimizeDatabaseResponse,
   RenameDatabaseRequest,
@@ -32,6 +34,7 @@ import {
   CompactDatabaseCmsRequest,
   GetAddVolStatusCmsRequest,
   LoadDatabaseCmsRequest,
+  LockDatabaseCmsRequest,
   OptimizeDatabaseCmsRequest,
   RenameDatabaseCmsRequest,
   UnloadDatabaseCmsRequest,
@@ -43,6 +46,7 @@ import {
   CompactDatabaseCmsResponse,
   GetAddVolStatusCmsResponse,
   LoadDatabaseCmsResponse,
+  LockDatabaseCmsResponse,
   OptimizeDatabaseCmsResponse,
   RenameDatabaseCmsResponse,
   UnloadDatabaseCmsResponse,
@@ -522,6 +526,48 @@ export class DatabaseManagementService {
     return {
       dbname: response.dbname,
       purpose: response.purpose,
+    };
+  }
+
+  /**
+   * Get lock information for a database.
+   * Returns lock information including lock entries, transactions, and lock statistics.
+   *
+   * @param userId User ID from JWT
+   * @param hostUid Host UID
+   * @param dbname Database name
+   * @param request Client request (empty object, no body required)
+   * @returns LockDatabaseResponse Lock information
+   * @throws DatabaseError If request fails or CMS status is fail
+   */
+  @HandleDatabaseErrors()
+  @HandleCmsStatusErrors()
+  async lockDatabase(
+    userId: string,
+    hostUid: string,
+    dbname: string,
+    request: LockDatabaseRequest
+  ): Promise<LockDatabaseResponse> {
+    const host = await this.hostService.findHostInternal(userId, hostUid);
+    const url = `https://${host.address}:${host.port}/cm_api`;
+
+    const cmsRequest: LockDatabaseCmsRequest = {
+      task: 'lockdb',
+      token: host.token || '',
+      dbname: dbname,
+    };
+
+    const response = await this.cmsClient.postAuthenticated<
+      LockDatabaseCmsRequest,
+      LockDatabaseCmsResponse
+    >(url, cmsRequest);
+
+    checkCmsTokenError(response);
+    checkCmsStatusError(response);
+
+    // Return lockinfo only (CMS envelope removed)
+    return {
+      lockinfo: response.lockinfo,
     };
   }
 }

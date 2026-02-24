@@ -9,6 +9,8 @@ import {
   GetAddVolStatusResponse,
   LoadDatabaseRequest,
   LoadDatabaseResponse,
+  LockDatabaseRequest,
+  LockDatabaseResponse,
   OptimizeDatabaseRequest,
   OptimizeDatabaseResponse,
   RenameDatabaseRequest,
@@ -328,5 +330,35 @@ export class DatabaseManagementController {
       'DatabaseManagementController'
     );
     return await this.managementService.addVolDb(userId, hostUid, dbname, body);
+  }
+
+  /**
+   * Get lock information for a database.
+   * Returns lock information including lock entries, transactions, and lock statistics.
+   *
+   * @route POST /:hostUid/database/lock/:dbname
+   * @param req Express request (contains authenticated user)
+   * @param hostUid Host unique identifier from path parameter
+   * @param dbname Database name from path parameter
+   * @param body Request body (empty object, no fields required)
+   * @returns LockDatabaseResponse Lock information
+   * @example
+   * // POST /host-uid/database/lock/demodb
+   * // Body: {}
+   */
+  @Post('lock/:dbname')
+  async lockDatabase(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string,
+    @Body() body: LockDatabaseRequest
+  ): Promise<LockDatabaseResponse> {
+    const userId = req.user.sub;
+
+    Logger.log(
+      `Getting lock information for database: ${dbname} on host: ${hostUid}`,
+      'DatabaseManagementController'
+    );
+    return await this.managementService.lockDatabase(userId, hostUid, dbname, body);
   }
 }
