@@ -4,8 +4,8 @@ import styles from '@/features/sidenav/styles/Modal.module.css';
 import { useDispatch, useSelector } from 'react-redux';
 import { getTransactionInfoAPI } from '../../../../../domain/transaction/transactionAPI';
 import ConfirmDBPassword from '../../../../../../components/composite/ConfirmDBPassword/ConfirmDBPassword';
-import { setTransactionInfo } from '../../../../sideNavSlice';
 import KillTransaction from './KillTransaction';
+import { setTransactionInfo } from '../../../../sideNavSlice';
 
 
 const TransactionInfo = () => {
