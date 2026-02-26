@@ -4,26 +4,35 @@ import styles from '@/features/sidenav/styles/Modal.module.css';
 import { getAutoBackupDBErrLogAPI } from '../../../../domain/log/logAPI';
 import { useDispatch, useSelector } from 'react-redux';
 import { setAutoBackupLog } from '../../../sideNavSlice';
+import { setBuffering } from '../../../../../shared/slice/globalSlice';
 
-const AutoBackupLog = (props) => {
+const AutoBackupLog = () => {
   const {activeHost} = useSelector((state) => state.host);
   const {autoBackupLog} = useSelector((state) => state.sidenav);
   const dispatch = useDispatch();
   const [dataSource, setDataSource] = useState([]);
   const columns = [
-    { title: 'Database', dataIndex: 'database', key: 'database' },
-    { title: 'Backup ID', dataIndex: 'backup_id', key: 'backup_id' },
-    { title: 'Log Time', dataIndex: 'log_time', key: 'log_time' },
-    { title: 'Description', dataIndex: 'description', key: 'description' },
+    { title: 'Database', dataIndex: 'dbname', key: 'dbname' },
+    { title: 'Backup ID', dataIndex: 'backupid', key: 'backupid' },
+    { title: 'Log Time', dataIndex: 'error_time', key: 'error_time' },
+    { title: 'Description', dataIndex: 'error_desc', key: 'error_desc' },
   ];
 
+  const refreshData = ()=>{
+    dispatch(setBuffering(true))
+    getAutoBackupDBErrLogAPI(activeHost).then((res) => {
+      if (res.success) {
+        if (res.result.error) {
+          setDataSource(res.result.error);
+        }
+      }
+    }).finally(() => {
+      dispatch(setBuffering(false))
+    });
+  }
   useEffect(() => {
     if (autoBackupLog.open) {
-      getAutoBackupDBErrLogAPI(activeHost).then(res=>{
-        if(res.success){
-          console.log(res.data);
-        }
-      })
+      refreshData()
     }
   }, [autoBackupLog]);
   const handleClose = () => {
@@ -31,13 +40,17 @@ const AutoBackupLog = (props) => {
   }
   return (
     <Modal
+      width={740}
       title="Auto Backup Log"
       open={autoBackupLog.open}
       footer={() => {
         return (
           <>
             <Button type="primary" onClick={() => handleClose()}>
-              OK
+              Cancel
+            </Button>
+            <Button type="primary" onClick={() => refreshData()}>
+              Refresh
             </Button>
           </>
         );
