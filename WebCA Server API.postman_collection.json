@@ -983,6 +983,41 @@
 					"response": []
 				},
 				{
+					"name": "Get Transaction Info",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"dbuser\": \"dba\",\n  \"dbpasswd\": \"\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{hostUid}}/database/transaction-info/{{dbname}}",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{hostUid}}",
+								"database",
+								"transaction-info",
+								"{{dbname}}"
+							]
+						},
+						"description": "Get transaction information for a database. Returns domain-only data (CMS envelope removed).\n\n**URI:**\n```\nPOST /:hostUid/database/transaction-info/:dbname\n```\n**Example:**\n```\nPOST /host-uid-1/database/transaction-info/demodb\n```\n\n**Authentication:** Required\n**Headers:**\n```\nAuthorization: Bearer <JWT_TOKEN>\nContent-Type: application/json\n```\n\n**Path Parameters:**\n- `hostUid` - Host unique identifier\n- `dbname` - Database name\n\n**Request Body (Required Fields):**\n```json\n{\n  \"dbuser\": \"dba\",\n  \"dbpasswd\": \"\"\n}\n```\n\n**Request Body Field Descriptions:**\n- `dbuser` - Database user name\n- `dbpasswd` - Database password (can be empty string)\n\n**Success Response (200 OK):**\n```json\n{\n  \"dbname\": \"demodb\",\n  \"transactioninfo\": [\n    {\n      \"transaction\": [\n        {\n          \"@user\": \"DBA\",\n          \"SQL_ID\": \"empty\",\n          \"host\": \"lgj1089-3-60\",\n          \"pid\": \"1684512\",\n          \"program\": \"query_editor_cub_cas_1\",\n          \"query_time\": \"0.00\",\n          \"tran_time\": \"0.00\",\n          \"tranindex\": \"2(ACTIVE)\",\n          \"wait_for_lock_holder\": \"-1\"\n        }\n      ]\n    }\n  ]\n}\n```\n\n**Response Field Descriptions:**\n- `dbname` - Database name\n- `transactioninfo` - Array of transaction information containers\n  - `transaction` - Array of transaction entries\n    - `@user` - User name\n    - `SQL_ID` - SQL ID\n    - `host` - Host name\n    - `pid` - Process ID\n    - `program` - Program name\n    - `query_time` - Query time\n    - `tran_time` - Transaction time\n    - `tranindex` - Transaction index (may include status like \"ACTIVE\")\n    - `wait_for_lock_holder` - Wait for lock holder\n\n**Error Response (400 Bad Request):**\n```json\n{\n  \"statusCode\": 400,\n  \"message\": \"Missing required fields: dbuser, dbpasswd\",\n  \"error\": \"Bad Request\"\n}\n```\n\n**Error Response (404 Not Found):**\n```json\n{\n  \"statusCode\": 404,\n  \"message\": \"Host not found\",\n  \"error\": \"Not Found\"\n}\n```\n\n**Error Response (500 Internal Server Error):**\n```json\n{\n  \"statusCode\": 500,\n  \"message\": \"Failed to get transaction information\",\n  \"error\": \"Internal Server Error\"\n}\n```"
+					},
+					"response": []
+				},
+				{
 					"name": "Compact Database",
 					"request": {
 						"method": "POST",

@@ -25,6 +25,7 @@ import AddVolume from './components/modal/DatabaseSpace/AddVolume';
 import SetAutoVolume from './components/modal/DatabaseSpace/SetAutoVolume';
 import UnloadDB from './components/modal/UnloadDB/UnloadDB';
 import AutoBackupLog from './components/modal/BackupModal/AutoBackupLog';
+import LockInformation from './components/modal/DatabaseInfo/LockInformation';
 import LoadDB from './components/modal/LoadDB/LoadDB';
 
 
@@ -51,6 +52,7 @@ const SideNav = () => {
       <SetAutoVolume />
       <UnloadDB/>
       <AutoBackupLog/>
+      <LockInformation />
       <LoadDB/>
       <div className={styles.layout}>
         <div className={styles.top__menu}>
