@@ -1,3 +1,5 @@
+import { GetDbmtUserInfoClientResponse } from './get-dbmt-user-info-client-response';
+
 /** DB list item in updatedbmtuser response */
 export type UpdateDbmtUserDblistItem = {
   dbs: Array<{ dbname: string }>;
@@ -9,9 +11,7 @@ export type UpdateDbmtUserUserlistItem = {
 };
 
 /**
- * Client response for updatedbmtuser (domain data only).
+ * Client response for updatedbmtuser (same as getdbmtuserinfo).
  */
-export type UpdateDbmtUserClientResponse = {
-  dblist: UpdateDbmtUserDblistItem[];
-  userlist: UpdateDbmtUserUserlistItem[];
-};
+export type UpdateDbmtUserClientResponse = GetDbmtUserInfoClientResponse;
+

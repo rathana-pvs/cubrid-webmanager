@@ -1,0 +1,87 @@
+import { useState, useEffect } from 'react';
+import { brokerApi } from '../../broker/brokerApi';
+import LogViewer from '../../broker/components/LogViewer';
+
+import { Icon } from '../../../components/ds/foundation/Icon';
+import { Modal } from '../../../components/ds/layout/Modal';
+import { Typography } from '../../../components/ds/foundation/Typography';
+import { Button } from '../../../components/ds/foundation/Button';
+
+export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casId, type = 'sql' }) {
+  const [logPath, setLogPath] = useState(null);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (isOpen && hostUid && brokerName && casId) {
+      fetchLogPath();
+    }
+  }, [isOpen, hostUid, brokerName, casId, type]);
+
+  const fetchLogPath = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await brokerApi.getBrokerLogs(hostUid, brokerName);
+      const logs = response.logfileinfo?.[0]?.logfile || [];
+      
+      const suffix = type === 'sql' ? `_${casId}.sql.log` : `_${casId}.err`;
+      const found = logs.find(log => log.path.endsWith(suffix));
+      
+      if (found) {
+        setLogPath(found.path);
+      } else {
+        setError(`Log file identifier [${suffix}] could not be resolved in the current broker directory.`);
+      }
+    } catch (err) {
+      setError('The remote host refused the log retrieval request. Please verify broker connectivity.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const title = type === 'sql' ? 'CAS SQL Transaction Log' : 'CAS Slow Query Registry';
+
+  return (
+    <Modal
+      isOpen={isOpen}
+      onClose={onClose}
+      title={title}
+      icon={type === 'sql' ? 'terminal' : 'timer_off'}
+      maxWidth="1100px"
+      loading={loading}
+      error={error}
+      onErrorRetry={fetchLogPath}
+      onErrorClose={onClose}
+    >
+      <div className="flex flex-col h-[70vh] min-h-[500px] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden bg-slate-900 shadow-2xl relative">
+        <div className="absolute top-4 left-6 z-10 flex items-center gap-4 pointer-events-none">
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-md border border-white/5 rounded-xl shadow-lg">
+             <Icon name="dns" size="xs" weight={300} className="text-bk-yellow" />
+             <Typography variant="caption" className="font-black text-white/60 uppercase tracking-widest">Broker: <span className="text-bk-yellow">{brokerName}</span></Typography>
+          </div>
+          <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-md border border-white/5 rounded-xl shadow-lg">
+             <Icon name="fingerprint" size="xs" weight={300} className="text-bk-yellow" />
+             <Typography variant="caption" className="font-black text-white/60 uppercase tracking-widest">CAS UID: <span className="text-bk-yellow">{casId}</span></Typography>
+          </div>
+        </div>
+
+        {!loading && !error && logPath && (
+          <div className="flex-1 overflow-hidden bg-slate-950">
+            <LogViewer hostUid={hostUid} path={logPath} />
+          </div>
+        )}
+
+        {!loading && !error && !logPath && (
+          <div className="flex-1 flex flex-col items-center justify-center p-20 text-center space-y-4">
+             <div className="w-20 h-20 bg-slate-800/50 rounded-3xl flex items-center justify-center border border-white/5 shadow-2xl">
+                <Icon name="search_off" size="lg" weight={100} className="text-slate-600" />
+             </div>
+             <Typography variant="h3" className="text-white/60 font-black uppercase tracking-[0.3em]">No Log Data</Typography>
+             <Typography variant="p" className="text-slate-500 max-w-sm">The requested log stream is currently empty or hasn't been initialized by the broker process.</Typography>
+          </div>
+        )}
+      </div>
+    </Modal>
+  );
+}

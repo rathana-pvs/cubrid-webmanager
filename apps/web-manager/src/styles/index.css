@@ -1,197 +1,240 @@
-@import './variables.css';
-@import './customize_antd.css';
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/all.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-duotone-thin.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-duotone-solid.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-duotone-light.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-thin.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-regular.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-solid.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/sharp-light.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/duotone-regular.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/duotone-thin.css");
-@import url("https://site-assets.fontawesome.com/releases/v6.7.2/css/duotone-light.css");
+@import 'tailwindcss';
 
+@custom-variant dark (&:is(.dark *));
 
+@theme {
+  --color-primary: #ffc107;
+  --color-bk-main: #121212;
+  --color-bk-side: #1e1e1e;
+  --color-bk-yellow: #ffc107;
+  --color-accent-red: #f43f5e;
+  --color-accent-orange: #f97316;
+  --color-accent-yellow: #ffc107;
+  --color-accent-green: #10b981;
+  --color-accent-blue: #0ea5e9;
+  --color-accent-purple: #8b5cf6;
+  --color-background-light: #f6f6f8;
+  --color-background-dark: #121212;
 
+  --font-display: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
 
-/* =======================================
-   Global Base
-======================================= */
-html {
-    box-sizing: border-box;
-    scroll-behavior: smooth;
+  --radius-none: 0;
+  --radius-sm: 0.25rem;
+  --radius: 0.25rem;
+  --radius-md: 0.25rem;
+  --radius-lg: 0.25rem;
+  --radius-xl: 0.25rem;
+  --radius-2xl: 0.25rem;
+  --radius-3xl: 0.25rem;
+  --radius-full: 9999px;
 }
 
-*, *::before, *::after {
-    box-sizing: inherit;
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
 }
 
-body {
+@utility cursor-col-resize {
+  cursor: col-resize;
+}
+
+@utility cursor-row-resize {
+  cursor: row-resize;
+}
+
+@utility custom-scrollbar {
+  &::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+  &::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  &::-webkit-scrollbar-thumb {
+    @apply bg-slate-200 dark:bg-slate-700 rounded-full;
+  }
+  &::-webkit-scrollbar-thumb:hover {
+    @apply bg-bk-yellow;
+  }
+}
+
+@layer base {
+  body {
+    @apply font-sans;
+  }
+  .dark body {
+    background-color: #121212;
+    color: #e2e8f0;
+  }
+  *:focus-visible {
+    outline: none;
+  }
+
+  /* Autocomplete Background Override */
+  input:-webkit-autofill,
+  input:-webkit-autofill:hover, 
+  input:-webkit-autofill:focus, 
+  input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px white inset !important;
+    -webkit-text-fill-color: #0f172a !important; /* slate-900 */
+    color: #0f172a !important;
+    caret-color: #0f172a !important;
+    font-weight: 500 !important;
+    font-family: inherit !important;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+  }
+
+  /* Dark mode autocomplete override */
+  .dark input:-webkit-autofill,
+  .dark input:-webkit-autofill:hover, 
+  .dark input:-webkit-autofill:focus, 
+  .dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #1a1a1a inset !important;
+    -webkit-text-fill-color: #f8fafc !important;
+    color: #f8fafc !important;
+    caret-color: #f8fafc !important;
+    font-weight: 500 !important;
+    font-family: inherit !important;
+    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+  }
+}
+
+
+@layer utilities {
+  html,
+  body {
     margin: 0;
-    padding: 0;
-    font-family: var(--app-font-family);
-    font-size: var(--app-font-size);
-    font-weight: var(--app-font-weight-regular);
-    line-height: var(--app-line-height);
-    color: var(--app-color-text);
-    background-color: var(--app-color-bg-layout);
-    -webkit-font-smoothing: antialiased;
     height: 100vh;
+  }
 }
 
-/* =======================================
-   Headings
-======================================= */
-h1, h2, h3, h4, h5, h6 {
-    margin: 0 0 0.5em;
-    font-weight: var(--app-font-weight-strong);
-    color: var(--app-color-text);
-    line-height: 1.25;
+@layer base {
+  /* Scrollbar overrides */
+  ::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+  }
+  ::-webkit-scrollbar-track {
+    background: transparent;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: #cbd5e1; /* slate-300 */
+    border-radius: 4px;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    background: #94a3b8; /* slate-400 */
+  }
+  .dark ::-webkit-scrollbar-thumb {
+    background: #334155; /* slate-700 */
+  }
+  .dark ::-webkit-scrollbar-thumb:hover {
+    background: #ffc107; /* bk-yellow */
+  }
+  
+  /* Firefox */
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 transparent;
+  }
+  .dark * {
+    scrollbar-color: #334155 transparent;
+  }
+  .dark *:hover {
+    scrollbar-color: #ffc107 transparent;
+  }
 }
 
-h1 { font-size: var(--app-font-size-h1); }
-h2 { font-size: var(--app-font-size-h2); }
-h3 { font-size: var(--app-font-size-h3); }
-h4 { font-size: var(--app-font-size-h4); }
-h5 { font-size: var(--app-font-size-h5); }
-h6 { font-size: var(--app-font-size-h6); }
 
-/* =======================================
-   Paragraphs & Text
-======================================= */
-p {
-    margin-top: 0;
-    margin-bottom: 1em;
+#sidebar.collapsed {
+  width: 80px !important;
 }
 
-small {
-    font-size: calc(var(--app-font-size) * 0.875);
-    color: var(--app-color-text-secondary);
+#sidebar.collapsed h2, 
+#sidebar.collapsed .text-sm, 
+#sidebar.collapsed .text-\[10px\], 
+#sidebar.collapsed .text-xs, 
+#sidebar.collapsed summary .text-sm,
+#sidebar.collapsed summary .material-symbols-outlined:first-child,
+#sidebar.collapsed #db-tree-container p,
+#sidebar.collapsed #broker-tree-container p,
+#sidebar.collapsed details div,
+#sidebar.collapsed #sidebar-footer-btn span:last-child,
+#sidebar.collapsed .section-title {
+  display: none !important;
 }
 
-strong {
-    font-weight: var(--app-font-weight-strong);
-    color: var(--app-color-text-strong);
+#sidebar.collapsed .px-3, #sidebar.collapsed .p-4 {
+  padding-left: 0.75rem !important;
+  padding-right: 0.75rem !important;
 }
 
-em {
-    font-style: italic;
+#sidebar.collapsed summary {
+  justify-content: center !important;
+  padding-left: 0 !important;
+  padding-right: 0 !important;
 }
 
-/* =======================================
-   Links
-======================================= */
-a {
-    color: var(--app-color-link);
-    text-decoration: none;
-    transition: color 0.2s ease;
+#sidebar.collapsed .flex-1.flex.flex-col.items-center {
+  padding: 0.5rem !important;
 }
 
-a:hover {
-    color: var(--app-color-link-hover);
-    text-decoration: underline;
+#sidebar.collapsed #sidebar-footer-btn {
+  justify-content: center !important;
+  padding: 0.75rem !important;
 }
 
-/* =======================================
-   Lists
-======================================= */
-ul, ol {
-    margin: 0 0 1em 1.5em;
-    padding: 0;
+#sidebar.collapsed #toggle-icon {
+  transform: rotate(180deg);
 }
 
-li {
-    margin-bottom: 0.5em;
+#sidebar.collapsed summary .material-symbols-outlined:not(:first-child) {
+  margin: 0 !important;
 }
 
-/* =======================================
-   Blockquotes & Code
-======================================= */
-blockquote {
-    margin: 1.5em 0;
-    padding-left: 1em;
-    border-left: 4px solid var(--app-color-border-secondary);
-    color: var(--app-color-text-secondary);
-    font-style: italic;
+#v-resizer:hover, #v-resizer.resizing { background-color: #ffc107; }
+
+@keyframes reloading {
+  0% { transform: translateX(-100%); }
+  50% { transform: translateX(100%); }
+  100% { transform: translateX(-100%); }
 }
 
-code {
-    font-family: var(--app-font-family-code);
-    font-size: 0.875rem;
-    background-color: var(--app-color-fill-tertiary);
-    border: 1px solid var(--app-color-border);
-    border-radius: var(--app-border-radius-sm);
-    padding: 0.2em 0.4em;
-    color: var(--app-color-text-code);
+.animate-in {
+  animation-duration: 300ms;
+  animation-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+  animation-fill-mode: both;
 }
 
-/* =======================================
-   Horizontal Rule
-======================================= */
-hr {
-    border: none;
-    border-top: 1px solid var(--app-color-border-secondary);
-    margin: 2em 0;
+.fade-in {
+  animation-name: fadeIn;
 }
 
-/* =======================================
-   Responsive Adjustment
-======================================= */
-@media (max-width: 768px) {
-    body {
-        font-size: calc(var(--app-font-size) * 0.95);
-    }
-}
-.folder__icon{
-    color: var(--app-color-folder);
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
 }
 
-.active__icon{
-    color: var(--app-color-primary);
-}
-.inactive__icon{
-    color: var(--app-color-inactive);
-}
-.error {
-    color: var(--app-color-error);
-}
-button{
-    height: 32px !important;
-}
-button.error{
-    background-color: var(--app-color-error);
-    color: white;
-}
-button.error:hover{
-    background-color: var(--app-color-error) !important;
-    opacity: 0.9;
-    transition: opacity 0.2s ease;
+.zoom-in-95 {
+  animation-name: zoomIn95;
 }
 
-.border__text{
-    position: absolute;
-    top: -12px;
-    padding: 0 6px;
-    margin-left: 16px;
-    font-weight: 500;
-    background-color: white;
-    transform: translateX(-8%);
+@keyframes zoomIn95 {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
 }
 
-/* Target the individual tab wrappers */
-.full__width__tab .ant-tabs-nav-list {
-    width: 100%;
-    display: flex;
-}
-
-.full__width__tab .ant-tabs-tab {
-    flex: 1; /* Forces both tabs to grow equally */
-    justify-content: center; /* Ensures the label stays centered */
-    margin: 0 !important; /* Removes default gaps between tabs */
-}
-.disabled{
-    pointer-events: none;
-    opacity: 0.7;
-    cursor: not-allowed;
-}
