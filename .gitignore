@@ -112,3 +112,6 @@ Desktop.ini
 *.swp
 *.swo
 docs/
+local-e2e/
+playwright-report/
+test-results/

@@ -1,5 +1,6 @@
-import React, { useMemo, memo } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useEffect, useMemo, memo } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { fetchDatabaseSpaceInfo } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -168,9 +169,18 @@ const VolumeTableContainer = memo(({ volumes, pageSize }) => (
 
 // ── Main Component ──
 
-export default function VolumeCategoryMonitor({ dbname, category }) {
-  const { spaceInfo } = useSelector((state) => state.database);
+export default function VolumeCategoryMonitor({ hostUid, dbname, category }) {
+  const dispatch = useDispatch();
+  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.database);
   const dbSpace = spaceInfo[dbname];
+  const isLoading = spaceInfoLoading?.[dbname];
+
+  useEffect(() => {
+    if (!dbSpace && !isLoading && hostUid) {
+      dispatch(fetchDatabaseSpaceInfo({ hostUid, dbname }));
+    }
+  }, [dispatch, hostUid, dbname, dbSpace, isLoading]);
+
   const meta = CATEGORY_META[category] || CATEGORY_META.Permanent_PermanentData;
 
   const volumes = useMemo(() => {

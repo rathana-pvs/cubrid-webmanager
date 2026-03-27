@@ -10,7 +10,7 @@ import {
   fetchDatabaseSpaceInfo
 } from '../../../database/databaseSlice';
 import { fetchDatabaseUsers } from '../../../user/userSlice';
-import { setActiveMainTab } from '../../layoutSlice';
+import { openTab } from '../../layoutSlice';
 import { TreeNode } from '../../../../components/domain/tree/TreeNode';
 import { Skeleton } from '../../../../components/ds/layout/Skeleton';
 import { Icon } from '../../../../components/ds/foundation/Icon';
@@ -32,7 +32,8 @@ const selectStatusStates = (state) => ({
   queryPlans: state.database.queryPlans,
   queryPlansLoading: state.database.queryPlansLoading,
   spaceInfo: state.database.spaceInfo,
-  spaceInfoLoading: state.database.spaceInfoLoading
+  spaceInfoLoading: state.database.spaceInfoLoading,
+  loggingInDatabases: state.database.loggingInDatabases
 });
 
 export default function DatabaseTree({ 
@@ -60,16 +61,22 @@ export default function DatabaseTree({
     queryPlans, 
     queryPlansLoading, 
     spaceInfo, 
-    spaceInfoLoading 
+    spaceInfoLoading,
+    loggingInDatabases
   } = useSelector(selectStatusStates, shallowEqual);
   
   const { databaseUsers, databaseUsersLoading } = useSelector((state) => state.user, shallowEqual);
 
   const handleDbToggle = useCallback((db, isActive, isLoggedIn) => {
-    if (isActive) {
+    if (!isActive) return;
+
+    // We use a small timeout to let the browser finish processing 
+    // click sequences (like double-clicks) before we trigger state-changing 
+    // dispatches that could cause a reset-rendering of the tree node.
+    setTimeout(() => {
       if (!isLoggedIn) {
         if (db.isProfileExists) {
-          dispatch(loginDatabase({ hostUid: selectedHostUid, dbname: db.dbname })).unwrap()
+          dispatch(loginDatabase({ hostUid: selectedHostUid, dbname: db.dbname, isBackground: true })).unwrap()
             .then(() => {
               dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname: db.dbname }));
               dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: db.dbname }));
@@ -89,7 +96,7 @@ export default function DatabaseTree({
           dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: db.dbname }));
         }
       }
-    }
+    }, 50);
   }, [selectedHostUid, databaseUsers, databaseUsersLoading, backupSchedules, backupSchedulesLoading, queryPlans, queryPlansLoading, dispatch]);
 
   const handleSelectSubItem = useCallback((dbname, subId, onClick) => {
@@ -99,7 +106,7 @@ export default function DatabaseTree({
   }, [dispatch]);
 
   const handleTabOpen = useCallback((tabId) => {
-    dispatch(setActiveMainTab(tabId));
+    dispatch(openTab(tabId));
   }, [dispatch]);
 
   if (loading) {
@@ -149,6 +156,7 @@ export default function DatabaseTree({
             level={1}
             isActive={isDbSelected}
             hasChildren={true}
+            isLoading={loggingInDatabases[db.dbname]}
             status={isActive ? 'on' : 'off'}
             onToggle={() => handleDbToggle(db, isActive, isLoggedIn)}
             onSelect={() => {
@@ -355,12 +363,8 @@ const SpaceFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem,
         isActive={isCatSelected}
         hasChildren={true}
         isLoading={spaceInfoLoading && !spaceInfo}
-        onSelect={() => onSelect(db.dbname, id, () => onTabOpen(`vol_category:${selectedHostUid}:${db.dbname}:${id}`))}
-        onToggle={() => {
-           if (selectedHostUid && !spaceInfo && !spaceInfoLoading) {
-             dispatch(fetchDatabaseSpaceInfo({ hostUid: selectedHostUid, dbname: db.dbname }));
-           }
-        }}
+        onSelect={() => onSelect(db.dbname, id)}
+        onDoubleClick={() => onTabOpen(`vol_category:${selectedHostUid}:${db.dbname}:${id}`)}
       >
         {volumes.map(vol => {
           const fileName = vol.spacename.split(/[\\/]/).pop();
@@ -390,10 +394,12 @@ const SpaceFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem,
       level={2}
       isActive={isSelected}
       hasChildren={true}
-      onSelect={() => onSelect(db.dbname, 'Space', () => onTabOpen(`db_space:${selectedHostUid}:${db.dbname}`))}
+      onSelect={() => onSelect(db.dbname, 'Space')}
+      onDoubleClick={() => onTabOpen(`db_space:${selectedHostUid}:${db.dbname}`)}
       onContextMenu={(e) => onSpaceContextMenu(e, db.dbname)}
       onToggle={() => {
-        if (selectedHostUid && !spaceInfo && !spaceInfoLoading) {
+        // Only fetch if we have a host, aren't already loading, AND the data is genuinely missing
+        if (selectedHostUid && !spaceInfoLoading && !spaceInfo) {
           dispatch(fetchDatabaseSpaceInfo({ hostUid: selectedHostUid, dbname: db.dbname }));
         }
       }}

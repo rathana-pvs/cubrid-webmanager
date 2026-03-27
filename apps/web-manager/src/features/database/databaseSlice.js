@@ -611,6 +611,7 @@ const initialState = {
   spaceInfo: {}, // { [dbname]: { volumes: [], summary: [], files: [] } }
   spaceInfoLoading: {},
   volumes: [],
+  loggingInDatabases: {}, // { [dbname]: boolean }
   loggedInDatabases: [],
   isLoginDatabaseModalOpen: false,
   loading: false,
@@ -623,6 +624,7 @@ const databaseSlice = createSlice({
   name: 'database',
   initialState,
   reducers: {
+    // ... reducers ... (I'll keep them as they are)
     setSelectedDatabase: (state, action) => {
       if (state.selectedDatabase !== action.payload) {
         state.selectedDatabase = action.payload;
@@ -1324,20 +1326,27 @@ const databaseSlice = createSlice({
         state.error = action.payload;
       })
       // Login database
-      .addCase(loginDatabase.pending, (state) => {
-        state.actionLoading = true;
+      .addCase(loginDatabase.pending, (state, action) => {
+        const { dbname, isBackground } = action.meta.arg;
+        if (!isBackground) {
+          state.actionLoading = true;
+        }
+        state.loggingInDatabases[dbname] = true;
         state.error = null;
       })
       .addCase(loginDatabase.fulfilled, (state, action) => {
+        const { dbname } = action.payload; // Payload returned contains dbname
         state.actionLoading = false;
+        state.loggingInDatabases[dbname] = false;
         state.isLoginDatabaseModalOpen = false;
-        const { dbname } = action.payload;
         if (!state.loggedInDatabases.includes(dbname)) {
           state.loggedInDatabases.push(dbname);
         }
       })
       .addCase(loginDatabase.rejected, (state, action) => {
+        const { dbname } = action.meta.arg;
         state.actionLoading = false;
+        state.loggingInDatabases[dbname] = false;
         state.error = action.payload;
       })
       // Register database

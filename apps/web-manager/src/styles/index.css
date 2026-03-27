@@ -90,27 +90,45 @@
   input:-webkit-autofill:hover, 
   input:-webkit-autofill:focus, 
   input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0px 1000px white inset !important;
-    -webkit-text-fill-color: #0f172a !important; /* slate-900 */
-    color: #0f172a !important;
-    caret-color: #0f172a !important;
-    font-weight: 500 !important;
-    font-family: inherit !important;
-    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+    -webkit-box-shadow: 0 0 0px 1000px #ffffff inset !important;
+    -webkit-text-fill-color: #0f172a !important;
+    transition: background-color 5000s ease-in-out 0s;
   }
 
   /* Dark mode autocomplete override */
-  .dark input:-webkit-autofill,
-  .dark input:-webkit-autofill:hover, 
-  .dark input:-webkit-autofill:focus, 
-  .dark input:-webkit-autofill:active {
-    -webkit-box-shadow: 0 0 0px 1000px #1a1a1a inset !important;
-    -webkit-text-fill-color: #f8fafc !important;
-    color: #f8fafc !important;
-    caret-color: #f8fafc !important;
-    font-weight: 500 !important;
-    font-family: inherit !important;
-    transition: background-color 5000s ease-in-out 0s, color 5000s ease-in-out 0s;
+  html.dark input:-webkit-autofill,
+  html.dark input:-webkit-autofill:hover, 
+  html.dark input:-webkit-autofill:focus, 
+  html.dark input:-webkit-autofill:active {
+    -webkit-box-shadow: 0 0 0px 1000px #1a1a1b inset !important;
+    -webkit-text-fill-color: #ffffff !important;
+    color: #ffffff !important;
+  }
+
+  /* Universal Clickable Cursor */
+  button, 
+  [role="button"],
+  [type="button"],
+  [type="submit"],
+  [type="reset"],
+  a,
+  select,
+  summary,
+  label[for],
+  .cursor-pointer,
+  [onclick] {
+    cursor: pointer;
+  }
+
+  /* Disabled state cursors */
+  button:disabled,
+  input:disabled,
+  select:disabled,
+  textarea:disabled,
+  [disabled],
+  [aria-disabled="true"],
+  .cursor-not-allowed {
+    cursor: not-allowed !important;
   }
 }
 

@@ -25,8 +25,16 @@ export const TreeNode = React.memo(({
   const indentClass = level === 1 ? theme.tree.levelOneIndent : theme.tree.levelDeepIndent;
 
   const handleToggle = (e) => {
-    setIsOpen(e.target.open);
-    if (e.target.open && onToggle) onToggle();
+    // Prevent toggle events from bubbling to parent TreeNode components
+    e.stopPropagation();
+    
+    // Only proceed if this specific node was the one toggled
+    if (e.target === e.currentTarget) {
+      setIsOpen(e.target.open);
+      if (e.target.open && onToggle) {
+        onToggle();
+      }
+    }
   };
 
   const handleSelect = (e) => {

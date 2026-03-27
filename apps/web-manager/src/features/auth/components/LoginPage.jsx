@@ -186,6 +186,8 @@ export default function LoginPage() {
                   type="text"
                   value={username}
                   autoComplete="username"
+                  onFocus={(e) => e.target.removeAttribute('readonly')}
+                  readOnly
                   onChange={(e) => { setUsername(e.target.value); if (errors.username) setErrors({ ...errors, username: '' }); }}
                   className={`${inputBase} pl-10 pr-4 ${errors.username ? inputError : `${inputFocus} ${inputNormal}`}`}
                   placeholder="Enter username"
@@ -210,6 +212,8 @@ export default function LoginPage() {
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   autoComplete="current-password"
+                  onFocus={(e) => e.target.removeAttribute('readonly')}
+                  readOnly
                   onChange={(e) => { setPassword(e.target.value); if (errors.password) setErrors({ ...errors, password: '' }); }}
                   className={`${inputBase} pl-10 pr-11 ${errors.password ? inputError : `${inputFocus} ${inputNormal}`}`}
                   placeholder="••••••••"

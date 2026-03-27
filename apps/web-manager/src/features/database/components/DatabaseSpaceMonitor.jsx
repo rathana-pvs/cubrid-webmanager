@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
 import { useDispatch } from 'react-redux';
 import { databaseApi } from '../databaseApi';
+import { openTab } from '../../layout/layoutSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -111,133 +112,163 @@ const SummaryCards = memo(({ dbname, data, totals }) => (
   </div>
 ));
 
-const VolumeCategorization = memo(({ dbinfo }) => (
-  <Card
-    title={
-      <div className="flex items-center gap-1.5">
-        <Icon name="layers" size="xs" weight={300} className="text-amber-500" />
-        <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">Volume Categorization</span>
-      </div>
-    }
-    bodyClassName="p-0"
-    collapsible
-  >
-    <Table
-      columns={[
-        {
-          header: 'Type',
-          accessor: 'type',
-          width: '140px',
-          render: (val) => (
-            <span className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-tight border ${TYPE_BADGE(val)}`}>{val}</span>
-          )
-        },
-        { header: 'Qty', accessor: 'volume_count', className: 'text-center', width: '60px' },
-        { header: 'Used', accessor: 'used_size', render: (val) => <span className="font-mono text-[11px]">{formatSize(val)}</span> },
-        { header: 'Free', accessor: 'free_size', render: (val) => <span className="font-mono text-[11px] text-slate-400">{formatSize(val)}</span> },
-        { header: 'Total', accessor: 'total_size', render: (val) => <span className="font-mono text-[11px] font-bold">{formatSize(val)}</span> },
-        {
-          header: 'Usage',
-          accessor: 'pct',
-          render: (_, row) => {
-            const used = cleanInt(row.used_size);
-            const total = cleanInt(row.total_size);
-            const pct = total > 0 ? (used / total) * 100 : 0;
-            return (
-              <div className="flex items-center gap-2">
-                <div className="flex-1 h-1 bg-slate-100 dark:bg-white/4 overflow-hidden">
-                  <div className={`h-full ${barColor(pct)}`} style={{ width: `${pct}%` }} />
-                </div>
-                <span className={`text-[10px] font-bold font-mono w-7 text-right ${usageSeverity(pct)}`}>{pct.toFixed(0)}%</span>
-              </div>
-            );
-          }
-        }
-      ]}
-      data={dbinfo || []}
-    />
-  </Card>
-));
+const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
+  const dispatch = useDispatch();
 
-const VolumeTopology = memo(({ spaceinfo }) => (
-  <Card
-    title={
-      <div className="flex items-center gap-1.5">
-        <Icon name="dataset" size="xs" weight={300} className="text-amber-500" />
-        <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">Physical Volume Topology</span>
-      </div>
+  const handleOpenCategory = (type) => {
+    let category = 'Permanent_PermanentData';
+    const t = type.toUpperCase();
+    if (t.includes('TEMPORARY')) {
+       category = t.includes('PERMANENT') ? 'Permanent_TemporaryData' : 'Temporary_TemporaryData';
+    } else if (t.includes('ACTIVE')) {
+       category = 'Active';
+    } else if (t.includes('ARCHIVE')) {
+       category = 'Archive';
     }
-    bodyClassName="p-0"
-    collapsible
-  >
-    <Table
-      columns={[
-        { header: 'ID', accessor: 'volid', className: 'text-center', width: '40px' },
-        {
-          header: 'Volume',
-          accessor: 'spacename',
-          width: '150px',
-          render: (val) => {
-            const name = val?.split(/[/\\]/).pop() || val;
-            return (
-              <div className="flex items-center gap-1.5 min-w-0">
-                <Icon name="draft" size="xs" weight={300} className="text-slate-300 dark:text-slate-600 shrink-0" />
-                <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-200 truncate" title={val}>{name}</span>
-              </div>
-            );
-          }
-        },
-        {
-          header: 'Type',
-          accessor: 'type',
-          width: '110px',
-          render: (val) => (
-            <span className={`px-1 py-0.5 rounded-sm text-[10px] font-bold uppercase border ${TYPE_BADGE(val)}`}>{val}</span>
-          )
-        },
-        {
-          header: 'Allocation',
-          accessor: 'usedpage',
-          render: (val, row) => {
-            const usedPages = cleanInt(val);
-            const totalPages = cleanInt(row.totalpage);
-            const freePages = Math.max(0, totalPages - usedPages);
-            const freePct = totalPages > 0 ? (freePages / totalPages) * 100 : 0;
-            const usedPct = 100 - freePct;
-            const isZero = totalPages === 0;
+    
+    dispatch(openTab(`vol_category:${hostUid}:${dbname}:${category}`));
+  };
 
-            return (
-              <div className="flex flex-col gap-0.5 min-w-[140px]">
-                <div className="flex justify-between items-end">
-                  <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
-                    <span className="text-slate-700 dark:text-slate-200 font-bold">{formatPages(usedPages)}</span> / {formatPages(totalPages)}
-                  </span>
-                  <span className={`text-[10px] font-mono font-black ${getFreeSeverity(freePct)} ml-2`}>
-                    {isZero ? '0' : Math.round(freePct)}% <span className="opacity-50 text-[8px] font-sans uppercase">free</span>
-                  </span>
+  return (
+    <Card
+      title={
+        <div className="flex items-center gap-1.5">
+          <Icon name="layers" size="xs" weight={300} className="text-amber-500" />
+          <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">Volume Categorization</span>
+        </div>
+      }
+      bodyClassName="p-0"
+      collapsible
+    >
+      <Table
+        columns={[
+          {
+            header: 'Type',
+            accessor: 'type',
+            width: '140px',
+            render: (val) => (
+              <button 
+                onClick={() => handleOpenCategory(val)}
+                className={`px-1.5 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-tight border hover:brightness-110 active:scale-95 transition-all text-left ${TYPE_BADGE(val)}`}
+              >
+                {val}
+              </button>
+            )
+          },
+          { header: 'Qty', accessor: 'volume_count', className: 'text-center', width: '60px' },
+          { header: 'Used', accessor: 'used_size', render: (val) => <span className="font-mono text-[11px]">{formatSize(val)}</span> },
+          { header: 'Free', accessor: 'free_size', render: (val) => <span className="font-mono text-[11px] text-slate-400">{formatSize(val)}</span> },
+          { header: 'Total', accessor: 'total_size', render: (val) => <span className="font-mono text-[11px] font-bold">{formatSize(val)}</span> },
+          {
+            header: 'Usage',
+            accessor: 'pct',
+            render: (_, row) => {
+              const used = cleanInt(row.used_size);
+              const total = cleanInt(row.total_size);
+              const pct = total > 0 ? (used / total) * 100 : 0;
+              return (
+                <div className="flex items-center gap-2">
+                  <div className="flex-1 h-1 bg-slate-100 dark:bg-white/4 overflow-hidden">
+                    <div className={`h-full ${barColor(pct)}`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <span className={`text-[10px] font-bold font-mono w-7 text-right ${usageSeverity(pct)}`}>{pct.toFixed(0)}%</span>
                 </div>
-                <div className="w-full h-0.5 bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
-                  <div className={`h-full ${usedPct > 90 ? 'bg-rose-500' : 'bg-amber-500/80'}`} style={{ width: `${isZero ? 0 : usedPct}%` }} />
-                </div>
-              </div>
-            );
+              );
+            }
           }
-        },
-        { 
-          header: 'Path', 
-          accessor: 'location',
-          render: (val) => (
-            <div className="flex items-center gap-1 group min-w-0">
-              <Icon name="folder" size="xs" weight={300} className="text-slate-300 dark:text-slate-600 shrink-0 group-hover:text-amber-500/50 transition-colors" />
-              <span className="text-[10px] text-slate-400 font-mono truncate" title={val}>{val?.toString().trim()}</span>
-            </div>
-          )
-        }
-      ]}
-      data={spaceinfo || []}
-    />
-  </Card>
-));
+        ]}
+        data={dbinfo || []}
+      />
+    </Card>
+  );
+});
+
+const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
+  const dispatch = useDispatch();
+
+  return (
+    <Card
+      title={
+        <div className="flex items-center gap-1.5">
+          <Icon name="dataset" size="xs" weight={300} className="text-amber-500" />
+          <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">Physical Volume Topology</span>
+        </div>
+      }
+      bodyClassName="p-0"
+      collapsible
+    >
+      <Table
+        columns={[
+          { header: 'ID', accessor: 'volid', className: 'text-center', width: '40px' },
+          {
+            header: 'Volume',
+            accessor: 'spacename',
+            width: '150px',
+            render: (val) => {
+              const name = val?.split(/[/\\]/).pop() || val;
+              return (
+                <button 
+                  onClick={() => dispatch(openTab(`vol_info:${hostUid}:${dbname}:${val}`))}
+                  className="flex items-center gap-1.5 min-w-0 group hover:bg-slate-50 dark:hover:bg-white/5 px-2 py-1 rounded transition-colors w-full text-left"
+                >
+                  <Icon name="draft" size="xs" weight={300} className="text-slate-300 dark:text-slate-600 shrink-0 group-hover:text-amber-500" />
+                  <span className="font-mono text-[11px] font-semibold text-slate-700 dark:text-slate-200 truncate group-hover:text-amber-600 dark:group-hover:text-amber-500" title={val}>{name}</span>
+                </button>
+              );
+            }
+          },
+          {
+            header: 'Type',
+            accessor: 'type',
+            width: '110px',
+            render: (val) => (
+              <span className={`px-1 py-0.5 rounded-sm text-[10px] font-bold uppercase border ${TYPE_BADGE(val)}`}>{val}</span>
+            )
+          },
+          {
+            header: 'Allocation',
+            accessor: 'usedpage',
+            render: (val, row) => {
+              const usedPages = cleanInt(val);
+              const totalPages = cleanInt(row.totalpage);
+              const freePages = Math.max(0, totalPages - usedPages);
+              const freePct = totalPages > 0 ? (freePages / totalPages) * 100 : 0;
+              const usedPct = 100 - freePct;
+              const isZero = totalPages === 0;
+  
+              return (
+                <div className="flex flex-col gap-0.5 min-w-[140px]">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
+                      <span className="text-slate-700 dark:text-slate-200 font-bold">{formatPages(usedPages)}</span> / {formatPages(totalPages)}
+                    </span>
+                    <span className={`text-[10px] font-mono font-black ${getFreeSeverity(freePct)} ml-2`}>
+                      {isZero ? '0' : Math.round(freePct)}% <span className="opacity-50 text-[8px] font-sans uppercase">free</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-0.5 bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
+                    <div className={`h-full ${usedPct > 90 ? 'bg-rose-500' : 'bg-amber-500/80'}`} style={{ width: `${isZero ? 0 : usedPct}%` }} />
+                  </div>
+                </div>
+              );
+            }
+          },
+          { 
+            header: 'Path', 
+            accessor: 'location',
+            render: (val) => (
+              <div className="flex items-center gap-1 group min-w-0">
+                <Icon name="folder" size="xs" weight={300} className="text-slate-300 dark:text-slate-600 shrink-0 group-hover:text-amber-500/50 transition-colors" />
+                <span className="text-[10px] text-slate-400 font-mono truncate" title={val}>{val?.toString().trim()}</span>
+              </div>
+            )
+          }
+        ]}
+        data={spaceinfo || []}
+      />
+    </Card>
+  );
+});
 
 const FileSpaceUsage = memo(({ fileinfo }) => (
   <Card
@@ -366,9 +397,17 @@ export default function DatabaseSpaceMonitor({ hostUid, dbname }) {
 
         <SummaryCards dbname={dbname} data={data} totals={totals} />
         
-        <VolumeCategorization dbinfo={data?.dbinfo} />
+        <VolumeCategorization 
+          hostUid={hostUid} 
+          dbname={dbname} 
+          dbinfo={data?.dbinfo} 
+        />
         
-        <VolumeTopology spaceinfo={data?.spaceinfo} />
+        <VolumeTopology 
+          hostUid={hostUid} 
+          dbname={dbname} 
+          spaceinfo={data?.spaceinfo} 
+        />
 
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
           <FileSpaceUsage fileinfo={data?.fileinfo} />
