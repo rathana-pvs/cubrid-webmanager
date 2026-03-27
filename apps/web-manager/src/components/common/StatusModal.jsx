@@ -1,98 +1,130 @@
+import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeStatusModal } from '../../features/layout/layoutSlice';
-
 import { Icon } from '../ds/foundation/Icon';
+
+const themes = {
+  success: {
+    accent: 'bg-emerald-500',
+    iconBg: 'bg-emerald-500/10 border-emerald-500/20',
+    iconText: 'text-emerald-500',
+    glow: 'rgba(16,185,129,0.12)',
+    badgeBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
+    btn: 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 text-white',
+    label: 'Completed',
+    icon: 'check_circle',
+  },
+  error: {
+    accent: 'bg-rose-500',
+    iconBg: 'bg-rose-500/10 border-rose-500/20',
+    iconText: 'text-rose-500',
+    glow: 'rgba(244,63,94,0.12)',
+    badgeBg: 'bg-rose-500/10 border-rose-500/20 text-rose-500',
+    btn: 'bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20 text-white',
+    label: 'Failed',
+    icon: 'report',
+  },
+  info: {
+    accent: 'bg-amber-500',
+    iconBg: 'bg-amber-500/10 border-amber-500/20',
+    iconText: 'text-amber-500',
+    glow: 'rgba(255,193,7,0.12)',
+    badgeBg: 'bg-amber-500/10 border-amber-500/20 text-amber-500',
+    btn: 'bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-500/20 text-bk-side',
+    label: 'Notice',
+    icon: 'info',
+  },
+};
 
 export default function StatusModal() {
   const dispatch = useDispatch();
   const { statusModal } = useSelector((state) => state.layout);
   const { isOpen, type, title, message } = statusModal;
+  const btnRef = useRef(null);
+
+  const t = themes[type] || themes.info;
+
+  // Focus the button when opened for keyboard accessibility
+  useEffect(() => {
+    if (isOpen && btnRef.current) {
+      setTimeout(() => btnRef.current?.focus(), 50);
+    }
+  }, [isOpen]);
+
+  // Close on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const fn = (e) => { if (e.key === 'Escape') dispatch(closeStatusModal()); };
+    document.addEventListener('keydown', fn);
+    return () => document.removeEventListener('keydown', fn);
+  }, [isOpen, dispatch]);
 
   if (!isOpen) return null;
 
-  const isSuccess = type === 'success';
-  const isError = type === 'error';
-  
-  const icon = isSuccess ? 'verified' : isError ? 'report' : 'info';
-  const themeColor = isSuccess ? 'emerald' : isError ? 'rose' : 'bk-yellow';
-  
-  const colorMap = {
-    emerald: {
-      bg: 'bg-emerald-500/10',
-      border: 'border-emerald-500/20',
-      text: 'text-emerald-500',
-      btn: 'bg-emerald-500 hover:bg-emerald-600 shadow-emerald-500/20',
-      accent: 'bg-emerald-500'
-    },
-    rose: {
-      bg: 'bg-rose-500/10',
-      border: 'border-rose-500/20',
-      text: 'text-rose-500',
-      btn: 'bg-rose-500 hover:bg-rose-600 shadow-rose-500/20',
-      accent: 'bg-rose-500'
-    },
-    'bk-yellow': {
-      bg: 'bg-bk-yellow/10',
-      border: 'border-bk-yellow/20',
-      text: 'text-bk-yellow',
-      btn: 'bg-bk-yellow hover:bg-[#ffd700] text-bk-side shadow-bk-yellow/20',
-      accent: 'bg-bk-yellow'
-    }
-  };
-
-  const currentTheme = colorMap[themeColor];
-
   return (
-    <div className="fixed inset-0 z-200 flex items-center justify-center p-4 font-sans text-left">
+    <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 font-sans">
       {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-bk-main/60 backdrop-blur-md animate-in fade-in duration-200"
+      <div
+        className="absolute inset-0 bg-bk-main/50 backdrop-blur-sm animate-in fade-in duration-150"
         onClick={() => dispatch(closeStatusModal())}
-      ></div>
-      
-      {/* Modal Content */}
-      <div className="relative bg-white dark:bg-bk-side rounded-xl shadow-[0_20px_60px_rgba(0,0,0,0.4)] w-full max-w-[380px] border border-slate-200 dark:border-slate-800 overflow-hidden transform transition-all z-10 p-7 flex flex-col items-center text-center animate-in zoom-in-95 duration-200">
-        
-        {/* Subtle Top Accent */}
-        <div className={`absolute top-0 left-0 right-0 h-[2.5px] ${currentTheme.accent}`}></div>
+      />
 
-        {/* Close Button Top Right */}
-        <button 
+      {/* Card */}
+      <div className="relative w-full max-w-[340px] bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_24px_64px_rgba(0,0,0,0.35)] overflow-hidden z-10 animate-in zoom-in-95 duration-200">
+
+        {/* Thin top accent */}
+        <div className={`absolute top-0 left-0 right-0 h-[2px] ${t.accent}`} />
+
+        {/* Ambient glow */}
+        <div
+          className="absolute top-0 left-0 right-0 h-32 pointer-events-none"
+          style={{ background: `radial-gradient(ellipse at 50% -20%, ${t.glow} 0%, transparent 70%)` }}
+        />
+
+        {/* Close button */}
+        <button
           onClick={() => dispatch(closeStatusModal())}
-          className="absolute top-4 right-4 w-7 h-7 rounded-md hover:bg-slate-100 dark:hover:bg-white/5 transition-all text-slate-400 dark:text-slate-600 flex items-center justify-center group"
+          className="absolute top-3.5 right-3.5 w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-100 dark:hover:bg-white/8 transition-all z-10"
         >
-          <Icon name="close" size="sm" weight={300} className="group-hover:rotate-90 transition-transform" />
+          <Icon name="close" size="sm" weight={300} className="transition-transform hover:rotate-90" />
         </button>
 
-        {/* Icon Container */}
-        <div className={`w-16 h-16 ${currentTheme.bg} ${currentTheme.border} border rounded-2xl flex items-center justify-center mb-5 rotate-3 animate-in zoom-in duration-300`}>
-          <div className="w-11 h-11 rounded-xl bg-white dark:bg-bk-main shadow-xs flex items-center justify-center border border-white/10">
-            <span className={`material-symbols-outlined text-2xl font-medium ${currentTheme.text}`}>
-              {icon}
-            </span>
+        <div className="px-7 pt-8 pb-6 flex flex-col items-center text-center">
+          {/* Icon */}
+          <div className="relative mb-5">
+            {/* Outer ping ring */}
+            <div className={`absolute inset-0 rounded-2xl border ${t.iconBg} animate-ping`} style={{ animationDuration: '2.5s' }} />
+            <div className={`relative w-14 h-14 rounded-2xl border ${t.iconBg} flex items-center justify-center`}>
+              <span className={`material-symbols-outlined text-2xl font-light ${t.iconText}`} style={{ fontVariationSettings: '"FILL" 0, "wght" 200' }}>
+                {t.icon}
+              </span>
+            </div>
           </div>
-        </div>
 
-        <div className="space-y-2 mb-8">
-          <h3 className="text-[12px] font-medium text-slate-900 dark:text-white tracking-wide leading-none">
-            {title || (isSuccess ? 'Response valid' : isError ? 'System fault' : 'Notification')}
+          {/* Status badge */}
+          <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-widest mb-3 ${t.badgeBg}`}>
+            <div className={`w-1.5 h-1.5 rounded-full ${t.accent}`} />
+            {t.label}
+          </div>
+
+          {/* Title & message */}
+          <h3 className="text-[14px] font-bold text-slate-900 dark:text-white tracking-tight leading-snug mb-2">
+            {title || (type === 'success' ? 'Operation complete' : type === 'error' ? 'Something went wrong' : 'Notification')}
           </h3>
-          <p className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium px-2">
-            {message}
-          </p>
-        </div>
+          {message && (
+            <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[240px]">
+              {message}
+            </p>
+          )}
 
-        <button 
-          className={`w-full py-2.5 rounded-lg text-white text-[12px] font-medium tracking-wide transition-all active:scale-[0.98] shadow-lg ${currentTheme.btn}`}
-          onClick={() => dispatch(closeStatusModal())}
-        >
-          {isSuccess ? 'Proceed' : 'Acknowledge'}
-        </button>
-
-        <div className="mt-4 flex items-center gap-1.5 opacity-20 group cursor-default">
-          <div className="w-1 h-1 rounded-full bg-slate-400"></div>
-          <div className="w-1 h-1 rounded-full bg-slate-400"></div>
-          <div className="w-1 h-1 rounded-full bg-slate-400"></div>
+          {/* CTA button */}
+          <button
+            ref={btnRef}
+            onClick={() => dispatch(closeStatusModal())}
+            className={`mt-6 w-full py-2.5 rounded-xl text-[12px] font-semibold tracking-wide transition-all active:scale-[0.98] ${t.btn}`}
+          >
+            {type === 'success' ? 'Got it' : type === 'error' ? 'Dismiss' : 'OK'}
+          </button>
         </div>
       </div>
     </div>

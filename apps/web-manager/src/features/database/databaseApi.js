@@ -112,7 +112,7 @@ export const databaseApi = {
     return apiClient.get(`/${hostUid}/database/auto-add-vol-log`, {});
   },
   copyDatabase: (hostUid, payload) => {
-    return apiClient.post(`/${hostUid}/database/copydb`, payload);
+    return apiClient.post(`/${hostUid}/database/copy`, payload);
   },
   createDatabase: (hostUid, payload) => {
     return apiClient.post(`/${hostUid}/database/create`, payload);
