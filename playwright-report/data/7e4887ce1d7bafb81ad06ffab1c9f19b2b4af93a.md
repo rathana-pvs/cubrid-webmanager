@@ -1,0 +1,205 @@
+# Page snapshot
+
+```yaml
+- generic [ref=e4]:
+  - complementary [ref=e6]:
+    - generic [ref=e7]:
+      - img "CUBRID Logo" [ref=e9]
+      - generic [ref=e10]:
+        - generic [ref=e11]:
+          - generic [ref=e12]: CUBRID
+          - generic [ref=e13]: Admin
+        - generic [ref=e14]: Manager Console
+    - generic [ref=e19]:
+      - generic [ref=e21]:
+        - generic [ref=e22] [cursor=pointer]:
+          - generic [ref=e23]:
+            - generic [ref=e25]: chevron_right
+            - generic [ref=e26]: Server List
+          - button "add Add" [ref=e28]:
+            - generic [ref=e29]: add
+            - generic [ref=e30]: Add
+        - generic "127.0.0.1:8001" [ref=e32] [cursor=pointer]:
+          - generic [ref=e33]:
+            - generic [ref=e35]: dns
+            - generic [ref=e38]: server
+      - generic "Drag to resize" [ref=e40]
+      - generic [ref=e43]:
+        - generic [ref=e45] [cursor=pointer]:
+          - generic [ref=e47]: chevron_right
+          - generic [ref=e48]: Resources
+        - generic [ref=e51]:
+          - button "database Database" [ref=e52]:
+            - generic [ref=e53]: database
+            - text: Database
+          - button "hub Broker" [ref=e55]:
+            - generic [ref=e56]: hub
+            - text: Broker
+          - button "receipt_long Log" [ref=e57]:
+            - generic [ref=e58]: receipt_long
+            - text: Log
+        - generic [ref=e59]:
+          - generic [ref=e60]:
+            - generic [ref=e62]: error
+            - paragraph [ref=e63]: Connection failed
+            - generic [ref=e64]: Failed to login to host 75158589-fba8-4747-857b-f68c034d1709
+            - button "Try Again" [ref=e65]
+          - generic:
+            - generic:
+              - generic: Databases
+            - generic:
+              - generic:
+                - generic: database
+              - generic: No databases found
+  - generic "Drag to resize" [ref=e66]
+  - main [ref=e69]:
+    - generic [ref=e70]:
+      - generic [ref=e71]:
+        - navigation [ref=e72]:
+          - button "File expand_more" [ref=e74]:
+            - generic [ref=e75]: File
+            - generic [ref=e76]: expand_more
+          - button "Tool expand_more" [ref=e78]:
+            - generic [ref=e79]: Tool
+            - generic [ref=e80]: expand_more
+          - button "Action expand_more" [ref=e82]:
+            - generic [ref=e83]: Action
+            - generic [ref=e84]: expand_more
+          - button "Help expand_more" [ref=e86]:
+            - generic [ref=e87]: Help
+            - generic [ref=e88]: expand_more
+        - button "play_arrow Start" [ref=e90]:
+          - generic [ref=e91]: play_arrow
+          - text: Start
+      - generic [ref=e92]:
+        - button "dark_mode" [ref=e93]:
+          - generic [ref=e94]: dark_mode
+        - button "person rathana12 expand_more" [ref=e96]:
+          - generic [ref=e98]: person
+          - generic [ref=e99]: rathana12
+          - generic [ref=e100]: expand_more
+        - button "logout" [ref=e101]:
+          - generic [ref=e102]: logout
+    - generic [ref=e106] [cursor=pointer]:
+      - generic [ref=e109]: dns
+      - generic [ref=e110]: server
+      - generic [ref=e112]: close
+    - generic [ref=e114]:
+      - generic [ref=e115]:
+        - generic [ref=e116]:
+          - generic [ref=e118]: dns
+          - generic [ref=e119]:
+            - heading "Server Dashboard" [level=1] [ref=e120]
+            - text: server
+        - generic [ref=e121]:
+          - button "refresh" [ref=e122]:
+            - generic [ref=e123]: refresh
+          - button "timer" [ref=e126]:
+            - generic [ref=e127]: timer
+      - generic [ref=e128]:
+        - generic [ref=e129]:
+          - generic [ref=e130] [cursor=pointer]:
+            - heading "storage Storage Volumes" [level=4] [ref=e132]:
+              - generic [ref=e133]:
+                - generic [ref=e134]: storage
+                - generic [ref=e135]: Storage Volumes
+            - button "expand_more" [ref=e136]:
+              - generic [ref=e137]: expand_more
+          - generic [ref=e139]:
+            - generic [ref=e141]: table_chart
+            - heading "No data available" [level=5] [ref=e142]
+        - generic [ref=e143]:
+          - generic [ref=e144] [cursor=pointer]:
+            - heading "hub Brokers" [level=4] [ref=e146]:
+              - generic [ref=e147]:
+                - generic [ref=e148]: hub
+                - generic [ref=e149]: Brokers
+            - button "expand_more" [ref=e150]:
+              - generic [ref=e151]: expand_more
+          - generic [ref=e153]:
+            - generic [ref=e155]: table_chart
+            - heading "No data available" [level=5] [ref=e156]
+        - generic [ref=e157]:
+          - generic [ref=e158] [cursor=pointer]:
+            - heading "bar_chart System Status · Live" [level=4] [ref=e160]:
+              - generic [ref=e162]:
+                - generic [ref=e163]: bar_chart
+                - generic [ref=e164]: System Status
+                - generic [ref=e165]: · Live
+            - button "expand_more" [ref=e166]:
+              - generic [ref=e167]: expand_more
+          - table [ref=e170]:
+            - rowgroup [ref=e171]:
+              - row "Period unfold_more Memory unfold_more Disk unfold_more CPU unfold_more TPS unfold_more QPS unfold_more" [ref=e172]:
+                - columnheader "Period unfold_more" [ref=e173] [cursor=pointer]:
+                  - generic [ref=e174]:
+                    - generic [ref=e175]: Period
+                    - generic [ref=e177]: unfold_more
+                - columnheader "Memory unfold_more" [ref=e178] [cursor=pointer]:
+                  - generic [ref=e179]:
+                    - generic [ref=e180]: Memory
+                    - generic [ref=e182]: unfold_more
+                - columnheader "Disk unfold_more" [ref=e183] [cursor=pointer]:
+                  - generic [ref=e184]:
+                    - generic [ref=e185]: Disk
+                    - generic [ref=e187]: unfold_more
+                - columnheader "CPU unfold_more" [ref=e188] [cursor=pointer]:
+                  - generic [ref=e189]:
+                    - generic [ref=e190]: CPU
+                    - generic [ref=e192]: unfold_more
+                - columnheader "TPS unfold_more" [ref=e193] [cursor=pointer]:
+                  - generic [ref=e194]:
+                    - generic [ref=e195]: TPS
+                    - generic [ref=e197]: unfold_more
+                - columnheader "QPS unfold_more" [ref=e198] [cursor=pointer]:
+                  - generic [ref=e199]:
+                    - generic [ref=e200]: QPS
+                    - generic [ref=e202]: unfold_more
+            - rowgroup [ref=e203]:
+              - row "Now 15.98 GB / 31.09 GB - 0.0% 0.00 0.00" [ref=e204]:
+                - cell "Now" [ref=e205]
+                - cell "15.98 GB / 31.09 GB" [ref=e206]:
+                  - generic [ref=e207]: 15.98 GB / 31.09 GB
+                - cell "-" [ref=e210]
+                - cell "0.0%" [ref=e211]:
+                  - generic [ref=e212]: 0.0%
+                - cell "0.00" [ref=e214]
+                - cell "0.00" [ref=e215]
+              - row "5 min Avg 51.4% - 0.0% 0.00 0.00" [ref=e216]:
+                - cell "5 min Avg" [ref=e217]
+                - cell "51.4%" [ref=e218]:
+                  - generic [ref=e219]: 51.4%
+                - cell "-" [ref=e222]
+                - cell "0.0%" [ref=e223]:
+                  - generic [ref=e224]: 0.0%
+                - cell "0.00" [ref=e226]
+                - cell "0.00" [ref=e227]
+        - generic [ref=e228]:
+          - generic [ref=e229] [cursor=pointer]:
+            - heading "database Databases (0)" [level=4] [ref=e231]:
+              - generic [ref=e232]:
+                - generic [ref=e233]: database
+                - generic [ref=e234]: Databases
+                - generic [ref=e235]: (0)
+            - button "expand_more" [ref=e236]:
+              - generic [ref=e237]: expand_more
+          - generic [ref=e239]:
+            - generic [ref=e241]: table_chart
+            - heading "No data available" [level=5] [ref=e242]
+        - generic [ref=e244] [cursor=pointer]:
+          - heading "info Environment Details" [level=4] [ref=e246]:
+            - generic [ref=e247]:
+              - generic [ref=e248]: info
+              - generic [ref=e249]: Environment Details
+          - button "expand_more" [ref=e250]:
+            - generic [ref=e251]: expand_more
+    - generic [ref=e252]:
+      - generic [ref=e253]:
+        - generic [ref=e256]: Connected to 127.0.0.1:8001
+        - generic [ref=e257]: Version CUBRID 11.4.4 (11.4.4.1832-7f8f019) (64bit release build for Linux) (Jan 8 2026 13:13:08)
+      - generic [ref=e258]:
+        - generic [ref=e259]:
+          - generic [ref=e260]: text_snippet
+          - generic [ref=e261]: UTF-8
+        - generic [ref=e263]: Disconnected
+```
