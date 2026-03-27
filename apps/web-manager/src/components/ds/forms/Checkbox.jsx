@@ -38,11 +38,11 @@ export const Checkbox = forwardRef(({
             checked={checked}
             onChange={onChange}
             disabled={disabled}
-            className="peer absolute inset-0 opacity-0 cursor-pointer z-10"
+            className="peer sr-only"
             {...props}
           />
           {/* Custom Checkbox UI */}
-          <div className="w-4.5 h-4.5 bg-white dark:bg-white/10 border border-slate-300 dark:border-white/25 rounded-md flex shrink-0 justify-center items-center transition-all shadow-xs group-hover:border-amber-500/50 dark:group-hover:border-amber-500/50 peer-checked:bg-amber-500 peer-checked:border-amber-500 dark:peer-checked:bg-amber-500 dark:peer-checked:border-amber-500 peer-[&:indeterminate]:bg-amber-500/60 peer-[&:indeterminate]:border-amber-500/30 pointer-events-none">
+          <div className="w-4.5 h-4.5 bg-slate-50 dark:bg-bk-main/30 border border-slate-300 dark:border-slate-800 rounded-md flex shrink-0 justify-center items-center transition-all shadow-xs group-hover:border-bk-yellow/50 peer-checked:bg-bk-yellow peer-checked:border-bk-yellow/50 peer-[&:indeterminate]:bg-bk-yellow/60 peer-[&:indeterminate]:border-bk-yellow/30 pointer-events-none">
             {/* Checked Icon */}
             <svg 
               className={`w-3.5 h-3.5 text-white dark:text-bk-side pointer-events-none transition-opacity duration-150 ${checked && !indeterminate ? 'opacity-100' : 'opacity-0'}`} 
@@ -63,7 +63,7 @@ export const Checkbox = forwardRef(({
         
         {label && (
           <div className="flex flex-col">
-            <Typography variant="span" className="select-none text-[11px] font-medium text-slate-700 dark:text-slate-200 tracking-wide uppercase">
+            <Typography variant="label" className="select-none text-[11px] font-medium text-slate-700 dark:text-slate-200 tracking-wide">
               {label}
             </Typography>
             {description && (
