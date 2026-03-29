@@ -264,19 +264,19 @@ export default function BrokerConfigEditor({ hostUid }) {
       </div>
       
       {/* Bottom hint bar */}
-      <div className="px-6 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-white/5 flex items-center justify-between transition-colors">
+      <div className="px-6 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between transition-colors">
          <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]"></span>
-              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 font-medium">Section Identifier</Typography>
+              <span className="size-2 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]"></span>
+              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 font-medium leading-none">Broker Alias</Typography>
             </div>
             <div className="flex items-center gap-2">
-              <span className="size-2 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]"></span>
-              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 font-medium">Active Cell</Typography>
+              <span className="size-2 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]"></span>
+              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 font-medium leading-none">Active Cell</Typography>
             </div>
          </div>
-         <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium">
-           Displaying {sections.length} brokers found in configuration
+         <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium tracking-tight">
+           Configuration: {sections.length} Brokers • {allPropertyKeys.length} Properties
          </Typography>
       </div>
     </div>

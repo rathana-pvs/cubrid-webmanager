@@ -11,7 +11,9 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function AutoQueryLogModal() {
   const dispatch = useDispatch();
-  const { isAutoQueryLogModalOpen, queryPlanLogs, logsLoading, selectedDatabase } = useSelector((state) => state.database);
+  const { isAutoQueryLogModalOpen } = useSelector((state) => state.databaseUI);
+  const { queryPlanLogs, logsLoading } = useSelector((state) => state.databaseOperation);
+  const { selectedDatabase } = useSelector((state) => state.database);
   const { selectedHostUid } = useSelector((state) => state.host);
   
   const [searchTerm, setSearchTerm] = useState('');

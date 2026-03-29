@@ -5,7 +5,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function UnloadResultModal() {
   const dispatch = useDispatch();
-  const { isUnloadResultModalOpen, unloadResultData } = useSelector((state) => state.database);
+  const { isUnloadResultModalOpen, unloadResultData } = useSelector((state) => state.databaseUI);
 
   if (!isUnloadResultModalOpen) return null;
 

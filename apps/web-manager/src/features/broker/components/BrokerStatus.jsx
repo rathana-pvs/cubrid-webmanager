@@ -112,13 +112,14 @@ export default function BrokerStatus({ hostUid, brokerName }) {
 
           <button
             onClick={() => dispatch(fetchDetailedBrokerStatus({ hostUid, brokerName }))}
-            className={`flex items-center justify-center w-7 h-7 rounded border transition-all shadow-xs
+            disabled={status.loading}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
               ${status.loading
-                ? 'bg-slate-50 dark:bg-white/2 border-slate-200 dark:border-white/[0.07] text-slate-400 cursor-not-allowed'
-                : 'bg-white dark:bg-white/5 border-slate-200 dark:border-white/8 text-slate-800 dark:text-slate-100 hover:bg-slate-100 dark:hover:bg-white/2'}`}
+                ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
             title="Refresh status"
           >
-            <span className={`material-symbols-outlined text-[16px] ${status.loading ? 'animate-spin' : ''}`}>refresh</span>
+            <Icon name="refresh" size="18px" weight={status.loading ? 700 : 300} className={status.loading ? 'animate-spin' : ''} />
           </button>
 
 

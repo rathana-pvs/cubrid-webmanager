@@ -11,7 +11,13 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function AutoBackupLogModal() {
   const dispatch = useDispatch();
-  const { isAutoBackupLogModalOpen, autoBackupLogs, logsLoading, logsError, selectedDatabase } = useSelector((state) => state.database);
+  const { isAutoBackupLogModalOpen } = useSelector((state) => state.databaseUI);
+  const { selectedDatabase } = useSelector((state) => state.database);
+  const {
+    autoBackupLogs,
+    logsLoading,
+    logsError,
+  } = useSelector((state) => state.databaseOperation);
   const { selectedHostUid } = useSelector((state) => state.host);
   
   const [searchTerm, setSearchTerm] = useState('');

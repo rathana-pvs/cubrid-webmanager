@@ -1,19 +1,9 @@
 import { useState, useRef, useEffect } from 'react';
-
 import { Icon } from '../ds/foundation/Icon';
 
 /**
- * Premium Select Field Component
- * 
- * @param {Object} props
- * @param {string} props.value - Current selected value
- * @param {Function} props.onChange - Selection change handler
- * @param {Array<{value: string, label: string}>} props.options - List of options
- * @param {string} props.className - Additional class names for the container
- * @param {string} props.triggerClassName - Additional class names for the trigger button
- * @param {boolean} props.disabled - Disabled state
- * @param {string} props.placeholder - Placeholder text
- * @param {boolean} props.isHighlight - Whether the field should be highlighted (active state)
+ * Premium Select Field Component - Standardized for CUBRID "Pro IDE" aesthetic
+ * Uses bk-yellow (Amber) as the primary brand highlight color.
  */
 export default function SelectField({ 
   value, 
@@ -48,55 +38,63 @@ export default function SelectField({
   };
 
   return (
-    <div className={`relative ${className}`} ref={containerRef}>
+    <div className={`relative w-full ${className}`} ref={containerRef}>
       {/* Trigger Button */}
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
         className={`
-          w-full h-9 rounded-lg px-3 py-1.5 text-xs font-medium outline-hidden transition-all flex items-center justify-between border
+          w-full h-9 rounded-lg px-3 py-1.5 text-[12px] font-semibold outline-none transition-all flex items-center justify-between border
           ${!isHighlight 
-            ? 'bg-white/5 border-white/5 text-slate-400 hover:bg-white/8' 
-            : 'bg-bk-side border-white/10 text-slate-100 hover:border-bk-yellow/50 focus:border-bk-yellow focus:ring-4 focus:ring-bk-yellow/10'
+            ? 'bg-slate-50/50 dark:bg-white/5 border-slate-100 dark:border-white/5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/8' 
+            : 'bg-white dark:bg-bk-side border-amber-500/20 dark:border-white/10 text-slate-700 dark:text-slate-100 dark:focus:border-bk-yellow focus:border-amber-500 focus:ring-4 focus:ring-amber-500/10 dark:focus:ring-bk-yellow/10'
           }
           ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
-          ${isOpen && isHighlight ? 'ring-4 ring-bk-yellow/10 border-bk-yellow/50' : ''}
+          ${isOpen && isHighlight ? 'ring-4 ring-amber-500/10 border-amber-500/50 dark:ring-bk-yellow/10 dark:border-bk-yellow/50' : ''}
           ${triggerClassName}
         `}
       >
         <span className="truncate">{displayLabel}</span>
-        <span className={`material-symbols-outlined text-[18px] transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}>
-          expand_more
-        </span>
+        <Icon 
+          name="expand_more" 
+          size="18px" 
+          weight={300} 
+          className={`transition-transform duration-200 text-slate-400 ${isOpen ? 'rotate-180 text-amber-500 dark:text-bk-yellow' : ''}`} 
+        />
       </button>
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute top-full left-0 w-full mt-2 z-100 bg-bk-side border border-white/10 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+        <div className="absolute top-[calc(100%+4px)] left-0 w-full mt-0 z-[100] bg-white dark:bg-bk-side border border-slate-200 dark:border-white/10 rounded-xl shadow-[0_10px_30px_rgba(0,0,0,0.15)] dark:shadow-[0_10px_30px_rgba(0,0,0,0.5)] overflow-hidden animate-in fade-in zoom-in-95 duration-200">
           <div className="max-h-60 overflow-y-auto custom-scrollbar">
             {options.length === 0 ? (
-              <div className="px-4 py-3 text-[10px] text-slate-500 italic text-center">No options available</div>
+              <div className="px-4 py-3 text-[10px] text-slate-500 italic text-center uppercase tracking-widest">No options available</div>
             ) : (
-              options.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => handleSelect(opt.value)}
-                  className={`
-                    w-full px-4 py-2.5 text-left text-xs font-medium transition-all flex items-center justify-between group
-                    ${value === opt.value 
-                      ? 'bg-bk-yellow text-bk-side' 
-                      : 'text-slate-400 hover:bg-white/5 hover:text-white'
-                    }
-                  `}
-                >
-                  <span>{opt.label}</span>
-                  {value === opt.value && (
-                    <Icon name="check" size="sm" weight={300} />
-                  )}
-                </button>
-              ))
+              <div className="p-1.5 flex flex-col gap-0.5">
+                {options.map((opt) => {
+                  const isActive = value === opt.value;
+                  return (
+                    <button
+                      key={opt.value}
+                      type="button"
+                      onClick={() => handleSelect(opt.value)}
+                      className={`
+                        w-full px-3 py-2 text-left text-[12px] font-semibold rounded-lg transition-all flex items-center justify-between group
+                        ${isActive 
+                          ? 'bg-amber-500 dark:bg-bk-yellow text-white dark:text-bk-side' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-slate-900 dark:hover:text-white'
+                        }
+                      `}
+                    >
+                      <span>{opt.label}</span>
+                      {isActive && (
+                        <Icon name="check" size="14px" weight={400} />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
             )}
           </div>
         </div>

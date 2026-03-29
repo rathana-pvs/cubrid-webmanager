@@ -1,115 +1,114 @@
 import React from 'react';
-import { Button } from '../../../../components/ds/foundation/Button';
-import { Typography } from '../../../../components/ds/foundation/Typography';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../../components/ds/foundation/Spinner';
 
-export default function ConfigEditorToolbar({ 
-  hostDisplayName, 
-  viewMode, 
-  setViewMode, 
-  hasChanges, 
-  loading, 
-  saving, 
-  handleUndo, 
-  fetchConfig, 
-  handleSave, 
-  handleAddProperty 
+const VIEWS = [
+  { key: 'table',  label: 'Table Editor',  icon: 'table_chart' },
+  { key: 'source', label: 'Source View',   icon: 'code'        },
+];
+
+export default function ConfigEditorToolbar({
+  hostDisplayName,
+  viewMode,
+  setViewMode,
+  hasChanges,
+  loading,
+  saving,
+  handleUndo,
+  fetchConfig,
+  handleSave,
+  handleAddProperty,
 }) {
   return (
-    <div className="flex items-center justify-between px-6 py-2 border-b border-slate-200 dark:border-white/5 bg-white dark:bg-bk-side shadow-xs z-10 transition-colors">
-      <div className="flex items-center gap-3">
-        <div className="size-8 rounded-lg bg-bk-yellow/10 flex items-center justify-center text-bk-yellow border border-bk-yellow/20">
-          <Icon name="hub" size="20px"  weight={300} />
+    <div className="shrink-0 px-4 py-2.5 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 z-10">
+
+      {/* Left: identity */}
+      <div className="flex items-center gap-3 min-w-0">
+        <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
+          <Icon name="hub" size="sm" weight={300} className="text-amber-600 dark:text-bk-yellow" />
         </div>
-        <div className="flex flex-col">
-          <Typography variant="span" className="text-[13px] font-bold text-slate-900 dark:text-white leading-tight">Broker Configuration</Typography>
-          <Typography variant="caption" className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{hostDisplayName} / cubrid_broker.conf</Typography>
+        <div className="min-w-0">
+          <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight">Broker Configuration</h2>
+          <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{hostDisplayName} / cubrid_broker.conf</p>
         </div>
       </div>
 
-      {/* View Mode Toggle */}
-      <div className="flex bg-slate-100 dark:bg-white/5 p-1 rounded-lg border border-slate-200 dark:border-white/5">
-        <button 
-          onClick={() => setViewMode('table')}
-          className={`flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-md transition-all duration-200 ${
-            viewMode === 'table' 
-              ? 'bg-white dark:bg-white/10 text-bk-yellow shadow-xs border border-slate-200 dark:border-white/10' 
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-transparent'
-          }`}
-        >
-          <Icon name="table_chart" size="14px"  weight={300} />
-          Table Editor
-        </button>
-        <button 
-          onClick={() => setViewMode('source')}
-          className={`flex items-center gap-1.5 px-3 py-1 text-[11px] font-bold rounded-md transition-all duration-200 ${
-            viewMode === 'source' 
-              ? 'bg-white dark:bg-white/10 text-bk-yellow shadow-xs border border-slate-200 dark:border-white/10' 
-              : 'text-slate-500 hover:text-slate-700 dark:text-slate-400 dark:hover:text-slate-200 border border-transparent'
-          }`}
-        >
-          <Icon name="code" size="14px"  weight={300} />
-          Source View
-        </button>
+      {/* Center: view switcher pill */}
+      <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 shrink-0">
+        {VIEWS.map(v => (
+          <button
+            key={v.key}
+            onClick={() => setViewMode(v.key)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors whitespace-nowrap ${
+              viewMode === v.key
+                ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-bk-yellow'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+            }`}
+          >
+            <Icon name={v.icon} size="sm" weight={300} />
+            {v.label}
+          </button>
+        ))}
       </div>
 
-      <div className="flex items-center gap-2">
-        <div className="flex items-center gap-2">
-          <Button
-            variant="secondary"
-            size="xs"
-            icon="undo"
-            onClick={handleUndo}
-            disabled={!hasChanges || loading || saving}
-            className="text-[11px]"
-          >
-            Undo
-          </Button>
-          <Button
-            variant="secondary"
-            size="xs"
-            icon={loading ? null : "refresh"}
-            onClick={fetchConfig}
-            disabled={loading || saving}
-            className="text-[11px]"
-          >
-            {loading && <Spinner size="xs" className="mr-1.5" />}
-            Refresh
-          </Button>
-          {viewMode === 'table' && (
-            <Button
-              variant="secondary"
-              size="xs"
-              icon="add_box"
-              onClick={handleAddProperty}
-              className="text-[11px]"
-            >
-              Add Property
-            </Button>
-          )}
-        </div>
+      {/* Right: actions */}
+      <div className="flex items-center gap-1 shrink-0">
 
-        <div className="h-6 w-px bg-slate-200 dark:bg-white/5 mx-1"></div>
+        {/* Add Property — only in table mode, always rendered to avoid layout shift */}
+        <button
+          onClick={handleAddProperty}
+          disabled={viewMode !== 'table' || loading || saving}
+          title="Add property"
+          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
+            viewMode === 'table'
+              ? 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+              : 'invisible pointer-events-none'
+          } disabled:opacity-40`}
+        >
+          <Icon name="add_box" size="sm" weight={300} />
+          Add Property
+        </button>
 
+        {/* Undo */}
+        <button
+          onClick={handleUndo}
+          disabled={!hasChanges || loading || saving}
+          title="Undo changes"
+          className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 transition-colors"
+        >
+          <Icon name="undo" size="sm" weight={300} />
+        </button>
+
+        {/* Refresh */}
+        <button
+          onClick={fetchConfig}
+          disabled={loading || saving}
+          title="Refresh config"
+          className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-bk-yellow disabled:opacity-30 transition-colors"
+        >
+          <Icon name="refresh" size="sm" weight={300} className={loading ? 'animate-spin' : ''} />
+        </button>
+
+        <div className="h-4 w-px bg-slate-200 dark:bg-slate-800 mx-1" />
+
+        {/* Modified badge */}
         {hasChanges && (
-          <div className="flex items-center gap-1.5 px-2 py-1 rounded-sm bg-amber-500/10 border border-amber-500/20 mr-1 animate-pulse">
-            <span className="size-1.5 rounded-full bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]"></span>
-            <Typography variant="span" className="text-[10px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-tighter">Modified</Typography>
+          <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 mr-1">
+            <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
+            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Modified</span>
           </div>
         )}
-        
-        <Button 
-          variant="primary"
-          size="xs"
-          icon={saving ? null : "check_circle"}
+
+        {/* Save */}
+        <button
           onClick={handleSave}
           disabled={!hasChanges || saving || loading}
-          className="text-[11px] font-bold min-w-[140px]"
+          title="Save changes"
+          className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold text-white dark:text-slate-900 bg-slate-800 dark:bg-bk-yellow hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
-          {saving && <Spinner size="xs" color="bk-side" className="mr-1.5" />}
+          {saving ? <Spinner size="xs" className="text-white dark:text-slate-900" /> : <Icon name="check_circle" size="sm" />}
           Save Changes
-        </Button>
+        </button>
       </div>
     </div>
   );

@@ -243,10 +243,10 @@ export default function ImportExportHostModal() {
             <div className="flex-1 overflow-hidden">
                <Table
                   className="h-full"
-                  columns={[
+                   columns={[
                     { 
-                      key: 'select', 
-                      label: '', 
+                      accessor: 'select', 
+                      header: '', 
                       width: '48px',
                       render: (_, host) => {
                         const id = host.uid || host.address + host.port + host.id;
@@ -263,8 +263,8 @@ export default function ImportExportHostModal() {
                       }
                     },
                     { 
-                      key: 'alias', 
-                      label: 'Name',
+                      accessor: 'alias', 
+                      header: 'Name',
                       render: (alias, host) => (
                         <div className="flex items-center gap-2">
                           <Typography variant="caption" className={`font-bold ${host.isDuplicate ? 'text-slate-400' : 'text-slate-700 dark:text-slate-200'}`}>
@@ -276,8 +276,8 @@ export default function ImportExportHostModal() {
                         </div>
                       )
                     },
-                    { key: 'address', label: 'Address' },
-                    { key: 'port', label: 'Port' }
+                    { accessor: 'address', header: 'Address' },
+                    { accessor: 'port', header: 'Port' }
                   ]}
                   data={importList}
                   onRowClick={(host) => {

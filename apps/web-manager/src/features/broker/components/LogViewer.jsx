@@ -1,226 +1,414 @@
 import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchLogContent } from '../brokerSlice';
-
 import { Icon } from '../../../components/ds/foundation/Icon';
 
+// ─── Constants ────────────────────────────────────────────────────────────────
+const MODES = [
+  { key: 'raw', label: 'Raw Log',    icon: 'subject'      },
+  { key: 'sql', label: 'Parsed SQL', icon: 'code'         },
+  { key: 'top', label: 'Top SQL',    icon: 'query_stats'  },
+];
+
+const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+
+// ─── Syntax highlighting ──────────────────────────────────────────────────────
 const HighlightedLine = ({ line }) => {
   if (!line) return <span>&nbsp;</span>;
-
-  // Regex patterns
-  const patterns = [
-    { type: 'timestamp', regex: /(\d{2,4}[-./]\d{2}[-./]\d{2,4}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/g },
-    { type: 'error', regex: /\b(ERROR|FATAL|ERR|FAIL)\b/gi },
-    { type: 'warn', regex: /\b(WARN|WARNING)\b/gi },
-    { type: 'info', regex: /\b(INFO|NOTIFICATION)\b/gi },
-    { type: 'success', regex: /\b(SUCCESS)\b/gi },
-    { type: 'debug', regex: /\b(DEBUG|TRACE)\b/gi },
-    { type: 'path', regex: /(\/[a-zA-Z0-9._\-/]+)/g },
-    { type: 'keyword', regex: /\b(SQL|TRAN|CLIENT|SERVER|EID|CODE|FILE|LINE|Time|Tran)\b/g },
-    { type: 'number', regex: /\b(-?\d+(?:\.\d+)?)\b/g },
+  const PATTERNS = [
+    { type: 'timestamp', re: /(\d{2,4}[-./]\d{2}[-./]\d{2,4}\s+\d{2}:\d{2}:\d{2}(?:\.\d+)?)/g },
+    { type: 'error',     re: /\b(ERROR|FATAL|ERR|FAIL)\b/gi },
+    { type: 'warn',      re: /\b(WARN|WARNING)\b/gi },
+    { type: 'success',   re: /\b(SUCCESS)\b/gi },
+    { type: 'path',      re: /(\/[a-zA-Z0-9._\-/]+)/g },
+    { type: 'keyword',   re: /\b(SQL|TRAN|CLIENT|SERVER|EID|CODE|FILE|LINE|Time|Tran|bind|execute)\b/g },
+    { type: 'number',    re: /\b(-?\d+(?:\.\d+)?)\b/g },
   ];
-
-  // Helper to get all matches for all patterns
-  let matches = [];
-  patterns.forEach(p => {
-    let match;
-    const regex = new RegExp(p.regex);
-    while ((match = regex.exec(line)) !== null) {
-      matches.push({
-        start: match.index,
-        end: match.index + match[0].length,
-        text: match[0],
-        type: p.type
-      });
-    }
+  const COLORS = {
+    timestamp: 'text-slate-400',
+    error:     'text-rose-500 font-semibold',
+    warn:      'text-amber-500 font-semibold',
+    success:   'text-emerald-500 font-semibold',
+    path:      'text-violet-500',
+    keyword:   'text-sky-500 dark:text-sky-400',
+    number:    'text-orange-500',
+  };
+  let hits = [];
+  PATTERNS.forEach(({ type, re }) => {
+    const r = new RegExp(re);
+    let m;
+    while ((m = r.exec(line)) !== null) hits.push({ s: m.index, e: m.index + m[0].length, v: m[0], type });
   });
+  hits.sort((a, b) => a.s - b.s);
+  // de-overlap
+  const clean = []; let end = 0;
+  for (const h of hits) if (h.s >= end) { clean.push(h); end = h.e; }
 
-  // Sort matches by start position, and handle overlaps (prioritize first found correctly)
-  matches.sort((a, b) => a.start - b.start);
-  
-  // Filter out overlaps
-  let filteredMatches = [];
-  let lastEnd = 0;
-  for (const match of matches) {
-    if (match.start >= lastEnd) {
-      filteredMatches.push(match);
-      lastEnd = match.end;
-    }
-  }
-
-  // Build the content
-  const content = [];
-  let currentPos = 0;
-
-  filteredMatches.forEach((match, i) => {
-    // Add text before match
-    if (match.start > currentPos) {
-      content.push(line.substring(currentPos, match.start));
-    }
-
-    // Add highlighted match
-    let colorClass = 'text-slate-300';
-    switch (match.type) {
-      case 'timestamp': colorClass = 'text-slate-500'; break;
-      case 'error': colorClass = 'text-rose-400 font-bold'; break;
-      case 'warn': colorClass = 'text-amber-300 font-bold'; break;
-      case 'info': colorClass = 'text-sky-300 font-bold'; break;
-      case 'success': colorClass = 'text-emerald-400 font-bold'; break;
-      case 'debug': colorClass = 'text-slate-400'; break;
-      case 'path': colorClass = 'text-slate-500 italic underline decoration-slate-600/30'; break;
-      case 'keyword': colorClass = 'text-indigo-300'; break;
-      case 'number': colorClass = 'text-orange-300'; break;
-    }
-
-    content.push(
-      <span key={`m-${i}`} className={colorClass}>
-        {match.text}
-      </span>
-    );
-    currentPos = match.end;
+  const parts = []; let pos = 0;
+  clean.forEach((h, i) => {
+    if (h.s > pos) parts.push(line.substring(pos, h.s));
+    parts.push(<span key={i} className={COLORS[h.type]}>{h.v}</span>);
+    pos = h.e;
   });
-
-  // Add remaining text
-  if (currentPos < line.length) {
-    content.push(line.substring(currentPos));
-  }
-
-  return <span>{content}</span>;
+  if (pos < line.length) parts.push(line.substring(pos));
+  return <span>{parts}</span>;
 };
 
+// ─── SQL Syntax Highlighter ──────────────────────────────────────────────────
+const SQL_KEYWORDS_RE = /\b(SELECT|FROM|WHERE|AND|OR|NOT|IN|IS|NULL|AS|JOIN|LEFT|RIGHT|INNER|OUTER|FULL|CROSS|ON|GROUP|BY|ORDER|HAVING|LIMIT|OFFSET|UNION|ALL|DISTINCT|INSERT|INTO|VALUES|UPDATE|SET|DELETE|CREATE|ALTER|DROP|TABLE|INDEX|VIEW|DATABASE|SCHEMA|TRUNCATE|GRANT|REVOKE|COMMIT|ROLLBACK|PREPARE|EXECUTE|BETWEEN|LIKE|CASE|WHEN|THEN|ELSE|END|EXISTS|ANY|SOME|COUNT|SUM|AVG|MAX|MIN|COALESCE|IFNULL|CAST|CONVERT|PRIMARY|KEY|FOREIGN|REFERENCES|UNIQUE|DEFAULT|CONSTRAINT|AUTO_INCREMENT|SERIAL|INTEGER|INT|BIGINT|SMALLINT|FLOAT|DOUBLE|DECIMAL|NUMERIC|VARCHAR|CHAR|TEXT|BLOB|DATE|TIME|DATETIME|TIMESTAMP|BOOLEAN|BOOL)\b/gi;
+
+const SQLHighlight = ({ sql }) => {
+  if (!sql) return null;
+  // Token types in priority order — strings and comments are matched first to avoid false keyword hits
+  const TOKENS = [
+    { type: 'comment',  re: /(--[^\n]*)/ },
+    { type: 'string',   re: /('[^']*'|"[^"]*")/ },
+    { type: 'keyword',  re: SQL_KEYWORDS_RE },
+    { type: 'number',   re: /\b(-?\d+(?:\.\d+)?)\b/ },
+    { type: 'operator', re: /([=<>!]+|\bnot\b)/i },
+    { type: 'paren',    re: /([(){}[\]])/ },
+  ];
+  const COLORS = {
+    keyword:  'text-sky-600 dark:text-sky-400 font-semibold',
+    string:   'text-emerald-600 dark:text-emerald-400',
+    number:   'text-orange-500 dark:text-orange-400',
+    operator: 'text-rose-500 dark:text-rose-400',
+    comment:  'text-slate-400 italic',
+    paren:    'text-amber-500 dark:text-amber-400 font-bold',
+  };
+
+  // Build a single combined regex with named groups
+  const combined = new RegExp(
+    TOKENS.map(t => `(${t.re.source})`).join('|'),
+    'gi'
+  );
+
+  const parts = [];
+  let pos = 0, m, key = 0;
+  while ((m = combined.exec(sql)) !== null) {
+    if (m.index > pos) parts.push(<span key={key++}>{sql.substring(pos, m.index)}</span>);
+    // Find which token group matched
+    const groupIdx = TOKENS.findIndex((_, i) => m[i + 1] !== undefined);
+    const type = groupIdx >= 0 ? TOKENS[groupIdx].type : null;
+    parts.push(<span key={key++} className={COLORS[type] || ''}>{m[0]}</span>);
+    pos = m.index + m[0].length;
+  }
+  if (pos < sql.length) parts.push(<span key={key++}>{sql.substring(pos)}</span>);
+  return <>{parts}</>;
+};
+
+// ─── SQL parsing helpers ──────────────────────────────────────────────────────
+const QM = ' ?.?.? ';
+const QM_RE = / \?\.?\?\.?\? /;
+const SQL_RE = /(?:execute_all\s+|execute\s+|srv_prepare:\s*|srv_execute:\s*)(?:srv_h_id\s+\d+\s+)?(?:0:\s*)?(SELECT|INSERT|UPDATE|DELETE|CREATE|ALTER|DROP|TRUNCATE|GRANT|REVOKE|REPLACE|DESCRIBE|COMMIT|ROLLBACK|PREPARE)(.*?)(?=\n\d{2}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}|\n$|$)/gis;
+const BIND_RE = /bind\s+\d+\s+:\s+(INT|DATETIME|TIME|DATE|BIGINT|DOUBLE|FLOAT|SHORT|VARCHAR\s\(\d+\)|NULL)\s*(.*)/gi;
+
+function extractSQL(ls) {
+  const text = ls.join('\n');
+  const stmts = [];
+  let m;
+  const r1 = new RegExp(SQL_RE);
+  while ((m = r1.exec(text)) !== null)
+    stmts.push((m[1] + m[2]).trim().replace(/<end>$/, '').replace(/\s{2,}/g, ' ').replace(/\?/g, QM));
+
+  const params = [];
+  const r2 = new RegExp(BIND_RE);
+  let p;
+  while ((p = r2.exec(text)) !== null)
+    params.push({ t: p[1].toUpperCase(), v: p[2].trim().replace(/<end>$/, '') });
+
+  let pi = 0;
+  return stmts.map(s => {
+    while (s.includes(QM) && pi < params.length) {
+      const { t, v } = params[pi++];
+      s = s.replace(QM_RE, /^(INT|BIGINT|DOUBLE|FLOAT|SHORT)/.test(t) ? (v || '0') : t === 'NULL' ? 'NULL' : `'${v}'`);
+    }
+    return s.replace(new RegExp(QM.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'g'), '?').trim();
+  });
+}
+
+function extractTopSQL(ls) {
+  const text = ls.join('\n');
+  const sqls = extractSQL(ls);
+  const stats = {};
+  const r = new RegExp(SQL_RE);
+  let m, i = 0;
+  while ((m = r.exec(text)) !== null && i < sqls.length) {
+    const s = sqls[i++]; if (!s) continue;
+    if (!stats[s]) stats[s] = { c: 0, e: 0, t: [] };
+    stats[s].c++;
+    const ahead = text.substring(m.index + m[0].length, m.index + m[0].length + 500);
+    const tm = ahead.match(/\*\*\* elapsed time (\d+\.\d+)/);
+    if (tm) stats[s].t.push(parseFloat(tm[1]));
+    if (ahead.includes('*** error')) stats[s].e++;
+  }
+  return Object.entries(stats).map(([sql, s], idx) => ({
+    id: `Q${idx + 1}`, sql,
+    max: (s.t.length ? Math.max(...s.t) : 0).toFixed(3),
+    min: (s.t.length ? Math.min(...s.t) : 0).toFixed(3),
+    avg: (s.t.length ? s.t.reduce((a, b) => a + b, 0) / s.t.length : 0).toFixed(3),
+    c: s.c, e: s.e,
+  })).sort((a, b) => b.c - a.c);
+}
+
+// ─── Main Component ───────────────────────────────────────────────────────────
 function LogViewer({ hostUid, path }) {
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(1);
+  const [viewMode, setViewMode]       = useState('raw');
+  const [copying, setCopying]         = useState(false);
   const pageSize = 100;
-  
-  const logState = useSelector((state) => state.broker.viewingLogs[path]);
-  const fileName = path.split('/').pop();
 
-  const startLine = (currentPage - 1) * pageSize + 1;
-  const endLine = currentPage * pageSize;
+  const logState   = useSelector(s => s.broker.viewingLogs[path]);
+  const loading    = logState?.loading;
+  const fileName   = path.split('/').pop();
+  const startLine  = (currentPage - 1) * pageSize + 1;
+  const endLine    = currentPage * pageSize;
+  const lines      = logState?.data?.log?.[0]?.line || [];
+  const totalLines = parseInt(logState?.data?.total || '0');
+  const totalPages = Math.max(1, Math.ceil(totalLines / pageSize));
 
   useEffect(() => {
     dispatch(fetchLogContent({ hostUid, path, start: String(startLine), end: String(endLine) }));
   }, [dispatch, hostUid, path, currentPage]);
 
-  const handleRefresh = () => {
-    dispatch(fetchLogContent({ hostUid, path, start: String(startLine), end: String(endLine) }));
+  const sqls = viewMode === 'sql' ? extractSQL(lines) : [];
+  const top  = viewMode === 'top' ? extractTopSQL(lines) : [];
+
+  const handleCopy = () => {
+    const txt =
+      viewMode === 'sql' ? extractSQL(lines).join('\n\n') :
+      viewMode === 'top' ? JSON.stringify(extractTopSQL(lines), null, 2) :
+      lines.join('\n');
+    navigator.clipboard.writeText(txt).then(() => {
+      setCopying(true);
+      setTimeout(() => setCopying(false), 2000);
+    });
   };
 
-  const handlePrevPage = () => {
-    if (currentPage > 1) setCurrentPage(currentPage - 1);
+  const handleExcel = (data) => {
+    const xml = `<?xml version="1.0"?><?mso-application progid="Excel.Sheet"?><Workbook xmlns="urn:schemas-microsoft-com:office:spreadsheet" xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns:ss="urn:schemas-microsoft-com:office:spreadsheet">
+<Styles><Style ss:ID="h"><Font ss:Bold="1"/><Interior ss:Color="#F1F5F9" ss:Pattern="Solid"/></Style><Style ss:ID="s"><Alignment ss:Vertical="Top" ss:WrapText="1"/><Font ss:FontName="Consolas" ss:Size="10"/></Style></Styles>
+<Worksheet ss:Name="TopSQL"><Table><Column ss:Width="40"/><Column ss:Width="60"/><Column ss:Width="60"/><Column ss:Width="60"/><Column ss:Width="50"/><Column ss:Width="50"/><Column ss:Width="500"/>
+<Row ss:Height="20">${['ID','MAX','MIN','AVG','Count','Error','SQL'].map(h => `<Cell ss:StyleID="h"><Data ss:Type="String">${h}</Data></Cell>`).join('')}</Row>
+${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}</Data></Cell><Cell><Data ss:Type="Number">${d.max}</Data></Cell><Cell><Data ss:Type="Number">${d.min}</Data></Cell><Cell><Data ss:Type="Number">${d.avg}</Data></Cell><Cell><Data ss:Type="Number">${d.c}</Data></Cell><Cell><Data ss:Type="Number">${d.e}</Data></Cell><Cell ss:StyleID="s"><Data ss:Type="String">${esc(d.sql)}</Data></Cell></Row>`).join('')}
+</Table></Worksheet></Workbook>`;
+    const blob = new Blob([xml], { type: 'application/vnd.ms-excel' });
+    const a = Object.assign(document.createElement('a'), {
+      href: URL.createObjectURL(blob),
+      download: `top_sql_${Date.now()}.xls`,
+    });
+    a.click();
   };
-
-  const handleNextPage = () => {
-    const total = parseInt(logState?.data?.total || '0');
-    if (endLine < total) {
-      setCurrentPage(currentPage + 1);
-    }
-  };
-
-  if (logState?.loading && !logState?.data) {
-    return (
-      <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-bk-main">
-        <div className="flex flex-col items-center gap-3">
-          <div className="w-10 h-10 border-4 border-bk-yellow/20 border-t-bk-yellow rounded-full animate-spin"></div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading log content...</p>
-        </div>
-      </div>
-    );
-  }
-
-  const logLines = logState?.data?.log?.[0]?.line || [];
-  const totalLines = parseInt(logState?.data?.total || '0');
-  const hasNext = endLine < totalLines;
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden">
-      {/* Log Header / Toolbar */}
-      <div className="shrink-0 px-4 py-2.5 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between">
-        <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center">
-            <Icon name="description" size="sm" weight={300} className="text-amber-600 dark:text-bk-yellow" />
+    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden font-mono">
+
+      {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
+      <div className="shrink-0 px-4 py-2.5 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
+
+        {/* Left: file info */}
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-8 h-8 rounded-lg bg-amber-50 dark:bg-amber-900/20 flex items-center justify-center shrink-0">
+            <Icon name="description" size="sm" className="text-amber-600 dark:text-bk-yellow" />
           </div>
           <div className="min-w-0">
             <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight truncate">{fileName}</h2>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-mono truncate max-w-[200px] lg:max-w-md">{path}</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Broker Log Viewer</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5">
-            <button 
-              onClick={handlePrevPage}
-              disabled={currentPage === 1 || logState?.loading}
-              className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-              title="Previous 100 lines"
+        {/* Center: mode switcher */}
+        <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 shrink-0">
+          {MODES.map(m => (
+            <button
+              key={m.key}
+              onClick={() => setViewMode(m.key)}
+              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors whitespace-nowrap ${
+                viewMode === m.key
+                  ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-bk-yellow'
+                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+              }`}
             >
-              <Icon name="chevron_left" size="sm" weight={300} />
+              <Icon name={m.icon} size="sm" />
+              {m.label}
             </button>
-            <div className="px-3 text-[11px] font-medium text-slate-600 dark:text-slate-300 min-w-[100px] text-center">
-              {startLine} - {Math.min(endLine, totalLines)}
-            </div>
-            <button 
-              onClick={handleNextPage}
-              disabled={!hasNext || logState?.loading}
-              className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
-              title="Next 100 lines"
+          ))}
+        </div>
+
+        {/* Right: actions */}
+        <div className="flex items-center gap-1 shrink-0">
+
+          {/* Export Excel */}
+          <button
+            onClick={() => handleExcel(top)}
+            disabled={top.length === 0}
+            title="Download as Excel"
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all active:scale-[0.98]
+              ${top.length === 0
+                ? 'bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+                : 'bg-amber-500/10 text-amber-600 dark:text-bk-yellow border-amber-500/50 dark:border-bk-yellow/50 hover:bg-amber-500/20 shadow-xs'
+              } ${viewMode === 'top' ? 'visible' : 'invisible pointer-events-none'}`}
+          >
+            <Icon name="download" size="18px" />
+            Export
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-0.5" />
+
+          {/* Copy */}
+          <button
+            onClick={handleCopy}
+            disabled={lines.length === 0}
+            title="Copy to clipboard"
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] disabled:opacity-30 
+              ${copying
+                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30 !w-auto !px-3 font-bold !gap-1.5 text-[10px]'
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
+          >
+            <Icon name={copying ? 'check' : 'content_copy'} size="18px" weight={300} />
+            {copying && <span className="uppercase tracking-tight">Copied</span>}
+          </button>
+
+          {/* Refresh */}
+          <button
+            onClick={() => dispatch(fetchLogContent({ hostUid, path, start: String(startLine), end: String(endLine) }))}
+            disabled={loading}
+            title="Refresh"
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
+              ${loading
+                ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
+          >
+            <Icon name="refresh" size="18px" weight={loading ? 700 : 300} className={loading ? 'animate-spin' : ''} />
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-0.5" />
+
+          {/* Pagination */}
+          <div className="flex items-center bg-slate-100 dark:bg-black/20 rounded-lg p-0.5">
+            <button
+              onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+              disabled={currentPage === 1 || loading}
+              className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
             >
-              <Icon name="chevron_right" size="sm" weight={300} />
+              <Icon name="chevron_left" size="18px" />
+            </button>
+            <div className="px-3 text-[11px] font-bold text-slate-600 dark:text-slate-300 min-w-[72px] text-center font-mono">
+              {currentPage} / {totalPages}
+            </div>
+            <button
+              onClick={() => setCurrentPage(p => endLine < totalLines ? p + 1 : p)}
+              disabled={endLine >= totalLines || loading}
+              className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+            >
+              <Icon name="chevron_right" size="18px" />
             </button>
           </div>
-
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
-
-          <button 
-             onClick={handleRefresh}
-             disabled={logState?.loading}
-             className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors disabled:opacity-50"
-             title="Refresh Current View"
-          >
-            <span className={`material-symbols-outlined text-[18px] ${logState?.loading ? 'animate-spin' : ''}`}>refresh</span>
-          </button>
         </div>
       </div>
 
-      {/* Log Content Area */}
-      <div className="flex-1 overflow-auto bg-white dark:bg-bk-side selection:bg-bk-yellow/30 relative">
-        {logState?.loading && logState?.data && (
-          <div className="absolute inset-0 bg-black/5 dark:bg-black/20 backdrop-blur-[1px] flex items-center justify-center z-10">
-            <div className="w-8 h-8 border-2 border-bk-yellow/20 border-t-bk-yellow rounded-full animate-spin"></div>
+      {/* ── Content ──────────────────────────────────────────────────────────── */}
+      <div className="flex-1 overflow-auto bg-white dark:bg-bk-side">
+
+        {/* Raw Log */}
+        {viewMode === 'raw' && (
+          lines.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center text-center p-8">
+              <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
+                <Icon name="inbox" size="sm" weight={300} className="text-slate-400 dark:text-slate-500 text-3xl" />
+              </div>
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">No content available for this range.</p>
+            </div>
+          ) : (
+            <div>
+              {lines.map((l, i) => (
+                <div
+                  key={i}
+                  className="flex gap-4 px-4 py-0.5 border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 group transition-colors"
+                >
+                  <span className="w-10 shrink-0 text-right text-[11px] text-slate-300 dark:text-slate-600 group-hover:text-amber-500 select-none font-semibold pt-0.5">
+                    {startLine + i}
+                  </span>
+                  <div className="text-[12px] text-slate-700 dark:text-slate-300 whitespace-pre-wrap break-all leading-relaxed">
+                    <HighlightedLine line={l} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Parsed SQL */}
+        {viewMode === 'sql' && (
+          sqls.length === 0 ? (
+            <div className="h-full flex flex-col items-center justify-center">
+              <p className="text-sm text-slate-400 italic">No SQL statements found in this page.</p>
+            </div>
+          ) : (
+            <div className="p-4 space-y-3">
+              {sqls.map((s, i) => (
+                <div key={i} className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
+                  <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800">
+                    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Statement #{i + 1}</span>
+                    <button
+                      onClick={() => navigator.clipboard.writeText(s)}
+                      className="p-1 text-slate-400 hover:text-amber-500 rounded transition-colors"
+                      title="Copy statement"
+                    >
+                      <Icon name="content_copy" size="sm" weight={300} />
+                    </button>
+                  </div>
+                  <div className="px-4 py-3 text-[12px] font-mono text-slate-800 dark:text-slate-200 whitespace-pre-wrap break-all leading-relaxed">
+                    <SQLHighlight sql={s} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          )
+        )}
+
+        {/* Top SQL */}
+        {viewMode === 'top' && (
+          <div className="min-w-full inline-block">
+            {/* Column headers */}
+            <div className="flex items-center gap-4 px-4 py-2 bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest sticky top-0">
+              <div className="w-10 shrink-0">ID</div>
+              <div className="w-20 shrink-0 text-right">Max (s)</div>
+              <div className="w-20 shrink-0 text-right text-sky-500">Avg (s)</div>
+              <div className="w-20 shrink-0 text-right text-emerald-500">Count</div>
+              <div className="w-16 shrink-0 text-right text-rose-500">Errors</div>
+              <div className="flex-1">SQL Pattern</div>
+            </div>
+            {top.length === 0 ? (
+              <div className="py-12 text-center text-slate-400 italic text-sm">No queries found to analyze.</div>
+            ) : top.map((d, i) => (
+              <div
+                key={i}
+                className="flex items-center gap-4 px-4 py-2 border-b border-slate-100 dark:border-white/5 hover:bg-slate-50 dark:hover:bg-white/5 transition-colors text-[12px]"
+              >
+                <div className="w-10 shrink-0 font-bold text-amber-500">{d.id}</div>
+                <div className="w-20 shrink-0 text-right text-slate-500 dark:text-slate-400">{d.max}</div>
+                <div className="w-20 shrink-0 text-right text-sky-600 dark:text-sky-400 font-semibold">{d.avg}</div>
+                <div className="w-20 shrink-0 text-right text-emerald-600 dark:text-emerald-400 font-bold">{d.c}</div>
+                <div className="w-16 shrink-0 text-right font-semibold text-rose-500">{d.e || '—'}</div>
+                <div className="flex-1 min-w-0 text-slate-500 dark:text-slate-400 truncate" title={d.sql}>{d.sql}</div>
+              </div>
+            ))}
           </div>
         )}
-        
-        <div className="min-w-full inline-block font-mono text-[12px] leading-relaxed py-4">
-          {logLines.length === 0 && !logState?.loading ? (
-            <div className="px-6 text-slate-500 italic">No log entries found.</div>
-          ) : (
-            logLines.map((line, idx) => (
-              <div key={idx} className="flex hover:bg-slate-50 dark:hover:bg-white/5 transition-colors group">
-                <div className="w-14 shrink-0 text-right pr-4 text-slate-400 dark:text-slate-500 select-none border-r border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-bk-side sticky left-0 group-hover:text-slate-500 dark:group-hover:text-slate-400">
-                  {startLine + idx}
-                </div>
-                <div className="px-4 text-slate-700 dark:text-slate-300 whitespace-pre min-w-0 flex-1">
-                  <HighlightedLine line={line} />
-                </div>
-              </div>
-            ))
-          )}
-        </div>
       </div>
 
-      {/* Footer / Stats */}
+      {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
         <div className="flex items-center gap-4">
-          <span>Format: UTF-8</span>
-          <span>Page: {currentPage} / {Math.ceil(totalLines / pageSize) || 1}</span>
-          <span>Total Lines: {totalLines.toLocaleString()}</span>
+          <span>Lines: {startLine}–{Math.min(endLine, totalLines)} of {totalLines.toLocaleString()}</span>
+          {viewMode === 'sql' && <span>{sqls.length} statements</span>}
+          {viewMode === 'top' && <span>{top.length} patterns</span>}
         </div>
-        <div className="flex items-center gap-3">
-          <span className="flex items-center gap-1.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-            Online
-          </span>
+        <div className="flex items-center gap-1.5">
+          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
+          Connected
         </div>
       </div>
     </div>

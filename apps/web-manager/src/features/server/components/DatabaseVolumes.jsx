@@ -43,19 +43,33 @@ const getLogColumn = (dbSpace, type) => {
   return totalPage > 0 ? getSizeFormat(totalPage * pageSize) : '-';
 };
 
-const BarCell = ({ val, barColor = 'bg-amber-500' }) => (
-  <div className="flex flex-col gap-1 min-w-[160px]">
-    <span className="text-[12px] font-mono font-semibold text-slate-600 dark:text-slate-300">{val.display}</span>
-    <div className="w-full h-1 bg-slate-100 dark:bg-white/6 overflow-hidden">
-      <div className={`h-full ${val.pct > 85 ? 'bg-rose-500' : barColor} transition-all duration-500`} style={{ width: `${val.pct}%` }} />
+const BarCell = ({ val }) => {
+  const getProgressColor = (pct) => {
+    if (pct > 85) return 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]';
+    if (pct > 50) return 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]';
+    return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]';
+  };
+
+  return (
+    <div className="flex flex-col gap-1 min-w-[160px]">
+      <div className="flex items-center justify-between pr-2">
+        <span className="text-[12px] font-mono font-semibold text-slate-600 dark:text-slate-300">{val.display}</span>
+      </div>
+      <div className="w-full h-1 bg-slate-100 dark:bg-white/6 overflow-hidden rounded-full">
+        <div 
+          className={`h-full ${getProgressColor(val.pct)} transition-all duration-700 ease-out`} 
+          style={{ width: `${val.pct}%` }} 
+        />
+      </div>
     </div>
-  </div>
-);
+  );
+};
 
 export default function DatabaseVolumes({ hostUid }) {
   const dispatch = useDispatch();
   const { authorizedHosts } = useSelector((state) => state.host);
-  const { activeDatabases, volumes, volumesLoading: loading } = useSelector((state) => state.database);
+  const { activeDatabases } = useSelector((state) => state.database);
+  const { volumes, volumesLoading: loading } = useSelector((state) => state.databaseMonitoring);
 
   const fetchVolumes = useCallback(() => {
     if (!hostUid || !authorizedHosts.includes(hostUid) || activeDatabases.length === 0) return;
@@ -83,8 +97,8 @@ export default function DatabaseVolumes({ hostUid }) {
       accessor: 'db',
       render: (val) => <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{val}</span>
     },
-    { header: 'Permanent', accessor: 'permanent', render: (val) => <BarCell val={val} barColor="bg-blue-500" /> },
-    { header: 'Temporary', accessor: 'temporary', render: (val) => <BarCell val={val} barColor="bg-amber-500" /> },
+    { header: 'Permanent', accessor: 'permanent', render: (val) => <BarCell val={val} /> },
+    { header: 'Temporary', accessor: 'temporary', render: (val) => <BarCell val={val} /> },
     { header: 'Active Log', accessor: 'activeLog', render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
     { header: 'Archive Log', accessor: 'archiveLog', render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
     { header: 'Free Storage', accessor: 'storageFree', render: (val) => <span className="font-mono text-[12px] text-emerald-600 dark:text-emerald-400 font-semibold">{val}</span> },

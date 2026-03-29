@@ -7,6 +7,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 function CMSLogViewer({ hostUid, type }) {
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(1);
+  const [copying, setCopying] = useState(false);
   const pageSize = 50;
 
   const cmsLogs = useSelector((state) => state.broker.cmsLogsByHost[hostUid]);
@@ -58,36 +59,62 @@ function CMSLogViewer({ hostUid, type }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-4">
-          <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5">
-            <button 
+        <div className="flex items-center gap-1">
+
+          {/* Copy */}
+          <button
+            onClick={() => {
+              const text = paginatedLogs.map(l => `[${l.time}] [${l['@user'] || 'System'}] [${l.taskname}] ${type === 'error' ? l.errornote : 'SUCCESS'}`).join('\n');
+              navigator.clipboard.writeText(text);
+              setCopying(true);
+              setTimeout(() => setCopying(false), 2000);
+            }}
+            disabled={paginatedLogs.length === 0}
+            title="Copy visible entries to clipboard"
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] disabled:opacity-30 
+              ${copying
+                ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/30 !w-auto !px-3 font-bold !gap-1.5 text-[10px]'
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
+          >
+            <Icon name={copying ? 'check' : 'content_copy'} size="18px" weight={300} />
+            {copying && <span className="uppercase tracking-tight">Copied</span>}
+          </button>
+
+          {/* Refresh */}
+          <button
+            onClick={handleRefresh}
+            disabled={loading}
+            title="Refresh"
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
+              ${loading
+                ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
+          >
+            <Icon name="refresh" size="18px" weight={loading ? 700 : 300} className={loading ? 'animate-spin' : ''} />
+          </button>
+
+          <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-0.5" />
+
+          {/* Pagination */}
+          <div className="flex items-center bg-slate-100 dark:bg-black/20 rounded-lg p-0.5">
+            <button
               onClick={handlePrevPage}
               disabled={currentPage === 1 || loading}
-              className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+              className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
             >
-              <Icon name="chevron_left" size="sm" weight={300} />
+              <Icon name="chevron_left" size="18px" />
             </button>
-            <div className="px-3 text-[11px] font-medium text-slate-600 dark:text-slate-300 min-w-[80px] text-center">
-              Page {currentPage} / {totalPages}
+            <div className="px-3 text-[11px] font-bold text-slate-600 dark:text-slate-300 min-w-[72px] text-center font-mono">
+              {currentPage} / {totalPages}
             </div>
-            <button 
+            <button
               onClick={handleNextPage}
               disabled={currentPage >= totalPages || loading}
-              className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/10 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+              className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
             >
-              <Icon name="chevron_right" size="sm" weight={300} />
+              <Icon name="chevron_right" size="18px" />
             </button>
           </div>
-
-          <div className="h-4 w-px bg-slate-200 dark:bg-slate-800"></div>
-
-          <button 
-             onClick={handleRefresh}
-             disabled={loading}
-             className="p-1.5 text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 rounded-md transition-colors"
-          >
-            <span className={`material-symbols-outlined text-[18px] ${loading ? 'animate-spin' : ''}`}>refresh</span>
-          </button>
         </div>
       </div>
 

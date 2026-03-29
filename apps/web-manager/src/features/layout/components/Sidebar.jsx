@@ -89,10 +89,12 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   const [brokerRootContextMenu, setBrokerRootContextMenu] = useState(null);
 
   const [backupItemContextMenu, setBackupItemContextMenu] = useState(null);
+  const [tableContextMenu, setTableContextMenu] = useState(null);
+  const [viewContextMenu, setViewContextMenu] = useState(null);
 
   const dispatch = useDispatch();
   const { hosts, selectedHostUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors } = useSelector((state) => state.host);
-  const { databases, activeDatabases, loggedInDatabases, actionLoading: dbActionLoading } = useSelector((state) => state.database);
+  const { databases, activeDatabases, loggedInDatabases, loading: dbActionLoading } = useSelector((state) => state.database);
   const { brokers, actionLoading: brokerActionLoading } = useSelector((state) => state.broker);
 
   useEffect(() => {
@@ -111,6 +113,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     setQueryPlanContextMenu(null);
     setBrokerRootContextMenu(null);
     setBackupItemContextMenu(null);
+    setTableContextMenu(null);
+    setViewContextMenu(null);
   }, []);
 
   const handleHostLogin = useCallback((uid) => {
@@ -208,6 +212,20 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     closeAllContextMenus();
     dispatch(setSelectedBackupId(planId));
     setBackupItemContextMenu({ mouseX: e.clientX, mouseY: e.clientY, db: dbName, planId });
+  };
+
+  const handleTableContextMenu = (e, dbName, tableName) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllContextMenus();
+    setTableContextMenu({ mouseX: e.clientX, mouseY: e.clientY, db: dbName, table: tableName });
+  };
+
+  const handleViewContextMenu = (e, dbName, viewName) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllContextMenus();
+    setViewContextMenu({ mouseX: e.clientX, mouseY: e.clientY, db: dbName, view: viewName });
   };
 
   useEffect(() => {
@@ -459,6 +477,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                         onSpaceContextMenu={handleSpaceContextMenu}
                         onBackupItemContextMenu={handleBackupItemContextMenu}
                         onQueryPlanContextMenu={handleQueryPlanContextMenu}
+                        onTableContextMenu={handleTableContextMenu}
+                        onViewContextMenu={handleViewContextMenu}
                       />
                     )}
                     {activeTab === 'broker' && <BrokerTree hostUid={selectedHostUid} onContextMenu={handleBrokerContextMenu} />}
@@ -551,26 +571,20 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <SubMenu icon="settings" label="Manage Database">
             <MenuItem icon="upload" label="Database Unload" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openUnloadDBModal()); setDbContextMenu(null); }} />
-            <MenuItem icon="download" label="Database Load" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openLoadDBModal()); setDbContextMenu(null); }} />
+            <MenuItem icon="download" label="Database Load" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openLoadDBModal()); setDbContextMenu(null); }} />
             <MenuItem icon="check_circle" label="Check Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCheckDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="compress" label="Compact Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCompactDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="auto_fix_high" label="Optimize Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openOptimizeDatabaseModal()); setDbContextMenu(null); }} />
-            <MenuItem icon="content_copy" label="Copy Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCopyDatabaseModal()); setDbContextMenu(null); }} />
+            <MenuItem icon="content_copy" label="Copy Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCopyDatabaseModal()); setDbContextMenu(null); }} />
             <MenuDivider />
-            <MenuItem icon="add_circle" iconColor="text-accent-green" label="Create Database" onClick={() => { dispatch(openCreateDatabaseModal()); setDbContextMenu(null); }} />
-            <MenuItem
-              icon="drive_file_rename_outline"
-              iconColor="text-accent-orange"
-              label="Rename Database"
-              disabled={dbContextMenu.isActive}
-              onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRenameDatabaseModal()); setDbContextMenu(null); }}
-            />
-            <MenuDivider />
-            <MenuItem icon="restore" label="Restore Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRestoreDatabaseModal()); setDbContextMenu(null); }} />
+            <MenuItem icon="drive_file_rename_outline" iconColor="text-accent-orange" label="Rename Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRenameDatabaseModal()); setDbContextMenu(null); }} />
+            <MenuItem icon="restore" label="Restore Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRestoreDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="backup" label="Backup Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openBackupDatabaseModal()); setDbContextMenu(null); }} />
+            <MenuItem icon="add_box" label="Add Volume" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openAddVolumeModal()); setDbContextMenu(null); }} />
             <MenuDivider />
             <MenuItem icon="delete" iconColor="text-accent-red" label="Delete Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openDeleteDBModal()); setDbContextMenu(null); }} />
           </SubMenu>
+
           <SubMenu icon="info" label="Database Info" width="w-52">
             <MenuItem icon="lock_open" label="Lock Information" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openLockInfoModal()); setDbContextMenu(null); }} />
             <MenuItem 
@@ -602,6 +616,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             />
             <MenuItem icon="explore" label="OID Navigation" />
           </SubMenu>
+          
+          <MenuDivider />
           <MenuItem icon="tune" label="Properties" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openDatabasePropertyModal()); setDbContextMenu(null); }} />
           <MenuDivider />
           <MenuItem
@@ -1043,6 +1059,57 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
         </ContextMenuWrapper>
       )}
+      {tableContextMenu && (
+        <ContextMenuWrapper x={tableContextMenu.mouseX} y={tableContextMenu.mouseY} onClose={() => setTableContextMenu(null)}>
+          <div className="px-4 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
+            <div className="flex flex-col">
+              <Typography variant="caption" className="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest text-[9px] truncate">{tableContextMenu.table}</Typography>
+              <Typography variant="label" className="text-[8px] text-slate-400 font-mono mt-0.5">{tableContextMenu.db}</Typography>
+            </div>
+            <Icon name="table_rows" size="xs" className="opacity-30" weight={300} />
+          </div>
+          <MenuItem 
+            icon="info" 
+            label="Show Info" 
+            onClick={() => {
+              dispatch(openTab(`table_info:${selectedHostUid}:${tableContextMenu.db}:${tableContextMenu.table}`));
+              setTableContextMenu(null);
+            }} 
+          />
+          <MenuItem icon="grid_on" label="View Data" />
+          <MenuItem icon="edit" label="Edit Table" />
+          <MenuDivider />
+          <MenuItem icon="key" label="Indices" />
+          <MenuItem icon="link" label="Foreign Keys" />
+          <MenuDivider />
+          <MenuItem icon="difference" label="Rename Table" />
+          <MenuItem icon="delete_forever" iconColor="text-rose-500" label="Drop Table" />
+        </ContextMenuWrapper>
+      )}
+
+      {viewContextMenu && (
+        <ContextMenuWrapper x={viewContextMenu.mouseX} y={viewContextMenu.mouseY} onClose={() => setViewContextMenu(null)}>
+          <div className="px-4 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
+            <div className="flex flex-col">
+              <Typography variant="caption" className="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest text-[9px] truncate">{viewContextMenu.view}</Typography>
+              <Typography variant="label" className="text-[8px] text-slate-400 font-mono mt-0.5">{viewContextMenu.db}</Typography>
+            </div>
+            <Icon name="grid_view" size="xs" className="opacity-30" weight={300} />
+          </div>
+          <MenuItem 
+            icon="info" 
+            label="Show Info" 
+            onClick={() => {
+              dispatch(openTab(`view_info:${selectedHostUid}:${viewContextMenu.db}:${viewContextMenu.view}`));
+              setViewContextMenu(null);
+            }} 
+          />
+          <MenuItem icon="grid_on" label="View Data" />
+          <MenuDivider />
+          <MenuItem icon="delete_forever" iconColor="text-rose-500" label="Drop View" />
+        </ContextMenuWrapper>
+      )}
+
       <AutoQueryLogModal />
       <AddQueryPlanModal />
       <SetAutomationVolumeModal />

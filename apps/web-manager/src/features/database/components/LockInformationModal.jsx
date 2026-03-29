@@ -85,7 +85,8 @@ const EmptyState = ({ icon = 'verified_user', title, subtitle, accent = 'emerald
 /* ─── main component ─────────────────────────────────────────── */
 export default function LockInformationModal() {
   const dispatch = useDispatch();
-  const { isLockInfoModalOpen, selectedDatabase } = useSelector((s) => s.database);
+  const { isLockInformationModalOpen: isLockInfoModalOpen } = useSelector((s) => s.databaseUI);
+  const { selectedDatabase } = useSelector((s) => s.database);
   const { selectedHostUid } = useSelector((s) => s.host);
 
   const [activeTab, setActiveTab] = useState('sessions');

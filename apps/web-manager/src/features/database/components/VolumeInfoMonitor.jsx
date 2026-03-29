@@ -9,9 +9,9 @@ export default function VolumeInfoMonitor({ tabId }) {
   const dispatch = useDispatch();
   const [, hostUid, dbname, volname] = tabId.split(':');
 
-  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.database);
-  const dbSpace = spaceInfo[dbname];
-  const isLoading = spaceInfoLoading[dbname];
+  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring || {});
+  const dbSpace = spaceInfo?.[dbname];
+  const isLoading = spaceInfoLoading?.[dbname];
 
   useEffect(() => {
     if (!dbSpace && !isLoading) {

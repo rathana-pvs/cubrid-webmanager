@@ -1,48 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeCheckDatabaseModal } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
-import { showStatusModal } from '../../layout/layoutSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
-import { Checkbox } from '../../../components/ds/forms/Checkbox';
+import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+
+// view states
+const VIEW_FORM    = 'form';
+const VIEW_LOADING = 'loading';
+const VIEW_SUCCESS = 'success';
+const VIEW_ERROR   = 'error';
 
 export default function CheckDatabaseModal() {
   const dispatch = useDispatch();
-  const { isCheckDatabaseModalOpen, selectedDatabase } = useSelector((state) => state.database);
+  const { isCheckDatabaseModalOpen } = useSelector((state) => state.databaseUI);
+  const { selectedDatabase } = useSelector((state) => state.database);
   const { selectedHostUid } = useSelector((state) => state.host);
+  
   const [repair, setRepair] = useState(false);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState(null);
+  const [view, setView] = useState(VIEW_FORM);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
+  useEffect(() => {
+    if (isCheckDatabaseModalOpen) {
+      setRepair(false);
+      setView(VIEW_FORM);
+      setErrorMsg('');
+      setSuccessMsg('');
+    }
+  }, [isCheckDatabaseModalOpen]);
 
   if (!isCheckDatabaseModalOpen) return null;
 
   const handleCheck = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
 
-    setLoading(true);
-    setError(null);
+    setView(VIEW_LOADING);
     try {
       const payload = {
         repairdb: repair ? 'y' : 'n'
       };
       const response = await databaseApi.checkDatabase(selectedHostUid, selectedDatabase, payload);
-
-      dispatch(closeCheckDatabaseModal());
-      dispatch(showStatusModal({
-        type: 'success',
-        title: 'Check complete',
-        message: response.note || 'Database check completed successfully.'
-      }));
+      setSuccessMsg(response.note || 'Database integrity verification completed successfully.');
+      setView(VIEW_SUCCESS);
     } catch (err) {
-      setError(err.response?.data?.note || err.response?.data?.message || 'The database check operation encountered a conflict or failed to reach the server.');
-    } finally {
-      setLoading(false);
+      setErrorMsg(
+        err.response?.data?.note || 
+        err.response?.data?.message || 
+        'The database check operation encountered a conflict or failed to reach the server.'
+      );
+      setView(VIEW_ERROR);
     }
   };
+
+  const handleClose = () => dispatch(closeCheckDatabaseModal());
 
   const scanSteps = [
     { icon: 'search', label: 'Block Integrity Scan', desc: 'Verify physical page checksums' },
@@ -50,26 +66,156 @@ export default function CheckDatabaseModal() {
     { icon: 'fact_check', label: 'Catalog Verification', desc: 'Cross-check system metadata' },
   ];
 
+  /* ─── LOADING view ─── */
+  if (view === VIEW_LOADING) {
+    return (
+      <Modal isOpen title="Database Integrity Verification" icon="verified" onClose={handleClose} maxWidth="480px">
+        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
+          <div className="relative w-[72px] h-[72px]">
+            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
+            <div
+              className="absolute inset-0 rounded-full border-2 border-transparent border-t-emerald-500 animate-spin"
+              style={{ animationDuration: '0.9s' }}
+            />
+            <div
+              className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-emerald-500/35 animate-spin"
+              style={{ animationDuration: '1.7s', animationDirection: 'reverse' }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 shadow-[0_0_10px_3px_rgba(16,185,129,0.3)] animate-pulse" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Running Diagnostics
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium max-w-[240px] mx-auto leading-relaxed">
+              Scanning block structures and verifying page checksums…
+            </Typography>
+          </div>
+
+          <div className="w-44 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-emerald-500 rounded-full"
+              style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/5 border border-emerald-500/15">
+            <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Scanning</span>
+          </div>
+
+          <style>{`
+            @keyframes modalSlide {
+              0%   { transform: translateX(-100%); width: 50%; }
+              50%  { transform: translateX(100%);  width: 60%; }
+              100% { transform: translateX(200%);  width: 50%; }
+            }
+          `}</style>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── SUCCESS view ─── */
+  if (view === VIEW_SUCCESS) {
+    return (
+      <Modal isOpen title="Database Integrity Verification" icon="verified" iconVariant="success" onClose={handleClose} maxWidth="480px">
+        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
+              <Icon name="verified" size="lg" weight={700} className="text-white" />
+            </div>
+          </div>
+
+          <div className="space-y-2 px-6">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Verification Complete
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[300px] mx-auto">
+              Diagnostic scan for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span> finished without critical errors.
+            </Typography>
+          </div>
+
+          {successMsg && (
+            <div className="w-full max-w-[340px] bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-4 py-3 text-left">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Icon name="fact_check" size="xs" weight={300} className="text-emerald-500" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Report Summary</span>
+              </div>
+              <Typography variant="caption" className="text-emerald-600 dark:text-emerald-400/80 font-medium leading-relaxed">
+                {successMsg}
+              </Typography>
+            </div>
+          )}
+
+          <Button variant="secondary" onClick={handleClose}>Dismiss Report</Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── ERROR view ─── */
+  if (view === VIEW_ERROR) {
+    return (
+      <Modal isOpen title="Database Integrity Verification" icon="verified" iconVariant="danger" onClose={handleClose} maxWidth="480px">
+        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
+          <div className="relative">
+            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
+              <Icon name="error" size="md" weight={300} className="text-white" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Diagnostic Failed
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[280px] mx-auto">
+              We encountered a technical issue while performing the database check.
+            </Typography>
+          </div>
+
+          <div className="w-full max-w-[320px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">Error Detail</span>
+            </div>
+            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
+              {errorMsg}
+            </Typography>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={handleClose}>Close</Button>
+            <Button variant="danger" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── FORM view ─── */
   return (
     <Modal
       isOpen={isCheckDatabaseModalOpen}
-      onClose={() => dispatch(closeCheckDatabaseModal())}
+      onClose={handleClose}
       title="Database Integrity Verification"
       icon="verified"
       maxWidth="480px"
-      loading={loading}
-      error={error}
-      onErrorRetry={handleCheck}
-      onErrorClose={() => setError(null)}
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={() => dispatch(closeCheckDatabaseModal())} disabled={loading}>
+          <Button variant="secondary" onClick={handleClose}>
             Discard
           </Button>
           <Button
             variant="primary"
             onClick={handleCheck}
-            loading={loading}
             icon="play_circle"
           >
             Run Diagnostics
@@ -148,10 +294,9 @@ export default function CheckDatabaseModal() {
               </Typography>
             </div>
             <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-              <Checkbox
-                className="w-fit!"
+              <Toggle
                 checked={repair}
-                onChange={(e) => setRepair(e.target.checked)}
+                onChange={setRepair}
               />
             </div>
           </div>
@@ -168,4 +313,3 @@ export default function CheckDatabaseModal() {
     </Modal>
   );
 }
-

@@ -8,14 +8,17 @@ import { Button } from '../../../../components/ds/foundation/Button';
 import { Spinner } from '../../../../components/ds/foundation/Spinner';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 
-const MetricBar = ({ pct, colorFn }) => (
-  <div className="w-full h-1 bg-slate-100 dark:bg-white/6 overflow-hidden mt-1">
-    <div className={`h-full transition-all duration-300 ${colorFn(pct)}`} style={{ width: `${pct}%` }} />
+const getStatusColor = (p) => {
+  if (p > 85) return 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]';
+  if (p > 50) return 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.3)]';
+  return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.3)]';
+};
+
+const MetricBar = ({ pct }) => (
+  <div className="w-full h-1 bg-slate-100 dark:bg-white/6 overflow-hidden mt-1 rounded-full">
+    <div className={`h-full transition-all duration-700 ease-out ${getStatusColor(pct)}`} style={{ width: `${pct}%` }} />
   </div>
 );
-
-const cpuColor  = (p) => p > 80 ? 'bg-rose-500' : p > 50 ? 'bg-amber-500' : 'bg-emerald-500';
-const memColor  = (p) => p > 80 ? 'bg-rose-500' : 'bg-amber-500';
 
 export default function SystemStatusSection({ hostUid, isTabActive = true }) {
   const dispatch = useDispatch();
@@ -111,7 +114,7 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
       render: (val) => val ? (
         <div className="min-w-[150px]">
           <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{val.display}</span>
-          <MetricBar pct={val.pct} colorFn={memColor} />
+          <MetricBar pct={val.pct} />
         </div>
       ) : <span className="text-slate-300">—</span>
     },
@@ -122,12 +125,28 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
       render: (val) => val ? (
         <div className="min-w-[100px]">
           <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{val.display}</span>
-          <MetricBar pct={val.pct} colorFn={cpuColor} />
+          <MetricBar pct={val.pct} />
         </div>
       ) : <span className="text-slate-300">—</span>
     },
-    { header: 'TPS', accessor: 'tps', render: (val) => <span className="font-mono text-[12px] text-amber-600 dark:text-amber-400 font-semibold">{val}</span> },
-    { header: 'QPS', accessor: 'qps', render: (val) => <span className="font-mono text-[12px] text-amber-600 dark:text-amber-400 font-semibold">{val}</span> },
+    { 
+      header: 'TPS', 
+      accessor: 'tps', 
+      render: (val) => {
+        const v = parseFloat(val);
+        const color = v === 0 ? 'text-slate-400 dark:text-slate-600' : v > 500 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
+        return <span className={`font-mono text-[12px] ${color} font-semibold transition-colors duration-500`}>{val}</span>;
+      }
+    },
+    { 
+      header: 'QPS', 
+      accessor: 'qps', 
+      render: (val) => {
+        const v = parseFloat(val);
+        const color = v === 0 ? 'text-slate-400 dark:text-slate-600' : v > 1000 ? 'text-rose-600 dark:text-rose-400' : 'text-emerald-600 dark:text-emerald-400';
+        return <span className={`font-mono text-[12px] ${color} font-semibold transition-colors duration-500`}>{val}</span>;
+      }
+    },
   ];
 
   return (

@@ -11,7 +11,9 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function AutoVolumeLogModal() {
   const dispatch = useDispatch();
-  const { isAutoVolumeLogModalOpen, selectedDatabase, autoVolumeLogs, logsLoading } = useSelector((state) => state.database);
+  const { isAutoVolumeLogModalOpen } = useSelector((state) => state.databaseUI);
+  const { selectedDatabase } = useSelector((state) => state.database);
+  const { autoVolumeLogs, logsLoading } = useSelector((state) => state.databaseConfiguration);
   const { selectedHostUid } = useSelector((state) => state.host);
   
   const [searchTerm, setSearchTerm] = useState('');

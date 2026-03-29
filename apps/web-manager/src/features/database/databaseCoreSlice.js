@@ -1,0 +1,191 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { databaseApi } from './databaseApi';
+
+export const fetchDatabaseStartInfo = createAsyncThunk(
+  'database/fetchDatabaseStartInfo',
+  async (arg, { rejectWithValue }) => {
+    const hostUid = typeof arg === 'string' ? arg : arg.hostUid;
+    try {
+      const response = await databaseApi.getStartInfo(hostUid);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.response?.data?.error || 'Failed to fetch database information');
+    }
+  }
+);
+
+export const startDatabase = createAsyncThunk(
+  'database/startDatabase',
+  async ({ hostUid, dbname }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.startDatabase(hostUid, dbname);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.response?.data?.error || `Failed to start database ${dbname}`);
+    }
+  }
+);
+
+export const stopDatabase = createAsyncThunk(
+  'database/stopDatabase',
+  async ({ hostUid, dbname }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.stopDatabase(hostUid, dbname);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.response?.data?.error || `Failed to stop database ${dbname}`);
+    }
+  }
+);
+
+export const loginDatabase = createAsyncThunk(
+  'database/loginDatabase',
+  async ({ hostUid, dbname, payload = {} }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.loginDatabase(hostUid, dbname, payload);
+      return { dbname, ...response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.response?.data?.error || `Failed to login to database ${dbname}`);
+    }
+  }
+);
+
+export const registerDatabase = createAsyncThunk(
+  'database/registerDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.registerDatabase(hostUid, dbname, payload);
+      return { dbname, response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.response?.data?.error || `Failed to register database ${dbname}`);
+    }
+  }
+);
+
+// Helper to parse the shared response format
+const parseDbResponse = (state, payload) => {
+  const dbsFound = payload.dblist?.dbs;
+  const activeFound = payload.activelist?.active;
+
+  if (dbsFound) {
+    const newDbs = dbsFound;
+    if (JSON.stringify(state.databases) !== JSON.stringify(newDbs)) {
+      state.databases = newDbs;
+    }
+  }
+
+  if (activeFound) {
+    const newActive = activeFound.map(d => d.dbname);
+    if (JSON.stringify(state.activeDatabases) !== JSON.stringify(newActive)) {
+      state.activeDatabases = newActive;
+    }
+  }
+
+  if (dbsFound) {
+    const exists = state.databases.find(db => db.dbname === state.selectedDatabase);
+    if (!exists) {
+      state.selectedDatabase = null;
+      state.selectedDatabaseSubItem = null;
+    }
+  }
+};
+
+const initialState = {
+  databases: [],
+  activeDatabases: [],
+  selectedDatabase: null,
+  selectedDatabaseSubItem: null,
+  loggedInDatabases: [],
+  loggingInDatabases: {},
+  loading: false,
+  actionLoading: false,
+  error: null,
+};
+
+const databaseCoreSlice = createSlice({
+  name: 'databaseCore',
+  initialState,
+  reducers: {
+    setSelectedDatabase: (state, action) => {
+      if (state.selectedDatabase !== action.payload) {
+        state.selectedDatabase = action.payload;
+        state.selectedDatabaseSubItem = null;
+      }
+    },
+    setSelectedDatabaseSubItem: (state, action) => {
+      state.selectedDatabaseSubItem = action.payload;
+    },
+    clearDatabaseError: (state) => {
+      state.error = null;
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchDatabaseStartInfo.pending, (state, action) => {
+        if (!action.meta.arg?.isBackground) state.loading = true;
+        state.error = null;
+      })
+      .addCase(fetchDatabaseStartInfo.fulfilled, (state, action) => {
+        state.loading = false;
+        parseDbResponse(state, action.payload);
+      })
+      .addCase(fetchDatabaseStartInfo.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+        state.databases = [];
+        state.activeDatabases = [];
+      })
+      .addCase(startDatabase.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(startDatabase.fulfilled, (state, action) => {
+        state.actionLoading = false;
+        parseDbResponse(state, action.payload);
+      })
+      .addCase(startDatabase.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(stopDatabase.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(stopDatabase.fulfilled, (state, action) => {
+        state.actionLoading = false;
+        parseDbResponse(state, action.payload);
+      })
+      .addCase(stopDatabase.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload;
+      })
+      .addCase(loginDatabase.pending, (state, action) => {
+        const { dbname, isBackground } = action.meta.arg || {};
+        if (!isBackground) state.actionLoading = true;
+        if (dbname) state.loggingInDatabases[dbname] = true;
+        state.error = null;
+      })
+      .addCase(loginDatabase.fulfilled, (state, action) => {
+        const { dbname } = action.payload;
+        state.actionLoading = false;
+        if (dbname) state.loggingInDatabases[dbname] = false;
+        if (!state.loggedInDatabases.includes(dbname)) {
+          state.loggedInDatabases.push(dbname);
+        }
+      })
+      .addCase(loginDatabase.rejected, (state, action) => {
+        const { dbname } = action.meta.arg || {};
+        state.actionLoading = false;
+        if (dbname) state.loggingInDatabases[dbname] = false;
+        state.error = action.payload;
+      });
+  }
+});
+
+export const { 
+  setSelectedDatabase, 
+  setSelectedDatabaseSubItem, 
+  clearDatabaseError 
+} = databaseCoreSlice.actions;
+
+export default databaseCoreSlice.reducer;

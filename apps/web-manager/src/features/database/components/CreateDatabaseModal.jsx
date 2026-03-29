@@ -1,15 +1,21 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeCreateDatabaseModal, createDatabase, fetchCreateDatabaseInfo } from '../databaseSlice';
-import { showStatusModal } from '../../layout/layoutSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
-import { Checkbox } from '../../../components/ds/forms/Checkbox';
+import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { Spinner } from '../../../components/ds/foundation/Spinner';
+
+// view states
+const VIEW_FORM    = 'form';
+const VIEW_LOADING = 'loading';
+const VIEW_SUCCESS = 'success';
+const VIEW_ERROR   = 'error';
 
 const PAGE_SIZES = [4096, 8192, 16384, 32768];
 const LOCALES = [
@@ -33,32 +39,43 @@ const STEPS = [
   { id: 4, label: 'Review', icon: 'fact_check' },
 ];
 
-// ── Shared compact section header ────────────────────────────────────────────
+/* ── helpers ─────────────────────────────────────────────────── */
 function SectionLabel({ icon, children }) {
   return (
     <div className="flex items-center gap-2 mb-3">
       <Icon name={icon} size="14px" weight={400} className="text-amber-500" />
-      <span className="text-[10px] font-bold uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">{children}</span>
+      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">{children}</span>
     </div>
   );
 }
 
-// ── Read-only summary row ─────────────────────────────────────────────────────
 function SummaryRow({ label, value, accent }) {
   return (
     <div className="flex items-center justify-between py-2 border-b border-slate-100 dark:border-white/4 last:border-0">
-      <span className="text-[11px] text-slate-500 dark:text-slate-400">{label}</span>
+      <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium">{label}</span>
       <span className={`text-[11px] font-bold font-mono ${accent ? 'text-amber-500' : 'text-slate-700 dark:text-slate-200'}`}>{value}</span>
     </div>
   );
 }
 
+const typeBadge = (t) => {
+  if (t === 'data') return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+  if (t === 'index') return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
+  if (t === 'temp') return 'bg-violet-500/10 text-violet-500 border-violet-500/20';
+  return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
+};
+
+/* ── main component ─────────────────────────────────────────── */
 export default function CreateDatabaseModal() {
   const dispatch = useDispatch();
-  const { isCreateDatabaseModalOpen, actionLoading } = useSelector((state) => state.database);
+  const { isCreateDatabaseModalOpen } = useSelector((state) => state.databaseUI);
   const { selectedHostUid } = useSelector((state) => state.host);
 
+  const [view, setView] = useState(VIEW_FORM);
   const [step, setStep] = useState(1);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
+
   const [formData, setFormData] = useState({
     dbName: '',
     pageSize: 16384,
@@ -81,6 +98,10 @@ export default function CreateDatabaseModal() {
 
   useEffect(() => {
     if (isCreateDatabaseModalOpen && selectedHostUid) {
+      setStep(1);
+      setView(VIEW_FORM);
+      setErrorMsg('');
+      setSuccessMsg('');
       dispatch(fetchCreateDatabaseInfo({ hostUid: selectedHostUid }))
         .unwrap()
         .then(data => {
@@ -96,7 +117,7 @@ export default function CreateDatabaseModal() {
             }));
           }
         })
-        .catch(err => console.warn('Failed to fetch default DB dir:', err));
+        .catch(() => {});
     }
   }, [isCreateDatabaseModalOpen, selectedHostUid, dispatch]);
 
@@ -138,22 +159,15 @@ export default function CreateDatabaseModal() {
 
   const isFormValid = () => {
     if (step === 1) return formData.dbName && formData.genericVolPath && formData.logVolPath;
-    if (step === 3) return formData.dbaPassword && formData.dbaPassword === formData.confirmPassword;
+    if (step === 3) return formData.dbaPassword && formData.dbaPassword === formData.confirmPassword && formData.dbaPassword.length >= 8;
     return true;
   };
 
   const handleFinish = async () => {
-    if (!selectedHostUid) {
-      dispatch(showStatusModal({
-        type: 'error',
-        title: 'Target host missing',
-        message: 'Please select a host first.'
-      }));
-      return;
-    }
+    if (!selectedHostUid) return;
 
+    setView(VIEW_LOADING);
     try {
-      // Map extra volumes to backend format
       const exvol = formData.volumes.map(vol => ({
         [vol.name]: {
           volpath: vol.path,
@@ -177,25 +191,18 @@ export default function CreateDatabaseModal() {
           userpass: formData.dbaPassword
         },
         setAutoStart: formData.autoStart,
-        // The backend expects numpage for generic and log volumes
       };
 
       await dispatch(createDatabase({ hostUid: selectedHostUid, payload })).unwrap();
-      
-      dispatch(showStatusModal({
-        type: 'success',
-        title: 'Database Created',
-        message: `Successfully created database "${formData.dbName}" on host.`
-      }));
-      dispatch(closeCreateDatabaseModal());
+      setSuccessMsg(`Database "${formData.dbName}" has been successfully initialized and commissioned.`);
+      setView(VIEW_SUCCESS);
     } catch (error) {
-      dispatch(showStatusModal({
-        type: 'error',
-        title: 'Creation Failed',
-        message: typeof error === 'string' ? error : (error.message || 'An error occurred during database creation.')
-      }));
+      setErrorMsg(typeof error === 'string' ? error : (error.message || 'An unexpected error occurred during database creation.'));
+      setView(VIEW_ERROR);
     }
   };
+
+  const handleClose = () => dispatch(closeCreateDatabaseModal());
 
   const totalStorage = formData.genericVolSize + formData.logVolSize + formData.volumes.reduce((a, v) => a + v.size, 0);
   const pwRules = [
@@ -204,26 +211,151 @@ export default function CreateDatabaseModal() {
     { text: 'At least one special symbol', ok: /[!@#$%^&*(),.?":{}|<>]/.test(formData.dbaPassword) },
   ];
 
-  // ── Volume type badge colours ─────────────────────────────────────────────
-  const typeBadge = (t) => {
-    if (t === 'data') return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    if (t === 'index') return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-    if (t === 'temp') return 'bg-violet-500/10 text-violet-500 border-violet-500/20';
-    return 'bg-slate-500/10 text-slate-400 border-slate-500/20';
-  };
+  /* ─── LOADING view ─── */
+  if (view === VIEW_LOADING) {
+    return (
+      <Modal isOpen title="Initializing Instance" icon="add_circle" onClose={handleClose} maxWidth="600px">
+        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
+          <div className="relative w-[72px] h-[72px]">
+            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
+            <div
+              className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin"
+              style={{ animationDuration: '0.9s' }}
+            />
+            <div
+              className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-bk-yellow/35 animate-spin"
+              style={{ animationDuration: '1.7s', animationDirection: 'reverse' }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full bg-bk-yellow shadow-[0_0_10px_3px_rgba(255,193,7,0.3)] animate-pulse" />
+            </div>
+          </div>
 
+          <div className="space-y-1.5 px-8">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Creating Database Structure
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium max-w-[320px] mx-auto leading-relaxed">
+              Allocating volume space and initializing the system catalog for <span className="text-slate-900 dark:text-white font-black">{formData.dbName}</span>.
+            </Typography>
+          </div>
+
+          <div className="w-44 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-bk-yellow rounded-full"
+              style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/4 border border-slate-100 dark:border-white/5">
+            <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow animate-pulse" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">In Progress</span>
+          </div>
+
+          <style>{`
+            @keyframes modalSlide {
+              0%   { transform: translateX(-100%); width: 50%; }
+              50%  { transform: translateX(100%);  width: 60%; }
+              100% { transform: translateX(200%);  width: 50%; }
+            }
+          `}</style>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── SUCCESS view ─── */
+  if (view === VIEW_SUCCESS) {
+    return (
+      <Modal isOpen title="Database Created" icon="add_circle" iconVariant="success" onClose={handleClose} maxWidth="600px">
+        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
+              <Icon name="verified" size="lg" weight={700} className="text-white" />
+            </div>
+          </div>
+
+          <div className="space-y-2 px-8">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Initialization Complete
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[340px] mx-auto">
+              Instance <span className="font-black text-slate-900 dark:text-white">{formData.dbName}</span> is now active and ready for data ingest.
+            </Typography>
+          </div>
+
+          {successMsg && (
+            <div className="w-full max-w-[420px] bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-4 py-3.5 text-left">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Icon name="rule" size="xs" weight={300} className="text-emerald-500" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Status Report</span>
+              </div>
+              <Typography variant="caption" className="text-emerald-600 dark:text-emerald-400/80 font-medium leading-relaxed">
+                {successMsg}
+              </Typography>
+            </div>
+          )}
+
+          <Button variant="secondary" onClick={handleClose}>Access Instance</Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── ERROR view ─── */
+  if (view === VIEW_ERROR) {
+    return (
+      <Modal isOpen title="Creation Failed" icon="add_circle" iconVariant="danger" onClose={handleClose} maxWidth="600px">
+        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
+          <div className="relative">
+            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
+              <Icon name="error" size="md" weight={300} className="text-white" />
+            </div>
+          </div>
+
+          <div className="space-y-2 px-6">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Action Interrupted
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[300px] mx-auto">
+              The initialization sequence for <span className="font-bold text-slate-900 dark:text-white">{formData.dbName}</span> was halted.
+            </Typography>
+          </div>
+
+          <div className="w-full max-w-[420px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">System Trace</span>
+            </div>
+            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
+              {errorMsg}
+            </Typography>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
+            <Button variant="danger" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); setStep(1); }}>
+              Retry Setup
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── FORM view ─── */
   return (
     <Modal
       isOpen={isCreateDatabaseModalOpen}
-      onClose={() => dispatch(closeCreateDatabaseModal())}
+      onClose={handleClose}
       title="Create Database"
       subtitle={`Step ${step} of 4 — ${STEPS[step - 1].label}`}
       icon="add_circle"
       maxWidth="780px"
-      loading={actionLoading}
       footer={
         <div className="flex w-full items-center justify-between">
-          {/* Step dots */}
           <div className="flex items-center gap-1.5">
             {STEPS.map(s => (
               <div
@@ -238,83 +370,68 @@ export default function CreateDatabaseModal() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              onClick={() => dispatch(closeCreateDatabaseModal())}
-            >
-              Cancel
-            </Button>
+            <Button variant="ghost" onClick={handleClose}>Cancel</Button>
             {step > 1 && (
-                <Button
-                  variant="outline"
-                  onClick={handleBack}
-                  icon="chevron_left"
-                >
-                  Back
-                </Button>
+              <Button variant="outline" onClick={handleBack} icon="chevron_left">
+                Back
+              </Button>
             )}
             {step < 4 ? (
-                <Button
-                  variant="primary"
-                  onClick={handleNext}
-                  disabled={!isFormValid()}
-                  icon="chevron_right"
-                  iconPosition="right"
-                >
-                  Continue
-                </Button>
+              <Button
+                variant="primary"
+                onClick={handleNext}
+                disabled={!isFormValid()}
+                icon="chevron_right"
+                iconPosition="right"
+              >
+                Continue
+              </Button>
             ) : (
-                <Button
-                  variant="primary"
-                  onClick={handleFinish}
-                  icon="done_all"
-                >
-                  Create database
-                </Button>
+              <Button variant="primary" onClick={handleFinish} icon="done_all">
+                Create database
+              </Button>
             )}
           </div>
         </div>
       }
     >
       <div className="space-y-0">
-        {/* ── Inline Step Track ─────────────────────────────────────────── */}
+        {/* Step Track */}
         <div className="flex items-center gap-0 mb-5 px-1">
           {STEPS.map((s, idx) => (
             <React.Fragment key={s.id}>
-              <div className="flex items-center gap-1.5 shrink-0">
-                <div className={`w-5 h-5 rounded-full flex items-center justify-center border text-[10px] font-black transition-all duration-300 ${
+              <div className="flex items-center gap-2 shrink-0">
+                <div className={`w-6 h-6 rounded-xl flex items-center justify-center border text-[10px] font-black transition-all duration-300 ${
                   step > s.id
                     ? 'bg-amber-500 border-amber-500 text-white'
                     : step === s.id
-                    ? 'bg-amber-500/10 border-amber-500 text-amber-500'
+                    ? 'bg-amber-500/10 border-amber-500 text-amber-500 shadow-[0_0_12px_rgba(255,193,7,0.1)]'
                     : 'bg-transparent border-slate-200 dark:border-white/10 text-slate-400'
                 }`}>
                   {step > s.id
-                    ? <Icon name="check" size="11px" weight={600} />
+                    ? <Icon name="check" size="11px" weight={700} />
                     : <span>{s.id}</span>
                   }
                 </div>
-                <span className={`text-[11px] font-semibold transition-colors ${
+                <span className={`text-[11px] font-bold transition-colors uppercase tracking-widest ${
                   step === s.id ? 'text-amber-600 dark:text-amber-400' :
                   step > s.id ? 'text-slate-400 dark:text-slate-500' :
                   'text-slate-300 dark:text-slate-600'
                 }`}>{s.label}</span>
               </div>
               {idx < STEPS.length - 1 && (
-                <div className={`flex-1 mx-2 h-px transition-all duration-500 ${step > s.id ? 'bg-amber-500/40' : 'bg-slate-100 dark:bg-white/6'}`} />
+                <div className={`flex-1 mx-3 h-px transition-all duration-500 ${step > idx + 1 ? 'bg-amber-500/30' : 'bg-slate-100 dark:bg-white/6'}`} />
               )}
             </React.Fragment>
           ))}
         </div>
 
-        {/* ── STEP 1: General Info ───────────────────────────────────────── */}
+        {/* STEP 1: General Info */}
         {step === 1 && (
           <div className="space-y-5 animate-in fade-in duration-200">
-
-            {/* Basic Config */}
-            <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-lg p-4">
+            <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
               <SectionLabel icon="settings">Basic Configuration</SectionLabel>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Database name"
                   value={formData.dbName}
@@ -331,9 +448,8 @@ export default function CreateDatabaseModal() {
               </div>
             </div>
 
-            {/* Locale */}
-            <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-lg p-4">
-              <SectionLabel icon="language">Locale &amp; Encoding</SectionLabel>
+            <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
+              <SectionLabel icon="language">Locale & Encoding</SectionLabel>
               <Select
                 label="Region locale"
                 value={formData.locale}
@@ -352,170 +468,162 @@ export default function CreateDatabaseModal() {
               )}
             </div>
 
-            {/* Volume Paths */}
-            <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-lg p-4">
-              <SectionLabel icon="folder_open">Initial Volume Paths</SectionLabel>
-              <div className="grid grid-cols-2 gap-3">
-                {/* Generic Volume */}
-                <div className="space-y-2 p-3 bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/4 rounded-lg">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                      <Icon name="storage" size="13px" weight={400} className="text-amber-500" />
+            <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
+              <SectionLabel icon="folder_open">Volume Mapping</SectionLabel>
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-3 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <Icon name="storage" size="14px" weight={400} className="text-amber-500" />
                       Generic Volume
                     </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-amber-500/10 text-amber-500 border border-amber-500/20">Required</span>
+                    <span className="text-[9px] font-black uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-sm border border-amber-500/20">System</span>
                   </div>
-                  <Input label="Path" value={formData.genericVolPath} disabled size="sm" />
-                  <Input label="Initial size (MB)" type="number" value={formData.genericVolSize} onChange={(e) => handleInputChange('genericVolSize', Number(e.target.value))} size="sm" />
+                  <Input label="Storage Path" value={formData.genericVolPath} disabled size="sm" />
+                  <Input label="Volume Size (MB)" type="number" value={formData.genericVolSize} onChange={(e) => handleInputChange('genericVolSize', Number(e.target.value))} size="sm" />
                 </div>
 
-                {/* Log Volume */}
-                <div className="space-y-2 p-3 bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/4 rounded-lg">
-                  <div className="flex items-center justify-between mb-1">
-                    <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300 flex items-center gap-1.5">
-                      <Icon name="history" size="13px" weight={400} className="text-amber-500" />
+                <div className="space-y-3 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                      <Icon name="history" size="14px" weight={400} className="text-amber-500" />
                       Log Volume
                     </span>
-                    <span className="text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm bg-amber-500/10 text-amber-500 border border-amber-500/20">Required</span>
+                    <span className="text-[9px] font-black uppercase bg-rose-500/10 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-sm border border-rose-500/20">Critical</span>
                   </div>
-                  <Input label="Path" value={formData.logVolPath} disabled size="sm" />
+                  <Input label="Log Path" value={formData.logVolPath} disabled size="sm" />
                   <div className="grid grid-cols-2 gap-2">
                     <Input label="Size (MB)" type="number" value={formData.logVolSize} onChange={(e) => handleInputChange('logVolSize', Number(e.target.value))} size="sm" />
-                    <Select label="Page size" value={formData.logPageSize} onChange={(e) => handleInputChange('logPageSize', parseInt(e.target.value))} options={PAGE_SIZES.map(s => ({ value: s, label: `${s / 1024}K` }))} size="sm" />
+                    <Select label="Page Size" value={formData.logPageSize} onChange={(e) => handleInputChange('logPageSize', parseInt(e.target.value))} options={PAGE_SIZES.map(s => ({ value: s, label: `${s / 1024}K` }))} size="sm" />
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* Auto-start toggle */}
-            <div className="flex items-center justify-between px-4 py-3 bg-amber-500/4 border border-amber-500/10 rounded-lg">
-              <div className="flex items-center gap-2.5">
-                <Icon name={formData.autoStart ? 'flash_on' : 'flash_off'} size="16px" weight={300} className="text-amber-500" />
+            <div 
+              className={`flex items-center justify-between p-4 border rounded-2xl transition-all duration-200 cursor-pointer select-none
+                ${formData.autoStart ? 'bg-amber-500/5 border-amber-500/20' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5'}`}
+              onClick={() => handleInputChange('autoStart', !formData.autoStart)}
+            >
+              <div className="flex items-center gap-3">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center border transition-all ${formData.autoStart ? 'bg-amber-500 text-white border-amber-400' : 'bg-slate-100 dark:bg-white/5 border-transparent text-slate-400'}`}>
+                  <Icon name={formData.autoStart ? 'flash_on' : 'flash_off'} size="sm" weight={300} />
+                </div>
                 <div>
-                  <p className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 leading-none">Auto-start database</p>
-                  <p className="text-[10px] text-slate-400 mt-0.5">Initialize and start automatically after creation</p>
+                  <Typography variant="p" className={`text-[12px] font-bold transition-colors ${formData.autoStart ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>Auto-Provisioning</Typography>
+                  <Typography variant="caption" className="text-slate-400 font-medium leading-none">Activate entire ecosystem post-initialization</Typography>
                 </div>
               </div>
-              <Checkbox checked={formData.autoStart} onChange={(e) => handleInputChange('autoStart', e.target.checked)} />
+              <div onClick={(e) => e.stopPropagation()}>
+                <Toggle checked={formData.autoStart} onChange={(v) => handleInputChange('autoStart', v)} color="amber" />
+              </div>
             </div>
           </div>
         )}
 
-        {/* ── STEP 2: Volumes ────────────────────────────────────────────── */}
+        {/* STEP 2: Volumes */}
         {step === 2 && (
           <div className="animate-in fade-in duration-200 space-y-4">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-[13px] font-semibold text-slate-700 dark:text-slate-200">Volume management</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Configure storage volumes for data, index, and temp operations.</p>
+                <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">Active Volume Topology</Typography>
+                <Typography variant="p" className="text-[11px] text-slate-500 font-medium">Provision secondary storage for data shards and index blocks.</Typography>
               </div>
-              <button
+              <Button
+                variant="primary"
+                size="sm"
                 onClick={addVolume}
-                className="h-7 px-3 flex items-center gap-1.5 text-[11px] font-semibold bg-amber-500 text-white rounded-sm hover:bg-amber-400 transition-all shadow-xs shadow-amber-500/20"
+                icon="add_box"
               >
-                <Icon name="add" size="13px" weight={400} />
-                Add volume
-              </button>
+                Provision Volume
+              </Button>
             </div>
 
-            <div className="border border-slate-100 dark:border-white/6 rounded-lg">
-              {/* Table header */}
-              <div className="grid grid-cols-[1fr_100px_80px_1fr_36px] bg-slate-50 dark:bg-white/2 border-b border-slate-100 dark:border-white/6 px-3 py-2">
-                {['Name', 'Type', 'Size (MB)', 'Path', ''].map((h, i) => (
-                  <span key={i} className="text-[9px] font-bold uppercase tracking-widest text-slate-400">{h}</span>
+            <div className="border border-slate-100 dark:border-white/8 rounded-2xl overflow-hidden bg-white dark:bg-white/1">
+              <div className="grid grid-cols-[1fr_120px_100px_1.5fr_44px] bg-slate-50 dark:bg-white/3 border-b border-slate-100 dark:border-white/8 px-4 py-2.5">
+                {['Identifier', 'Segment', 'Size MB', 'Absolute Path', ''].map((h, i) => (
+                  <span key={i} className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{h}</span>
                 ))}
               </div>
 
-              {/* Table body */}
-              <div className="divide-y divide-slate-100 dark:divide-white/4">
+              <div className="divide-y divide-slate-100 dark:divide-white/4 max-h-[320px] overflow-y-auto custom-scrollbar">
                 {formData.volumes.map((vol, idx) => (
-                  <div key={idx} className="grid grid-cols-[1fr_100px_80px_1fr_36px] items-center gap-0 px-3 py-1.5 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors group">
-                    <div className="pr-2">
-                      <Input value={vol.name} onChange={(e) => handleVolumeChange(idx, 'name', e.target.value)} size="sm" />
+                  <div key={idx} className="grid grid-cols-[1fr_120px_100px_1.5fr_44px] items-center gap-0 px-4 py-2 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors group">
+                    <div className="pr-3">
+                      <Input value={vol.name} onChange={(e) => handleVolumeChange(idx, 'name', e.target.value)} size="sm" className="font-mono text-[11px]" />
                     </div>
-                    <div className="pr-2">
+                    <div className="pr-3">
                       <Select value={vol.type} onChange={(e) => handleVolumeChange(idx, 'type', e.target.value)} options={VOLUME_TYPES} size="sm" />
                     </div>
-                    <div className="pr-2">
-                      <Input type="number" value={vol.size} onChange={(e) => handleVolumeChange(idx, 'size', Number(e.target.value))} size="sm" />
+                    <div className="pr-3">
+                      <Input type="number" value={vol.size} onChange={(e) => handleVolumeChange(idx, 'size', Number(e.target.value))} size="sm" suffix="MB" />
                     </div>
-                    <div className="pr-2">
-                      <Input value={vol.path} onChange={(e) => handleVolumeChange(idx, 'path', e.target.value)} size="sm" />
+                    <div className="pr-1">
+                      <Input value={vol.path} onChange={(e) => handleVolumeChange(idx, 'path', e.target.value)} size="sm" className="font-mono text-[10px]" />
                     </div>
                     <button
                       onClick={() => removeVolume(idx)}
-                      className="w-7 h-7 flex items-center justify-center rounded-sm text-slate-300 dark:text-slate-600 hover:bg-rose-500/10 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100"
+                      className="w-8 h-8 flex items-center justify-center rounded-xl text-slate-300 hover:bg-rose-500/10 hover:text-rose-500 transition-all opacity-0 group-hover:opacity-100 cursor-pointer"
                     >
-                      <Icon name="close" size="14px" weight={400} />
+                      <Icon name="delete_outline" size="sm" weight={300} />
                     </button>
                   </div>
                 ))}
               </div>
 
-              {/* Type legend */}
-              <div className="flex items-center gap-3 px-3 py-2 border-t border-slate-100 dark:border-white/4 bg-slate-50/50 dark:bg-white/1">
+              <div className="flex items-center gap-4 px-4 py-2.5 border-t border-slate-100 dark:border-white/4 bg-slate-50/50 dark:bg-white/1">
                 {VOLUME_TYPES.map(vt => (
-                  <span key={vt.value} className={`text-[9px] font-bold uppercase tracking-wider px-1.5 py-0.5 rounded-sm border ${typeBadge(vt.value)}`}>{vt.label}</span>
+                  <span key={vt.value} className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border ${typeBadge(vt.value)}`}>{vt.label}</span>
                 ))}
               </div>
-            </div>
-
-            <div className="flex items-start gap-2.5 p-3 bg-amber-500/4 border border-amber-500/10 rounded-lg">
-              <Icon name="info" size="14px" weight={300} className="text-amber-500 mt-px shrink-0" />
-              <p className="text-[11px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                Distribute volumes across physical disks to optimize I/O. Separate data, index, and temp volumes for best performance.
-              </p>
             </div>
           </div>
         )}
 
-        {/* ── STEP 3: DBA Password ───────────────────────────────────────── */}
+        {/* STEP 3: Access Control */}
         {step === 3 && (
-          <div className="animate-in fade-in duration-200 space-y-4 max-w-sm mx-auto py-2">
-            {/* Icon header */}
-            <div className="flex flex-col items-center gap-3 text-center pb-2">
-              <div className="w-12 h-12 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
-                <Icon name="admin_panel_settings" size="22px" weight={300} />
+          <div className="animate-in fade-in duration-200 space-y-6 max-w-sm mx-auto py-6">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_8px_32px_rgba(255,193,7,0.1)]">
+                <Icon name="admin_panel_settings" size="lg" weight={300} />
               </div>
-              <div>
-                <p className="text-[13px] font-bold text-slate-700 dark:text-slate-200">Account Security</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Set the administrative password for the <span className="font-bold text-amber-500 uppercase tracking-wider">dba</span> account</p>
+              <div className="space-y-1">
+                <Typography variant="h4" className="text-[16px] font-black text-slate-800 dark:text-white tracking-tight">Access Guardian</Typography>
+                <Typography variant="p" className="text-[11px] text-slate-500 font-medium">Initialize the core <span className="font-black text-amber-500 uppercase">dba</span> administrative token.</Typography>
               </div>
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-4">
               <Input
                 type="password"
-                label="DBA password"
+                label="Primary DBA Token"
                 value={formData.dbaPassword}
                 onChange={(e) => handleInputChange('dbaPassword', e.target.value)}
-                placeholder="••••••••••••"
+                placeholder="Strength required"
+                icon="key"
               />
               <Input
                 type="password"
-                label="Confirm password"
+                label="Verify Token"
                 value={formData.confirmPassword}
                 onChange={(e) => handleInputChange('confirmPassword', e.target.value)}
-                placeholder="••••••••••••"
-                error={(formData.confirmPassword && formData.dbaPassword !== formData.confirmPassword) ? "Passwords don't match" : ""}
+                placeholder="Confirm entry"
+                icon="verified_user"
+                error={(formData.confirmPassword && formData.dbaPassword !== formData.confirmPassword) ? "Tokens do not match" : ""}
               />
             </div>
 
-            {/* Password strength rules */}
-            <div className="p-3.5 bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-lg space-y-2">
-              <div className="flex items-center gap-1.5 mb-2">
-                <Icon name="security" size="13px" weight={400} className="text-amber-500" />
-                <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400">Password requirements</span>
+            <div className="p-4 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl space-y-3">
+              <div className="flex items-center gap-2 mb-1">
+                <Icon name="security_update_good" size="xs" weight={400} className="text-amber-500" />
+                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security Heuristics</span>
               </div>
               {pwRules.map((rule, i) => (
-                <div key={i} className="flex items-center gap-2">
-                  <Icon
-                    name={rule.ok ? 'check_circle' : 'radio_button_unchecked'}
-                    size="13px"
-                    weight={rule.ok ? 400 : 300}
-                    className={rule.ok ? 'text-emerald-500' : 'text-slate-300 dark:text-slate-700'}
-                  />
-                  <span className={`text-[11px] font-medium transition-colors ${rule.ok ? 'text-slate-600 dark:text-slate-300' : 'text-slate-400 dark:text-slate-600'}`}>
+                <div key={i} className="flex items-center gap-3">
+                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${rule.ok ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-700'}`}>
+                    <Icon name={rule.ok ? 'check' : 'close'} size="10px" weight={900} />
+                  </div>
+                  <span className={`text-[11px] font-bold transition-colors ${rule.ok ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600'}`}>
                     {rule.text}
                   </span>
                 </div>
@@ -524,61 +632,59 @@ export default function CreateDatabaseModal() {
           </div>
         )}
 
-        {/* ── STEP 4: Review & Summary ───────────────────────────────────── */}
+        {/* STEP 4: Commisioning Review */}
         {step === 4 && (
-          <div className="animate-in fade-in duration-200 space-y-4">
-            {/* Ready banner */}
-            <div className="flex items-center gap-3 p-3.5 bg-emerald-500/5 border border-emerald-500/15 rounded-lg">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500 flex items-center justify-center text-white shrink-0">
-                <Icon name="done_all" size="16px" weight={400} />
+          <div className="animate-in fade-in duration-200 space-y-5">
+            <div className="flex items-center gap-4 p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl">
+              <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-[0_4px_16px_rgba(16,185,129,0.3)]">
+                <Icon name="verified" size="md" weight={400} />
               </div>
               <div>
-                <p className="text-[12px] font-bold text-slate-700 dark:text-slate-200">Ready for initialization</p>
-                <p className="text-[11px] text-slate-400 mt-0.5">Review your configuration before creating the database.</p>
+                <Typography variant="p" className="text-[12.5px] font-black text-slate-800 dark:text-white leading-none">Topology Verified</Typography>
+                <Typography variant="p" className="text-[11px] text-slate-500 font-medium mt-1">Review finalized manifest before deploying to host.</Typography>
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-3">
-              {/* Parameters */}
-              <div className="p-4 bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-lg">
-                <SectionLabel icon="tune">Parameters</SectionLabel>
-                <SummaryRow label="Database Name" value={formData.dbName} accent />
-                <SummaryRow label="Page Size" value={`${formData.pageSize / 1024} KB`} />
-                <SummaryRow label="Locale" value={formData.locale === 'user_defined' ? formData.userDefinedLocale : formData.locale.split('.')[1]} />
-                <SummaryRow label="Auto-start" value={formData.autoStart ? 'Enabled' : 'Disabled'} />
+            <div className="grid grid-cols-2 gap-4">
+              <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
+                <SectionLabel icon="tune">Heuristics</SectionLabel>
+                <div className="space-y-0.5 mt-1">
+                  <SummaryRow label="Primary Identifier" value={formData.dbName} accent />
+                  <SummaryRow label="Base Page Topology" value={`${formData.pageSize / 1024} KB`} />
+                  <SummaryRow label="Execution Locale" value={formData.locale === 'user_defined' ? formData.userDefinedLocale : formData.locale.split('.')[0]} />
+                  <SummaryRow label="Automatic Ignition" value={formData.autoStart ? 'Ready' : 'Manual'} />
+                </div>
               </div>
 
-              {/* Storage */}
-              <div className="p-4 bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-lg">
-                <SectionLabel icon="hard_drive">Storage</SectionLabel>
-                <SummaryRow label="Total Volumes" value={`${formData.volumes.length + 2}`} />
-                <SummaryRow label="Generic Volume" value={`${formData.genericVolSize} MB`} />
-                <SummaryRow label="Log Volume" value={`${formData.logVolSize} MB`} />
-                <SummaryRow label="Custom Volumes" value={`${formData.volumes.reduce((a, v) => a + v.size, 0)} MB`} />
-                <div className="flex items-center justify-between pt-2.5 mt-0.5 border-t border-slate-100 dark:border-white/4">
-                  <span className="text-[11px] font-bold text-slate-500">Total Footprint</span>
-                  <span className="text-[14px] font-black font-mono text-emerald-500">{totalStorage} MB</span>
+              <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
+                <SectionLabel icon="hard_drive">Physical Footprint</SectionLabel>
+                <div className="space-y-0.5 mt-1">
+                  <SummaryRow label="Segment Count" value={`${formData.volumes.length + 2}`} />
+                  <SummaryRow label="System Volume" value={`${formData.genericVolSize} MB`} />
+                  <SummaryRow label="Transmission Logs" value={`${formData.logVolSize} MB`} />
+                  <div className="flex items-center justify-between pt-3 mt-1.5 border-t border-slate-100 dark:border-white/4">
+                    <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Total Projection</span>
+                    <span className="text-[16px] font-black font-mono text-emerald-500 tracking-tight">{totalStorage} MB</span>
+                  </div>
                 </div>
               </div>
             </div>
 
-            {/* Volume list */}
-            <div className="border border-slate-100 dark:border-white/5 rounded-lg overflow-hidden">
-              <div className="px-3 py-2 bg-slate-50 dark:bg-white/2 border-b border-slate-100 dark:border-white/5">
-                <SectionLabel icon="storage">Configured Volumes</SectionLabel>
+            <div className="border border-slate-100 dark:border-white/8 rounded-2xl overflow-hidden shadow-xs">
+              <div className="px-4 py-2.5 bg-slate-50/50 dark:bg-white/3 border-b border-slate-100 dark:border-white/8">
+                <SectionLabel icon="storage">Segment Manifest</SectionLabel>
               </div>
-              <div className="divide-y divide-slate-50 dark:divide-white/3">
-                {/* Implicit volumes */}
+              <div className="divide-y divide-slate-100 dark:divide-white/4 max-h-[160px] overflow-y-auto custom-scrollbar">
                 {[
-                  { name: `${formData.dbName}_generic`, type: 'generic', size: formData.genericVolSize, path: formData.genericVolPath },
-                  { name: `${formData.dbName}_log`, type: 'generic', size: formData.logVolSize, path: formData.logVolPath },
+                  { name: `${formData.dbName}_primary`, type: 'generic', size: formData.genericVolSize },
+                  { name: `${formData.dbName}_log`, type: 'generic', size: formData.logVolSize },
                   ...formData.volumes
                 ].map((vol, idx) => (
-                  <div key={idx} className="flex items-center gap-3 px-3 py-2">
-                    <Icon name="storage" size="13px" weight={300} className="text-slate-300 dark:text-slate-600 shrink-0" />
-                    <span className="text-[11px] font-mono text-slate-600 dark:text-slate-300 flex-1 truncate">{vol.name}</span>
-                    <span className={`text-[9px] font-bold uppercase px-1.5 py-0.5 rounded-sm border ${typeBadge(vol.type)}`}>{vol.type}</span>
-                    <span className="text-[10px] font-bold font-mono text-slate-500 w-14 text-right">{vol.size} MB</span>
+                  <div key={idx} className="flex items-center gap-3 px-4 py-2.5 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors">
+                    <Icon name="storage" size="14px" weight={300} className="text-slate-400 shrink-0" />
+                    <span className="text-[11px] font-mono font-bold text-slate-600 dark:text-slate-300 flex-1 truncate">{vol.name}</span>
+                    <span className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border leading-tight ${typeBadge(vol.type)}`}>{vol.type}</span>
+                    <span className="text-[11px] font-black font-mono text-slate-700 dark:text-slate-300 w-16 text-right tabular-nums">{vol.size} MB</span>
                   </div>
                 ))}
               </div>

@@ -2,7 +2,7 @@ import { useDispatch, useSelector } from 'react-redux';
 import { DropdownMenu, SubMenu, MenuItem, MenuDivider } from '../../../components/common/DropdownMenu';
 import { openTab, showStatusModal, setActiveMainTab } from '../layoutSlice';
 import { openAddHostModal, openEditHostModal, startService, stopService, openServerVersionModal, openImportExportModal } from '../../host/hostSlice';
-import { startDatabase, stopDatabase, openOptimizeDatabaseModal, fetchDatabaseStartInfo } from '../../database/databaseSlice';
+import { startDatabase, stopDatabase, fetchDatabaseStartInfo } from '../../database/databaseSlice';
 import { startBroker, stopBroker, fetchBrokerList } from '../../broker/brokerSlice';
 import { setAboutCubrid } from '../appBarSlice';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -97,12 +97,6 @@ export default function HeaderMenu() {
                 dispatch(showStatusModal({ type: 'error', title: 'Action Failed', message: err }));
               });
           }}
-        />
-        <MenuItem
-          icon="auto_fix_high"
-          label="Optimize Database"
-          disabled={!selectedDatabase}
-          onClick={() => dispatch(openOptimizeDatabaseModal())}
         />
         <MenuDivider />
         <MenuItem

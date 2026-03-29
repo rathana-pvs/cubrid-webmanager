@@ -21,12 +21,22 @@ export default function DatabaseListSection({ dbListDisplay, handleAutoStartTogg
       accessor: 'autoStart',
       className: 'text-center',
       render: (val, row) => (
-        <input
-          type="checkbox"
-          className="size-3.5 rounded-sm border-slate-300 dark:border-slate-700 bg-white dark:bg-background-dark text-amber-500 focus:ring-amber-500/50 cursor-pointer accent-amber-500"
-          checked={val}
-          onChange={() => handleAutoStartToggle(row.db, val)}
-        />
+        <button
+          type="button"
+          role="switch"
+          aria-checked={val}
+          onClick={() => handleAutoStartToggle(row.db, val)}
+          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50
+            ${val
+              ? 'bg-amber-500 border-amber-500'
+              : 'bg-slate-200 dark:bg-white/10 border-slate-300 dark:border-white/15'
+            }`}
+        >
+          <span
+            className={`inline-block h-2.5 w-2.5 rounded-full bg-white shadow-sm transform transition-transform duration-200
+              ${val ? 'translate-x-3' : 'translate-x-0.5'}`}
+          />
+        </button>
       )
     },
     {

@@ -1,7 +1,11 @@
 import { configureStore, combineReducers } from '@reduxjs/toolkit';
 import layoutReducer from '../features/layout/layoutSlice';
 import serverReducer from '../features/server/serverSlice';
-import databaseReducer from '../features/database/databaseSlice';
+import databaseCoreReducer from '../features/database/databaseCoreSlice';
+import databaseMonitoringReducer from '../features/database/databaseMonitoringSlice';
+import databaseOperationReducer from '../features/database/databaseOperationSlice';
+import databaseUIReducer from '../features/database/databaseUISlice';
+import databaseConfigurationReducer from '../features/database/databaseConfigurationSlice';
 import brokerReducer from '../features/broker/brokerSlice';
 import hostReducer from '../features/host/hostSlice';
 import userReducer from '../features/user/userSlice';
@@ -17,7 +21,11 @@ const combinedReducer = combineReducers({
   appBar: appBarReducer,
   server: serverReducer,
   monitoring: monitoringReducer,
-  database: databaseReducer,
+  database: databaseCoreReducer,
+  databaseMonitoring: databaseMonitoringReducer,
+  databaseOperation: databaseOperationReducer,
+  databaseUI: databaseUIReducer,
+  databaseConfiguration: databaseConfigurationReducer,
   broker: brokerReducer,
   host: hostReducer,
   user: userReducer,

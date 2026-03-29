@@ -13,23 +13,35 @@ export default function ContextMenuWrapper({ x, y, children, onClose, width = "w
       const rect = menuRef.current.getBoundingClientRect();
       const viewportWidth = window.innerWidth;
       const viewportHeight = window.innerHeight;
+      const padding = 18;
 
       let newLeft = x;
       let newTop = y;
 
       // Check right edge
-      if (x + rect.width > viewportWidth) {
-        newLeft = x - rect.width;
+      if (x + rect.width + padding > viewportWidth) {
+        newLeft = Math.max(padding, x - rect.width);
       }
 
       // Check bottom edge
-      if (y + rect.height > viewportHeight) {
+      if (y + rect.height + padding > viewportHeight) {
+        // Try flipping up first
         newTop = y - rect.height;
+        
+        // If flipping up still overflows the top, or if we prefer just pushing it up
+        if (newTop < padding) {
+          // If it can't fit even when flipped, cap the height and position at top
+          newTop = padding;
+        }
       }
 
-      // Keep within bounds
-      newLeft = Math.max(5, newLeft);
-      newTop = Math.max(5, newTop);
+      // Ensure it doesn't go off the right/bottom if we pushed it
+      newLeft = Math.min(newLeft, viewportWidth - rect.width - padding);
+      newTop = Math.min(newTop, viewportHeight - rect.height - padding);
+
+      // Final bounds check
+      newLeft = Math.max(padding, newLeft);
+      newTop = Math.max(padding, newTop);
 
       setPosition({ top: newTop, left: newLeft });
       setIsPositioned(true);
@@ -39,7 +51,7 @@ export default function ContextMenuWrapper({ x, y, children, onClose, width = "w
   return (
     <div
       ref={menuRef}
-      className={`fixed z-1000 ${width} bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-xl shadow-[0_4px_25px_rgba(0,0,0,0.2)] py-1.5 animate-in fade-in zoom-in-95 duration-200 context-menu-container ${isPositioned ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+      className={`fixed z-1000 ${width} bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-xl shadow-[0_4px_25px_rgba(0,0,0,0.2)] py-1.5 max-h-[calc(100vh-36px)] animate-in fade-in zoom-in-95 duration-200 context-menu-container ${isPositioned ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       style={{ top: position.top, left: position.left }}
       onClick={(e) => e.stopPropagation()}
     >

@@ -55,7 +55,14 @@ apiClient.interceptors.response.use(
         // can check response.data === false reliably.
         return rawData;
       }
-      return rawData.data;
+      const payload = rawData.data;
+      if (payload && typeof payload === 'object') {
+        // Attach note/status to payload so callers have access for display messages
+        // while maintaining legacy unwrap behavior for payload extraction.
+        if (rawData.note) payload.note = rawData.note;
+        if (rawData.status) payload.status = rawData.status;
+      }
+      return payload;
     }
     return rawData;
   },
@@ -128,7 +135,8 @@ apiClient.interceptors.response.use(
 
     // Standardize error messaging for components
     if (apiData) {
-      apiData.message = apiData.data?.title || apiData.note || apiData.message || 'An unexpected error occurred';
+      // Prioritize 'note' for detailed CMS-level error messages as requested
+      apiData.message = apiData.note || apiData.data?.title || apiData.message || 'An unexpected error occurred';
     }
 
     return Promise.reject(error);

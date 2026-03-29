@@ -10,7 +10,7 @@ export const Button = React.forwardRef(({
   children,
   ...props
 }, ref) => {
-  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-hidden focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed';
+  const baseClasses = 'inline-flex items-center justify-center font-medium rounded-md transition-colors focus:outline-none disabled:opacity-50 disabled:cursor-not-allowed';
   
   const variants = {
     primary: 'bg-amber-500 hover:bg-amber-400 text-white border border-amber-600/20 shadow-lg shadow-amber-500/10 active:scale-[0.98]',

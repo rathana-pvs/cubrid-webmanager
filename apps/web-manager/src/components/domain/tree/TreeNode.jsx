@@ -43,9 +43,9 @@ export const TreeNode = React.memo(({
   };
 
   const handleContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
     if (onContextMenu) {
-      e.stopPropagation();
-      e.preventDefault();
       onContextMenu(e);
     }
   };

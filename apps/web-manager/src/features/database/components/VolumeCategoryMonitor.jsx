@@ -171,7 +171,7 @@ const VolumeTableContainer = memo(({ volumes, pageSize }) => (
 
 export default function VolumeCategoryMonitor({ hostUid, dbname, category }) {
   const dispatch = useDispatch();
-  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.database);
+  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring);
   const dbSpace = spaceInfo[dbname];
   const isLoading = spaceInfoLoading?.[dbname];
 

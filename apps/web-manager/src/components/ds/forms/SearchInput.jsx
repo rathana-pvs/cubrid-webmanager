@@ -16,7 +16,7 @@ export const SearchInput = ({
       
       <input
         type="text"
-        className="w-full pl-9 pr-8 py-1.5 text-sm bg-slate-50/50 dark:bg-bk-main/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-bk-yellow/50 focus:ring-2 focus:ring-bk-yellow/5 hover:border-slate-300/60 dark:hover:border-white/20 transition-all duration-200"
+        className="w-full pl-9 pr-8 py-1.5 text-sm bg-slate-50/50 dark:bg-bk-main/20 border border-slate-200 dark:border-white/10 rounded-lg text-slate-900 dark:text-slate-100 placeholder:text-slate-400 dark:placeholder:text-slate-500 focus:outline-hidden focus:border-bk-yellow/50 hover:border-slate-300/60 dark:hover:border-white/20 transition-all duration-200"
         placeholder={placeholder}
         value={value}
         onChange={(e) => onChange && onChange(e.target.value)}

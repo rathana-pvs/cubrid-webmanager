@@ -1,38 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeBackupDatabaseModal, backupDatabase, fetchBackupDbInfo } from '../databaseSlice';
-import { showStatusModal } from '../../layout/layoutSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
+import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+
+// view states
+const VIEW_FORM    = 'form';
+const VIEW_LOADING = 'loading';
+const VIEW_SUCCESS = 'success';
+const VIEW_ERROR   = 'error';
 
 // Minimal section header
 const SectionHeader = ({ label }) => (
   <div className="flex items-center gap-3 mb-3">
-    <span className="text-[10px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</span>
+    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</span>
     <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
   </div>
 );
 
-// Slide toggle
-const Toggle = ({ checked, onChange }) => (
-  <button
-    type="button"
-    onClick={onChange}
-    className={`w-9 h-5 rounded-full border-2 relative shrink-0 transition-all duration-200
-      ${checked ? 'bg-amber-500 border-amber-500' : 'bg-slate-200 dark:bg-white/10 border-slate-300 dark:border-white/15'}`}
-  >
-    <span className={`absolute top-0.5 w-3 h-3 rounded-full bg-white shadow-xs transition-all duration-200 ${checked ? 'left-[18px]' : 'left-0.5'}`} />
-  </button>
-);
-
 export default function BackupDatabaseModal() {
   const dispatch = useDispatch();
-  const { isBackupDatabaseModalOpen, selectedDatabase, actionLoading, databaseBackupInfo } = useSelector((state) => state.database);
+  const { isBackupDatabaseModalOpen } = useSelector((state) => state.databaseUI);
+  const { selectedDatabase } = useSelector((state) => state.database);
+  const { backupDbInfo: databaseBackupInfo } = useSelector((state) => state.databaseOperation);
   const { selectedHostUid } = useSelector((state) => state.host);
+
+  const [view, setView] = useState(VIEW_FORM);
+  const [errorMsg, setErrorMsg] = useState('');
+  const [successMsg, setSuccessMsg] = useState('');
 
   const [formData, setFormData] = useState({
     volPath: `${selectedDatabase}_backup_lv0`,
@@ -63,15 +63,26 @@ export default function BackupDatabaseModal() {
     }
   }, [selectedDatabase, databaseBackupInfo]);
 
+  useEffect(() => {
+    if (isBackupDatabaseModalOpen) {
+      setView(VIEW_FORM);
+      setErrorMsg('');
+      setSuccessMsg('');
+    }
+  }, [isBackupDatabaseModalOpen]);
+
   if (!isBackupDatabaseModalOpen) return null;
 
   const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
   const handleBackup = async () => {
     if (!formData.volPath || !formData.backupDir) {
-      dispatch(showStatusModal({ type: 'error', title: 'Validation Error', message: "Volume path and Backup directory are required." }));
+      setErrorMsg("Volume path and Backup directory are required.");
+      setView(VIEW_ERROR);
       return;
     }
+
+    setView(VIEW_LOADING);
     try {
       const payload = {
         level: formData.backupLevel.split(' ')[1],
@@ -84,12 +95,15 @@ export default function BackupDatabaseModal() {
         safereplication: 'n'
       };
       await dispatch(backupDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
-      dispatch(showStatusModal({ type: 'success', title: 'Backup Successful', message: `"${selectedDatabase}" backed up to "${formData.backupDir}".` }));
-      dispatch(closeBackupDatabaseModal());
+      setSuccessMsg(`Database "${selectedDatabase}" has been successfully backed up to "${formData.backupDir}".`);
+      setView(VIEW_SUCCESS);
     } catch (err) {
-      dispatch(showStatusModal({ type: 'error', title: 'Backup Failed', message: typeof err === 'string' ? err : (err.message || 'An error occurred.') }));
+      setErrorMsg(typeof err === 'string' ? err : (err.message || 'An unexpected error occurred during backup.'));
+      setView(VIEW_ERROR);
     }
   };
+
+  const handleClose = () => dispatch(closeBackupDatabaseModal());
 
   const levels = [
     { level: 'level 0', label: 'L0', title: 'Full', desc: 'Complete snapshot of all data', icon: 'layers' },
@@ -103,25 +117,153 @@ export default function BackupDatabaseModal() {
     { field: 'compress', icon: 'compress', label: 'Compress Output', desc: 'Reduce file size with stream compression' },
   ];
 
+  /* ─── LOADING view ─── */
+  if (view === VIEW_LOADING) {
+    return (
+      <Modal isOpen title="Backup Database" icon="backup" onClose={handleClose} maxWidth="540px">
+        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
+          <div className="relative w-[72px] h-[72px]">
+            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
+            <div
+              className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin"
+              style={{ animationDuration: '0.9s' }}
+            />
+            <div
+              className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-bk-yellow/35 animate-spin"
+              style={{ animationDuration: '1.7s', animationDirection: 'reverse' }}
+            />
+            <div className="absolute inset-0 flex items-center justify-center">
+              <div className="w-2.5 h-2.5 rounded-full bg-bk-yellow shadow-[0_0_10px_3px_rgba(255,193,7,0.3)] animate-pulse" />
+            </div>
+          </div>
+
+          <div className="space-y-1.5 px-8">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Initializing Backup
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium max-w-[280px] mx-auto leading-relaxed">
+              Consolidating pages and initializing data streams for <span className="text-slate-900 dark:text-white font-black">{selectedDatabase}</span>.
+            </Typography>
+          </div>
+
+          <div className="w-44 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+            <div
+              className="h-full bg-bk-yellow rounded-full"
+              style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }}
+            />
+          </div>
+
+          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/4 border border-slate-100 dark:border-white/5">
+            <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow animate-pulse" />
+            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">In Progress</span>
+          </div>
+
+          <style>{`
+            @keyframes modalSlide {
+              0%   { transform: translateX(-100%); width: 50%; }
+              50%  { transform: translateX(100%);  width: 60%; }
+              100% { transform: translateX(200%);  width: 50%; }
+            }
+          `}</style>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── SUCCESS view ─── */
+  if (view === VIEW_SUCCESS) {
+    return (
+      <Modal isOpen title="Backup Database" icon="backup" iconVariant="success" onClose={handleClose} maxWidth="540px">
+        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
+          <div className="relative">
+            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
+              <Icon name="check" size="lg" weight={700} className="text-white" />
+            </div>
+          </div>
+
+          <div className="space-y-2 px-8">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Backup Successful
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[320px] mx-auto">
+              System snapshot for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span> has been captured.
+            </Typography>
+          </div>
+
+          {successMsg && (
+            <div className="w-full max-w-[380px] bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-4 py-3.5 text-left">
+              <div className="flex items-center gap-2 mb-1.5">
+                <Icon name="folder_zip" size="xs" weight={300} className="text-emerald-500" />
+                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Destination</span>
+              </div>
+              <Typography variant="caption" className="text-emerald-600 dark:text-emerald-400/80 font-medium leading-relaxed break-all">
+                {successMsg}
+              </Typography>
+            </div>
+          )}
+
+          <Button variant="secondary" onClick={handleClose}>Close</Button>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── ERROR view ─── */
+  if (view === VIEW_ERROR) {
+    return (
+      <Modal isOpen title="Backup Database" icon="backup" iconVariant="danger" onClose={handleClose} maxWidth="540px">
+        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
+          <div className="relative">
+            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
+              <Icon name="error" size="md" weight={300} className="text-white" />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
+              Capture Failed
+            </Typography>
+            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[300px] mx-auto">
+              We encountered a technical issue while backing up the database volumes.
+            </Typography>
+          </div>
+
+          <div className="w-full max-w-[380px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
+            <div className="flex items-center gap-2 mb-1.5">
+              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
+              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">Error Detail</span>
+            </div>
+            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
+              {errorMsg}
+            </Typography>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <Button variant="secondary" onClick={handleClose}>Close</Button>
+            <Button variant="danger" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>
+              Try Again
+            </Button>
+          </div>
+        </div>
+      </Modal>
+    );
+  }
+
+  /* ─── FORM view ─── */
   return (
     <Modal
       isOpen={isBackupDatabaseModalOpen}
-      onClose={() => dispatch(closeBackupDatabaseModal())}
+      onClose={handleClose}
       title="Backup Database"
       subtitle="Create a persistent snapshot of your database volumes"
       icon="backup"
-      maxWidth="max-w-[600px]"
+      maxWidth="600px"
       footer={
-        <div className="flex items-center justify-between w-full gap-3">
-          <button
-            type="button"
-            onClick={() => dispatch(closeBackupDatabaseModal())}
-            disabled={actionLoading}
-            className="text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors px-2"
-          >
-            Cancel
-          </button>
-          <Button variant="primary" onClick={handleBackup} loading={actionLoading} icon="play_circle">
+        <div className="flex justify-end gap-3 w-full">
+          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+          <Button variant="primary" onClick={handleBackup} icon="play_circle">
             Run Backup
           </Button>
         </div>
@@ -173,7 +315,7 @@ export default function BackupDatabaseModal() {
                   >
                     <Icon name={item.icon} size="sm" weight={300} />
                   </div>
-                  <span className={`text-[12px] font-bold transition-colors block mb-1 ${isSelected ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'}`}>
+                  <span className={`text-[12px] font-black transition-colors block mb-1 ${isSelected ? 'text-amber-600 dark:text-amber-400' : 'text-slate-700 dark:text-slate-200'}`}>
                     {item.title}
                   </span>
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-medium leading-tight">
@@ -237,7 +379,7 @@ export default function BackupDatabaseModal() {
                   key={opt.field}
                   type="button"
                   onClick={() => handleInputChange(opt.field, !isOn)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 text-left
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl border transition-all duration-200 text-left cursor-pointer
                     ${isOn
                       ? 'bg-amber-500/5 border-amber-500/20 dark:bg-amber-500/8 dark:border-amber-500/15'
                       : 'bg-slate-50/50 dark:bg-white/2 border-slate-200 dark:border-white/8 hover:border-slate-300 dark:hover:border-white/15'
@@ -252,14 +394,16 @@ export default function BackupDatabaseModal() {
                     <Icon name={opt.icon} size="sm" weight={300} />
                   </div>
                   <div className="flex-1 min-w-0">
-                    <span className={`block text-[12px] font-semibold transition-colors ${isOn ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
+                    <span className={`block text-[12px] font-bold transition-colors ${isOn ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
                       {opt.label}
                     </span>
                     <span className="block text-[11px] text-slate-400 dark:text-slate-500 font-medium">
                       {opt.desc}
                     </span>
                   </div>
-                  <Toggle checked={isOn} onChange={() => handleInputChange(opt.field, !isOn)} />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Toggle checked={isOn} onChange={() => handleInputChange(opt.field, !isOn)} />
+                  </div>
                 </button>
               );
             })}

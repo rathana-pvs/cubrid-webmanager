@@ -35,10 +35,15 @@ import CreateDatabaseModal from '../features/database/components/CreateDatabaseM
 import EditBackupPlanModal from '../features/database/components/EditBackupPlanModal';
 import LoginDatabaseModal from '../features/database/components/LoginDatabaseModal';
 import RestoreDatabaseModal from '../features/database/components/RestoreDatabaseModal';
+import SetAutomationVolumeModal from '../features/database/components/SetAutomationVolumeModal';
+import AutoVolumeLogModal from '../features/database/components/AutoVolumeLogModal';
+import AddQueryPlanModal from '../features/database/components/AddQueryPlanModal';
+import AutoQueryLogModal from '../features/database/components/AutoQueryLogModal';
 
 import LockInformationModal from '../features/database/components/LockInformationModal';
 import UnloadResultModal from '../features/database/components/UnloadResultModal';
 import TransactionInfoModal from '../features/database/components/TransactionInfoModal';
+import KillTransactionModal from '../features/database/components/KillTransactionModal';
 import DeleteHostModal from '../features/host/components/DeleteHostModal';
 import EditHostModal from '../features/host/components/EditHostModal';
 import ServerVersionModal from '../features/host/components/ServerVersionModal';
@@ -65,13 +70,14 @@ import { Icon } from '../components/ds/foundation/Icon';
 
 function DashboardLayout() {
   const dispatch = useDispatch();
-  const { isLoginDatabaseModalOpen, selectedDatabase } = useSelector((state) => state.database);
+  const { loading: dbCoreLoading } = useSelector((state) => state.database);
+  const { actionLoading: dbUILoading } = useSelector((state) => state.databaseUI);
+  const { operationLoading: dbOpLoading } = useSelector((state) => state.databaseOperation);
+  const dbActionLoading = dbCoreLoading || dbOpLoading || dbUILoading;
   const { theme, isSidebarCollapsed, isResizing, activeMainTab, openTabs } = useSelector((state) => state.layout);
   const { isAddHostModalOpen, hosts, isServiceOperating, serviceOperationType, serviceProgressMessage } = useSelector((state) => state.host);
   const { isCreateUserModalOpen, createUserDbName, isEditUserModalOpen, editUserData, isDropUserModalOpen } = useSelector((state) => state.user);
-  const { actionLoading: dbActionLoading } = useSelector((state) => state.database);
   const { actionLoading: brokerActionLoading } = useSelector((state) => state.broker);
-
   const tabLabels = openTabs.reduce((acc, tabId) => {
     if (tabId.startsWith('host:')) {
       const uid = tabId.split(':')[1];
@@ -336,19 +342,24 @@ function DashboardLayout() {
         <CreateDatabaseModal />
         <LoginDatabaseModal />
         <RestoreDatabaseModal />
+        <SetAutomationVolumeModal />
+        <AutoVolumeLogModal />
+        <AddQueryPlanModal />
+        <AutoQueryLogModal />
 
         <LockInformationModal />
         <UnloadResultModal />
         <TransactionInfoModal />
-        <CreateUserModal 
-          isOpen={isCreateUserModalOpen} 
-          onClose={() => dispatch(closeCreateUserModal())} 
-          dbname={createUserDbName} 
+        <KillTransactionModal />
+        <CreateUserModal
+          isOpen={isCreateUserModalOpen}
+          onClose={() => dispatch(closeCreateUserModal())}
+          dbname={createUserDbName}
         />
-        <CreateUserModal 
-          isOpen={isEditUserModalOpen} 
-          onClose={() => dispatch(closeEditUserModal())} 
-          dbname={editUserData?.dbname} 
+        <CreateUserModal
+          isOpen={isEditUserModalOpen}
+          onClose={() => dispatch(closeEditUserModal())}
+          dbname={editUserData?.dbname}
           editingUser={editUserData?.userName}
         />
         <DropUserModal />

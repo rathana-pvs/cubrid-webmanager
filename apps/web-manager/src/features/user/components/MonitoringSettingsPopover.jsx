@@ -43,16 +43,17 @@ export default function MonitoringSettingsPopover() {
     <div className="relative" ref={popoverRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-8 h-8 flex items-center justify-center rounded border transition-all active:scale-[0.98] relative group
-          ${isOpen ? 'bg-amber-500/10 text-amber-500 border-amber-500/20 shadow-xs' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/6 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/10'}`}
-
-
+        className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] relative group
+          ${isOpen 
+            ? 'bg-amber-500/10 text-amber-600 dark:text-bk-yellow border-amber-500/50 dark:border-bk-yellow/50 shadow-xs' 
+            : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5'
+          }`}
         title="Monitoring Settings"
       >
-        <Icon name="timer" size="16px" weight={300} />
+        <Icon name="timer" size="18px" weight={300} />
 
         {(preferences.dashboardInterval > 0 || preferences.brokerStatusInterval > 0) && (
-          <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-500 rounded-full border border-white dark:border-bk-side animate-pulse"></div>
+          <div className="absolute top-2 right-2 w-1.5 h-1.5 bg-amber-500 rounded-full border border-white dark:border-bk-side ring-2 ring-amber-500/20"></div>
         )}
       </button>
 

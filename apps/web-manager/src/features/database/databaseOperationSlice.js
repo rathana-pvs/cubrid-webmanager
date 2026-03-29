@@ -1,0 +1,489 @@
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { databaseApi } from './databaseApi';
+
+// Lifecycle Operations
+export const createDatabase = createAsyncThunk(
+  'database/createDatabase',
+  async ({ hostUid, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.createDatabase(hostUid, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to create database');
+    }
+  }
+);
+
+export const copyDatabase = createAsyncThunk(
+  'database/copyDatabase',
+  async ({ hostUid, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.copyDatabase(hostUid, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to copy database');
+    }
+  }
+);
+
+export const deleteDatabase = createAsyncThunk(
+  'database/deleteDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.deleteDatabase(hostUid, dbname, payload);
+      return { dbname, response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to delete database ${dbname}`);
+    }
+  }
+);
+
+export const renameDatabase = createAsyncThunk(
+  'database/renameDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.renameDatabase(hostUid, dbname, payload);
+      return { dbname, newName: payload.newName, response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to rename database ${dbname}`);
+    }
+  }
+);
+
+export const fetchCreateDatabaseInfo = createAsyncThunk(
+  'database/fetchCreateDatabaseInfo',
+  async ({ hostUid }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getCreateDatabaseInfo(hostUid);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch database creation info');
+    }
+  }
+);
+
+// Volume Management
+export const addVolume = createAsyncThunk(
+  'database/addVolume',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.addVolume(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to add volume to ${dbname}`);
+    }
+  }
+);
+
+// Backup & Restore
+export const backupDatabase = createAsyncThunk(
+  'database/backupDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.backupDatabase(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to backup ${dbname}`);
+    }
+  }
+);
+
+export const restoreDatabase = createAsyncThunk(
+  'database/restoreDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.restoreDatabase(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to restore ${dbname}`);
+    }
+  }
+);
+
+export const fetchBackupSchedule = createAsyncThunk(
+  'database/fetchBackupSchedule',
+  async ({ hostUid, dbname }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getBackupSchedule(hostUid, dbname);
+      return { dbname, schedules: response.scheduler || [] };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to fetch backup schedules for ${dbname}`);
+    }
+  }
+);
+
+export const addBackupSchedule = createAsyncThunk(
+  'database/addBackupSchedule',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.addBackupSchedule(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to add backup schedule for ${dbname}`);
+    }
+  }
+);
+
+export const editBackupSchedule = createAsyncThunk(
+  'database/editBackupSchedule',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.editBackupSchedule(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to update backup schedule for ${dbname}`);
+    }
+  }
+);
+
+export const deleteBackupSchedule = createAsyncThunk(
+  'database/deleteBackupSchedule',
+  async ({ hostUid, dbname, scheduleName }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.deleteBackupSchedule(hostUid, dbname, scheduleName);
+      return { dbname, scheduleName, response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to delete backup schedule ${scheduleName}`);
+    }
+  }
+);
+
+export const fetchBackupList = createAsyncThunk(
+  'database/fetchBackupList',
+  async ({ hostUid, dbname }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getBackupList(hostUid, dbname);
+      return { dbname, backups: response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to fetch backup list for ${dbname}`);
+    }
+  }
+);
+
+export const fetchBackupDbInfo = createAsyncThunk(
+  'database/fetchBackupDbInfo',
+  async ({ hostUid, dbname }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getBackupDbInfo(hostUid, dbname);
+      return { dbname, info: response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to fetch backup info for ${dbname}`);
+    }
+  }
+);
+
+export const fetchAutoBackupLog = createAsyncThunk(
+  'database/fetchAutoBackupLog',
+  async ({ hostUid }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getAutoBackupLog(hostUid);
+      return response.log || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch auto backup log');
+    }
+  }
+);
+
+// Maintenance
+export const checkDatabase = createAsyncThunk(
+  'database/checkDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.checkDatabase(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to check database ${dbname}`);
+    }
+  }
+);
+
+export const compactDatabase = createAsyncThunk(
+  'database/compactDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.compactDatabase(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to compact database ${dbname}`);
+    }
+  }
+);
+
+export const optimizeDatabase = createAsyncThunk(
+  'database/optimizeDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.optimizeDatabase(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to optimize database ${dbname}`);
+    }
+  }
+);
+
+// Data Transfers
+export const loadDatabase = createAsyncThunk(
+  'database/loadDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.loadDatabase(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to load database ${dbname}`);
+    }
+  }
+);
+
+export const unloadDatabase = createAsyncThunk(
+  'database/unloadDatabase',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.unloadDatabase(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to unload database ${dbname}`);
+    }
+  }
+);
+
+// Query Plan Operations
+export const fetchQueryPlan = createAsyncThunk(
+  'database/fetchQueryPlan',
+  async ({ hostUid, dbname }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getQueryPlan(hostUid, dbname);
+      return { dbname, plan: response.planinfo || [] };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to fetch query plans for ${dbname}`);
+    }
+  }
+);
+
+export const setAutoExecQuery = createAsyncThunk(
+  'database/setAutoExecQuery',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.setAutoExecQuery(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to set auto exec query for ${dbname}`);
+    }
+  }
+);
+
+export const fetchQueryPlanLog = createAsyncThunk(
+  'database/fetchQueryPlanLog',
+  async ({ hostUid }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getQueryPlanLog(hostUid);
+      return response.log || [];
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch query plan log');
+    }
+  }
+);
+
+// Locks & Transactions
+export const fetchLockInfo = createAsyncThunk(
+  'database/fetchLockInfo',
+  async ({ hostUid, dbname }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getLockInfo(hostUid, dbname);
+      return { dbname, info: response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to fetch lock info for ${dbname}`);
+    }
+  }
+);
+
+export const fetchTransactionInfo = createAsyncThunk(
+  'database/fetchTransactionInfo',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.getTransactionInfo(hostUid, dbname, payload);
+      return { dbname, info: response };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to fetch transaction info for ${dbname}`);
+    }
+  }
+);
+
+export const killTransaction = createAsyncThunk(
+  'database/killTransaction',
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.killTransaction(hostUid, dbname, payload);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to kill transaction in ${dbname}`);
+    }
+  }
+);
+
+const initialState = {
+  createDatabaseInfo: null,
+  createDatabaseInfoLoading: false,
+  backupSchedules: {},
+  backupSchedulesLoading: {},
+  databaseBackups: {},
+  databaseBackupsLoading: {},
+  backupDbInfo: {},
+  backupDbInfoLoading: {},
+  autoBackupLogs: [],
+  logsLoading: false,
+  logsError: null,
+  queryPlans: {},
+  queryPlansLoading: {},
+  queryPlanLogs: [],
+  lockInfo: {},
+  transactionInfo: {},
+  operationLoading: false,
+  actionLoading: false,
+  error: null,
+};
+
+const databaseOperationSlice = createSlice({
+  name: 'databaseOperation',
+  initialState,
+  reducers: {
+    clearError: (state) => {
+      state.error = null;
+    }
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(createDatabase.pending, (state) => { state.operationLoading = true; })
+      .addCase(createDatabase.fulfilled, (state) => { state.operationLoading = false; })
+      .addCase(createDatabase.rejected, (state, action) => { state.operationLoading = false; state.error = action.payload; })
+      
+      .addCase(fetchCreateDatabaseInfo.pending, (state) => {
+        state.createDatabaseInfoLoading = true;
+      })
+      .addCase(fetchCreateDatabaseInfo.fulfilled, (state, action) => {
+        state.createDatabaseInfoLoading = false;
+        state.createDatabaseInfo = action.payload;
+      })
+
+      .addCase(addVolume.pending, (state) => { state.actionLoading = true; state.error = null; })
+      .addCase(addVolume.fulfilled, (state) => { state.actionLoading = false; })
+      .addCase(addVolume.rejected, (state, action) => { state.actionLoading = false; state.error = action.payload; })
+
+      .addCase(restoreDatabase.pending, (state) => { state.actionLoading = true; })
+      .addCase(restoreDatabase.fulfilled, (state) => { state.actionLoading = false; })
+      .addCase(restoreDatabase.rejected, (state, action) => { state.actionLoading = false; state.error = action.payload; })
+
+      .addCase(fetchBackupSchedule.pending, (state, action) => {
+        const { dbname } = action.meta.arg;
+        state.backupSchedulesLoading[dbname] = true;
+      })
+      .addCase(fetchBackupSchedule.fulfilled, (state, action) => {
+        const { dbname, schedules } = action.payload;
+        state.backupSchedulesLoading[dbname] = false;
+        state.backupSchedules[dbname] = schedules;
+      })
+
+      .addCase(fetchBackupList.pending, (state, action) => {
+        const { dbname } = action.meta.arg;
+        state.databaseBackupsLoading[dbname] = true;
+      })
+      .addCase(fetchBackupList.fulfilled, (state, action) => {
+        const { dbname, backups } = action.payload;
+        state.databaseBackupsLoading[dbname] = false;
+        state.databaseBackups[dbname] = backups;
+      })
+
+      .addCase(fetchBackupDbInfo.pending, (state, action) => {
+        const { dbname } = action.meta.arg;
+        state.backupDbInfoLoading[dbname] = true;
+      })
+      .addCase(fetchBackupDbInfo.fulfilled, (state, action) => {
+        const { dbname, info } = action.payload;
+        state.backupDbInfoLoading[dbname] = false;
+        state.backupDbInfo[dbname] = info;
+      })
+
+      .addCase(fetchAutoBackupLog.pending, (state) => {
+        state.logsLoading = true;
+        state.logsError = null;
+      })
+      .addCase(fetchAutoBackupLog.fulfilled, (state, action) => {
+        state.logsLoading = false;
+        state.autoBackupLogs = action.payload;
+      })
+      .addCase(fetchAutoBackupLog.rejected, (state, action) => {
+        state.logsLoading = false;
+        state.logsError = action.payload;
+      })
+
+      .addCase(fetchQueryPlan.pending, (state, action) => {
+        const { dbname } = action.meta.arg;
+        state.queryPlansLoading[dbname] = true;
+      })
+      .addCase(fetchQueryPlan.fulfilled, (state, action) => {
+        const { dbname, plan } = action.payload;
+        state.queryPlansLoading[dbname] = false;
+        state.queryPlans[dbname] = plan;
+      })
+      .addCase(fetchLockInfo.fulfilled, (state, action) => {
+        const { dbname, info } = action.payload;
+        state.lockInfo[dbname] = info;
+      })
+      .addCase(fetchTransactionInfo.fulfilled, (state, action) => {
+        const { dbname, info } = action.payload;
+        state.transactionInfo[dbname] = info;
+      })
+      
+      // Backup Schedule cases
+      .addCase(addBackupSchedule.pending, (state) => { 
+        state.operationLoading = true; 
+        state.error = null; 
+      })
+      .addCase(addBackupSchedule.fulfilled, (state) => { state.operationLoading = false; })
+      .addCase(addBackupSchedule.rejected, (state, action) => { 
+        state.operationLoading = false; 
+        state.error = action.payload; 
+      })
+
+      .addCase(editBackupSchedule.pending, (state) => { 
+        state.actionLoading = true; 
+        state.error = null; 
+      })
+      .addCase(editBackupSchedule.fulfilled, (state) => { state.actionLoading = false; })
+      .addCase(editBackupSchedule.rejected, (state, action) => { 
+        state.actionLoading = false; 
+        state.error = action.payload; 
+      })
+
+      .addCase(backupDatabase.pending, (state) => { 
+        state.operationLoading = true; 
+        state.error = null; 
+      })
+      .addCase(backupDatabase.fulfilled, (state) => { state.operationLoading = false; })
+      .addCase(backupDatabase.rejected, (state, action) => { 
+        state.operationLoading = false; 
+        state.error = action.payload; 
+      })
+      
+      .addCase(fetchQueryPlan.rejected, (state, action) => {
+        const { dbname } = action.meta.arg;
+        state.queryPlansLoading[dbname] = false;
+        state.error = action.payload;
+      })
+      
+      .addCase(fetchQueryPlanLog.pending, (state) => {
+        state.logsLoading = true;
+        state.logsError = null;
+      })
+      .addCase(fetchQueryPlanLog.fulfilled, (state, action) => {
+        state.logsLoading = false;
+        state.queryPlanLogs = action.payload;
+      })
+      .addCase(fetchQueryPlanLog.rejected, (state, action) => {
+        state.logsLoading = false;
+        state.logsError = action.payload;
+      });
+  }
+});
+
+export const { clearError } = databaseOperationSlice.actions;
+export default databaseOperationSlice.reducer;

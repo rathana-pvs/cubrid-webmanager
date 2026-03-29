@@ -1,74 +1,118 @@
-import { Checkbox } from '../../../../components/ds/forms/Checkbox';
+import { Toggle } from '../../../../components/ds/forms/Toggle';
 import { Input } from '../../../../components/ds/forms/Input';
+import { Icon } from '../../../../components/ds/foundation/Icon';
+import { Typography } from '../../../../components/ds/foundation/Typography';
 
 const SectionHeader = ({ label }) => (
-  <div className="flex items-center gap-3 mb-4">
-    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">{label}</span>
+  <div className="flex items-center gap-3 mb-5">
+    <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">{label}</span>
     <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
   </div>
 );
 
+function OptionCard({ label, checked, onChange, disabled, icon }) {
+  return (
+    <div 
+      className={`flex items-center justify-between p-3.5 border rounded-2xl transition-all duration-200 
+        ${disabled ? 'opacity-40 grayscale cursor-not-allowed' : 'cursor-pointer select-none'}
+        ${checked && !disabled ? 'bg-amber-500/4 border-amber-500/20 shadow-xs' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}
+      onClick={() => !disabled && onChange(!checked)}
+    >
+      <div className="flex items-center gap-3">
+        {icon && <Icon name={icon} size="xs" weight={300} className={checked ? 'text-amber-500' : 'text-slate-400'} />}
+        <Typography variant="p" className={`text-[11.5px] font-bold transition-colors ${checked && !disabled ? 'text-slate-900 dark:text-white' : 'text-slate-500'}`}>
+          {label}
+        </Typography>
+      </div>
+      <div onClick={(e) => e.stopPropagation()}>
+        <Toggle 
+          checked={checked}
+          onChange={onChange}
+          disabled={disabled}
+          size="sm"
+        />
+      </div>
+    </div>
+  );
+}
+
 export default function UnloadAdvancedOptions({ formData, handleInputChange }) {
   const checkboxes = [
-    { label: 'As DBA', name: 'asDba' },
-    { label: 'Split schema files', name: 'splitSchema' },
-    { label: 'Class only', name: 'classOnly' },
-    { label: 'Skip index detail', name: 'skipIndex' },
-    { label: 'Use delimited identifier', name: 'useDelimitedIdentifier' },
-    { label: 'Include referenced tables', name: 'includeReferencedTables', disabled: formData.schemaOption === 'Not include' },
+    { label: 'As Administrator (DBA)', name: 'asDba', icon: 'shield_person' },
+    { label: 'Deconstruct Schema Files', name: 'splitSchema', icon: 'splitscreen' },
+    { label: 'Class Manifest Only', name: 'classOnly', icon: 'list_alt' },
+    { label: 'Skip Indexing Payload', name: 'skipIndex', icon: 'layers_clear' },
+    { label: 'Delimited Identifiers', name: 'useDelimitedIdentifier', icon: 'format_quote' },
+    { label: 'Recursive Dependencies', name: 'includeReferencedTables', icon: 'account_tree', disabled: formData.schemaOption === 'Not include' },
   ];
 
   const inputFields = [
-    { label: 'Output file prefix', name: 'prefixOutputFile',    useName: 'usePrefixOutputFile',    type: 'text',   placeholder: 'prefix_' },
-    { label: 'Hash file path',     name: 'fileForHash',          useName: 'useFileForHash',          type: 'text',   placeholder: '' },
-    { label: 'Cached pages limit', name: 'cachedPages',          useName: 'useCachedPages',          type: 'number', placeholder: '0' },
-    { label: 'Instances estimate', name: 'estimateInstances',    useName: 'useEstimateInstances',    type: 'number', placeholder: '1000' },
-    { label: 'LO file directory',  name: 'loFileDirectory',      useName: 'useLoFileDirectory',      type: 'text',   placeholder: '' },
+    { label: 'Output File Prefix', name: 'prefixOutputFile',    useName: 'usePrefixOutputFile',    type: 'text',   placeholder: 'prefix_', icon: 'title' },
+    { label: 'Hash Mapping Path',  name: 'fileForHash',          useName: 'useFileForHash',          type: 'text',   placeholder: '/path/to/hash', icon: 'fingerprint' },
+    { label: 'Cached Page Limit',  name: 'cachedPages',          useName: 'useCachedPages',          type: 'number', placeholder: '0', icon: 'memory' },
+    { label: 'Instance Estimation', name: 'estimateInstances',    useName: 'useEstimateInstances',    type: 'number', placeholder: '1000', icon: 'calculate' },
+    { label: 'LO Block Directory', name: 'loFileDirectory',      useName: 'useLoFileDirectory',      type: 'text',   placeholder: '/path/to/lo', icon: 'folder_zip' },
   ];
 
-  return (
-    <div>
-      <SectionHeader label="Advanced Options" />
+  const triggerInputChange = (name, value) => {
+    handleInputChange({ target: { name, value, type: 'toggle' } });
+  };
 
-      {/* Checkbox grid */}
-      <div className="grid grid-cols-2 gap-x-8 gap-y-2 px-1 mb-5">
+  return (
+    <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
+      <SectionHeader label="Advanced Heuristics" />
+
+      {/* Toggle grid */}
+      <div className="grid grid-cols-2 gap-3 mb-6">
         {checkboxes.map(opt => (
-          <Checkbox
+          <OptionCard
             key={opt.name}
             label={opt.label}
-            name={opt.name}
+            icon={opt.icon}
             checked={formData[opt.name]}
-            onChange={handleInputChange}
+            onChange={(v) => triggerInputChange(opt.name, v)}
             disabled={opt.disabled}
           />
         ))}
       </div>
 
-      {/* Conditional input fields */}
-      <div className="space-y-2.5 pt-4 border-t border-slate-100 dark:border-white/4">
-        {inputFields.map(field => (
-          <div key={field.name} className="flex items-center gap-3">
-            <div className="w-48 shrink-0">
-              <Checkbox
-                label={field.label}
-                name={field.useName}
-                checked={formData[field.useName]}
-                onChange={handleInputChange}
-              />
+      {/* Parameter Overrides */}
+      <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-white/5">
+        <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Parameter Overrides</Typography>
+        <div className="grid grid-cols-1 gap-4">
+          {inputFields.map(field => (
+            <div key={field.name} className="flex items-center gap-4 bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-3 px-4 transition-all hover:border-slate-200 dark:hover:border-white/10">
+              <div className="flex-1 flex items-center gap-3">
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Toggle
+                    checked={formData[field.useName]}
+                    onChange={(v) => triggerInputChange(field.useName, v)}
+                    size="sm"
+                  />
+                </div>
+                <div className="min-w-0">
+                  <Typography variant="p" className={`text-[11px] font-bold leading-none mb-1 transition-colors ${formData[field.useName] ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                    {field.label}
+                  </Typography>
+                  <Typography variant="caption" className="text-slate-400 text-[9px] font-medium leading-none block">Override system default</Typography>
+                </div>
+              </div>
+              <div className="flex-1 max-w-[240px]">
+                <Input
+                  type={field.type}
+                  name={field.name}
+                  value={formData[field.name]}
+                  onChange={handleInputChange}
+                  placeholder={field.placeholder || ''}
+                  disabled={!formData[field.useName]}
+                  size="sm"
+                  icon={field.icon}
+                  className="font-mono! text-[10px]!"
+                />
+              </div>
             </div>
-            <div className="flex-1">
-              <Input
-                type={field.type}
-                name={field.name}
-                value={formData[field.name]}
-                onChange={handleInputChange}
-                placeholder={field.placeholder || ''}
-                disabled={!formData[field.useName]}
-                size="sm"
-              />
-            </div>
-          </div>
-        ))}
+          ))}
+        </div>
       </div>
     </div>
   );

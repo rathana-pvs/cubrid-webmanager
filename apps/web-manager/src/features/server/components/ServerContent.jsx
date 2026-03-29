@@ -161,18 +161,24 @@ export default function ServerContent({ hostUid }) {
             <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight">{hostLabel}</Typography>
           </div>
         </div>
-        <div className="flex items-center gap-1.5">
+        <div className="flex items-center gap-1">
           <button
             onClick={handleRefresh}
-            className={`w-8 h-8 flex items-center justify-center rounded border transition-all active:scale-[0.98]
+            disabled={isRefreshing}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
               ${isRefreshing
-                ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/6 cursor-not-allowed'
-                : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/6 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 hover:bg-slate-200 dark:hover:bg-white/10 shadow-xs'}`}
+                ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
             title="Refresh dashboard"
           >
-            <span className={`material-symbols-outlined text-[16px] ${isRefreshing ? 'animate-spin' : ''}`}>refresh</span>
+            <Icon 
+              name="refresh" 
+              size="18px" 
+              weight={isRefreshing ? 700 : 300} 
+              className={isRefreshing ? 'animate-spin' : ''} 
+            />
           </button>
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/10" />
+          <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-0.5" />
           <MonitoringSettingsPopover />
         </div>
       </header>

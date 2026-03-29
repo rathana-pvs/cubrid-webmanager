@@ -15,7 +15,7 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 export default function DatabaseDashboard({ dbname }) {
   const dispatch = useDispatch();
   const { selectedHostUid, hosts } = useSelector((state) => state.host);
-  const { dashboardData, dashboardLoading } = useSelector((state) => state.database);
+  const { dashboardData, dashboardLoading } = useSelector((state) => state.databaseMonitoring);
 
   const [autoRefresh, setAutoRefresh] = useState(false);
   const [refreshInterval, setRefreshInterval] = useState(10);
@@ -160,41 +160,54 @@ export default function DatabaseDashboard({ dbname }) {
           </div>
         </div>
 
-        <div className="flex items-center gap-1.5">
-          <button
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            title={autoRefresh ? 'Live monitoring active' : 'Auto refresh off'}
-            className={`${btnCls} px-2.5 gap-1.5 text-[11px] font-semibold ${autoRefresh ? 'bg-emerald-50 dark:bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-200 dark:border-emerald-500/20' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/6 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
-          >
-            <Icon name={autoRefresh ? 'sync' : 'sync_disabled'} size="16px" weight={300} />
-            {autoRefresh ? 'Live' : 'Paused'}
-          </button>
-
+        <div className="flex items-center gap-1">
+          {/* Manual Refresh */}
           <button
             onClick={handleRefresh}
             disabled={isLoading}
-            className={iconBtnCls}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
+              ${isLoading
+                ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
             title="Manual refresh"
           >
-            <Icon name="refresh" size="16px" weight={300} className={isLoading ? 'animate-spin' : ''} />
+            <Icon name="refresh" size="18px" weight={isLoading ? 700 : 300} className={isLoading ? 'animate-spin' : ''} />
           </button>
 
-          <div className="w-px h-5 bg-slate-200 dark:bg-white/8" />
+          {/* Live/Paused Toggle */}
+          <button
+            onClick={() => setAutoRefresh(!autoRefresh)}
+            title={autoRefresh ? 'Live monitoring active' : 'Auto refresh off'}
+            className={`h-8 px-2.5 flex items-center gap-1.5 rounded-lg border transition-all active:scale-[0.98] text-[11px] font-bold
+              ${autoRefresh 
+                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
+          >
+            <Icon name={autoRefresh ? 'timer' : 'timer_off'} size="18px" weight={300} />
+            {autoRefresh ? 'Live' : 'Paused'}
+          </button>
 
+          <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-0.5" />
+
+          {/* Settings Toggle */}
           <button
             onClick={() => setShowSettings(!showSettings)}
-            className={`${btnCls} w-8 transition-all ${showSettings ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/6 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'}`}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
+              ${showSettings 
+                ? 'bg-amber-500/10 text-amber-600 dark:text-bk-yellow border-amber-500/50 dark:border-bk-yellow/50' 
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
             title="Dashboard settings"
           >
-            <Icon name="tune" size="16px" weight={300} />
+            <Icon name="tune" size="18px" weight={300} />
           </button>
 
+          {/* Export */}
           <button
             onClick={handleExport}
-            className={iconBtnCls}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs`}
             title="Export metrics as CSV"
           >
-            <Icon name="ios_share" size="16px" weight={300} />
+            <Icon name="ios_share" size="18px" weight={300} />
           </button>
         </div>
       </header>

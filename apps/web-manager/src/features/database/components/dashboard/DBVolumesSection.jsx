@@ -38,11 +38,10 @@ export default function DBVolumesSection({ volumes, pollingProps }) {
     return 'text-emerald-500';
   };
 
-  const getBarColor = (pct) => {
-    const usedPct = 100 - pct;
-    if (usedPct > 90) return 'bg-rose-500';
-    if (usedPct > 75) return 'bg-amber-500';
-    return 'bg-amber-500'; // Default volume color
+  const getBarColor = (usedPct) => {
+    if (usedPct > 85) return 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]';
+    if (usedPct > 50) return 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]';
+    return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]';
   };
 
   const cleanInt = (v) => {
@@ -106,7 +105,7 @@ export default function DBVolumesSection({ volumes, pollingProps }) {
             </div>
             <div className="w-full h-1 bg-slate-100 dark:bg-white/6 rounded-full overflow-hidden flex">
                <div 
-                className={`h-full transition-all duration-700 ${getBarColor(freePct)}`}
+                className={`h-full transition-all duration-700 rounded-full ${getBarColor(usedPct)}`}
                 style={{ width: `${isNaNData ? 0 : usedPct}%` }} 
               />
             </div>

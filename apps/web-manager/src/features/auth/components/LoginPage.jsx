@@ -4,6 +4,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { loginStart, loginSuccess, loginFailure } from '../authSlice';
 import { authApi } from '../authApi';
 import { Icon } from '../../../components/ds/foundation/Icon';
+import { Toggle } from '../../../components/ds/forms/Toggle';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -11,6 +12,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
+  const [remember, setRemember] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading } = useSelector((state) => state.auth);
@@ -234,16 +236,12 @@ export default function LoginPage() {
             </div>
 
             {/* Remember me */}
-            <label className="flex items-center gap-2.5 cursor-pointer group w-fit py-1 select-none">
-              <input type="checkbox" id="remember" className="peer sr-only" />
-              <div
-                onClick={() => document.getElementById('remember').click()}
-                className="w-4 h-4 rounded-md border border-slate-300 dark:border-white/15 peer-checked:bg-amber-500 peer-checked:border-amber-500 flex items-center justify-center transition-all bg-white dark:bg-white/3"
-              >
-                <Icon name="check" size="12px" weight={600} className="text-white opacity-0 peer-checked:opacity-100" />
-              </div>
-              <span className="text-[12px] font-medium text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300 transition-colors">Remember this device</span>
-            </label>
+            <Toggle
+              label="Remember this device"
+              checked={remember}
+              onChange={setRemember}
+              className="py-1"
+            />
 
             {/* API error */}
             {apiError && (

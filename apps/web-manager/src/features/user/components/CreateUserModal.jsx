@@ -51,7 +51,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
   const { databaseUsers: allUsers, databaseUsersLoading, error: userError, actionLoading } = useSelector((state) => state.user);
   const databaseUsers = allUsers[dbname] || [];
   const loading = databaseUsersLoading[dbname];
-  const { databaseClasses, databaseClassesLoading, activeDatabases } = useSelector((state) => state.database);
+  const { databaseClasses, databaseClassesLoading } = useSelector((state) => state.databaseConfiguration);
+  const { activeDatabases } = useSelector((state) => state.database);
   const currentDbClasses = databaseClasses[dbname];
   const isClassesLoading = databaseClassesLoading[dbname];
 
@@ -134,10 +135,11 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
     }
   }, [isOpen, dbname, selectedHostUid, dispatch, databaseUsers.length, activeDatabases, isEditMode, editingUser]);
 
-  // Set initial selected object when classes load
   useEffect(() => {
     if (currentDbClasses && !selectedObjectId) {
-      const firstClass = currentDbClasses.systemclass?.[0]?.class?.[0]?.classname;
+      const firstUserClass = currentDbClasses.userclass?.[0]?.class?.[0]?.classname;
+      const firstSysClass = currentDbClasses.systemclass?.[0]?.class?.[0]?.classname;
+      const firstClass = firstUserClass || firstSysClass;
       if (firstClass) setSelectedObjectId(firstClass);
     }
   }, [currentDbClasses, selectedObjectId]);
@@ -607,7 +609,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     ) : (
                       (() => {
                         const systemClasses = currentDbClasses?.systemclass?.[0]?.class?.map(c => ({ name: c.classname, type: 'system' })) || [];
-                        const allObjects = systemClasses.filter(o => o.name.toLowerCase().includes(objectSearchTerm.toLowerCase()));
+                        const userClasses = currentDbClasses?.userclass?.[0]?.class?.map(c => ({ name: c.classname, type: 'user' })) || [];
+                        const allObjects = [...userClasses, ...systemClasses].filter(o => o.name.toLowerCase().includes(objectSearchTerm.toLowerCase()));
 
                         if (allObjects.length === 0) return <div className="text-center py-10 opacity-20"><Typography variant="caption" className="font-bold">NO OBJECTS</Typography></div>;
 
@@ -667,7 +670,6 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                                 >
                                   <div className="flex items-center justify-between mb-2">
                                     <span className={`text-[10px] font-black uppercase tracking-tight ${isActive ? 'text-blue-500' : 'text-slate-400'}`}>{perm}</span>
-                                    {isActive && <Icon name="check_circle" size="xs" className="text-blue-500" />}
                                   </div>
                                   <span className="text-[8px] text-slate-400 font-bold leading-tight block">Capability to {perm.toLowerCase()} records</span>
                                 </button>
@@ -693,7 +695,6 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                                 >
                                   <div className="flex items-center justify-between mb-1">
                                     <span className={`text-[10px] font-black uppercase tracking-tight ${isActive ? 'text-amber-500' : 'text-slate-400'}`}>{perm}</span>
-                                    {isActive && <Icon name="check_circle" size="xs" className="text-amber-500" />}
                                   </div>
                                   <span className="text-[8px] text-slate-400 font-bold">{perm === 'Execute' ? 'Procedure calls' : `Table ${perm.toLowerCase()}`}</span>
                                 </button>
@@ -715,10 +716,9 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                                 <button 
                                   key={perm} 
                                   onClick={() => togglePermission(selectedObjectId, perm)}
-                                  className={`px-3 py-2 rounded-xl border flex items-center justify-between transition-all ${isActive ? 'bg-indigo-500/10 border-indigo-500/30' : 'bg-white dark:bg-bk-main/40 border-slate-200 dark:border-white/5 opacity-40 hover:opacity-100'}`}
+                                  className={`px-3 py-2 rounded-xl border flex items-center justify-center transition-all ${isActive ? 'bg-indigo-500/10 border-indigo-500/30 font-black' : 'bg-white dark:bg-bk-main/40 border-slate-200 dark:border-white/5 opacity-40 hover:opacity-100'}`}
                                 >
                                   <span className={`text-[9px] font-black uppercase ${isActive ? 'text-indigo-500' : 'text-slate-400'}`}>{perm}</span>
-                                  <div className={`w-3 h-3 rounded-full ${isActive ? 'bg-indigo-500 shadow-[0_0_8px_rgba(99,102,241,0.5)]' : 'bg-slate-200 dark:bg-white/10'}`}></div>
                                 </button>
                               );
                             })}
