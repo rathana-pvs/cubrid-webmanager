@@ -206,14 +206,6 @@ export const {
   setSelectedBackupId, clearSelectedBackupId, setSelectedQueryPlanId
 } = databaseUISlice.actions;
 
-// Compatibility Aliases
-export const openUnloadDBModal = openUnloadDatabaseModal;
-export const closeUnloadDBModal = closeUnloadDatabaseModal;
-export const openLoadDBModal = openLoadDatabaseModal;
-export const closeLoadDBModal = closeLoadDatabaseModal;
-export const openDeleteDBModal = openDeleteDatabaseModal;
-export const closeDeleteDBModal = closeDeleteDatabaseModal;
-export const openLockInfoModal = openLockInformationModal;
-export const closeLockInfoModal = closeLockInformationModal;
+
 
 export default databaseUISlice.reducer;

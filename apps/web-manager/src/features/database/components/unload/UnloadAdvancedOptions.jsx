@@ -47,11 +47,11 @@ export default function UnloadAdvancedOptions({ formData, handleInputChange }) {
   ];
 
   const inputFields = [
-    { label: 'Output File Prefix', name: 'prefixOutputFile',    useName: 'usePrefixOutputFile',    type: 'text',   placeholder: 'prefix_', icon: 'title' },
-    { label: 'Hash Mapping Path',  name: 'fileForHash',          useName: 'useFileForHash',          type: 'text',   placeholder: '/path/to/hash', icon: 'fingerprint' },
-    { label: 'Cached Page Limit',  name: 'cachedPages',          useName: 'useCachedPages',          type: 'number', placeholder: '0', icon: 'memory' },
-    { label: 'Instance Estimation', name: 'estimateInstances',    useName: 'useEstimateInstances',    type: 'number', placeholder: '1000', icon: 'calculate' },
-    { label: 'LO Block Directory', name: 'loFileDirectory',      useName: 'useLoFileDirectory',      type: 'text',   placeholder: '/path/to/lo', icon: 'folder_zip' },
+    { label: 'Prefix for output files', name: 'prefixOutputFile',    useName: 'usePrefixOutputFile',    type: 'text',   placeholder: 'prefix_', icon: 'title' },
+    { label: 'File for hash',          name: 'fileForHash',          useName: 'useFileForHash',          type: 'text',   placeholder: '/path/to/hash', icon: 'fingerprint' },
+    { label: 'Number of cached pages',  name: 'cachedPages',          useName: 'useCachedPages',          type: 'number', placeholder: '0', icon: 'memory' },
+    { label: 'Estimated number of instances', name: 'estimateInstances',    useName: 'useEstimateInstances',    type: 'number', placeholder: '1000', icon: 'calculate' },
+    { label: 'Lo file count per a directory', name: 'loFileDirectory',      useName: 'useLoFileDirectory',      type: 'text',   placeholder: '/path/to/lo', icon: 'folder_zip' },
   ];
 
   const triggerInputChange = (name, value) => {
@@ -91,13 +91,12 @@ export default function UnloadAdvancedOptions({ formData, handleInputChange }) {
                   />
                 </div>
                 <div className="min-w-0">
-                  <Typography variant="p" className={`text-[11px] font-bold leading-none mb-1 transition-colors ${formData[field.useName] ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                  <Typography variant="p" className={`text-[11px] font-bold leading-none transition-colors ${formData[field.useName] ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
                     {field.label}
                   </Typography>
-                  <Typography variant="caption" className="text-slate-400 text-[9px] font-medium leading-none block">Override system default</Typography>
                 </div>
               </div>
-              <div className="flex-1 max-w-[240px]">
+              <div className="flex-[1.4] max-w-[420px]">
                 <Input
                   type={field.type}
                   name={field.name}

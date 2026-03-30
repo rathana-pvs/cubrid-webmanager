@@ -42,14 +42,14 @@ export const Checkbox = forwardRef(({
             {...props}
           />
           {/* Custom Checkbox UI */}
-          <div className="w-4.5 h-4.5 bg-slate-50 dark:bg-white/5 border border-slate-300 dark:border-white/10 rounded-md flex shrink-0 justify-center items-center transition-all shadow-xs group-hover:border-amber-500/50 dark:group-hover:border-bk-yellow/50 peer-checked:bg-bk-yellow peer-checked:border-bk-yellow/50 peer-[&:indeterminate]:bg-bk-yellow/60 peer-[&:indeterminate]:border-bk-yellow/30 pointer-events-none">
+          <div className="w-4.5 h-4.5 bg-white dark:bg-white/10 border border-slate-300 dark:border-white/25 rounded-md flex shrink-0 justify-center items-center transition-all shadow-xs group-hover:border-amber-500/50 dark:group-hover:border-amber-500/50 peer-checked:bg-amber-500 peer-checked:border-amber-500 dark:peer-checked:bg-amber-500 dark:peer-checked:border-amber-500 peer-[&:indeterminate]:bg-amber-500/60 peer-[&:indeterminate]:border-amber-500/30 pointer-events-none">
             {/* Checked Icon */}
             <svg 
-              className={`w-3.5 h-3.5 text-bk-side pointer-events-none transition-opacity duration-150 ${checked && !indeterminate ? 'opacity-100' : 'opacity-0'}`} 
+              className={`w-3.5 h-3.5 text-white dark:text-bk-side pointer-events-none transition-opacity duration-150 ${checked && !indeterminate ? 'opacity-100' : 'opacity-0'}`} 
               viewBox="0 0 24 24" 
               fill="none" 
               stroke="currentColor" 
-              strokeWidth="3.5" 
+              strokeWidth="4" 
               strokeLinecap="round" 
               strokeLinejoin="round"
             >
@@ -57,7 +57,7 @@ export const Checkbox = forwardRef(({
             </svg>
             
             {/* Indeterminate Icon */}
-            <div className={`absolute w-2 h-0.5 bg-bk-side rounded-full transition-opacity duration-150 ${indeterminate ? 'opacity-100' : 'opacity-0'}`} />
+            <div className={`absolute w-2 h-0.5 bg-white dark:bg-bk-side rounded-full transition-opacity duration-150 ${indeterminate ? 'opacity-100' : 'opacity-0'}`} />
           </div>
         </div>
         

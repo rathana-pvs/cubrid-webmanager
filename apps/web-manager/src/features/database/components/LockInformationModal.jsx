@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { closeLockInfoModal } from '../databaseSlice';
+import { closeLockInformationModal } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -143,7 +143,7 @@ export default function LockInformationModal() {
   return (
     <Modal
       isOpen={isLockInfoModalOpen}
-      onClose={() => dispatch(closeLockInfoModal())}
+      onClose={() => dispatch(closeLockInformationModal())}
       title="Lock Information"
       subtitle={`Concurrency diagnostics for ${selectedDatabase}`}
       icon="lock"
@@ -163,7 +163,7 @@ export default function LockInformationModal() {
           </div>
           <div className="flex items-center gap-3">
             <button
-              onClick={() => dispatch(closeLockInfoModal())}
+              onClick={() => dispatch(closeLockInformationModal())}
               disabled={loading}
               className="text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors px-4"
             >

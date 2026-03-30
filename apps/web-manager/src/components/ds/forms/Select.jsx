@@ -50,7 +50,7 @@ export const Select = ({
             error 
               ? 'border-rose-500/50' 
               : isOpen 
-                ? 'border-bk-yellow/50 dark:border-bk-yellow/50 bg-bk-yellow/2 dark:bg-bk-yellow/4' 
+                ? 'border-amber-500/50 dark:border-amber-500/50 bg-amber-500/2 dark:bg-amber-500/4' 
                 : 'hover:border-slate-300/60 dark:hover:border-white/20'
           } ${
             disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
@@ -63,8 +63,13 @@ export const Select = ({
           }`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <div className={`absolute right-3.5 top-1/2 -translate-y-[52%] transition-transform duration-200 pointer-events-none ${isOpen ? 'rotate-180' : ''}`}>
-             <Icon name="expand_more" size="sm" weight={300} className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-300" />
+          <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-6 h-6 pointer-events-none">
+             <Icon 
+               name="expand_more" 
+               size="14px" 
+               weight={700} 
+               className={`text-slate-400 group-hover:text-amber-500 transition-all duration-200 ${isOpen ? 'rotate-180' : ''}`} 
+             />
           </div>
         </button>
 
@@ -79,9 +84,9 @@ export const Select = ({
                   <div
                     key={opt.value}
                     onClick={() => handleSelect(opt)}
-                    className={`flex items-center justify-between px-3 h-9 rounded-lg text-[13px] font-bold transition-all cursor-pointer group relative overflow-hidden ${
+                    className={`flex items-center justify-between px-3 h-9 rounded-lg text-[13px] font-medium transition-all cursor-pointer group relative overflow-hidden ${
                       opt.value === value
-                        ? 'bg-bk-yellow/10 text-bk-yellow shadow-xs border border-bk-yellow/20'
+                        ? 'bg-amber-500/10 text-amber-500 shadow-xs border border-amber-500/20'
                         : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/6 hover:text-slate-900 dark:hover:text-white'
                     } ${
                       opt.disabled ? 'opacity-30 cursor-not-allowed' : ''
@@ -89,7 +94,7 @@ export const Select = ({
                   >
                     <span className="truncate">{opt.label}</span>
                     {opt.value === value && (
-                      <div className="w-1 h-3 rounded-full bg-bk-yellow" />
+                      <div className="w-1 h-3 rounded-full bg-amber-500" />
                     )}
                   </div>
                 ))

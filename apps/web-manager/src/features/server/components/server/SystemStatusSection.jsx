@@ -90,7 +90,10 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
   const rows = [
     {
       id: 'now', time: 'Now',
-      memory: currentStatus?.memTotal ? { display: `${formatBytes(currentStatus.memUsed)} / ${formatBytes(currentStatus.memTotal)}`, pct: currentStatus.memory } : null,
+      memory: currentStatus?.memTotal ? { 
+        display: `${formatBytes(currentStatus.memUsed)} / ${formatBytes(currentStatus.memTotal)} (${(currentStatus.memory || 0).toFixed(1)}%)`, 
+        pct: currentStatus.memory 
+      } : null,
       disk: history[history.length - 1]?.disk || '-',
       cpu: { display: `${(currentStatus?.cpu || 0).toFixed(1)}%`, pct: currentStatus?.cpu || 0 },
       tps: (currentStatus?.tps || 0).toFixed(2),
@@ -98,7 +101,10 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
     },
     {
       id: 'avg', time: '5 min Avg',
-      memory: { display: `${(averages?.memory || 0).toFixed(1)}%`, pct: averages?.memory || 0 },
+      memory: currentStatus?.memTotal ? { 
+        display: `${formatBytes(currentStatus.memTotal * (averages?.memory || 0) / 100)} / ${formatBytes(currentStatus.memTotal)} (${(averages?.memory || 0).toFixed(1)}%)`,
+        pct: averages?.memory || 0 
+      } : { display: `${(averages?.memory || 0).toFixed(1)}%`, pct: averages?.memory || 0 },
       disk: '-',
       cpu: { display: `${(averages?.cpu || 0).toFixed(1)}%`, pct: averages?.cpu || 0 },
       tps: (averages?.tps || 0).toFixed(2),

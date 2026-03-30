@@ -79,10 +79,11 @@ export function SubMenu({ icon, iconColor = '', label, children, width = 'w-56',
     <div 
       ref={menuRef}
       className={`${width} bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-xl 
-        shadow-[0_4px_20px_rgba(0,0,0,0.15)] p-1.5 animate-in fade-in transition duration-200
+        shadow-[0_4px_20px_rgba(0,0,0,0.15)] p-1.5 animate-in fade-in transition duration-200 context-menu-container
         ${isPositioned ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}
         ${position.x === 'right' ? 'origin-left' : 'origin-right'}
         overflow-y-auto overflow-x-hidden custom-scrollbar`}
+      onClick={(e) => e.stopPropagation()}
 
       style={menuStyle}
       onMouseEnter={handleEnter}

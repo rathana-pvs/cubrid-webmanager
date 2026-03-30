@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { closeUnloadDBModal, openUnloadResultModal } from '../databaseSlice';
+import { closeUnloadDatabaseModal, openUnloadResultModal } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 
 import UnloadConfigSection from './unload/UnloadConfigSection';
@@ -166,7 +166,7 @@ export default function UnloadDatabaseModal() {
       const response = await databaseApi.unloadDatabase(selectedHostUid, selectedDatabase, payload);
       // Instead of manual succession, we use the result modal as intended by legacy
       // but wrap it in our VIEW_SUCCESS pattern
-      dispatch(closeUnloadDBModal());
+      dispatch(closeUnloadDatabaseModal());
       dispatch(openUnloadResultModal(response));
     } catch (err) {
       setErrorMsg(typeof err === 'string' ? err : (err.message || 'The extraction process was interrupted. Ensure the target directory is writable.'));
@@ -174,7 +174,7 @@ export default function UnloadDatabaseModal() {
     }
   };
 
-  const handleClose = () => dispatch(closeUnloadDBModal());
+  const handleClose = () => dispatch(closeUnloadDatabaseModal());
 
   /* ─── LOADING view ─── */
   if (view === VIEW_LOADING) {

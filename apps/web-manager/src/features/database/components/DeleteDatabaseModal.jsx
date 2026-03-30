@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { closeDeleteDBModal, deleteDatabase, fetchDatabaseStartInfo } from '../databaseSlice';
+import { closeDeleteDatabaseModal, deleteDatabase, fetchDatabaseStartInfo } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -93,7 +93,7 @@ export default function DeleteDatabaseModal() {
     }
   };
 
-  const handleClose = () => dispatch(closeDeleteDBModal());
+  const handleClose = () => dispatch(closeDeleteDatabaseModal());
 
   const typeColors = {
     'Data': 'text-sky-500 bg-sky-500/8 border-sky-500/20',

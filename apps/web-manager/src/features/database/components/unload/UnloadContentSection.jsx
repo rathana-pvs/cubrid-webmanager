@@ -3,7 +3,7 @@ import { Checkbox } from '../../../../components/ds/forms/Checkbox';
 
 const RadioOption = ({ label, checked, onClick }) => (
   <div
-    className="flex items-center gap-2.5 cursor-pointer group py-1"
+    className="flex items-center gap-2.5 cursor-pointer group py-1 pl-0.5"
     onClick={onClick}
   >
     <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all shrink-0
@@ -38,18 +38,18 @@ export default function UnloadContentSection({
 
       {/* Schema + Data option panels */}
       <div className="grid grid-cols-2 gap-3 mb-4">
-        {/* Objects / Schema */}
+        {/* Schema */}
         <div className="bg-slate-50 dark:bg-white/2 rounded-lg border border-slate-200 dark:border-white/5 p-3.5 space-y-1">
           <div className="flex items-center gap-2 mb-3">
             <div className="w-5 h-5 rounded-sm bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
               <Icon name="terminal" size="sm" weight={300} className="text-amber-500" style={{ fontSize: '11px' }} />
             </div>
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Objects</span>
+            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Schema</span>
           </div>
           {['All', 'Selected tables', 'Not include'].map(opt => (
             <RadioOption
               key={opt}
-              label={`Schema: ${opt}`}
+              label={opt}
               checked={formData.schemaOption === opt}
               onClick={() => handleSchemaChange({ target: { name: 'schemaOption', value: opt } })}
             />
@@ -67,7 +67,7 @@ export default function UnloadContentSection({
           {['Selected tables', 'Not include'].map(opt => (
             <RadioOption
               key={opt}
-              label={`Data: ${opt}`}
+              label={opt}
               checked={formData.dataOption === opt}
               onClick={() => handleInputChange({ target: { name: 'dataOption', value: opt } })}
             />
@@ -98,7 +98,7 @@ export default function UnloadContentSection({
               {dynamicTables.map(table => (
                 <Checkbox
                   key={table}
-                  label={table}
+                  label={table.toUpperCase()}
                   checked={formData.selectedTables.includes(table)}
                   onChange={() => handleTableToggle(table)}
                 />

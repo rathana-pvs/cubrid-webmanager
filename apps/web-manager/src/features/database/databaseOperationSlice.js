@@ -252,7 +252,9 @@ export const fetchQueryPlan = createAsyncThunk(
   async ({ hostUid, dbname }, { rejectWithValue }) => {
     try {
       const response = await databaseApi.getQueryPlan(hostUid, dbname);
-      return { dbname, plan: response.planinfo || [] };
+      // The backend returns { planlist: [ { dbname, queryplan: [] } ] }
+      const dbEntry = response.planlist?.find(p => p.dbname === dbname);
+      return { dbname, plan: dbEntry?.queryplan || [] };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || `Failed to fetch query plans for ${dbname}`);
     }

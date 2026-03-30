@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { closeLoadDBModal } from '../databaseSlice';
+import { closeLoadDatabaseModal } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 
 import LoadConfigSection from './load/LoadConfigSection';
@@ -186,7 +186,7 @@ export default function LoadDatabaseModal() {
     }
   };
 
-  const handleClose = () => dispatch(closeLoadDBModal());
+  const handleClose = () => dispatch(closeLoadDatabaseModal());
 
   /* ─── LOADING view ─── */
   if (view === VIEW_LOADING) {

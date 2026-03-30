@@ -3,13 +3,14 @@
 @custom-variant dark (&:is(.dark *));
 
 @theme {
-  --color-primary: #ffc107;
+  --color-primary: #f59e0b;
   --color-bk-main: #121212;
   --color-bk-side: #1e1e1e;
-  --color-bk-yellow: #ffc107;
+  --color-amber: #f59e0b;
+  --color-bk-yellow: #f59e0b;
   --color-accent-red: #f43f5e;
   --color-accent-orange: #f97316;
-  --color-accent-yellow: #ffc107;
+  --color-accent-amber: #f59e0b;
   --color-accent-green: #10b981;
   --color-accent-blue: #0ea5e9;
   --color-accent-purple: #8b5cf6;

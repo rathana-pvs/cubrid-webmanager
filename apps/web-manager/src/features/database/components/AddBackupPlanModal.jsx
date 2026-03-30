@@ -251,19 +251,27 @@ export default function AddBackupPlanModal() {
               <button
                 key={item.value}
                 onClick={() => handleInputChange('backupLevel', item.value)}
-                className={`flex flex-col items-center text-center p-4 rounded-2xl border transition-all duration-300 group ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-200 ${
                   formData.backupLevel === item.value
                     ? 'bg-bk-yellow/10 border-bk-yellow/40 shadow-xs'
                     : 'bg-white dark:bg-white/1 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
                 }`}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center mb-2.5 transition-colors border ${
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
                   formData.backupLevel === item.value ? 'bg-bk-yellow text-slate-900 border-bk-yellow/50' : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent'
                 }`}>
-                  <Icon name={item.icon} size="sm" weight={300} />
+                  <Icon name={item.icon} size="14px" weight={300} />
                 </div>
-                <Typography variant="p" className={`font-black text-[11.5px] mb-0.5 tracking-tight ${formData.backupLevel === item.value ? 'text-bk-yellow' : 'text-slate-900 dark:text-white'}`}>{item.title}</Typography>
-                <Typography variant="caption" className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">{item.desc}</Typography>
+                <div className="text-left min-w-0">
+                  <div className="flex items-baseline gap-1.5">
+                    <Typography variant="p" className={`font-black text-[11px] leading-none ${formData.backupLevel === item.value ? 'text-bk-yellow' : 'text-slate-700 dark:text-white'}`}>
+                      {item.title}
+                    </Typography>
+                    <Typography variant="caption" className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter leading-none">
+                      {item.desc}
+                    </Typography>
+                  </div>
+                </div>
               </button>
             ))}
           </div>
@@ -389,34 +397,35 @@ export default function AddBackupPlanModal() {
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Archive Rotation', field: 'deleteArchive', icon: 'auto_delete', desc: 'Auto-purge old logs' },
-              { label: 'Integrity Seal', field: 'checkConsistency', icon: 'verified', desc: 'Verify block checksums' },
-              { label: 'Schema Re-indexing', field: 'updateStatistics', icon: 'query_stats', desc: 'Optimize query map' },
-              { label: 'LZ4 Core Compression', field: 'useCompression', icon: 'compress', desc: 'Minimize disk footprint' },
+              { label: 'Delete archive volumes', field: 'deleteArchive', icon: 'auto_delete', desc: 'Automatic log purging' },
+              { label: 'Update statistics information', field: 'updateStatistics', icon: 'query_stats', desc: 'Optimize query performance' },
+              { label: 'Check database consistency', field: 'checkConsistency', icon: 'verified', desc: 'Validate data block checksums' },
+              { label: 'Use compression', field: 'useCompression', icon: 'compress', desc: 'Reduce storage footprint' },
             ].map(opt => (
               <div 
                 key={opt.field} 
-                className={`flex items-center gap-4 p-4 rounded-2xl border transition-all cursor-pointer group shadow-xs ${
+                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer group ${
                   formData[opt.field] 
                     ? 'bg-bk-yellow/5 border-bk-yellow/30' 
                     : 'bg-white dark:bg-white/1 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/12'
                 }`}
                 onClick={() => handleInputChange(opt.field, !formData[opt.field])}
               >
-                <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-all shrink-0 border ${
+                <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all shrink-0 border ${
                   formData[opt.field] 
                     ? 'bg-bk-yellow text-slate-900 border-bk-yellow/40' 
                     : 'bg-slate-50 dark:bg-white/5 border-transparent text-slate-400 group-hover:text-slate-500'
                 }`}>
-                  <Icon name={opt.icon} size="sm" weight={300} />
+                  <Icon name={opt.icon} size="12px" weight={300} />
                 </div>
                 <div className="flex-1 min-w-0">
-                   <Typography variant="p" className={`text-[12px] font-black transition-colors leading-none mb-1 ${formData[opt.field] ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
+                  <Typography variant="p" className={`text-[11px] font-black transition-colors leading-none whitespace-nowrap ${formData[opt.field] ? 'text-slate-900 dark:text-white' : 'text-slate-500 dark:text-slate-400'}`}>
                     {opt.label}
                   </Typography>
-                  <Typography variant="caption" className="text-[9px] text-slate-400 font-bold uppercase tracking-tighter block leading-none">{opt.desc}</Typography>
                 </div>
-                <Toggle checked={formData[opt.field]} onChange={(v) => handleInputChange(opt.field, v)} size="sm" />
+                <div className="pointer-events-none">
+                  <Toggle checked={formData[opt.field]} size="sm" />
+                </div>
               </div>
             ))}
           </div>

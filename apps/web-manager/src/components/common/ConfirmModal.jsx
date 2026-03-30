@@ -35,7 +35,7 @@ export default function ConfirmModal({
             <div className={`w-12 h-12 rounded-2xl flex items-center justify-center mb-4 ${
               variant === 'danger' 
                 ? 'bg-rose-500/10 text-rose-500 border border-rose-500/15' 
-                : 'bg-bk-yellow/10 text-bk-yellow border border-bk-yellow/15'
+                : 'bg-amber/10 text-amber border border-amber/15'
             }`}>
               <Icon name="{variant === 'danger' ? 'warning' : 'help'}" size="sm" weight={300} className="select-none" />
             </div>
@@ -62,7 +62,7 @@ export default function ConfirmModal({
               className={`w-full py-2.5 rounded-2xl text-[13px] font-bold transition-all shadow-md active:scale-[0.98] ${
                 variant === 'danger'
                   ? 'bg-rose-500 hover:bg-rose-600 text-white shadow-rose-500/10 hover:shadow-rose-500/20'
-                  : 'bg-bk-yellow hover:bg-[#ffd700] text-bk-side shadow-bk-yellow/10 hover:shadow-bk-yellow/20'
+                  : 'bg-amber hover:bg-amber-400 text-bk-side shadow-amber/10 hover:shadow-amber/20'
               }`}
             >
               {confirmLabel}

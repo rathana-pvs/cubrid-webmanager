@@ -44,9 +44,7 @@ export {
   openAddQueryPlanModal, closeAddQueryPlanModal, openAutoQueryLogModal, closeAutoQueryLogModal,
   openCreateDatabaseModal, closeCreateDatabaseModal, openSetAutomationVolumeModal, closeSetAutomationVolumeModal,
   openAutoVolumeLogModal, closeAutoVolumeLogModal, openLoginDatabaseModal, closeLoginDatabaseModal,
-  setSelectedBackupId, clearSelectedBackupId, setSelectedQueryPlanId,
-  openUnloadDBModal, closeUnloadDBModal, openLoadDBModal, closeLoadDBModal,
-  openDeleteDBModal, closeDeleteDBModal, openLockInfoModal, closeLockInfoModal
+  setSelectedBackupId, clearSelectedBackupId, setSelectedQueryPlanId
 } from './databaseUISlice';
 
 export {
