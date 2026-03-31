@@ -422,8 +422,8 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
           {viewMode === 'top' && <span>{top.length} patterns</span>}
         </div>
         <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          Connected
+          <div className={`h-1.5 w-1.5 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : logState?.error ? 'bg-rose-500' : 'bg-emerald-500'}`} />
+          {loading ? 'Synchronizing...' : logState?.error ? 'Disconnected' : 'Connected'}
         </div>
       </div>
     </div>

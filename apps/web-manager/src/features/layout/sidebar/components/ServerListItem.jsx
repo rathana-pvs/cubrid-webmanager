@@ -17,7 +17,11 @@ export default function ServerListItem({ host, isSelected, isAuthorized, onConte
         }`}
       onClick={() => {
         dispatch(setSelectedHost(host.uid));
-        dispatch(setActiveMainTab('host:' + host.uid));
+      }}
+      onDoubleClick={() => {
+        if (isAuthorized) {
+          dispatch(setActiveMainTab('host:' + host.uid));
+        }
       }}
       onContextMenu={(e) => onContextMenu(e, host.alias || host.id, host.uid, host.alias || host.id)}
     >

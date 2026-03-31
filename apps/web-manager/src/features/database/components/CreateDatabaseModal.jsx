@@ -35,8 +35,9 @@ const VOLUME_TYPES = [
 const STEPS = [
   { id: 1, label: 'General', icon: 'settings' },
   { id: 2, label: 'Volumes', icon: 'storage' },
-  { id: 3, label: 'Access', icon: 'lock' },
-  { id: 4, label: 'Review', icon: 'fact_check' },
+  { id: 3, label: 'Automation', icon: 'auto_mode' },
+  { id: 4, label: 'Access', icon: 'lock' },
+  { id: 5, label: 'Review', icon: 'fact_check' },
 ];
 
 /* ── helpers ─────────────────────────────────────────────────── */
@@ -81,20 +82,31 @@ export default function CreateDatabaseModal() {
     pageSize: 16384,
     locale: 'en_US.utf8',
     userDefinedLocale: '',
-    genericVolPath: '/home/cubrid/databases',
+    genericVolPath: '',
     genericVolSize: 512,
-    logVolPath: '/home/cubrid/databases',
+    logVolPath: '',
     logVolSize: 512,
     logPageSize: 16384,
     autoStart: true,
     volumes: [
-      { name: 'data_vol_001', type: 'data', size: 512, path: '/home/cubrid/databases' },
-      { name: 'index_vol_001', type: 'index', size: 512, path: '/home/cubrid/databases' },
-      { name: 'temp_vol_001', type: 'temp', size: 512, path: '/home/cubrid/databases' }
+      { name: 'data_vol_001', type: 'data', size: 512, path: '' },
+      { name: 'index_vol_001', type: 'index', size: 512, path: '' },
+      { name: 'temp_vol_001', type: 'temp', size: 512, path: '' }
     ],
+    autoAddVol: {
+      index: "ON",
+      indexWarn: "0.15",
+      indexExtPage: "32768",
+      data: "ON",
+      dataWarn: "0.15",
+      dataExtPage: "32768"
+    },
+    baseDir: '',
     dbaPassword: '',
     confirmPassword: ''
   });
+
+  const hostEnv = useSelector((state) => state.host.hostEnvs[selectedHostUid]);
 
   useEffect(() => {
     if (isCreateDatabaseModalOpen && selectedHostUid) {
@@ -102,36 +114,56 @@ export default function CreateDatabaseModal() {
       setView(VIEW_FORM);
       setErrorMsg('');
       setSuccessMsg('');
+      
+      // 1. Immediate Population: Use cached system info if available
+      const cachedDir = hostEnv?.CUBRID_DATABASES;
+      if (cachedDir) {
+        setFormData(prev => ({
+          ...prev,
+          baseDir: cachedDir,
+          genericVolPath: cachedDir,
+          logVolPath: cachedDir,
+          volumes: prev.volumes.map(vol => ({ ...vol, path: cachedDir }))
+        }));
+      } else {
+        // 2. Proactive Fetch: If missing, fetch system environment metadata
+        dispatch(fetchHostEnv(selectedHostUid));
+      }
+
+      // 3. Backend Fallback: Fetch specific create-info
       dispatch(fetchCreateDatabaseInfo({ hostUid: selectedHostUid }))
         .unwrap()
         .then(data => {
-          if (data?.default_db_dir) {
+          const dir = hostEnv?.CUBRID_DATABASES || data?.default_db_dir;
+          if (dir) {
             setFormData(prev => ({
               ...prev,
-              genericVolPath: data.default_db_dir,
-              logVolPath: data.default_db_dir,
-              volumes: prev.volumes.map(vol => ({
-                ...vol,
-                path: data.default_db_dir
-              }))
+              baseDir: dir,
+              genericVolPath: prev.genericVolPath || dir,
+              logVolPath: prev.logVolPath || dir,
+              volumes: prev.volumes.map(vol => ({ ...vol, path: vol.path || dir }))
             }));
           }
         })
         .catch(() => {});
     }
-  }, [isCreateDatabaseModalOpen, selectedHostUid, dispatch]);
+  }, [isCreateDatabaseModalOpen, selectedHostUid, dispatch, hostEnv?.CUBRID_DATABASES]);
 
   useEffect(() => {
-    if (formData.dbName) {
-      const dbName = formData.dbName;
+    const { dbName, baseDir } = formData;
+    if (baseDir) {
+      const fullPath = dbName 
+        ? (baseDir.endsWith('/') ? `${baseDir}${dbName}` : `${baseDir}/${dbName}`)
+        : baseDir;
+      
       setFormData(prev => ({
         ...prev,
-        genericVolPath: prev.genericVolPath.endsWith(dbName) ? prev.genericVolPath : `${prev.genericVolPath}${prev.genericVolPath.endsWith('/') ? '' : '/'}${dbName}`,
-        logVolPath: prev.logVolPath.endsWith(dbName) ? prev.logVolPath : `${prev.logVolPath}${prev.logVolPath.endsWith('/') ? '' : '/'}${dbName}`,
-        volumes: prev.volumes.map(vol => ({
+        genericVolPath: fullPath,
+        logVolPath: fullPath,
+        volumes: prev.volumes.map((vol, i) => ({
           ...vol,
-          name: `${dbName}_${vol.type}_001`,
-          path: prev.genericVolPath.endsWith(dbName) ? prev.genericVolPath : `${prev.genericVolPath}${prev.genericVolPath.endsWith('/') ? '' : '/'}${dbName}`
+          name: dbName ? `${dbName}_${vol.type}_001` : `vol_${vol.type}_${String(i + 1).padStart(3, '0')}`,
+          path: fullPath
         }))
       }));
     }
@@ -157,9 +189,16 @@ export default function CreateDatabaseModal() {
   };
   const removeVolume = (index) => setFormData(prev => ({ ...prev, volumes: prev.volumes.filter((_, i) => i !== index) }));
 
+  const handleAutoAddVolChange = (field, value) => {
+    setFormData(prev => ({
+      ...prev,
+      autoAddVol: { ...prev.autoAddVol, [field]: value }
+    }));
+  };
+
   const isFormValid = () => {
     if (step === 1) return formData.dbName && formData.genericVolPath && formData.logVolPath;
-    if (step === 3) return formData.dbaPassword && formData.dbaPassword === formData.confirmPassword && formData.dbaPassword.length >= 8;
+    if (step === 4) return formData.dbaPassword && formData.dbaPassword === formData.confirmPassword && formData.dbaPassword.length >= 8;
     return true;
   };
 
@@ -170,27 +209,38 @@ export default function CreateDatabaseModal() {
     try {
       const exvol = formData.volumes.map(vol => ({
         [vol.name]: {
-          volpath: vol.path,
-          volsize: String(Math.floor((vol.size * 1024 * 1024) / formData.pageSize)),
-          voltype: vol.type
+          type: vol.type,
+          size: vol.size,
+          pagesize: formData.pageSize,
+          volpath: vol.path
         }
       }));
 
       const payload = {
         dbname: formData.dbName,
-        numpage: String(Math.floor((formData.genericVolSize * 1024 * 1024) / formData.pageSize)),
-        pagesize: String(formData.pageSize),
-        logsize: String(Math.floor((formData.logVolSize * 1024 * 1024) / formData.logPageSize)),
-        logpagesize: String(formData.logPageSize),
+        pagesize: formData.pageSize,
+        db_volume_size: formData.genericVolSize,
         genvolpath: formData.genericVolPath,
+        logpagesize: formData.logPageSize,
+        logsize: formData.logVolSize,
         logvolpath: formData.logVolPath,
+        setAutoStart: formData.autoStart,
+        overwrite_config_file: 'YES',
+        numpage: Math.floor((formData.genericVolSize * 1024 * 1024) / formData.pageSize),
         exvol: exvol,
         charset: formData.locale === 'user_defined' ? formData.userDefinedLocale : formData.locale,
-        overwrite_config_file: 'n',
+        setAutoAddVol: {
+          index: formData.autoAddVol.index,
+          index_warn_outofspace: formData.autoAddVol.indexWarn,
+          index_ext_page: formData.autoAddVol.indexExtPage,
+          data: formData.autoAddVol.data,
+          data_warn_outofspace: formData.autoAddVol.dataWarn,
+          data_ext_page: formData.autoAddVol.dataExtPage
+        },
+        username: "dba",
         updateUser: {
           userpass: formData.dbaPassword
-        },
-        setAutoStart: formData.autoStart,
+        }
       };
 
       await dispatch(createDatabase({ hostUid: selectedHostUid, payload })).unwrap();
@@ -351,7 +401,7 @@ export default function CreateDatabaseModal() {
       isOpen={isCreateDatabaseModalOpen}
       onClose={handleClose}
       title="Create Database"
-      subtitle={`Step ${step} of 4 — ${STEPS[step - 1].label}`}
+      subtitle={`Step ${step} of 5 — ${STEPS[step - 1].label}`}
       icon="add_circle"
       maxWidth="780px"
       footer={
@@ -376,7 +426,7 @@ export default function CreateDatabaseModal() {
                 Back
               </Button>
             )}
-            {step < 4 ? (
+            {step < 5 ? (
               <Button
                 variant="primary"
                 onClick={handleNext}
@@ -580,8 +630,78 @@ export default function CreateDatabaseModal() {
           </div>
         )}
 
-        {/* STEP 3: Access Control */}
+        {/* STEP 3: Automation Settings */}
         {step === 3 && (
+          <div className="animate-in fade-in duration-200 space-y-6">
+            <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
+              <SectionLabel icon="auto_mode">Automated Volume Expansion</SectionLabel>
+              <Typography variant="p" className="text-[11px] text-slate-500 font-medium mb-4 block">
+                Configure thresholds for automatic storage provisioning when space is low.
+              </Typography>
+              
+              <div className="grid grid-cols-2 gap-6">
+                {/* Data Segment Automation */}
+                <div className="space-y-4 p-4 rounded-2xl bg-blue-500/5 border border-blue-500/10">
+                  <div className="flex items-center justify-between">
+                    <Typography variant="span" className="text-[11px] font-black uppercase tracking-wider text-blue-600 dark:text-blue-400">Data Segment</Typography>
+                    <Toggle 
+                      checked={formData.autoAddVol.data === 'ON'} 
+                      onChange={(v) => handleAutoAddVolChange('data', v ? 'ON' : 'OFF')} 
+                      size="sm" 
+                    />
+                  </div>
+                  <div className={`space-y-3 transition-opacity ${formData.autoAddVol.data === 'ON' ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                    <Input 
+                      label="Warning Threshold (0-1)" 
+                      value={formData.autoAddVol.dataWarn} 
+                      onChange={(e) => handleAutoAddVolChange('dataWarn', e.target.value)}
+                      size="sm"
+                      placeholder="e.g. 0.15"
+                    />
+                    <Input 
+                      label="Extension Pages" 
+                      value={formData.autoAddVol.dataExtPage} 
+                      onChange={(e) => handleAutoAddVolChange('dataExtPage', e.target.value)}
+                      size="sm"
+                      placeholder="e.g. 32768"
+                    />
+                  </div>
+                </div>
+
+                {/* Index Segment Automation */}
+                <div className="space-y-4 p-4 rounded-2xl bg-amber-500/5 border border-amber-500/10">
+                  <div className="flex items-center justify-between">
+                    <Typography variant="span" className="text-[11px] font-black uppercase tracking-wider text-amber-600 dark:text-amber-400">Index Segment</Typography>
+                    <Toggle 
+                      checked={formData.autoAddVol.index === 'ON'} 
+                      onChange={(v) => handleAutoAddVolChange('index', v ? 'ON' : 'OFF')} 
+                      size="sm"
+                    />
+                  </div>
+                  <div className={`space-y-3 transition-opacity ${formData.autoAddVol.index === 'ON' ? 'opacity-100' : 'opacity-40 pointer-events-none'}`}>
+                    <Input 
+                      label="Warning Threshold (0-1)" 
+                      value={formData.autoAddVol.indexWarn} 
+                      onChange={(e) => handleAutoAddVolChange('indexWarn', e.target.value)}
+                      size="sm"
+                      placeholder="e.g. 0.15"
+                    />
+                    <Input 
+                      label="Extension Pages" 
+                      value={formData.autoAddVol.indexExtPage} 
+                      onChange={(e) => handleAutoAddVolChange('indexExtPage', e.target.value)}
+                      size="sm"
+                      placeholder="e.g. 32768"
+                    />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* STEP 4: Access Control */}
+        {step === 4 && (
           <div className="animate-in fade-in duration-200 space-y-6 max-w-sm mx-auto py-6">
             <div className="flex flex-col items-center gap-4 text-center">
               <div className="w-16 h-16 rounded-3xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-[0_8px_32px_rgba(255,193,7,0.1)]">
@@ -632,8 +752,8 @@ export default function CreateDatabaseModal() {
           </div>
         )}
 
-        {/* STEP 4: Commisioning Review */}
-        {step === 4 && (
+        {/* STEP 5: Commisioning Review */}
+        {step === 5 && (
           <div className="animate-in fade-in duration-200 space-y-5">
             <div className="flex items-center gap-4 p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl">
               <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-[0_4px_16px_rgba(16,185,129,0.3)]">
@@ -665,6 +785,32 @@ export default function CreateDatabaseModal() {
                   <div className="flex items-center justify-between pt-3 mt-1.5 border-t border-slate-100 dark:border-white/4">
                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">Total Projection</span>
                     <span className="text-[16px] font-black font-mono text-emerald-500 tracking-tight">{totalStorage} MB</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
+              <SectionLabel icon="auto_mode">Automation Provisioning</SectionLabel>
+              <div className="grid grid-cols-2 gap-4 mt-2">
+                <div className="p-3 bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-slate-500">Data Expansion</span>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${formData.autoAddVol.data === 'ON' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-500/10 text-slate-500'}`}>{formData.autoAddVol.data}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500"><span>Warn:</span> <span className="text-slate-700 dark:text-slate-300 font-bold">{formData.autoAddVol.dataWarn}</span></div>
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500"><span>Ext:</span> <span className="text-slate-700 dark:text-slate-300 font-bold">{formData.autoAddVol.dataExtPage}</span></div>
+                  </div>
+                </div>
+                <div className="p-3 bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 rounded-xl">
+                  <div className="flex items-center justify-between mb-2">
+                    <span className="text-[10px] font-bold text-slate-500">Index Expansion</span>
+                    <span className={`text-[8px] font-black px-1.5 py-0.5 rounded ${formData.autoAddVol.index === 'ON' ? 'bg-emerald-500/10 text-emerald-600' : 'bg-slate-500/10 text-slate-500'}`}>{formData.autoAddVol.index}</span>
+                  </div>
+                  <div className="space-y-1">
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500"><span>Warn:</span> <span className="text-slate-700 dark:text-slate-300 font-bold">{formData.autoAddVol.indexWarn}</span></div>
+                    <div className="flex justify-between text-[10px] font-mono text-slate-500"><span>Ext:</span> <span className="text-slate-700 dark:text-slate-300 font-bold">{formData.autoAddVol.indexExtPage}</span></div>
                   </div>
                 </div>
               </div>

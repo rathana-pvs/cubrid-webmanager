@@ -33,8 +33,16 @@ const combinedReducer = combineReducers({
 
 const rootReducer = (state, action) => {
   if (action.type === 'auth/logout') {
-    // Reset all state by passing undefined to the combined reducer
+    // TOTAL RESET: For full system logout, clear everything
     state = undefined;
+  } else if (action.type === 'host/revokeHostLogin') {
+    // SELECTIVE RESET: When disconnecting from a server, clear resource data 
+    // but preserve the host list, UI layout, and system session.
+    if (state) {
+      const { auth, host, layout, appBar } = state;
+      // All other resource slices (database, broker, user, monitoring, etc.) will be reset
+      state = { auth, host, layout, appBar };
+    }
   }
   return combinedReducer(state, action);
 };

@@ -128,9 +128,12 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
 
   const handleHostLogin = useCallback((uid) => {
     if (!uid) return;
+    
     dispatch(loginToHost(uid))
       .unwrap()
       .then(() => {
+        // Rule #1: Automatically open tab if login is successful
+        dispatch(setActiveMainTab('host:' + uid));
         dispatch(fetchDatabaseStartInfo(uid));
         dispatch(fetchBrokerList(uid));
         dispatch(fetchHostEnv(uid));
@@ -430,7 +433,9 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                         </span>
                       </div>
                     ) : (
-                      <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse" />
+                      authorizedHosts.includes(selectedHostUid) && (
+                        <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse" />
+                      )
                     )}
                   </div>
                 </div>
@@ -524,10 +529,11 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuItem
             icon="power_settings_new" iconColor="text-rose-500" label="Disconnect"
             onClick={() => {
-              dispatch(revokeHostLogin(contextMenu.hostUid));
-              if (selectedHostUid === contextMenu.hostUid) {
+              const hostUid = contextMenu.hostUid;
+              dispatch(revokeHostLogin(hostUid));
+              dispatch(closeHostTabs(hostUid));
+              if (selectedHostUid === hostUid) {
                 dispatch(setSelectedHost(null));
-                dispatch(closeHostTabs(contextMenu.hostUid));
               }
               setContextMenu(null);
             }}
