@@ -278,7 +278,15 @@ export const fetchQueryPlanLog = createAsyncThunk(
   async ({ hostUid }, { rejectWithValue }) => {
     try {
       const response = await databaseApi.getQueryPlanLog(hostUid);
-      return response.log || [];
+      // Fallback: handle if response is the log array itself or if it has a 'log', 'error', 'caslog', 'plan_log', or 'logs' key
+      if (Array.isArray(response)) return response;
+      if (response && typeof response === 'object') {
+        const payload = response.data || response.log || response.error || response.caslog || response.plan_log || response.logs;
+        if (Array.isArray(payload)) return payload;
+        // If response has non-array 'error' key (like error message), ignore it and check next
+        if (typeof response.error === 'string') return [];
+      }
+      return Array.isArray(response) ? response : [];
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to fetch query plan log');
     }
@@ -478,7 +486,7 @@ const databaseOperationSlice = createSlice({
       })
       .addCase(fetchQueryPlanLog.fulfilled, (state, action) => {
         state.logsLoading = false;
-        state.queryPlanLogs = action.payload;
+        state.queryPlanLogs = action.payload || [];
       })
       .addCase(fetchQueryPlanLog.rejected, (state, action) => {
         state.logsLoading = false;

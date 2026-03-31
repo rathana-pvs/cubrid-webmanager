@@ -58,11 +58,11 @@ export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casI
         <div className="absolute top-4 left-6 z-10 flex items-center gap-4 pointer-events-none">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-md border border-white/5 rounded-xl shadow-lg">
              <Icon name="dns" size="xs" weight={300} className="text-bk-yellow" />
-             <Typography variant="caption" className="font-black text-white/60 uppercase tracking-widest">Broker: <span className="text-bk-yellow">{brokerName}</span></Typography>
+             <Typography variant="caption" className="font-bold text-white/60">Broker: <span className="text-bk-yellow">{brokerName}</span></Typography>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-md border border-white/5 rounded-xl shadow-lg">
              <Icon name="fingerprint" size="xs" weight={300} className="text-bk-yellow" />
-             <Typography variant="caption" className="font-black text-white/60 uppercase tracking-widest">CAS UID: <span className="text-bk-yellow">{casId}</span></Typography>
+             <Typography variant="caption" className="font-bold text-white/60">CAS UID: <span className="text-bk-yellow">{casId}</span></Typography>
           </div>
         </div>
 
@@ -77,7 +77,7 @@ export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casI
              <div className="w-20 h-20 bg-slate-800/50 rounded-3xl flex items-center justify-center border border-white/5 shadow-2xl">
                 <Icon name="search_off" size="lg" weight={100} className="text-slate-600" />
              </div>
-             <Typography variant="h3" className="text-white/60 font-black uppercase tracking-[0.3em]">No Log Data</Typography>
+             <Typography variant="h3" className="text-white/60 font-bold tracking-tight">No Log Data</Typography>
              <Typography variant="p" className="text-slate-500 max-w-sm">The requested log stream is currently empty or hasn't been initialized by the broker process.</Typography>
           </div>
         )}

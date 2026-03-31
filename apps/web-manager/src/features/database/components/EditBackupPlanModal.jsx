@@ -264,7 +264,7 @@ export default function EditBackupPlanModal() {
         <div className="space-y-4">
            <div className="flex items-center gap-3">
              <Icon name="architecture" size="14px" weight={400} className="text-bk-yellow" />
-             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Abstraction Level</span>
+             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Abstraction Level</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
             {LEVEL_PRESETS.map(item => (
@@ -287,7 +287,7 @@ export default function EditBackupPlanModal() {
                     <Typography variant="p" className={`font-black text-[11px] leading-none ${formData.backupLevel === item.value ? 'text-bk-yellow' : 'text-slate-700 dark:text-white'}`}>
                       {item.title}
                     </Typography>
-                    <Typography variant="caption" className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter leading-none">
+                    <Typography variant="caption" className="text-[9px] text-slate-400 dark:text-slate-500 font-bold leading-none">
                       {item.desc}
                     </Typography>
                   </div>
@@ -307,7 +307,7 @@ export default function EditBackupPlanModal() {
         <div className="space-y-4">
            <div className="flex items-center gap-3">
              <Icon name="schedule" size="14px" weight={400} className="text-bk-yellow" />
-             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Execution Schedule</span>
+             <span className="text-[10px] font-bold text-slate-400">Execution Schedule</span>
           </div>
           <div className="p-5 bg-slate-50/50 dark:bg-white/1 border border-slate-100 dark:border-white/4 rounded-2xl space-y-6 shadow-xs">
             <div className="flex gap-4">
@@ -339,7 +339,7 @@ export default function EditBackupPlanModal() {
                         key={id}
                         type="button"
                         onClick={() => setBulkDays(id)}
-                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[9px] font-black uppercase tracking-widest text-slate-400 hover:border-bk-yellow/50 hover:text-bk-yellow transition-all"
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[10px] font-bold text-slate-400 hover:border-bk-yellow/50 hover:text-bk-yellow transition-all"
                       >
                          {id.replace('_', ' ')}
                       </button>
@@ -391,8 +391,8 @@ export default function EditBackupPlanModal() {
                 <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center gap-4">
                   <Icon name="verified" size="md" weight={400} className="text-emerald-500" />
                   <div className="min-w-0">
-                    <Typography variant="p" className="text-[11px] font-black text-emerald-500 uppercase tracking-tight leading-none mb-1">Standard 24h Cycle</Typography>
-                    <Typography variant="caption" className="text-emerald-500/70 font-medium leading-none block italic">Instance synchronized daily at exactly <span className="font-black text-emerald-500">{formData.backupTime}</span>.</Typography>
+                    <Typography variant="p" className="text-[11px] font-bold text-emerald-500 leading-none mb-1">Standard 24h cycle</Typography>
+                    <Typography variant="caption" className="text-emerald-500/70 font-medium leading-none block italic">Instance synchronized daily at exactly <span className="font-bold text-emerald-500">{formData.backupTime}</span>.</Typography>
                   </div>
                 </div>
               )}
@@ -408,7 +408,7 @@ export default function EditBackupPlanModal() {
         <div className="space-y-4">
            <div className="flex items-center gap-3">
              <Icon name="settings_input_component" size="14px" weight={400} className="text-bk-yellow" />
-             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Optimization Matrix</span>
+             <span className="text-[10px] font-bold text-slate-400">Optimization Matrix</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
             {[
@@ -438,8 +438,8 @@ export default function EditBackupPlanModal() {
                     {opt.label}
                   </Typography>
                 </div>
-                <div className="pointer-events-none">
-                  <Toggle checked={formData[opt.field]} size="sm" />
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <Toggle checked={formData[opt.field]} onChange={(val) => handleInputChange(opt.field, val)} size="sm" variant="primary" />
                 </div>
               </div>
             ))}

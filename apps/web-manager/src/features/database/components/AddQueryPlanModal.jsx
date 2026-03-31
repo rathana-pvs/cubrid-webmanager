@@ -37,7 +37,7 @@ const CustomSelect = ({ label, value, options, onChange, icon }) => {
         <button
           type="button"
           onClick={() => setIsOpen(!isOpen)}
-          className={`w-full h-11 px-3.5 flex items-center justify-between bg-white dark:bg-white/3 border rounded-2xl transition-all font-bold text-[12px] shadow-xs cursor-pointer
+          className={`w-full h-11 px-3.5 flex items-center justify-between bg-white dark:bg-white/3 border rounded-2xl transition-all font-medium text-[12px] shadow-xs cursor-pointer
             ${isOpen ? 'border-amber-500 ring-2 ring-amber-500/10' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}
         >
           <span className="flex items-center gap-2.5">
@@ -59,14 +59,13 @@ const CustomSelect = ({ label, value, options, onChange, icon }) => {
                   key={opt.value}
                   type="button"
                   onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                  className={`w-full px-4 py-3 text-[12px] font-bold transition-all flex items-center justify-between group cursor-pointer
+                  className={`w-full px-4 py-3 text-[12px] font-medium transition-all flex items-center justify-between group cursor-pointer
                     ${value === opt.value ? 'bg-amber-500/10 text-amber-600 dark:text-amber-500' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'}`}
                 >
                   <div className="flex items-center gap-3">
                     <div className={`w-1.5 h-1.5 rounded-full transition-all ${value === opt.value ? 'bg-amber-500 scale-125' : 'bg-slate-300 dark:bg-slate-700 opacity-0 group-hover:opacity-100'}`} />
                     {opt.label}
                   </div>
-                  {value === opt.value && <Icon name="check_circle" size="xs" weight={700} />}
                 </button>
               ))}
             </div>
@@ -330,25 +329,25 @@ export default function AddQueryPlanModal() {
                 <Icon name="database" size="md" weight={300} className="text-amber-500" />
               </div>
               <div className="min-w-0">
-                <Typography variant="caption" className="font-black uppercase tracking-widest text-amber-600/70 mb-0.5">Automating Database</Typography>
+                <Typography variant="caption" className="font-bold text-amber-600/70 mb-0.5">Automating database</Typography>
                 <Typography variant="h4" className="text-[14px] font-black text-amber-700 dark:text-amber-400 font-mono truncate">
-                  {selectedDatabase}
+                   {selectedDatabase}
                 </Typography>
               </div>
             </div>
             <div className="shrink-0 flex items-center gap-2 px-3 py-1.5 rounded-xl bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/5 shadow-xs">
               <Icon name="bolt" size="sm" className="text-amber-500 animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-slate-600 dark:text-slate-400">Payload: SQL Service</span>
+              <span className="text-[10px] font-bold text-slate-600 dark:text-slate-400">Payload: SQL Service</span>
             </div>
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-x-8 gap-y-6">
+        <div className="space-y-8">
           {/* Identity */}
-          <div className="col-span-2 space-y-4">
+          <div className="space-y-4">
             <div className="flex items-center gap-3">
                <Icon name="fingerprint" size="14px" weight={400} className="text-amber-500" />
-               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Object Identification</span>
+               <span className="text-[10px] font-black text-slate-400">Object Identification</span>
             </div>
             <Input 
               label="Query Identifier"
@@ -363,11 +362,11 @@ export default function AddQueryPlanModal() {
           <div className="space-y-4">
              <div className="flex items-center gap-3">
                <Icon name="lock" size="14px" weight={400} className="text-amber-500" />
-               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Secure Context</span>
+               <span className="text-[10px] font-black text-slate-400">Secure Context</span>
             </div>
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <Input 
-                label="DB Username"
+                label="Database Username"
                 value={formData.username}
                 onChange={e => handleInputChange('username', e.target.value)}
                 icon="person"
@@ -375,7 +374,7 @@ export default function AddQueryPlanModal() {
               />
               <Input 
                 type="password"
-                label="DB Password"
+                label="Database Password"
                 value={formData.password}
                 onChange={e => handleInputChange('password', e.target.value)}
                 icon="key"
@@ -389,9 +388,9 @@ export default function AddQueryPlanModal() {
           <div className="space-y-4">
             <div className="flex items-center gap-3">
                <Icon name="schedule" size="14px" weight={400} className="text-amber-500" />
-               <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Execution Schedule</span>
+               <span className="text-[10px] font-black text-slate-400">Execution Schedule</span>
             </div>
-            <div className="space-y-4">
+            <div className="grid grid-cols-2 gap-4">
               <CustomSelect 
                 label="Recurrence Frequency"
                 icon="event_repeat"
@@ -406,11 +405,11 @@ export default function AddQueryPlanModal() {
               />
               
               <div className="space-y-1" ref={timePickerRef}>
-                <Typography variant="caption" className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-0.5">Start Time</Typography>
+                <Typography variant="caption" className="text-[10px] font-black text-slate-400 dark:text-slate-500 ml-0.5">Start Time</Typography>
                 <div className="relative">
                   <button 
                     onClick={() => setShowTimePicker(!showTimePicker)}
-                    className={`w-full h-11 px-3.5 flex items-center justify-between bg-white dark:bg-white/3 border rounded-2xl transition-all font-bold text-[12px] shadow-xs cursor-pointer
+                    className={`w-full h-11 px-3.5 flex items-center justify-between bg-white dark:bg-white/3 border rounded-2xl transition-all font-medium text-[12px] shadow-xs cursor-pointer
                       ${showTimePicker ? 'border-amber-500 ring-2 ring-amber-500/10' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}
                   >
                     <span className="flex items-center gap-2.5">
@@ -446,7 +445,7 @@ export default function AddQueryPlanModal() {
             {formData.periodType === 'WEEK' && (
               <div className="grid grid-cols-7 gap-2">
                 {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, ix) => (
-                  <button key={day} onClick={() => toggleDetail(ix + 1)} className={`h-10 rounded-xl border text-[10px] font-black tracking-widest uppercase transition-all cursor-pointer ${formData.periodDetail.includes(ix + 1) ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 text-slate-400 hover:border-amber-500/30'}`}>{day}</button>
+                  <button key={day} onClick={() => toggleDetail(ix + 1)} className={`h-10 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${formData.periodDetail.includes(ix + 1) ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 text-slate-400 hover:border-amber-500/30'}`}>{day}</button>
                 ))}
               </div>
             )}
@@ -507,9 +506,9 @@ export default function AddQueryPlanModal() {
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                  <Icon name="code" size="14px" weight={400} className="text-amber-500" />
-                 <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">SQL Execution Payload</span>
+                 <span className="text-[10px] font-black text-slate-400">SQL Execution Payload</span>
               </div>
-              <span className="text-[9px] font-black uppercase tracking-widest text-amber-500/60 bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-full">Atomic Execution</span>
+              <span className="text-[10px] font-bold text-amber-500/60 bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-full">Atomic execution</span>
             </div>
             <div className="relative group rounded-3xl overflow-hidden border border-slate-200 dark:border-white/8 bg-white dark:bg-[#1e1e1e] shadow-inner transition-all focus-within:ring-4 focus-within:ring-amber-500/5 focus-within:border-amber-500/40">
               <div className="absolute top-4 left-4 z-10 opacity-40 group-focus-within:opacity-100 transition-opacity pointer-events-none">
@@ -525,11 +524,11 @@ export default function AddQueryPlanModal() {
                   options={{
                     minimap: { enabled: false },
                     fontSize: 13,
-                    lineNumbers: 'on',
+                    lineNumbers: 'off',
                     glyphMargin: false,
                     folding: false,
-                    lineDecorationsWidth: 10,
-                    lineNumbersMinChars: 3,
+                    lineDecorationsWidth: 0,
+                    lineNumbersMinChars: 0,
                     scrollBeyondLastLine: false,
                     automaticLayout: true,
                     padding: { top: 16, bottom: 16 },
@@ -550,7 +549,7 @@ export default function AddQueryPlanModal() {
                 <Icon name="info" size="sm" weight={300} className="text-sky-500" />
               </div>
               <div className="space-y-0.5">
-                <Typography variant="p" className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">System Compliance</Typography>
+                <Typography variant="p" className="text-[11px] font-black text-slate-700 dark:text-slate-200 tracking-tight">System Compliance</Typography>
                 <Typography variant="caption" className="text-slate-500 dark:text-slate-500 font-medium leading-relaxed italic block">
                   Queries are executed on the server side via the task controller. Ensure the DB user has <span className="font-bold non-italic text-amber-500">sufficient privileges</span> for the intended operations.
                 </Typography>

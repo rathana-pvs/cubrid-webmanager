@@ -29,6 +29,8 @@ const initialState = {
   isSetAutomationVolumeModalOpen: false,
   isAutoVolumeLogModalOpen: false,
   isLoginDatabaseModalOpen: false,
+  isEditQueryPlanModalOpen: false,
+  isDeleteQueryPlanModalOpen: false,
   
   // Modal Data
   deleteDatabaseName: null,
@@ -162,6 +164,18 @@ const databaseUISlice = createSlice({
     openAutoVolumeLogModal: (state) => { state.isAutoVolumeLogModalOpen = true; },
     closeAutoVolumeLogModal: (state) => { state.isAutoVolumeLogModalOpen = false; },
     
+    openEditQueryPlanModal: (state, action) => { 
+      state.isEditQueryPlanModalOpen = true; 
+      state.selectedQueryPlanId = action.payload;
+    },
+    closeEditQueryPlanModal: (state) => { state.isEditQueryPlanModalOpen = false; },
+
+    openDeleteQueryPlanModal: (state, action) => { 
+      state.isDeleteQueryPlanModalOpen = true; 
+      state.selectedQueryPlanId = action.payload;
+    },
+    closeDeleteQueryPlanModal: (state) => { state.isDeleteQueryPlanModalOpen = false; },
+    
     openLoginDatabaseModal: (state, action) => { 
       state.isLoginDatabaseModalOpen = true; 
       state.loginDatabaseName = action.payload;
@@ -203,6 +217,8 @@ export const {
   openSetAutomationVolumeModal, closeSetAutomationVolumeModal,
   openAutoVolumeLogModal, closeAutoVolumeLogModal,
   openLoginDatabaseModal, closeLoginDatabaseModal,
+  openEditQueryPlanModal, closeEditQueryPlanModal,
+  openDeleteQueryPlanModal, closeDeleteQueryPlanModal,
   setSelectedBackupId, clearSelectedBackupId, setSelectedQueryPlanId
 } = databaseUISlice.actions;
 

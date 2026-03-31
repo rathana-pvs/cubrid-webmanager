@@ -402,7 +402,7 @@ export default function BackupDatabaseModal() {
                     </span>
                   </div>
                   <div onClick={(e) => e.stopPropagation()}>
-                    <Toggle checked={isOn} onChange={() => handleInputChange(opt.field, !isOn)} />
+                    <Toggle checked={isOn} onChange={(val) => handleInputChange(opt.field, val)} variant="primary" />
                   </div>
                 </button>
               );

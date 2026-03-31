@@ -78,7 +78,7 @@ export const databaseApi = {
   getAddVolStatus: (hostUid, dbname) => {
     return apiClient.get(`/${hostUid}/database/add-vol-status/${encodeURIComponent(dbname)}`);
   },
-  addVolDb: (hostUid, dbname, payload) => {
+  addVolume: (hostUid, dbname, payload) => {
     return apiClient.post(`/${hostUid}/database/add-vol/${encodeURIComponent(dbname)}`, payload);
   },
   getAutoBackupLog: (hostUid) => {

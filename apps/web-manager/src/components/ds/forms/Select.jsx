@@ -93,9 +93,6 @@ export const Select = ({
                     }`}
                   >
                     <span className="truncate">{opt.label}</span>
-                    {opt.value === value && (
-                      <div className="w-1 h-3 rounded-full bg-amber-500" />
-                    )}
                   </div>
                 ))
               )}

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { closeAutoBackupLogModal, fetchAutoBackupLog } from '../databaseSlice';
 
@@ -16,11 +16,13 @@ export default function AutoBackupLogModal() {
   const {
     autoBackupLogs,
     logsLoading,
-    logsError,
   } = useSelector((state) => state.databaseOperation);
   const { selectedHostUid } = useSelector((state) => state.host);
   
   const [searchTerm, setSearchTerm] = useState('');
+  const [currentPage, setCurrentPage] = useState(1);
+  const [showAll, setShowAll] = useState(false);
+  const pageSize = 15;
 
   useEffect(() => {
     if (isAutoBackupLogModalOpen && selectedHostUid) {
@@ -28,15 +30,37 @@ export default function AutoBackupLogModal() {
     }
   }, [isAutoBackupLogModalOpen, selectedHostUid, dispatch]);
 
-  if (!isAutoBackupLogModalOpen) return null;
+  // Reset pagination when search term or database context changes
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchTerm, selectedDatabase]);
 
-  const filteredLogs = (autoBackupLogs || []).filter(log => {
-    const matchesDB = selectedDatabase ? log.dbname === selectedDatabase : true;
-    const matchesSearch = log.backupid?.toLowerCase().includes(searchTerm.toLowerCase()) || 
-                          log.error_desc?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          log.dbname?.toLowerCase().includes(searchTerm.toLowerCase());
-    return matchesDB && matchesSearch;
-  });
+  const filteredLogs = useMemo(() => {
+    return (autoBackupLogs || []).filter(log => {
+      if (!log) return false;
+
+      // Robust DB matching
+      const logDb = (log.dbname || log.db_name || log['@dbname'] || log.db || '').toString().trim();
+      const selectedDBName = (selectedDatabase || '').toString().trim();
+
+      const matchesDB = !selectedDBName ||
+        logDb.toLowerCase() === selectedDBName.toLowerCase() ||
+        logDb === '';
+
+      const matchesSearch = !searchTerm ||
+        log.backupid?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+        log.error_desc?.toString().toLowerCase().includes(searchTerm.toLowerCase()) ||
+        logDb.toLowerCase().includes(searchTerm.toLowerCase());
+
+      return matchesDB && matchesSearch;
+    });
+  }, [autoBackupLogs, selectedDatabase, searchTerm]);
+
+  const totalPages = Math.max(1, Math.ceil(filteredLogs.length / pageSize));
+  const startIdx = (currentPage - 1) * pageSize;
+  const paginatedLogs = showAll ? filteredLogs : filteredLogs.slice(startIdx, startIdx + pageSize);
+
+  if (!isAutoBackupLogModalOpen) return null;
 
   const columns = [
     { 
@@ -59,21 +83,27 @@ export default function AutoBackupLogModal() {
         const isStart = val?.toLowerCase().includes('auto job start');
         
         return (
-          <div className="flex items-center gap-2.5">
+          <div className="flex items-center gap-2.5 text-[12px]">
             {isSuccess ? (
               <div className="flex items-center gap-2 text-emerald-600 dark:text-emerald-400">
-                <Icon name="check_circle" size="sm" weight={300} className="fill-current" />
-                <span>{val}</span>
+                <span className="flex-shrink-0">
+                  <Icon name="check_circle" size="sm" weight={300} className="fill-current" />
+                </span>
+                <span className="truncate">{val}</span>
               </div>
             ) : isStart ? (
               <div className="flex items-center gap-2 text-sky-600 dark:text-sky-400">
-                <Icon name="play_circle" size="sm" weight={300} className="animate-pulse" />
-                <span>{val}</span>
+                <span className="flex-shrink-0">
+                  <Icon name="play_circle" size="sm" weight={300} className="animate-pulse" />
+                </span>
+                <span className="truncate">{val}</span>
               </div>
             ) : (
               <div className="flex items-center gap-2 text-rose-500 dark:text-rose-400">
-                <Icon name="report" size="sm" weight={300} />
-                <span>{val}</span>
+                <span className="flex-shrink-0">
+                  <Icon name="report" size="sm" weight={300} />
+                </span>
+                <span className="truncate">{val}</span>
               </div>
             )}
           </div>
@@ -83,36 +113,52 @@ export default function AutoBackupLogModal() {
   ];
 
   const footer = (
-    <div className="flex items-center justify-between w-full">
-      <div className="flex items-center gap-2">
-        <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Status:</Typography>
-        {logsLoading ? (
-           <span className="flex items-center gap-1.5 text-[10px] text-amber-500 font-bold animate-pulse uppercase">
-             <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-             Buffering
-           </span>
-        ) : (
-          <span className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-bold uppercase">
-             <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-             Synchronized
-           </span>
-        )}
+    <div className="flex items-center justify-between w-full px-1">
+      <div className="flex items-center gap-6">
+        <div className="flex items-center gap-2.5">
+          <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">Status:</Typography>
+          {logsLoading ? (
+            <span className="flex items-center gap-1.5 text-[10px] text-amber-500 font-bold animate-pulse">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
+              Buffering
+            </span>
+          ) : (
+            <span className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-bold">
+              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
+              Synchronized
+            </span>
+          )}
+        </div>
+        
+        <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 font-bold">
+          <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/10" />
+          {showAll ? (
+            <span>Showing all {filteredLogs.length} records</span>
+          ) : (
+            <span>Showing {Math.min(filteredLogs.length, startIdx + 1)}–{Math.min(filteredLogs.length, startIdx + pageSize)} of {filteredLogs.length}</span>
+          )}
+        </div>
       </div>
       
-      <div className="flex gap-3">
+      <div className="flex items-center gap-2.5">
         <Button 
-          variant="ghost" 
+          variant="secondary" 
+          size="sm"
+          icon="close"
           onClick={() => dispatch(closeAutoBackupLogModal())}
+          className="min-w-[100px]"
         >
-          Cancel
+          Close
         </Button>
         <Button 
+          variant="primary"
+          size="sm"
           onClick={() => dispatch(fetchAutoBackupLog({ hostUid: selectedHostUid }))}
           loading={logsLoading}
           icon="refresh"
-          className="min-w-[120px]"
+          className="min-w-[120px] shadow-lg shadow-amber-500/10"
         >
-          Refresh
+          Refresh Now
         </Button>
       </div>
     </div>
@@ -129,21 +175,63 @@ export default function AutoBackupLogModal() {
       maxWidth="max-w-[800px]"
       footer={footer}
     >
-      <div className="flex flex-col h-[500px]">
-        <div className="mb-4">
-          <SearchInput 
-            placeholder="Filter logs by ID or description..."
-            value={searchTerm}
-            onChange={setSearchTerm}
-            onClear={() => setSearchTerm('')}
-            className="max-w-xs"
-          />
+      <div className="flex flex-col h-[520px]">
+        {/* Toolbar matches LogViewer style */}
+        <div className="mb-4 flex items-center justify-between gap-4">
+          <div className="flex items-center gap-3">
+            <SearchInput 
+              placeholder="Filter logs by ID or description..."
+              value={searchTerm}
+              onChange={setSearchTerm}
+              onClear={() => setSearchTerm('')}
+              className="max-w-xs"
+            />
+
+            {/* LogViewer-style Pagination */}
+            <div className="flex items-center bg-slate-100 dark:bg-black/20 rounded-lg p-0.5 h-8">
+              <button
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                disabled={currentPage === 1 || logsLoading || showAll}
+                className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-amber-400 rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <Icon name="chevron_left" size="18px" />
+              </button>
+              <div className={`px-3 text-[11px] font-bold text-slate-600 dark:text-slate-300 min-w-[72px] text-center font-mono ${showAll ? 'opacity-30' : ''}`}>
+                {currentPage} / {totalPages}
+              </div>
+              <button
+                onClick={() => setCurrentPage(p => currentPage < totalPages ? p + 1 : p)}
+                disabled={currentPage >= totalPages || logsLoading || showAll}
+                className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-amber-400 rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
+              >
+                <Icon name="chevron_right" size="18px" />
+              </button>
+
+              <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+              <button
+                onClick={() => setShowAll(!showAll)}
+                className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all whitespace-nowrap transition-colors ${
+                  showAll 
+                  ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20' 
+                  : 'text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-amber-400'
+                }`}
+              >
+                {showAll ? 'Paginated' : 'View All'}
+              </button>
+            </div>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <Typography variant="caption" className="text-slate-400 font-semibold font-mono">
+              {filteredLogs.length} Records
+            </Typography>
+          </div>
         </div>
 
         <div className="flex-1 min-h-0 border border-slate-100 dark:border-white/5 rounded-xl overflow-hidden bg-white/50 dark:bg-bk-side/50">
           <Table 
             columns={columns}
-            data={filteredLogs}
+            data={paginatedLogs}
             loading={logsLoading}
             emptyMessage="No backup logs found for the current criteria."
             className="h-full"
@@ -153,3 +241,4 @@ export default function AutoBackupLogModal() {
     </Modal>
   );
 }
+

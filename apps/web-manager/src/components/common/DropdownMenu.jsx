@@ -215,8 +215,9 @@ export function MenuItem({ icon, iconColor = '', label, onClick, href, disabled 
       )}
       
       {icon && (
-        <span className={`material-symbols-outlined transition-colors 
-          ${disabled ? 'text-slate-300' : (iconColor || 'text-slate-400 dark:text-slate-500 group-hover:text-amber-500')}`}
+        <span className={`material-symbols-outlined transition-colors duration-200
+          ${disabled ? 'text-slate-300 dark:text-slate-700' : (iconColor || 'text-slate-400 dark:text-slate-500')}
+          ${!disabled && !iconColor ? 'group-hover:text-amber-600 dark:group-hover:text-amber-500' : ''}`}
           style={{ fontSize: '18px' }}>
           {icon}
         </span>

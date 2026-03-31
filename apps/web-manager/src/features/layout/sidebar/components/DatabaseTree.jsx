@@ -194,6 +194,7 @@ export default function DatabaseTree({
   onBackupPlanContextMenu,
   onSpaceContextMenu,
   onQueryPlanContextMenu,
+  onQueryItemContextMenu,
   onJobAutomationContextMenu,
   onBackupItemContextMenu,
   onTableContextMenu,
@@ -368,6 +369,7 @@ export default function DatabaseTree({
               onJobAutomationContextMenu={onJobAutomationContextMenu}
               onBackupPlanContextMenu={onBackupPlanContextMenu}
               onQueryPlanContextMenu={onQueryPlanContextMenu}
+              onQueryItemContextMenu={onQueryItemContextMenu}
               onBackupItemContextMenu={onBackupItemContextMenu}
               onSelect={handleSelectSubItem}
               selectedHostUid={selectedHostUid}
@@ -440,7 +442,7 @@ const UsersFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem,
   );
 });
 
-const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem, backupSchedules, backupSchedulesLoading, queryPlans, queryPlansLoading, onJobAutomationContextMenu, onBackupPlanContextMenu, onQueryPlanContextMenu, onBackupItemContextMenu, onSelect, selectedHostUid }) => {
+const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem, backupSchedules, backupSchedulesLoading, queryPlans, queryPlansLoading, onJobAutomationContextMenu, onBackupPlanContextMenu, onQueryPlanContextMenu, onQueryItemContextMenu, onBackupItemContextMenu, onSelect, selectedHostUid }) => {
   const dispatch = useDispatch();
   const isSelected = selectedDatabase === db.dbname && selectedDatabaseSubItem === 'Job automation';
 
@@ -516,6 +518,7 @@ const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabase
                 level={4}
                 isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `query:${qId}`}
                 onSelect={() => onSelect(db.dbname, `query:${qId}`)}
+                onContextMenu={(e) => onQueryItemContextMenu?.(e, db.dbname, qId)}
               />
             );
           })}

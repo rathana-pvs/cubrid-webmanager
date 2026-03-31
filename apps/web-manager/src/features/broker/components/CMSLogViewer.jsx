@@ -7,6 +7,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 function CMSLogViewer({ hostUid, type }) {
   const dispatch = useDispatch();
   const [currentPage, setCurrentPage] = useState(1);
+  const [showAll, setShowAll] = useState(false);
   const [copying, setCopying] = useState(false);
   const pageSize = 50;
 
@@ -20,7 +21,7 @@ function CMSLogViewer({ hostUid, type }) {
   const totalEntries = logs?.length || 0;
   const totalPages = Math.ceil(totalEntries / pageSize) || 1;
   const startIndex = (currentPage - 1) * pageSize;
-  const paginatedLogs = logs?.slice(startIndex, startIndex + pageSize) || [];
+  const paginatedLogs = showAll ? (logs || []) : (logs?.slice(startIndex, startIndex + pageSize) || []);
 
   const handleRefresh = () => {
     dispatch(fetchCMSLogs(hostUid));
@@ -77,7 +78,7 @@ function CMSLogViewer({ hostUid, type }) {
                 : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
           >
             <Icon name={copying ? 'check' : 'content_copy'} size="18px" weight={300} />
-            {copying && <span className="uppercase tracking-tight">Copied</span>}
+            {copying && <span className="tracking-tight">Copied</span>}
           </button>
 
           {/* Refresh */}
@@ -99,27 +100,39 @@ function CMSLogViewer({ hostUid, type }) {
           <div className="flex items-center bg-slate-100 dark:bg-black/20 rounded-lg p-0.5">
             <button
               onClick={handlePrevPage}
-              disabled={currentPage === 1 || loading}
+              disabled={currentPage === 1 || loading || showAll}
               className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <Icon name="chevron_left" size="18px" />
             </button>
-            <div className="px-3 text-[11px] font-bold text-slate-600 dark:text-slate-300 min-w-[72px] text-center font-mono">
+            <div className={`px-3 text-[11px] font-bold text-slate-600 dark:text-slate-300 min-w-[72px] text-center font-mono ${showAll ? 'opacity-30' : ''}`}>
               {currentPage} / {totalPages}
             </div>
             <button
               onClick={handleNextPage}
-              disabled={currentPage >= totalPages || loading}
+              disabled={currentPage >= totalPages || loading || showAll}
               className="p-1 text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-slate-700 hover:text-amber-600 dark:hover:text-bk-yellow rounded-md transition-all disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <Icon name="chevron_right" size="18px" />
+            </button>
+
+            <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-1" />
+            <button
+              onClick={() => setShowAll(!showAll)}
+              className={`px-2 py-1 rounded-md text-[10px] font-bold transition-all whitespace-nowrap transition-colors ${
+                showAll 
+                ? 'bg-amber-500 text-white shadow-sm shadow-amber-500/20' 
+                : 'text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-bk-yellow'
+              }`}
+            >
+              {showAll ? 'Paginated' : 'View All'}
             </button>
           </div>
         </div>
       </div>
 
       {/* Table Header */}
-      <div className="shrink-0 flex items-center gap-4 px-4 py-2 bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">
+      <div className="shrink-0 flex items-center gap-4 px-4 py-2 bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-wider">
         <div className="w-36 shrink-0">Time</div>
         <div className="w-24 shrink-0">User</div>
         <div className="w-40 shrink-0">Task</div>
@@ -150,7 +163,7 @@ function CMSLogViewer({ hostUid, type }) {
                   <span className="text-slate-700 dark:text-slate-300 font-medium truncate">{log['@user'] || 'System'}</span>
                 </div>
                 <div className="w-40 shrink-0">
-                  <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-sm border border-indigo-500/20 text-[10px] font-bold uppercase tracking-tighter">
+                  <span className="px-2 py-0.5 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-sm border border-indigo-500/20 text-[10px] font-bold tracking-tighter">
                     {log.taskname}
                   </span>
                 </div>
@@ -176,10 +189,14 @@ function CMSLogViewer({ hostUid, type }) {
       </div>
 
       {/* Footer Stats */}
-      <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-medium uppercase tracking-wider">
+      <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
         <div className="flex items-center gap-4">
-          <span>Total Entries: {totalEntries.toLocaleString()}</span>
-          <span>Showing: {startIndex + 1} - {Math.min(startIndex + pageSize, totalEntries)}</span>
+          <span>Total entries: {totalEntries.toLocaleString()}</span>
+          {showAll ? (
+             <span>Showing all records</span>
+          ) : (
+             <span>Showing: {startIndex + 1} - {Math.min(startIndex + pageSize, totalEntries)}</span>
+          )}
         </div>
         <div className="flex items-center gap-1.5">
           <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>

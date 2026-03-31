@@ -423,8 +423,8 @@ export default function AddBackupPlanModal() {
                     {opt.label}
                   </Typography>
                 </div>
-                <div className="pointer-events-none">
-                  <Toggle checked={formData[opt.field]} size="sm" />
+                <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                  <Toggle checked={formData[opt.field]} onChange={(val) => handleInputChange(opt.field, val)} size="sm" variant="primary" />
                 </div>
               </div>
             ))}
