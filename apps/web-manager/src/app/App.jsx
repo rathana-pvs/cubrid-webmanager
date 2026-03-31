@@ -57,6 +57,7 @@ import CMSLogViewer from '../features/broker/components/CMSLogViewer';
 import BrokerStatus from '../features/broker/components/BrokerStatus';
 import BrokerPropertyModal from '../features/broker/components/BrokerPropertyModal';
 import Brokers from '../features/server/components/Brokers';
+import ServiceDashboard from '../features/server/components/ServiceDashboard';
 
 import CreateUserModal from '../features/user/components/CreateUserModal';
 import DropUserModal from '../features/user/components/DropUserModal';
@@ -109,6 +110,8 @@ function DashboardLayout() {
     } else if (tabId.startsWith('vol_category:')) {
       const category = tabId.split(':')[3];
       acc[tabId] = `Volumes: ${category.replace(/_/g, ' ')}`;
+    } else if (tabId === 'service_dashboard') {
+      acc[tabId] = 'Service Dashboard';
     }
 
     return acc;
@@ -308,6 +311,7 @@ function DashboardLayout() {
                       <Brokers hostUid={tabId.split(':')[1]} />
                     </div>
                   )}
+                  {tabId === 'service_dashboard' && <ServiceDashboard />}
 
                 </div>
               );

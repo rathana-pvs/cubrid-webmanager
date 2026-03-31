@@ -18,24 +18,7 @@ export const fetchMonitoringData = createAsyncThunk(
 );
 
 const initialState = {
-  currentStatus: {
-    cpu: 0,
-    memory: 0,
-    tps: 0,
-    qps: 0,
-    memUsed: 0,
-    memTotal: 0,
-  },
-  averages: {
-    cpu: 0,
-    memory: 0,
-    tps: 0,
-    qps: 0,
-  },
-  history: [], // [{ timestamp, cpu, memory, tps, qps }]
-  prevHostStat: null,
-  loading: false,
-  error: null,
+  hostsData: {}, // { [hostUid]: { currentStatus, averages, history, prevHostStat, loading, error } }
 };
 
 const MAX_HISTORY_MS = 5 * 60 * 1000; // 5 minutes
@@ -44,20 +27,42 @@ const monitoringSlice = createSlice({
   name: 'monitoring',
   initialState,
   reducers: {
-    clearMonitoring: (state) => {
-      state.history = [];
-      state.prevHostStat = null;
-      state.currentStatus = initialState.currentStatus;
-      state.averages = initialState.averages;
+    clearMonitoring: (state, action) => {
+      const hostUid = action.payload;
+      if (hostUid && state.hostsData[hostUid]) {
+        state.hostsData[hostUid] = {
+          ...state.hostsData[hostUid],
+          history: [],
+          prevHostStat: null,
+          currentStatus: { cpu: 0, memory: 0, tps: 0, qps: 0, memUsed: 0, memTotal: 0 },
+          averages: { cpu: 0, memory: 0, tps: 0, qps: 0 },
+        };
+      }
     }
   },
   extraReducers: (builder) => {
     builder
-      .addCase(fetchMonitoringData.pending, (state) => {
-        state.loading = true;
+      .addCase(fetchMonitoringData.pending, (state, action) => {
+        const hostUid = action.meta.arg;
+        if (!state.hostsData[hostUid]) {
+          state.hostsData[hostUid] = {
+            currentStatus: { cpu: 0, memory: 0, tps: 0, qps: 0, memUsed: 0, memTotal: 0 },
+            averages: { cpu: 0, memory: 0, tps: 0, qps: 0 },
+            history: [],
+            prevHostStat: null,
+            loading: true,
+            error: null
+          };
+        } else {
+          state.hostsData[hostUid].loading = true;
+        }
       })
       .addCase(fetchMonitoringData.fulfilled, (state, action) => {
-        state.loading = false;
+        const hostUid = action.meta.arg;
+        const hostData = state.hostsData[hostUid];
+        if (!hostData) return;
+        
+        hostData.loading = false;
         const { hostStat, brokers } = action.payload;
         const now = Date.now();
 
@@ -71,10 +76,10 @@ const monitoringSlice = createSlice({
           });
         }
 
-        // 2. Calculate CPU % if we have previous data (Match d-cms: only use User Percent)
+        // 2. Calculate CPU %
         let cpuUsage = 0;
-        if (state.prevHostStat) {
-          const prev = state.prevHostStat;
+        if (hostData.prevHostStat) {
+          const prev = hostData.prevHostStat;
           const curr = hostStat;
 
           const cpuUserDelta = parseFloat(curr.cpu_user) - parseFloat(prev.cpu_user);
@@ -83,22 +88,18 @@ const monitoringSlice = createSlice({
           const cpuIowaitDelta = parseFloat(curr.cpu_iowait) - parseFloat(prev.cpu_iowait);
 
           const totalDelta = cpuUserDelta + cpuKernelDelta + cpuIdleDelta + cpuIowaitDelta;
-          
-          if (totalDelta > 0) {
-            // d-cms HostStatDataProxy.java uses (cpuUserDelta / totalDelta) * 100
-            cpuUsage = (cpuUserDelta / totalDelta) * 100;
-          }
+          if (totalDelta > 0) cpuUsage = (cpuUserDelta / totalDelta) * 100;
         }
-        state.prevHostStat = hostStat;
+        hostData.prevHostStat = hostStat;
 
-        // 3. Calculate Memory % (Values from API are in Bytes)
+        // 3. Calculate Memory %
         const memTotalBytes = parseFloat(hostStat.mem_phy_total || 0);
         const memFreeBytes = parseFloat(hostStat.mem_phy_free || 0);
         const memUsedBytes = memTotalBytes - memFreeBytes;
         const memUsage = memTotalBytes > 0 ? (memUsedBytes / memTotalBytes) * 100 : 0;
 
         // 4. Update Current Status
-        state.currentStatus = {
+        hostData.currentStatus = {
           cpu: cpuUsage,
           memory: memUsage,
           tps: totalTps,
@@ -108,39 +109,32 @@ const monitoringSlice = createSlice({
         };
 
         // 5. Update History
-        state.history.push({
-          timestamp: now,
-          cpu: cpuUsage,
-          memory: memUsage,
-          tps: totalTps,
-          qps: totalQps
-        });
+        hostData.history.push({ timestamp: now, cpu: cpuUsage, memory: memUsage, tps: totalTps, qps: totalQps, disk: hostStat.disk_usage });
+        hostData.history = hostData.history.filter(h => now - h.timestamp < MAX_HISTORY_MS);
 
-        // 6. Prune old history (older than 5 mins)
-        state.history = state.history.filter(item => now - item.timestamp <= MAX_HISTORY_MS);
-
-        // 7. Calculate Averages
-        if (state.history.length > 0) {
-          const sum = state.history.reduce((acc, item) => ({
-            cpu: acc.cpu + item.cpu,
-            memory: acc.memory + item.memory,
-            tps: acc.tps + item.tps,
-            qps: acc.qps + item.qps
+        // 6. Calculate Averages
+        const historyLen = hostData.history.length;
+        if (historyLen > 0) {
+          const sums = hostData.history.reduce((a, b) => ({
+            cpu: a.cpu + b.cpu,
+            memory: a.memory + b.memory,
+            tps: a.tps + b.tps,
+            qps: a.qps + b.qps
           }), { cpu: 0, memory: 0, tps: 0, qps: 0 });
-
-          state.averages = {
-            cpu: sum.cpu / state.history.length,
-            memory: sum.memory / state.history.length,
-            tps: sum.tps / state.history.length,
-            qps: sum.qps / state.history.length
+          hostData.averages = {
+            cpu: sums.cpu / historyLen,
+            memory: sums.memory / historyLen,
+            tps: sums.tps / historyLen,
+            qps: sums.qps / historyLen
           };
         }
-
-        state.error = null;
       })
       .addCase(fetchMonitoringData.rejected, (state, action) => {
-        state.loading = false;
-        state.error = action.payload;
+        const hostUid = action.meta.arg;
+        if (state.hostsData[hostUid]) {
+          state.hostsData[hostUid].loading = false;
+          state.hostsData[hostUid].error = action.payload;
+        }
       });
   }
 });

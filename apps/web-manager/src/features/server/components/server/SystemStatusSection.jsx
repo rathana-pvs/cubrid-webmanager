@@ -22,7 +22,8 @@ const MetricBar = ({ pct }) => (
 
 export default function SystemStatusSection({ hostUid, isTabActive = true }) {
   const dispatch = useDispatch();
-  const { currentStatus, averages, history, loading, error } = useSelector((state) => state.monitoring);
+  const hostData = useSelector((state) => state.monitoring.hostsData[hostUid] || {});
+  const { currentStatus = {}, averages = {}, history = [], loading = false, error = null } = hostData;
   const { authorizedHosts } = useSelector((state) => state.host);
   const isAuthorized = hostUid && authorizedHosts.includes(hostUid);
 

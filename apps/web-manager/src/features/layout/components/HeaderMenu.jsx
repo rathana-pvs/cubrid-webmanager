@@ -54,7 +54,13 @@ export default function HeaderMenu() {
         />
       </DropdownMenu>
 
-      <DropdownMenu label={<MenuLabel>Tool</MenuLabel>} width="w-48">
+      <DropdownMenu label={<MenuLabel>Tool</MenuLabel>} width="w-56">
+        <MenuItem
+          icon="space_dashboard"
+          label="Service Dashboard"
+          onClick={() => dispatch(openTab('service_dashboard'))}
+        />
+        <MenuDivider />
         <MenuItem
           icon="play_arrow"
           label="Start Service"

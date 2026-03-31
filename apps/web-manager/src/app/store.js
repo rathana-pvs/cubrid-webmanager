@@ -14,6 +14,7 @@ import authReducer from '../features/auth/authSlice';
 import appBarReducer from '../features/layout/appBarSlice';
 
 import monitoringReducer from '../features/server/monitoringSlice';
+import globalMonitoringReducer from '../features/server/globalMonitoringSlice';
 
 const combinedReducer = combineReducers({
   auth: authReducer,
@@ -21,6 +22,7 @@ const combinedReducer = combineReducers({
   appBar: appBarReducer,
   server: serverReducer,
   monitoring: monitoringReducer,
+  globalMonitoring: globalMonitoringReducer,
   database: databaseCoreReducer,
   databaseMonitoring: databaseMonitoringReducer,
   databaseOperation: databaseOperationReducer,
