@@ -1,7 +1,8 @@
-import React, { useState, useEffect, useCallback, useMemo, memo } from 'react';
-import { useDispatch } from 'react-redux';
+import React, { useState, useEffect, useCallback, useMemo, memo, useRef } from 'react';
+import { useDispatch, useSelector } from 'react-redux';
 import { databaseApi } from '../databaseApi';
 import { openTab } from '../../layout/layoutSlice';
+import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -48,31 +49,46 @@ const barColor = (pct) => pct > 85 ? 'bg-rose-500' : 'bg-amber-500';
 
 // ── Sub-components (Memoized) ──
 
-const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh }) => (
+const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboardInterval }) => (
   <header className="px-6 py-2.5 border-b border-slate-100 dark:border-white/4 flex items-center justify-between shrink-0 sticky top-0 z-10 bg-white dark:bg-background-dark">
     <div className="flex items-center gap-2.5">
-      <div className="w-7 h-7 rounded-sm bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-        <Icon name="donut_small" size="xs" weight={300} className="text-amber-500" />
+      <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-sm">
+        <Icon name="donut_small" size="sm" weight={300} className="text-amber-500" />
       </div>
       <div>
-        <Typography variant="h1" className="text-[13px] font-bold text-amber-600 dark:text-amber-500 leading-tight">
-          Database Space Monitor
-        </Typography>
+        <div className="flex items-center gap-2">
+          <Typography variant="h1" className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-tight">
+            Database Space Monitor
+          </Typography>
+          <div className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 shrink-0 transition-all duration-300 ${dashboardInterval > 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
+            <div className={`w-1 h-1 rounded-full ${dashboardInterval > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+            <span className={`text-[9px] font-bold ${dashboardInterval > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+              {dashboardInterval > 0 ? 'Live' : 'Paused'}
+            </span>
+          </div>
+        </div>
         <Typography variant="label" className="text-[9px] text-slate-400 font-mono tracking-tight">{dbname}</Typography>
       </div>
     </div>
-    <div className="flex items-center gap-4">
-      <Typography variant="label" className="text-[10px] text-slate-400 font-mono hidden md:block">
-        Refreshed {lastRefreshed.toLocaleTimeString()}
+    
+    <div className="flex items-center gap-1.5">
+      <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block mr-2">
+        Synced {lastRefreshed.toLocaleTimeString('en-US', { hour12: true })}
       </Typography>
       <button
         onClick={onRefresh}
         disabled={loading}
-        className="h-8 flex items-center gap-1.5 px-2.5 rounded-sm border bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/6 text-[11px] font-semibold text-slate-500 dark:text-slate-400 hover:bg-slate-200 dark:hover:bg-white/10 transition-all disabled:opacity-50"
+        className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
+          ${loading
+            ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+            : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5'}`}
+        title="Refresh space metrics"
       >
-        <Icon name="refresh" size="16px" weight={300} className={loading ? 'animate-spin text-amber-500' : ''} />
-        Sync
+        <Icon name="refresh" size="18px" weight={300} className={loading ? 'animate-spin' : ''} />
       </button>
+
+      <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-0.5" />
+      <MonitoringSettingsPopover />
     </div>
   </header>
 ));
@@ -199,7 +215,6 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
     >
       <Table
         columns={[
-          { header: 'ID', accessor: 'volid', className: 'text-center', width: '40px' },
           {
             header: 'Volume',
             accessor: 'spacename',
@@ -341,13 +356,20 @@ const DistributionChart = memo(({ totals }) => (
 // ── Main Component ──
 
 export default function DatabaseSpaceMonitor({ hostUid, dbname }) {
+  const { preferences } = useSelector((state) => state.user);
+  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout);
   const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  
+  const [isBrowserVisible, setIsBrowserVisible] = useState(document.visibilityState === 'visible');
+  const isTabActive = isBrowserVisible && activeMainTab === `db_space:${hostUid}:${dbname}`;
+  const isActiveRef = useRef(isTabActive);
+  const initialLoadDone = useRef(false);
 
-  const fetchSpaceInfo = useCallback(async () => {
-    setLoading(true);
+  const fetchSpaceInfo = useCallback(async (silent = false) => {
+    if (!silent) setLoading(true);
     try {
       const response = await databaseApi.getVolumeInfo(hostUid, dbname);
       setData(response);
@@ -356,11 +378,47 @@ export default function DatabaseSpaceMonitor({ hostUid, dbname }) {
     } catch (err) {
        setError('Could not retrieve database space information.');
     } finally {
-      setLoading(false);
+      if (!silent) setLoading(false);
     }
   }, [hostUid, dbname]);
 
-  useEffect(() => { fetchSpaceInfo(); }, [fetchSpaceInfo]);
+  // 1. Browser Visibility Listener
+  useEffect(() => {
+    const handleVisibilityChange = () => setIsBrowserVisible(document.visibilityState === 'visible');
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, []);
+
+  // 2. Global Refresh (F5) Listener
+  useEffect(() => {
+    if (refreshCounter > 0 && isTabActive) {
+      fetchSpaceInfo();
+    }
+  }, [refreshCounter, fetchSpaceInfo, isTabActive]);
+
+  // 3. Initial Load
+  useEffect(() => {
+    if (hostUid && dbname && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      fetchSpaceInfo();
+    }
+  }, [hostUid, dbname, fetchSpaceInfo]);
+
+  // 4. Sync Ref and Trigger One-Time Resume Fetch
+  useEffect(() => {
+    const becameActive = !isActiveRef.current && isTabActive;
+    isActiveRef.current = isTabActive;
+    if (becameActive && initialLoadDone.current && preferences.dashboardInterval > 0) fetchSpaceInfo(true);
+  }, [isTabActive, fetchSpaceInfo, preferences.dashboardInterval]);
+
+  // 5. Background Polling Timer
+  useEffect(() => {
+    if (!isTabActive || preferences.dashboardInterval <= 0) return;
+    const timer = setInterval(() => {
+      if (isActiveRef.current) fetchSpaceInfo(true);
+    }, preferences.dashboardInterval * 1000);
+    return () => clearInterval(timer);
+  }, [isTabActive, preferences.dashboardInterval, fetchSpaceInfo]);
 
   const totals = useMemo(() => {
     if (!data?.dbinfo) return null;
@@ -384,7 +442,8 @@ export default function DatabaseSpaceMonitor({ hostUid, dbname }) {
         dbname={dbname} 
         lastRefreshed={lastRefreshed} 
         loading={loading} 
-        onRefresh={fetchSpaceInfo} 
+        onRefresh={fetchSpaceInfo}
+        dashboardInterval={preferences.dashboardInterval}
       />
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">

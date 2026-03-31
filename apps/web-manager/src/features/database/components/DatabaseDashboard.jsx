@@ -1,4 +1,4 @@
-import { useEffect, useState, useRef } from 'react';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData } from '../databaseSlice';
 import DBPerformanceSection from './dashboard/DBPerformanceSection';
@@ -8,53 +8,85 @@ import DBBrokersCASSection from './dashboard/DBBrokersCASSection';
 import DBLockTransactionSection from './dashboard/DBLockTransactionSection';
 import CASLogModal from './CASLogModal';
 
+import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
 import { Icon } from '../../../components/ds/foundation/Icon';
-import { Select } from '../../../components/ds/forms/Select';
 import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function DatabaseDashboard({ dbname }) {
   const dispatch = useDispatch();
   const { selectedHostUid, hosts } = useSelector((state) => state.host);
   const { dashboardData, dashboardLoading } = useSelector((state) => state.databaseMonitoring);
+  const { preferences } = useSelector((state) => state.user);
+  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout);
 
-  const [autoRefresh, setAutoRefresh] = useState(false);
-  const [refreshInterval, setRefreshInterval] = useState(10);
-  const [showSettings, setShowSettings] = useState(false);
   const [logModal, setLogModal] = useState({ isOpen: false, brokerName: '', casId: '', type: 'sql' });
   
-  const [isTabActive, setIsTabActive] = useState(document.visibilityState === 'visible');
+  const [isBrowserVisible, setIsBrowserVisible] = useState(document.visibilityState === 'visible');
+  const isTabActive = isBrowserVisible && activeMainTab === `db:${dbname}`;
+  const isActiveRef = useRef(isTabActive);
+  const initialLoadDone = useRef(false);
 
   const activeHost = hosts.find(h => h.uid === selectedHostUid);
   const hostUid = selectedHostUid;
   const data = dashboardData[dbname] || { volumes: [], spaceInfo: [], locks: [], performance: {} };
   const isLoading = dashboardLoading[dbname];
+  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
+  const [lastRefreshed, setLastRefreshed] = useState(new Date());
 
+  // 1. Browser Visibility Listener
   useEffect(() => {
-    const handleVisibilityChange = () => setIsTabActive(document.visibilityState === 'visible');
+    const handleVisibilityChange = () => setIsBrowserVisible(document.visibilityState === 'visible');
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
   }, []);
 
-  const handleRefresh = () => {
-    if (hostUid && dbname) dispatch(fetchDashboardData({ hostUid, dbname }));
-  };
+  const handleRefresh = useCallback(async (silent = false) => {
+    if (hostUid && dbname) {
+      if (!silent) setIsManualRefreshing(true);
+      try {
+        await dispatch(fetchDashboardData({ hostUid, dbname, isBackground: silent })).unwrap();
+        setLastRefreshed(new Date());
+      } catch (err) {
+        console.error('Failed to refresh dashboard:', err);
+      } finally {
+        if (!silent) setIsManualRefreshing(false);
+      }
+    }
+  }, [dispatch, hostUid, dbname]);
 
-  // Initial load or tab activation
-  // Requirement: "when switching back to active. it should refresh once... then start checking time interval"
-  const wasActiveRef = useRef(isTabActive);
+  // 2. Global Refresh (F5) Listener
   useEffect(() => {
-    if (isTabActive && !wasActiveRef.current) {
+    if (refreshCounter > 0 && isTabActive) {
       handleRefresh();
     }
-    wasActiveRef.current = isTabActive;
-  }, [isTabActive, hostUid, dbname]);
+  }, [refreshCounter, handleRefresh, isTabActive]);
 
+  // 3. Initial Load
   useEffect(() => {
-    if (hostUid && dbname) handleRefresh();
-  }, [hostUid, dbname]);
+    if (hostUid && dbname && !initialLoadDone.current) {
+      initialLoadDone.current = true;
+      handleRefresh();
+    }
+  }, [hostUid, dbname, handleRefresh]);
+
+  // 4. Sync Ref and Trigger One-Time Resume Fetch
+  useEffect(() => {
+    const becameActive = !isActiveRef.current && isTabActive;
+    isActiveRef.current = isTabActive;
+    if (becameActive && initialLoadDone.current && preferences.dashboardInterval > 0) handleRefresh(true);
+  }, [isTabActive, handleRefresh, preferences.dashboardInterval]);
+
+  // 5. Background Polling Timer
+  useEffect(() => {
+    if (!isTabActive || preferences.dashboardInterval <= 0) return;
+    const timer = setInterval(() => {
+      if (isActiveRef.current) handleRefresh(true);
+    }, preferences.dashboardInterval * 1000);
+    return () => clearInterval(timer);
+  }, [isTabActive, preferences.dashboardInterval, handleRefresh]);
 
   // Pass polling props to sections
-  const pollingProps = { hostUid, dbname, isTabActive, autoRefresh, refreshInterval };
+  const pollingProps = { hostUid, dbname, isTabActive, refreshInterval: preferences.dashboardInterval };
 
   const mappedVolumes = (data.volumes || []).map(v => ({
     name: v.spacename, 
@@ -76,19 +108,9 @@ export default function DatabaseDashboard({ dbname }) {
     totalPages: f.total_size ? `${f.total_size} pages` : '-'
   }));
 
-  const mappedSummary = (data.volumeSummary || []).map(s => ({
-    purpose: s.purpose,
-    type: s.type,
-    volCount: s.volume_count,
-    used: s.used_size ? `${s.used_size} pages` : '-',
-    free: s.free_size ? `${s.free_size} pages` : '-',
-    total: s.total_size ? `${s.total_size} pages` : '-'
-  }));
-
   const perf = data.performance || {};
   const brokersCAS = data.brokersCAS || [];
   
-  // d-cms Logic: Aggregate stats from all CAS processes serving this database
   const casStats = brokersCAS.reduce((acc, cas) => {
     acc.cpu += parseFloat(cas.cpu || 0);
     acc.memKB += parseFloat(cas.psize || 0);
@@ -97,7 +119,9 @@ export default function DatabaseDashboard({ dbname }) {
   }, { cpu: 0, memKB: 0, activeCount: 0 });
 
   const totalQps = brokersCAS.reduce((a, c) => a + parseInt(c.qps || 0), 0);
-  const totalMemMB = (casStats.memKB / 1024).toFixed(1);  const rates = perf.calculatedRates || { tps: 0, qps: 0, fetchPerSec: 0, dirtyPerSec: 0, ioReadPerSec: 0, ioWritePerSec: 0 };
+  const totalMemMB = (casStats.memKB / 1024).toFixed(1);
+  const rates = perf.calculatedRates || { tps: 0, qps: 0, fetchPerSec: 0, dirtyPerSec: 0, ioReadPerSec: 0, ioWritePerSec: 0 };
+  
   const dbStats = [{
     cpu: casStats.cpu.toFixed(1) + '%', 
     cpuPct: Math.min(casStats.cpu, 100),
@@ -112,6 +136,7 @@ export default function DatabaseDashboard({ dbname }) {
     ioReads: rates.ioReadPerSec.toFixed(1),
     ioWrites: rates.ioWritePerSec.toFixed(1)
   }];
+  
   const mappedBrokers = brokersCAS.map(c => ({ broker: c.broker, id: c.id, pid: c.pid, qps: c.qps, lqs: c.lqs, status: c.status, lastConn: c.lastConn, dbname: c.dbname }));
   const mappedLocks = (data.locks || []).map((l, i) => ({ index: l.index || i + 1, user: l.uid || '-', host: l.host || '-', pid: l.pid || '-', obj: l.object || '-', mode: l.granted_mode || '-' }));
 
@@ -139,72 +164,54 @@ export default function DatabaseDashboard({ dbname }) {
     document.body.removeChild(link);
   };
 
-  const btnCls = "h-8 flex items-center justify-center rounded-sm border transition-all active:scale-[0.98]";
-  const iconBtnCls = `${btnCls} w-8 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/6 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200`;
-
   return (
     <div className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden font-sans">
-      <header className="px-6 py-3 border-b border-slate-100 dark:border-white/4 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-white dark:bg-background-dark">
+      <header className="px-6 py-2.5 border-b border-slate-100 dark:border-white/4 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-white dark:bg-background-dark">
         <div className="flex items-center gap-3">
-          <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+          <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 shadow-sm">
             <Icon name="database" size="sm" weight={300} className="text-amber-500" />
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <Typography variant="h1" className="text-sm font-bold text-amber-600 dark:text-amber-500 leading-tight uppercase tracking-tight">{dbname}</Typography>
-              <div className="w-2.5 h-2.5 rounded-full bg-emerald-500/10 flex items-center justify-center shrink-0">
-                <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse shadow-[0_0_8px_rgba(16,185,129,0.4)]" />
+              <Typography variant="h1" className="text-[13px] font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">Database Dashboard</Typography>
+              <div className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 shrink-0 transition-all duration-300 ${preferences.dashboardInterval > 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
+                <div className={`w-1 h-1 rounded-full ${preferences.dashboardInterval > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
+                <span className={`text-[9px] font-bold ${preferences.dashboardInterval > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
+                  {preferences.dashboardInterval > 0 ? 'Live' : 'Paused'}
+                </span>
               </div>
             </div>
-            <Typography variant="label" className="text-[10px] text-slate-400 font-mono">{activeHost?.address}:{activeHost?.port}</Typography>
+            <div className="flex items-center gap-1.5 mt-0.5">
+              <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
+              <Typography variant="label" className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">@{dbname}</Typography>
+            </div>
           </div>
         </div>
 
-        <div className="flex items-center gap-1">
-          {/* Manual Refresh */}
+        <div className="flex items-center gap-1.5">
+          <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block mr-2">
+            Synced {lastRefreshed.toLocaleTimeString('en-US', { hour12: true })}
+          </Typography>
+
           <button
             onClick={handleRefresh}
-            disabled={isLoading}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
-              ${isLoading
+            disabled={isLoading || isManualRefreshing}
+            className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
+              ${(isLoading || isManualRefreshing)
                 ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
-                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
-            title="Manual refresh"
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5'}`}
+            title="Refresh database status"
           >
-            <Icon name="refresh" size="18px" weight={isLoading ? 700 : 300} className={isLoading ? 'animate-spin' : ''} />
+            <Icon name="refresh" size="18px" className={(isLoading || isManualRefreshing) ? 'animate-spin' : ''} />
           </button>
 
-          {/* Live/Paused Toggle */}
-          <button
-            onClick={() => setAutoRefresh(!autoRefresh)}
-            title={autoRefresh ? 'Live monitoring active' : 'Auto refresh off'}
-            className={`h-8 px-2.5 flex items-center gap-1.5 rounded-lg border transition-all active:scale-[0.98] text-[11px] font-bold
-              ${autoRefresh 
-                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30' 
-                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
-          >
-            <Icon name={autoRefresh ? 'timer' : 'timer_off'} size="18px" weight={300} />
-            {autoRefresh ? 'Live' : 'Paused'}
-          </button>
+          <div className="w-[1px] h-4 bg-slate-200 dark:bg-white/10 mx-0.5" />
+          <MonitoringSettingsPopover />
 
           <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-0.5" />
-
-          {/* Settings Toggle */}
-          <button
-            onClick={() => setShowSettings(!showSettings)}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
-              ${showSettings 
-                ? 'bg-amber-500/10 text-amber-600 dark:text-bk-yellow border-amber-500/50 dark:border-bk-yellow/50' 
-                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
-            title="Dashboard settings"
-          >
-            <Icon name="tune" size="18px" weight={300} />
-          </button>
-
-          {/* Export */}
           <button
             onClick={handleExport}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs`}
+            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5 shadow-sm`}
             title="Export metrics as CSV"
           >
             <Icon name="ios_share" size="18px" weight={300} />
@@ -212,33 +219,7 @@ export default function DatabaseDashboard({ dbname }) {
         </div>
       </header>
 
-      {showSettings && (
-        <div className="mx-6 mt-4 p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/6 rounded-xl flex items-center gap-6">
-          <div className="flex items-center gap-2 shrink-0">
-            <Icon name="tune" size="sm" weight={300} className="text-amber-500" />
-            <Typography variant="label" className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Auto Refresh</Typography>
-          </div>
-          <div className="w-52">
-            <Select
-              value={refreshInterval}
-              onChange={(e) => setRefreshInterval(parseInt(e.target.value))}
-              options={[
-                { label: '1 second (Realtime)', value: 1 },
-                { label: '5 seconds', value: 5 },
-                { label: '10 seconds', value: 10 },
-                { label: '30 seconds', value: 30 },
-                { label: '1 minute', value: 60 },
-              ]}
-            />
-          </div>
-          <Typography variant="label" className="text-[10px] text-slate-400 italic leading-relaxed">
-            Lower intervals increase polling frequency and may impact server performance.
-          </Typography>
-          <button onClick={() => setShowSettings(false)} className="ml-auto p-1 rounded-sm text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors shrink-0">
-            <Icon name="close" size="sm" weight={300} />
-          </button>
-        </div>
-      )}
+
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         {isLoading && (!data.volumes || data.volumes.length === 0) ? (

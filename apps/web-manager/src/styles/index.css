@@ -152,29 +152,26 @@
     background: transparent;
   }
   ::-webkit-scrollbar-thumb {
-    background: #cbd5e1; /* slate-300 */
-    border-radius: 4px;
+    background: rgba(245, 158, 11, 0.4); /* amber-500 with 40% opacity */
+    border-radius: 10px;
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #94a3b8; /* slate-400 */
+    background: rgba(245, 158, 11, 0.9); /* amber-500 full */
   }
   .dark ::-webkit-scrollbar-thumb {
-    background: #334155; /* slate-700 */
+    background: rgba(245, 158, 11, 0.25); /* subtler amber in dark mode */
   }
   .dark ::-webkit-scrollbar-thumb:hover {
-    background: #ffc107; /* bk-yellow */
+    background: rgba(245, 158, 11, 0.8);
   }
   
   /* Firefox */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #cbd5e1 transparent;
+    scrollbar-color: rgba(245, 158, 11, 0.4) transparent;
   }
   .dark * {
-    scrollbar-color: #334155 transparent;
-  }
-  .dark *:hover {
-    scrollbar-color: #ffc107 transparent;
+    scrollbar-color: rgba(245, 158, 11, 0.25) transparent;
   }
 }
 

@@ -1,7 +1,7 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Routes, Route, Navigate } from 'react-router-dom';
-import { toggleTheme, toggleSidebar, setIsResizing, setActiveMainTab, closeTab, closeOtherTabs, closeAllTabs } from '../features/layout/layoutSlice';
+import { toggleTheme, toggleSidebar, setIsResizing, setActiveMainTab, closeTab, closeOtherTabs, closeAllTabs, triggerRefreshActiveTab } from '../features/layout/layoutSlice';
 import { openAddHostModal, closeAddHostModal, setSelectedHost } from '../features/host/hostSlice';
 import { setSelectedDatabase } from '../features/database/databaseSlice';
 import { closeCreateUserModal, closeEditUserModal, closeDropUserModal } from '../features/user/userSlice';
@@ -75,10 +75,20 @@ function DashboardLayout() {
   const { actionLoading: dbUILoading } = useSelector((state) => state.databaseUI);
   const { operationLoading: dbOpLoading } = useSelector((state) => state.databaseOperation);
   const dbActionLoading = dbCoreLoading || dbOpLoading || dbUILoading;
-  const { theme, isSidebarCollapsed, isResizing, activeMainTab, openTabs } = useSelector((state) => state.layout);
+  const { theme, isSidebarCollapsed, isResizing, activeMainTab, openTabs, refreshCounter } = useSelector((state) => state.layout);
+  const [isFlashing, setIsFlashing] = useState(false);
   const { isAddHostModalOpen, hosts, isServiceOperating, serviceOperationType, serviceProgressMessage } = useSelector((state) => state.host);
   const { isCreateUserModalOpen, createUserDbName, isEditUserModalOpen, editUserData, isDropUserModalOpen } = useSelector((state) => state.user);
   const { actionLoading: brokerActionLoading } = useSelector((state) => state.broker);
+
+  useEffect(() => {
+    if (refreshCounter > 0) {
+      setIsFlashing(true);
+      const timer = setTimeout(() => setIsFlashing(false), 400);
+      return () => clearTimeout(timer);
+    }
+  }, [refreshCounter]);
+
   const tabLabels = openTabs.reduce((acc, tabId) => {
     if (tabId.startsWith('host:')) {
       const uid = tabId.split(':')[1];
@@ -129,6 +139,17 @@ function DashboardLayout() {
   }, [activeMainTab, dispatch]);
 
   useEffect(() => {
+    const handleKeyDown = (e) => {
+      if (e.key === 'F5') {
+        e.preventDefault();
+        dispatch(triggerRefreshActiveTab());
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [dispatch]);
+
+  useEffect(() => {
     if (theme === 'dark') {
       document.documentElement.classList.add('dark');
       document.documentElement.classList.remove('light');
@@ -141,6 +162,9 @@ function DashboardLayout() {
   return (
     <MonitoringProvider>
       <div className={`h-screen overflow-hidden ${isResizing ? 'select-none' : ''}`}>
+        {/* Flash Overlay */}
+        <div className={`fixed inset-0 bg-white/20 dark:bg-white/5 pointer-events-none z-[9999] transition-opacity duration-300 ${isFlashing ? 'opacity-100' : 'opacity-0'}`} />
+        
         <SplitPane split="vertical" defaultSize={288} minSize={200} maxSize={600} className="h-full w-full">
           <Sidebar
             isCollapsed={isSidebarCollapsed}

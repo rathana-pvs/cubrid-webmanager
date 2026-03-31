@@ -18,7 +18,8 @@ const initialState = {
     type: 'success', // success, error, info
     title: '',
     message: ''
-  }
+  },
+  refreshCounter: 0,
 };
 
 const layoutSlice = createSlice({
@@ -118,6 +119,9 @@ const layoutSlice = createSlice({
     closeStatusModal: (state) => {
       state.statusModal.isOpen = false;
     },
+    triggerRefreshActiveTab: (state) => {
+      state.refreshCounter += 1;
+    },
   },
 });
 
@@ -136,6 +140,7 @@ export const {
   closeHostTabs,
   showStatusModal,
   closeStatusModal,
+  triggerRefreshActiveTab,
 } = layoutSlice.actions;
 
 export default layoutSlice.reducer;
