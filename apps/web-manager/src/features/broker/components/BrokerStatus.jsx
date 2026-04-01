@@ -1,3 +1,4 @@
+import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchDetailedBrokerStatus } from '../brokerSlice';
@@ -24,68 +25,14 @@ export default function BrokerStatus({ hostUid, brokerName }) {
   const dispatch = useDispatch();
   const { detailedStatus } = useSelector((state) => state.broker);
   const { preferences } = useSelector((state) => state.user);
-  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout);
-
   const status = detailedStatus[brokerName] || { data: {}, loading: false, error: null };
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
 
-  const [isBrowserVisible, setIsBrowserVisible] = useState(document.visibilityState === 'visible');
-  const isTabActive = isBrowserVisible && activeMainTab === `broker_status:${hostUid}:${brokerName}`;
-  const isActiveRef = useRef(isTabActive);
-  const initialLoadDone = useRef(false);
-
-  // 1. Browser Visibility Listener
-  useEffect(() => {
-    const handleVisibilityChange = () => setIsBrowserVisible(document.visibilityState === 'visible');
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  const handleRefresh = useCallback(async (silent = false) => {
-    if (hostUid && brokerName) {
-      if (!silent) setIsManualRefreshing(true);
-      try {
-        await dispatch(fetchDetailedBrokerStatus({ hostUid, brokerName, isBackground: silent })).unwrap();
-        setLastRefreshed(new Date());
-      } catch (err) {
-        console.error('Failed to refresh broker status:', err);
-      } finally {
-        if (!silent) setIsManualRefreshing(false);
-      }
-    }
-  }, [dispatch, hostUid, brokerName]);
-
-  // 2. Global Refresh (F5) Listener
-  useEffect(() => {
-    if (refreshCounter > 0 && isTabActive) {
-      handleRefresh();
-    }
-  }, [refreshCounter, handleRefresh, isTabActive]);
-
-  // 3. Initial Load
-  useEffect(() => {
-    if (hostUid && brokerName && !initialLoadDone.current) {
-      initialLoadDone.current = true;
-      handleRefresh();
-    }
-  }, [hostUid, brokerName, handleRefresh]);
-
-  // 4. Sync Ref and Trigger One-Time Resume Fetch
-  useEffect(() => {
-    const becameActive = !isActiveRef.current && isTabActive;
-    isActiveRef.current = isTabActive;
-    if (becameActive && initialLoadDone.current && preferences.brokerStatusInterval > 0) handleRefresh(true);
-  }, [isTabActive, handleRefresh, preferences.brokerStatusInterval]);
-
-  // 5. Background Polling Timer
-  useEffect(() => {
-    if (!isTabActive || preferences.brokerStatusInterval <= 0) return;
-    const timer = setInterval(() => {
-      if (isActiveRef.current) handleRefresh(true);
-    }, preferences.brokerStatusInterval * 1000);
-    return () => clearInterval(timer);
-  }, [isTabActive, preferences.brokerStatusInterval, handleRefresh]);
+  const { isManualRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
+    hostUid,
+    tabId: `broker_status:${hostUid}:${brokerName}`,
+    pollingIntervalSeconds: preferences.brokerStatusInterval,
+    onFetch: (silent) => (dispatch) => dispatch(fetchDetailedBrokerStatus({ hostUid, brokerName, isBackground: silent }))
+  });
 
   /* Loading */
   if (status.loading && !status.data?.asinfo) {
@@ -117,9 +64,6 @@ export default function BrokerStatus({ hostUid, brokerName }) {
   const asInfo = status.data?.asinfo || [];
   const jobInfo = status.data?.jobinfo || [];
   const basicInfo = status.data?.binfo?.[0] || {};
-
-  const [asCollapsed, setAsCollapsed] = useState(false);
-  const [jobCollapsed, setJobCollapsed] = useState(false);
 
   /* Table Columns Definitions */
   const asColumns = [
@@ -277,11 +221,9 @@ export default function BrokerStatus({ hostUid, brokerName }) {
               <span className="text-[12px] font-bold">Application Servers (AS)</span>
             </div>
           }
-          rightContent={asCollapsed && asActiveBadge}
+          rightContent={(isCollapsed) => isCollapsed && asActiveBadge}
           bodyClassName="p-0"
           collapsible
-          isCollapsed={asCollapsed}
-          onToggle={setAsCollapsed}
         >
           <Table 
             columns={asColumns} 
@@ -300,11 +242,9 @@ export default function BrokerStatus({ hostUid, brokerName }) {
               <span className="text-[12px] font-bold">Job Queue</span>
             </div>
           }
-          rightContent={jobCollapsed && jobInfo.length > 0 && jobQueuedBadge}
+          rightContent={(isCollapsed) => isCollapsed && jobInfo.length > 0 && jobQueuedBadge}
           bodyClassName="p-0"
           collapsible
-          isCollapsed={jobCollapsed}
-          onToggle={setJobCollapsed}
         >
           <Table 
             columns={jobColumns} 

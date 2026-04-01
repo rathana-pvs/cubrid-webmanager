@@ -28,9 +28,12 @@ export const Card = ({
     }
   };
 
+  const renderSubtitle = typeof subtitle === 'function' ? subtitle(isCollapsed) : subtitle;
+  const renderRightContent = typeof rightContent === 'function' ? rightContent(isCollapsed) : rightContent;
+
   return (
     <div className={`bg-white dark:bg-bk-side border border-slate-200 dark:border-white/5 rounded-xl overflow-hidden shadow-xs transition-all duration-300 ${isCollapsed ? 'ring-0 shadow-none' : ''} ${className}`}>
-      {(title || subtitle) && (
+      {(title || renderSubtitle) && (
         <div 
           className={`px-5 py-3 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/2 flex items-center justify-between ${collapsible ? 'cursor-pointer hover:bg-slate-100/50 dark:hover:bg-white/4 transition-colors group' : ''}`}
           onClick={toggleCollapse}
@@ -41,15 +44,15 @@ export const Card = ({
                 {title}
               </Typography>
             )}
-            {subtitle && !isCollapsed && (
+            {renderSubtitle && !isCollapsed && (
               <Typography variant="p" className="text-[11px] text-slate-500 dark:text-slate-400 mt-1">
-                {subtitle}
+                {renderSubtitle}
               </Typography>
             )}
           </div>
           
           <div className="flex items-center gap-3">
-            {rightContent}
+            {renderRightContent}
             {collapsible && (
               <button 
                 className={`w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 transition-all ${isCollapsed ? '-rotate-90' : ''}`}

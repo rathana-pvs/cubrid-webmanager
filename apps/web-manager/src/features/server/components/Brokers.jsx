@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
+import React from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchBrokerList } from '../../broker/brokerSlice';
 import { openTab } from '../../layout/layoutSlice';
@@ -13,67 +14,12 @@ export default function Brokers({ hostUid, isSection = false }) {
   const { brokers, loading } = useSelector((state) => state.broker);
   const { authorizedHosts } = useSelector((state) => state.host);
   const { preferences } = useSelector((state) => state.user);
-  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout);
-
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
-
-  const [isBrowserVisible, setIsBrowserVisible] = useState(document.visibilityState === 'visible');
-  const isTabActive = isBrowserVisible && activeMainTab === `brokers_status:${hostUid}`;
-  const isActiveRef = useRef(isTabActive);
-  const initialLoadDone = useRef(false);
-
-  // 1. Browser Visibility Listener
-  useEffect(() => {
-    const handleVisibilityChange = () => setIsBrowserVisible(document.visibilityState === 'visible');
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  const handleRefresh = useCallback(async (silent = false) => {
-    if (hostUid && authorizedHosts.includes(hostUid)) {
-      if (!silent) setIsManualRefreshing(true);
-      try {
-        await dispatch(fetchBrokerList(hostUid)).unwrap();
-        setLastRefreshed(new Date());
-      } catch (err) {
-        console.error('Failed to refresh brokers summary:', err);
-      } finally {
-        if (!silent) setIsManualRefreshing(false);
-      }
-    }
-  }, [dispatch, hostUid, authorizedHosts]);
-
-  // 2. Global Refresh (F5) Listener
-  useEffect(() => {
-    if (refreshCounter > 0 && isTabActive) {
-      handleRefresh();
-    }
-  }, [refreshCounter, handleRefresh, isTabActive]);
-
-  // 3. Initial Load
-  useEffect(() => {
-    if (hostUid && authorizedHosts.includes(hostUid) && !initialLoadDone.current) {
-      initialLoadDone.current = true;
-      handleRefresh();
-    }
-  }, [hostUid, authorizedHosts, handleRefresh]);
-
-  // 4. On Tab Resume
-  useEffect(() => {
-    const becameActive = !isActiveRef.current && isTabActive;
-    isActiveRef.current = isTabActive;
-    if (becameActive && initialLoadDone.current && preferences.brokerStatusInterval > 0) handleRefresh(true);
-  }, [isTabActive, handleRefresh, preferences.brokerStatusInterval]);
-
-  // 5. Polling Timer
-  useEffect(() => {
-    if (!isTabActive || preferences.brokerStatusInterval <= 0) return;
-    const timer = setInterval(() => {
-      if (isActiveRef.current) handleRefresh(true);
-    }, preferences.brokerStatusInterval * 1000);
-    return () => clearInterval(timer);
-  }, [isTabActive, preferences.brokerStatusInterval, handleRefresh]);
+  const { isManualRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
+    hostUid,
+    tabId: `brokers_status:${hostUid}`,
+    pollingIntervalSeconds: preferences.brokerStatusInterval,
+    onFetch: () => (dispatch) => dispatch(fetchBrokerList(hostUid))
+  });
 
   const columns = [
     {
@@ -113,8 +59,6 @@ export default function Brokers({ hostUid, isSection = false }) {
     { header: 'Err-Q', accessor: 'error_query', render: (val) => <span className={`font-mono text-[12px] font-bold ${parseInt(val) > 0 ? 'text-rose-500' : 'text-slate-400'}`}>{val}</span> },
   ];
 
-  const [collapsed, setCollapsed] = useState(false);
-
   const activeCount = brokers.filter(b => b.state === 'ON').length;
 
   const activeBadge = (
@@ -132,11 +76,9 @@ export default function Brokers({ hostUid, isSection = false }) {
           <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Brokers Control</span>
         </div>
       }
-      rightContent={collapsed && activeBadge}
+      rightContent={(isCollapsed) => isCollapsed && activeBadge}
       bodyClassName="p-0"
       collapsible
-      isCollapsed={collapsed}
-      onToggle={setCollapsed}
     >
       <Table
         columns={columns}

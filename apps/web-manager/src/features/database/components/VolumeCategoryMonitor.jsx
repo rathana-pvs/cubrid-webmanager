@@ -1,5 +1,6 @@
-import React, { useState, useEffect, useMemo, useCallback, memo } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
+import React, { useMemo, memo } from 'react';
+import { useSelector } from 'react-redux';
 import { fetchDatabaseSpaceInfo } from '../databaseSlice';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
 
@@ -196,46 +197,20 @@ const VolumeTableContainer = memo(({ volumes, pageSize }) => (
 // ── Main Component ──
 
 export default function VolumeCategoryMonitor({ hostUid, dbname, category }) {
-  const dispatch = useDispatch();
-  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring);
+  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring || {});
   const { preferences } = useSelector((state) => state.user);
-  const { refreshCounter } = useSelector((state) => state.layout);
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  
+  const tabId = `vol_category:${hostUid}:${dbname}:${category}`;
+  const { isManualRefreshing: isRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
+    hostUid,
+    tabId,
+    pollingIntervalSeconds: preferences?.dashboardInterval || 0,
+    onFetch: () => (dispatch) => dispatch(fetchDatabaseSpaceInfo({ hostUid, dbname }))
+  });
+
   const dbSpace = spaceInfo[dbname];
   const isLoading = spaceInfoLoading?.[dbname];
-
-  const handleRefresh = useCallback(async () => {
-    if (hostUid) {
-      setIsRefreshing(true);
-      try {
-        await dispatch(fetchDatabaseSpaceInfo({ hostUid, dbname })).unwrap();
-        setLastRefreshed(new Date());
-      } finally {
-        setIsRefreshing(false);
-      }
-    }
-  }, [dispatch, hostUid, dbname]);
-
-  useEffect(() => {
-    if (refreshCounter > 0) {
-      handleRefresh();
-    }
-  }, [refreshCounter]);
-
-  useEffect(() => {
-    if (!dbSpace && !isLoading && hostUid) {
-      handleRefresh();
-    }
-  }, [dispatch, hostUid, dbname, dbSpace, isLoading]);
-
-  useEffect(() => {
-    if (!preferences?.dashboardInterval || preferences.dashboardInterval <= 0) return;
-    const interval = setInterval(handleRefresh, preferences.dashboardInterval * 1000);
-    return () => clearInterval(interval);
-  }, [preferences?.dashboardInterval, handleRefresh]);
-
-  const meta = CATEGORY_META[category] || CATEGORY_META.Permanent_PermanentData;
+  const meta = useMemo(() => CATEGORY_META[category] || CATEGORY_META.Permanent_PermanentData, [category]);
 
   const volumes = useMemo(() => {
     if (!dbSpace || !dbSpace.volumes) return [];

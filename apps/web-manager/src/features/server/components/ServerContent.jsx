@@ -1,4 +1,5 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
+import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
+import React, { useState, useCallback } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { hostApi } from '../../host/hostApi';
 import { databaseApi } from '../../database/databaseApi';
@@ -21,28 +22,23 @@ export default function ServerContent({ hostUid }) {
   const { hosts, authorizedHosts } = useSelector((state) => state.host);
   const { preferences } = useSelector((state) => state.user);
   const { refreshCounter } = useSelector((state) => state.layout);
+  const [autoStartDBs, setAutoStartDBs] = useState([]);
   
   const currentHost = hosts.find(h => h.uid === hostUid);
   const hostLabel = currentHost ? (currentHost.alias || currentHost.id) : 'Unknown Host';
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
-  const [autoStartDBs, setAutoStartDBs] = useState([]);
-
-  const handleRefresh = useCallback(async (silent = false) => {
-    if (!hostUid || (isRefreshing && !silent)) return;
-    if (!silent) setIsRefreshing(true);
-    try {
+  const { isManualRefreshing: isRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
+    hostUid,
+    tabId: `host:${hostUid}`,
+    pollingIntervalSeconds: preferences.dashboardInterval,
+    onFetch: (silent) => async (dispatch) => {
       await Promise.all([
         dispatch(fetchDatabaseStartInfo(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchBrokerList(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchHostEnv(hostUid)),
         fetchAutoStartInfo()
       ]);
-      setLastRefreshed(new Date());
-    } finally {
-      if (!silent) setIsRefreshing(false);
     }
-  }, [dispatch, hostUid]);
+  });
 
   const fetchAutoStartInfo = async () => {
     try {
@@ -66,48 +62,9 @@ export default function ServerContent({ hostUid }) {
     }
   };
 
-  // 0. Global Refresh (F5) Listener
-  useEffect(() => {
-    if (refreshCounter > 0) handleRefresh();
-  }, [refreshCounter, handleRefresh]);
-
-  const initialLoadDone = useRef(false);
-
-  // 1. Initial Load
-  useEffect(() => {
-    if (!hostUid || !authorizedHosts.includes(hostUid)) return;
-    initialLoadDone.current = true;
-    handleRefresh(); // Non-silent refresh with spinner
-  }, [hostUid, authorizedHosts, handleRefresh]);
-
   const { activeMainTab } = useSelector((state) => state.layout);
-  const [isBrowserVisible, setIsBrowserVisible] = useState(document.visibilityState === 'visible');
-  
-  const isTabActive = isBrowserVisible && activeMainTab === `host:${hostUid}`;
-  const isActiveRef = useRef(isTabActive);
+  const isTabActive = activeMainTab === `host:${hostUid}`;
 
-  // 2. Browser Visibility Listener
-  useEffect(() => {
-    const handleVisibilityChange = () => setIsBrowserVisible(document.visibilityState === 'visible');
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // 3. Sync Ref and Trigger One-Time Resume Fetch
-  useEffect(() => {
-    const becameActive = !isActiveRef.current && isTabActive;
-    isActiveRef.current = isTabActive;
-    if (becameActive && initialLoadDone.current) handleRefresh(true);
-  }, [isTabActive, hostUid, handleRefresh]);
-
-  // 4. Background Polling Timer
-  useEffect(() => {
-    if (!hostUid || !isTabActive || preferences.dashboardInterval <= 0) return;
-    const timer = setInterval(() => {
-      if (isActiveRef.current) handleRefresh(true);
-    }, preferences.dashboardInterval * 1000);
-    return () => clearInterval(timer);
-  }, [hostUid, isTabActive, preferences.dashboardInterval, handleRefresh]);
 
   const handleAutoStartToggle = async (dbname, isCurrentlyAutoStart) => {
     try {

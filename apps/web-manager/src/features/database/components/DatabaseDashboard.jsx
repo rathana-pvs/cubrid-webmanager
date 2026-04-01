@@ -1,4 +1,5 @@
-import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
+import React, { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { fetchDashboardData } from '../databaseSlice';
 import DBPerformanceSection from './dashboard/DBPerformanceSection';
@@ -21,69 +22,21 @@ export default function DatabaseDashboard({ dbname }) {
 
   const [logModal, setLogModal] = useState({ isOpen: false, brokerName: '', casId: '', type: 'sql' });
   
-  const [isBrowserVisible, setIsBrowserVisible] = useState(document.visibilityState === 'visible');
-  const isTabActive = isBrowserVisible && activeMainTab === `db:${dbname}`;
-  const isActiveRef = useRef(isTabActive);
-  const initialLoadDone = useRef(false);
+  const hostUid = selectedHostUid;
+
+  const { isManualRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
+    hostUid,
+    tabId: `db:${dbname}`,
+    pollingIntervalSeconds: preferences.dashboardInterval,
+    onFetch: (silent) => (dispatch) => dispatch(fetchDashboardData({ hostUid, dbname, isBackground: silent }))
+  });
 
   const activeHost = hosts.find(h => h.uid === selectedHostUid);
-  const hostUid = selectedHostUid;
   const data = dashboardData[dbname] || { volumes: [], spaceInfo: [], locks: [], performance: {} };
   const isLoading = dashboardLoading[dbname];
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
+  
+  const isTabActive = document.visibilityState === 'visible' && activeMainTab === `db:${dbname}`;
 
-  // 1. Browser Visibility Listener
-  useEffect(() => {
-    const handleVisibilityChange = () => setIsBrowserVisible(document.visibilityState === 'visible');
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  const handleRefresh = useCallback(async (silent = false) => {
-    if (hostUid && dbname) {
-      if (!silent) setIsManualRefreshing(true);
-      try {
-        await dispatch(fetchDashboardData({ hostUid, dbname, isBackground: silent })).unwrap();
-        setLastRefreshed(new Date());
-      } catch (err) {
-        console.error('Failed to refresh dashboard:', err);
-      } finally {
-        if (!silent) setIsManualRefreshing(false);
-      }
-    }
-  }, [dispatch, hostUid, dbname]);
-
-  // 2. Global Refresh (F5) Listener
-  useEffect(() => {
-    if (refreshCounter > 0 && isTabActive) {
-      handleRefresh();
-    }
-  }, [refreshCounter, handleRefresh, isTabActive]);
-
-  // 3. Initial Load
-  useEffect(() => {
-    if (hostUid && dbname && !initialLoadDone.current) {
-      initialLoadDone.current = true;
-      handleRefresh();
-    }
-  }, [hostUid, dbname, handleRefresh]);
-
-  // 4. Sync Ref and Trigger One-Time Resume Fetch
-  useEffect(() => {
-    const becameActive = !isActiveRef.current && isTabActive;
-    isActiveRef.current = isTabActive;
-    if (becameActive && initialLoadDone.current && preferences.dashboardInterval > 0) handleRefresh(true);
-  }, [isTabActive, handleRefresh, preferences.dashboardInterval]);
-
-  // 5. Background Polling Timer
-  useEffect(() => {
-    if (!isTabActive || preferences.dashboardInterval <= 0) return;
-    const timer = setInterval(() => {
-      if (isActiveRef.current) handleRefresh(true);
-    }, preferences.dashboardInterval * 1000);
-    return () => clearInterval(timer);
-  }, [isTabActive, preferences.dashboardInterval, handleRefresh]);
 
   // Pass polling props to sections
   const pollingProps = { hostUid, dbname, isTabActive, refreshInterval: preferences.dashboardInterval };

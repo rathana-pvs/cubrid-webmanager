@@ -1,4 +1,5 @@
-import React, { useEffect, useRef, useState, useCallback } from 'react';
+import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
+import React, { useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { fetchHostSummary } from '../globalMonitoringSlice';
 import { setActiveMainTab } from '../../layout/layoutSlice';
@@ -23,62 +24,17 @@ export default function ServiceDashboard() {
   const { summaries } = useSelector((state) => state.globalMonitoring);
   const { preferences } = useSelector((state) => state.user);
   const { refreshCounter, activeMainTab } = useSelector((state) => state.layout);
-  const [isManualRefreshing, setIsManualRefreshing] = useState(false);
-  const [lastRefreshed, setLastRefreshed] = useState(new Date());
-  
-  const [isBrowserVisible, setIsBrowserVisible] = useState(document.visibilityState === 'visible');
-  const isTabActive = isBrowserVisible && activeMainTab === 'service_dashboard';
-  const isActiveRef = useRef(isTabActive);
-  const initialLoadDone = useRef(false);
-
-  const refreshAll = useCallback(async (silent = false) => {
-    if (authorizedHosts.length === 0 || (isManualRefreshing && !silent)) return;
-    if (!silent) setIsManualRefreshing(true);
-    try {
+  const { isManualRefreshing, lastRefreshed, handleRefresh: refreshAll } = usePollingRefresh({
+    hostUid: 'global',
+    tabId: 'service_dashboard',
+    pollingIntervalSeconds: preferences.dashboardInterval,
+    onFetch: (silent) => async (dispatch) => {
+      if (authorizedHosts.length === 0) return;
       await Promise.all(authorizedHosts.map(hostUid => 
         dispatch(fetchHostSummary(silent ? { hostUid, isBackground: true } : hostUid)).unwrap().catch(() => {})
       ));
-      setLastRefreshed(new Date());
-    } finally {
-      if (!silent) setIsManualRefreshing(false);
     }
-  }, [authorizedHosts, dispatch]);
-
-  // 1. Initial Load
-  useEffect(() => {
-    if (authorizedHosts.length > 0 && !initialLoadDone.current) {
-      initialLoadDone.current = true;
-      refreshAll();
-    }
-  }, [authorizedHosts, refreshAll]);
-
-  // 2. Global Refresh (F5) Listener
-  useEffect(() => {
-    if (refreshCounter > 0 && isTabActive) refreshAll();
-  }, [refreshCounter, isTabActive, refreshAll]);
-
-  // 3. Browser Visibility Listener
-  useEffect(() => {
-    const handleVisibilityChange = () => setIsBrowserVisible(document.visibilityState === 'visible');
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
-  }, []);
-
-  // 4. Sync Ref and Trigger One-Time Resume Fetch
-  useEffect(() => {
-    const becameActive = !isActiveRef.current && isTabActive;
-    isActiveRef.current = isTabActive;
-    if (becameActive && initialLoadDone.current && preferences.dashboardInterval > 0) refreshAll(true);
-  }, [isTabActive, refreshAll, preferences.dashboardInterval]);
-
-  // 5. Background Polling Timer
-  useEffect(() => {
-    if (!isTabActive || preferences.dashboardInterval <= 0) return;
-    const timer = setInterval(() => {
-      if (isActiveRef.current) refreshAll(true);
-    }, preferences.dashboardInterval * 1000);
-    return () => clearInterval(timer);
-  }, [isTabActive, preferences.dashboardInterval, refreshAll]);
+  });
 
   const handleRowDoubleClick = (row) => {
     const hostUid = row.uid;
