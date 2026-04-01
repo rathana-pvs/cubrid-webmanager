@@ -488,8 +488,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                       </Typography>
                       <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
                     </div>
-
-                    {activeTab === 'db' && (
+                    <div className={activeTab !== 'db' ? 'hidden' : ''}>
                       <DatabaseTree
                         onContextMenu={handleDbContextMenu}
                         onRootContextMenu={handleDbRootContextMenu}
@@ -503,9 +502,13 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                         onTableContextMenu={handleTableContextMenu}
                         onViewContextMenu={handleViewContextMenu}
                       />
-                    )}
-                    {activeTab === 'broker' && <BrokerTree hostUid={selectedHostUid} onContextMenu={handleBrokerContextMenu} />}
-                    {activeTab === 'log' && <LogTree hostUid={selectedHostUid} />}
+                    </div>
+                    <div className={activeTab !== 'broker' ? 'hidden' : ''}>
+                      <BrokerTree hostUid={selectedHostUid} onContextMenu={handleBrokerContextMenu} />
+                    </div>
+                    <div className={activeTab !== 'log' ? 'hidden' : ''}>
+                      <LogTree hostUid={selectedHostUid} />
+                    </div>
                   </div>
                     </div>
                   </>
@@ -528,7 +531,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             <Icon name="dns" size="xs" className="opacity-30"  weight={300} />
           </div>
           <MenuItem
-            icon="power_settings_new" iconColor="text-rose-500" label="Disconnect"
+            icon="power_settings_new" label="Disconnect"
             onClick={() => {
               const hostUid = contextMenu.hostUid;
               dispatch(revokeHostLogin(hostUid));
@@ -542,7 +545,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <MenuItem icon="add_box" label="Add Host" onClick={() => { onAddHost(); setContextMenu(null); }} />
           <MenuItem icon="edit" label="Edit Host" onClick={() => { dispatch(openEditHostModal(contextMenu.hostUid)); setContextMenu(null); }} />
-          <MenuItem icon="delete" iconColor="text-rose-500" label="Delete Host" onClick={() => { dispatch(openDeleteHostModal({ hostUid: contextMenu.hostUid, alias: contextMenu.alias })); setContextMenu(null); }} />
+          <MenuItem icon="delete" label="Delete Host" onClick={() => { dispatch(openDeleteHostModal({ hostUid: contextMenu.hostUid, alias: contextMenu.alias })); setContextMenu(null); }} />
           <MenuDivider />
           <MenuItem 
             icon="lock" 
@@ -563,7 +566,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           {dbContextMenu.isActive ? (
             <MenuItem
               icon="stop"
-              iconColor="text-rose-500"
               label="Stop Database"
               onClick={() => {
                 dispatch(stopDatabase({ hostUid: selectedHostUid, dbname: dbContextMenu.db }))
@@ -576,7 +578,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           ) : (
             <MenuItem
               icon="play_arrow"
-              iconColor="text-emerald-500"
               label="Start Database"
               onClick={() => {
                 dispatch(startDatabase({ hostUid: selectedHostUid, dbname: dbContextMenu.db }))
@@ -606,11 +607,11 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             <MenuItem icon="auto_fix_high" label="Optimize Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openOptimizeDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="content_copy" label="Copy Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCopyDatabaseModal()); setDbContextMenu(null); }} />
             <MenuDivider />
-            <MenuItem icon="drive_file_rename_outline" iconColor="text-accent-orange" label="Rename Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRenameDatabaseModal()); setDbContextMenu(null); }} />
+            <MenuItem icon="drive_file_rename_outline" label="Rename Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRenameDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="restore" label="Restore Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRestoreDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="backup" label="Backup Database" onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openBackupDatabaseModal()); setDbContextMenu(null); }} />
             <MenuDivider />
-            <MenuItem icon="delete" iconColor="text-accent-red" label="Delete Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openDeleteDatabaseModal(dbContextMenu.db)); setDbContextMenu(null); }} />
+            <MenuItem icon="delete" label="Delete Database" disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openDeleteDatabaseModal(dbContextMenu.db)); setDbContextMenu(null); }} />
           </SubMenu>
 
           <SubMenu icon="info" label="Database Info" width="w-52">
@@ -658,7 +659,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="play_circle"
-            iconColor="text-emerald-500"
             label="Start All Databases"
             onClick={() => {
               databases.forEach(db => {
@@ -671,7 +671,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="stop_circle"
-            iconColor="text-rose-500"
             label="Stop All Databases"
             onClick={() => {
               activeDatabases.forEach(dbname => {
@@ -682,7 +681,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="restart_alt"
-            iconColor="text-amber-500"
             label="Restart All Databases"
             onClick={async () => {
               const currentActive = [...activeDatabases];
@@ -698,7 +696,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <MenuItem
             icon="add_circle"
-            iconColor="text-emerald-500"
             label="Create Database"
             onClick={() => {
               dispatch(openCreateDatabaseModal());
@@ -726,7 +723,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="play_circle"
-            iconColor="text-emerald-500"
             label="Start All Brokers"
             onClick={() => {
               brokers.forEach(broker => {
@@ -739,7 +735,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="stop_circle"
-            iconColor="text-rose-500"
             label="Stop All Brokers"
             onClick={() => {
               brokers.forEach(broker => {
@@ -752,7 +747,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="restart_alt"
-            iconColor="text-amber-500"
             label="Restart All Brokers"
             onClick={async () => {
               const currentActive = brokers.filter(b => b.state === 'ON').map(b => b.name);
@@ -806,7 +800,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           {brokerContextMenu.state === 'ON' ? (
             <MenuItem
               icon="stop"
-              iconColor="text-rose-500"
               label="Stop Broker"
               onClick={() => {
                 dispatch(stopBroker({ hostUid: selectedHostUid, brokerName: brokerContextMenu.broker }))
@@ -819,7 +812,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           ) : (
             <MenuItem
               icon="play_arrow"
-              iconColor="text-emerald-500"
               label="Start Broker"
               onClick={() => {
                 dispatch(startBroker({ hostUid: selectedHostUid, brokerName: brokerContextMenu.broker }))
@@ -893,7 +885,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="person_remove"
-            iconColor="text-rose-500"
             label="Drop DB User"
             onClick={() => {
               dispatch(openDropUserModal({ dbname: userContextMenu.db, userName: userContextMenu.user }));
@@ -1020,7 +1011,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="delete_forever"
-            iconColor="text-rose-500"
             label="Delete Backup Plan"
             onClick={() => {
               dispatch(setSelectedDatabase(backupItemContextMenu.db));
@@ -1096,7 +1086,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="delete_forever"
-            iconColor="text-rose-500"
             label="Delete Query Plan"
             onClick={() => {
               dispatch(setSelectedDatabase(queryItemContextMenu.db));
@@ -1141,7 +1130,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuItem icon="link" label="Foreign Keys" />
           <MenuDivider />
           <MenuItem icon="difference" label="Rename Table" />
-          <MenuItem icon="delete_forever" iconColor="text-rose-500" label="Drop Table" />
+          <MenuItem icon="delete_forever" label="Drop Table" />
         </ContextMenuWrapper>
       )}
 
@@ -1164,7 +1153,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem icon="grid_on" label="View Data" />
           <MenuDivider />
-          <MenuItem icon="delete_forever" iconColor="text-rose-500" label="Drop View" />
+          <MenuItem icon="delete_forever" label="Drop View" />
         </ContextMenuWrapper>
       )}
 

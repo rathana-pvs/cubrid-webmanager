@@ -113,6 +113,17 @@ export default function Brokers({ hostUid, isSection = false }) {
     { header: 'Err-Q', accessor: 'error_query', render: (val) => <span className={`font-mono text-[12px] font-bold ${parseInt(val) > 0 ? 'text-rose-500' : 'text-slate-400'}`}>{val}</span> },
   ];
 
+  const [collapsed, setCollapsed] = useState(false);
+
+  const activeCount = brokers.filter(b => b.state === 'ON').length;
+
+  const activeBadge = (
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full animate-in fade-in transition duration-300">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+      {activeCount} active
+    </span>
+  );
+
   const content = (
     <Card
       title={
@@ -121,8 +132,11 @@ export default function Brokers({ hostUid, isSection = false }) {
           <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">Brokers Control</span>
         </div>
       }
+      rightContent={collapsed && activeBadge}
       bodyClassName="p-0"
       collapsible
+      isCollapsed={collapsed}
+      onToggle={setCollapsed}
     >
       <Table
         columns={columns}

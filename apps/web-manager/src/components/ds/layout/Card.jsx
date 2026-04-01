@@ -5,6 +5,7 @@ import { Icon } from '../foundation/Icon';
 export const Card = ({
   title,
   subtitle,
+  rightContent,
   children,
   footer,
   className = '',
@@ -47,13 +48,16 @@ export const Card = ({
             )}
           </div>
           
-          {collapsible && (
-            <button 
-              className={`w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 transition-all ${isCollapsed ? '-rotate-90' : ''}`}
-            >
-              <Icon name="expand_more" size="sm" weight={300} />
-            </button>
-          )}
+          <div className="flex items-center gap-3">
+            {rightContent}
+            {collapsible && (
+              <button 
+                className={`w-6 h-6 flex items-center justify-center rounded-md hover:bg-slate-200 dark:hover:bg-white/10 text-slate-400 dark:text-slate-500 transition-all ${isCollapsed ? '-rotate-90' : ''}`}
+              >
+                <Icon name="expand_more" size="sm" weight={300} />
+              </button>
+            )}
+          </div>
         </div>
       )}
       

@@ -118,6 +118,9 @@ export default function BrokerStatus({ hostUid, brokerName }) {
   const jobInfo = status.data?.jobinfo || [];
   const basicInfo = status.data?.binfo?.[0] || {};
 
+  const [asCollapsed, setAsCollapsed] = useState(false);
+  const [jobCollapsed, setJobCollapsed] = useState(false);
+
   /* Table Columns Definitions */
   const asColumns = [
     { header: 'ID', accessor: 'as_id', width: '60px', render: (v) => <span className="font-mono text-amber-600 dark:text-amber-400">{v}</span> },
@@ -139,6 +142,20 @@ export default function BrokerStatus({ hostUid, brokerName }) {
     { header: 'Elapsed', accessor: 'job_time', width: '100px', render: (v) => <span className="font-mono text-rose-500">{v}s</span> },
     { header: 'Request', accessor: 'job_request', render: (v) => <div className="max-w-xs truncate text-slate-500 dark:text-slate-500 font-mono">{v}</div> },
   ];
+
+  const asActiveBadge = (
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full animate-in fade-in transition duration-300">
+      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+      {asInfo.length} active
+    </span>
+  );
+
+  const jobQueuedBadge = (
+    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-amber-600 dark:text-amber-400 px-2 py-0.5 bg-amber-500/10 border border-amber-500/20 rounded-full animate-in fade-in transition duration-300">
+      <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+      {jobInfo.length} queued
+    </span>
+  );
 
   return (
     <div className="flex-1 flex flex-col h-full bg-slate-50 dark:bg-bk-main overflow-hidden">
@@ -172,7 +189,7 @@ export default function BrokerStatus({ hostUid, brokerName }) {
           </span>
 
           <button
-            onClick={() => handleRefresh()}
+            onClick={() => handleRefresh(false)}
             disabled={status.loading || isManualRefreshing}
             className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all active:scale-[0.98]
               ${(status.loading || isManualRefreshing)
@@ -201,27 +218,54 @@ export default function BrokerStatus({ hostUid, brokerName }) {
           bodyClassName="p-0"
           collapsible
         >
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 divide-x divide-y divide-slate-100 dark:divide-white/5">
+          <div className="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 text-left">
             {[
-              { label: 'PID',             value: basicInfo.pid             || '—', accent: true },
-              { label: 'Port',            value: basicInfo.port            || '—' },
-              { label: 'Job Queue',       value: basicInfo.job_queue       || '0' },
-              { label: 'Auto Add AS',     value: basicInfo.auto_add_as     || 'OFF' },
-              { label: 'SQL Log Mode',    value: basicInfo.sql_log_mode    || 'OFF', badge: true },
-              { label: 'Long Trans',      value: `${basicInfo.long_transaction_time || '0'}s` },
-              { label: 'Long Query',      value: `${basicInfo.long_query_time       || '0'}s` },
-            ].map((m) => (
-              <div key={m.label} className="px-4 py-3 flex flex-col gap-1 min-w-0">
-                <span className="text-[10px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">{m.label}</span>
-                {m.badge ? (
-                  <StatusBadge value={m.value} />
-                ) : (
-                  <span className={`font-mono text-[13px] font-bold ${m.accent ? 'text-emerald-500' : 'text-slate-800 dark:text-slate-200'}`}>
-                    {m.value}
+              { label: 'PID',          value: basicInfo.pid                           || '—',    accent: 'emerald' },
+              { label: 'Port',         value: basicInfo.port                          || '—',    accent: 'amber'   },
+              { label: 'Job Queue',    value: basicInfo.job_queue                     ?? '0',    accent: 'slate'   },
+              { label: 'Auto Add AS',  value: basicInfo.auto_add_as                  || 'OFF',  badge: true       },
+              { label: 'SQL Log Mode', value: basicInfo.sql_log_mode                 || 'OFF',  badge: true       },
+              { label: 'Long Trans',   value: `${basicInfo.long_transaction_time      || '0'}s`, accent: 'slate'   },
+              { label: 'Long Query',   value: `${basicInfo.long_query_time            || '0'}s`, accent: 'slate'   },
+            ].map((m, i, arr) => {
+              const isActive = m.badge && m.value && m.value !== 'IDLE' && m.value !== 'OFF';
+              const accentBar = m.accent === 'emerald'
+                ? 'bg-emerald-500'
+                : m.accent === 'amber'
+                ? 'bg-amber-500'
+                : 'bg-slate-300 dark:bg-slate-700';
+              return (
+                <div
+                  key={m.label}
+                  className={`relative flex flex-col gap-2 px-4 py-3.5 min-w-0
+                    ${i < arr.length - 1 ? 'border-r border-slate-100 dark:border-white/5' : ''}
+                  `}
+                >
+                  <div className={`absolute top-0 left-4 right-4 h-[2px] rounded-b-full opacity-30 ${accentBar || 'bg-slate-300 dark:bg-slate-700'}`} />
+                  <span className="text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-[0.12em] leading-none">
+                    {m.label}
                   </span>
-                )}
-              </div>
-            ))}
+                  {m.badge ? (
+                    <span className={`inline-flex items-center gap-1.5 self-start px-2 py-1 rounded-md text-[11px] font-bold uppercase tracking-wide border
+                      ${isActive
+                        ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
+                        : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/4 dark:text-slate-400 dark:border-white/[0.07]'}`}
+                    >
+                      <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+                      {m.value}
+                    </span>
+                  ) : (
+                    <span className={`font-mono text-[15px] font-bold leading-none
+                      ${m.accent === 'emerald' ? 'text-emerald-500 dark:text-emerald-400'
+                      : m.accent === 'amber'   ? 'text-amber-500 dark:text-amber-400'
+                      : 'text-slate-800 dark:text-slate-200'}`}
+                    >
+                      {m.value}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </Card>
 
@@ -233,16 +277,11 @@ export default function BrokerStatus({ hostUid, brokerName }) {
               <span className="text-[12px] font-bold">Application Servers (AS)</span>
             </div>
           }
-          subtitle={
-             <div className="flex items-center gap-2 mt-1">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-slate-500 dark:text-slate-500 px-2 py-0.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/[0.07] rounded-full">
-                  <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  {asInfo.length} active
-                </span>
-             </div>
-          }
+          rightContent={asCollapsed && asActiveBadge}
           bodyClassName="p-0"
           collapsible
+          isCollapsed={asCollapsed}
+          onToggle={setAsCollapsed}
         >
           <Table 
             columns={asColumns} 
@@ -261,17 +300,11 @@ export default function BrokerStatus({ hostUid, brokerName }) {
               <span className="text-[12px] font-bold">Job Queue</span>
             </div>
           }
-          subtitle={
-            jobInfo.length > 0 && (
-              <div className="mt-1">
-                <span className="inline-flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400 px-2 py-0.5 bg-amber-50 dark:bg-amber-500/8 border border-amber-200 dark:border-amber-500/20 rounded-full">
-                  {jobInfo.length} queued
-                </span>
-              </div>
-            )
-          }
+          rightContent={jobCollapsed && jobInfo.length > 0 && jobQueuedBadge}
           bodyClassName="p-0"
           collapsible
+          isCollapsed={jobCollapsed}
+          onToggle={setJobCollapsed}
         >
           <Table 
             columns={jobColumns} 
