@@ -6,6 +6,7 @@ import {
   loginToHost,
   openDeleteHostModal,
   openEditHostModal,
+  openChangePasswordModal,
   revokeHostLogin,
   openServerVersionModal,
   fetchHostEnv
@@ -543,7 +544,12 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuItem icon="edit" label="Edit Host" onClick={() => { dispatch(openEditHostModal(contextMenu.hostUid)); setContextMenu(null); }} />
           <MenuItem icon="delete" iconColor="text-rose-500" label="Delete Host" onClick={() => { dispatch(openDeleteHostModal({ hostUid: contextMenu.hostUid, alias: contextMenu.alias })); setContextMenu(null); }} />
           <MenuDivider />
-          <MenuItem icon="lock" label="Change Password" />
+          <MenuItem 
+            icon="lock" 
+            label="Change Password" 
+            disabled={!(selectedHostUid === contextMenu.hostUid && authorizedHosts.includes(contextMenu.hostUid))}
+            onClick={() => { dispatch(openChangePasswordModal(contextMenu.hostUid)); setContextMenu(null); }} 
+          />
           <MenuItem icon="info" label="Server Version" onClick={() => { dispatch(openServerVersionModal(contextMenu.hostUid)); setContextMenu(null); }} />
         </ContextMenuWrapper>
       )}

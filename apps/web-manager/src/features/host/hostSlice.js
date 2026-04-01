@@ -63,6 +63,18 @@ export const editHost = createAsyncThunk(
   }
 );
 
+export const setHostPassword = createAsyncThunk(
+  'host/setHostPassword',
+  async ({ hostUid, payload }, { rejectWithValue }) => {
+    try {
+      await hostApi.setHostPassword(hostUid, payload);
+      return hostUid;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || err.response?.data?.error || 'Failed to set password');
+    }
+  }
+);
+
 // Async thunk to start CUBRID service (Brokers + Auto-start Databases)
 export const startService = createAsyncThunk(
   'host/startService',
@@ -197,6 +209,8 @@ const initialState = {
   hostAuthErrors: {}, // { [hostUid]: errorMessage }
   isImportExportModalOpen: false,
   importExportMode: 'export', // 'import' or 'export'
+  isChangePasswordModalOpen: false,
+  changePasswordHostUid: null,
   error: null,
 };
 
@@ -251,6 +265,14 @@ const hostSlice = createSlice({
     },
     closeImportExportModal: (state) => {
       state.isImportExportModalOpen = false;
+    },
+    openChangePasswordModal: (state, action) => {
+      state.isChangePasswordModalOpen = true;
+      state.changePasswordHostUid = action.payload;
+    },
+    closeChangePasswordModal: (state) => {
+      state.isChangePasswordModalOpen = false;
+      state.changePasswordHostUid = null;
     },
     clearHostError: (state) => {
       state.error = null;
@@ -326,9 +348,24 @@ const hostSlice = createSlice({
         state.loading = false;
         state.hosts = action.payload; // Payload is the full updated host list array
         state.isEditHostModalOpen = false;
+        state.isChangePasswordModalOpen = false;
         state.hostToEditUid = null;
+        state.changePasswordHostUid = null;
       })
       .addCase(editHost.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(setHostPassword.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(setHostPassword.fulfilled, (state) => {
+        state.loading = false;
+        state.isChangePasswordModalOpen = false;
+        state.changePasswordHostUid = null;
+      })
+      .addCase(setHostPassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -380,6 +417,8 @@ export const {
   closeServerVersionModal,
   openImportExportModal,
   closeImportExportModal,
+  openChangePasswordModal,
+  closeChangePasswordModal,
   clearHostError,
   setServiceProgressMessage,
 } = hostSlice.actions;

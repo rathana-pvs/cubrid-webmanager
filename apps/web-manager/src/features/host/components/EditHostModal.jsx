@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
-import { editHost, closeEditHostModal, clearHostError } from '../hostSlice';
+import { editHost, loginToHost, closeEditHostModal, clearHostError } from '../hostSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
@@ -10,7 +10,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function EditHostModal() {
   const dispatch = useDispatch();
-  const { isEditHostModalOpen, hostToEditUid, hosts, loading, error: apiError } = useSelector((state) => state.host);
+  const { isEditHostModalOpen, hostToEditUid, hosts, selectedHostUid, loading, error: apiError } = useSelector((state) => state.host);
 
   const [formData, setFormData] = useState({
     id: '',
@@ -73,7 +73,15 @@ export default function EditHostModal() {
       payload.password = formData.password;
     }
     
-    dispatch(editHost({ hostUid: hostToEditUid, payload }));
+    dispatch(editHost({ hostUid: hostToEditUid, payload }))
+      .unwrap()
+      .then(() => {
+        // If the edited host is the currently selected one, we should revalidate the login
+        // to pick up any changes in credentials or address/port.
+        if (selectedHostUid === hostToEditUid) {
+          dispatch(loginToHost(hostToEditUid));
+        }
+      });
   };
   
   const handleClose = () => {

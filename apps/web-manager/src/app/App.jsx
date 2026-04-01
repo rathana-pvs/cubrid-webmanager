@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { toggleTheme, toggleSidebar, setIsResizing, setActiveMainTab, closeTab, closeOtherTabs, closeAllTabs, triggerRefreshActiveTab } from '../features/layout/layoutSlice';
-import { openAddHostModal, closeAddHostModal, setSelectedHost } from '../features/host/hostSlice';
+import { openAddHostModal, closeAddHostModal, closeChangePasswordModal, setSelectedHost } from '../features/host/hostSlice';
 import { setSelectedDatabase } from '../features/database/databaseSlice';
 import { closeCreateUserModal, closeEditUserModal, closeDropUserModal } from '../features/user/userSlice';
 import Sidebar from '../features/layout/components/Sidebar';
@@ -10,6 +10,7 @@ import Header from '../features/layout/components/Header';
 import Breadcrumb from '../features/layout/components/Breadcrumb';
 import Footer from '../features/layout/components/Footer';
 import AddHostModal from '../features/host/components/AddHostModal';
+import ChangeHostPasswordModal from '../features/host/components/ChangeHostPasswordModal';
 import ServerContent from '../features/server/components/ServerContent';
 import DatabaseDashboard from '../features/database/components/DatabaseDashboard';
 import DatabaseSpaceMonitor from '../features/database/components/DatabaseSpaceMonitor';
@@ -352,6 +353,7 @@ function DashboardLayout() {
         />
         <DeleteHostModal />
         <EditHostModal />
+        <ChangeHostPasswordModal />
         <ServerVersionModal />
         <ImportExportHostModal />
 
