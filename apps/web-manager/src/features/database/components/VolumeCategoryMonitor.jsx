@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React, { useMemo, memo } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, shallowEqual } from 'react-redux';
 import { fetchDatabaseSpaceInfo } from '../databaseSlice';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
 
@@ -196,9 +196,9 @@ const VolumeTableContainer = memo(({ volumes, pageSize }) => (
 
 // ── Main Component ──
 
-export default function VolumeCategoryMonitor({ hostUid, dbname, category }) {
-  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring || {});
-  const { preferences } = useSelector((state) => state.user);
+const Component = function VolumeCategoryMonitor({ hostUid, dbname, category }) {
+  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring || {}, shallowEqual);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
   
   const tabId = `vol_category:${hostUid}:${dbname}:${category}`;
   const { isManualRefreshing: isRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
@@ -263,3 +263,5 @@ export default function VolumeCategoryMonitor({ hostUid, dbname, category }) {
     </div>
   );
 }
+
+export default React.memo(Component);

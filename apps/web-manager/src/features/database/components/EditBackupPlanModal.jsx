@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeEditBackupPlanModal, editBackupSchedule, fetchBackupSchedule } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -24,9 +24,9 @@ const LEVEL_PRESETS = [
 
 export default function EditBackupPlanModal() {
   const dispatch = useDispatch();
-  const { isEditBackupPlanModalOpen, selectedBackupId } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isEditBackupPlanModalOpen, selectedBackupId } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const [view, setView] = useState(VIEW_FORM);
   const [errorMsg, setErrorMsg] = useState('');

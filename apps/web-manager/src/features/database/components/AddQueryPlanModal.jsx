@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeAddQueryPlanModal, setAutoExecQuery } from '../databaseSlice';
 import Editor from '@monaco-editor/react';
 
@@ -22,10 +22,10 @@ const VIEW_ERROR   = 'error';
 
 export default function AddQueryPlanModal() {
   const dispatch = useDispatch();
-  const { isAddQueryPlanModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { selectedHostUid } = useSelector((state) => state.host);
-  const { theme } = useSelector((state) => state.layout);
+  const { isAddQueryPlanModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
+  const { theme } = useSelector((state) => state.layout, shallowEqual);
   
   const [view, setView] = useState(VIEW_FORM);
   const [errorMsg, setErrorMsg] = useState('');

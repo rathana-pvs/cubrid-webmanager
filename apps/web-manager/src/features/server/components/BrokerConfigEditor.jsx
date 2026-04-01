@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { hostApi } from '../../host/hostApi';
 import { showStatusModal, setTabDirty } from '../../layout/layoutSlice';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -13,7 +13,7 @@ import ConfigSourceEditor from './broker/ConfigSourceEditor';
 export default function BrokerConfigEditor({ hostUid }) {
   const tabId = `broker_config:${hostUid}`;
   const dispatch = useDispatch();
-  const { hosts } = useSelector((state) => state.host);
+  const { hosts } = useSelector((state) => state.host, shallowEqual);
   const currentHost = hosts.find(h => h.uid === hostUid);
   const hostDisplayName = currentHost ? (currentHost.alias || currentHost.id) : 'unknown host';
 

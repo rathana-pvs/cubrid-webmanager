@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeTransactionInfoModal, openKillTransactionModal } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 import KillTransactionModal from './KillTransactionModal';
@@ -17,9 +17,9 @@ const VIEW_ERROR   = 'error';
 
 export default function TransactionInfoModal() {
   const dispatch = useDispatch();
-  const { isTransactionInfoModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isTransactionInfoModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   
   const [view, setView] = useState(VIEW_LOADING);
   const [transactions, setTransactions] = useState([]);

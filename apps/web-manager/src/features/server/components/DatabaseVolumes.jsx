@@ -1,5 +1,5 @@
 import React, { useEffect, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { fetchDatabaseVolumes } from '../../database/databaseSlice';
 import { Card } from '../../../components/ds/layout/Card';
 import { Table } from '../../../components/ds/layout/Table';
@@ -67,9 +67,9 @@ const BarCell = ({ val }) => {
 
 export default function DatabaseVolumes({ hostUid }) {
   const dispatch = useDispatch();
-  const { authorizedHosts } = useSelector((state) => state.host);
-  const { activeDatabases } = useSelector((state) => state.database);
-  const { volumes, volumesLoading: loading } = useSelector((state) => state.databaseMonitoring);
+  const { authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  const { volumes, volumesLoading: loading } = useSelector((state) => state.databaseMonitoring, shallowEqual);
 
   const fetchVolumes = useCallback(() => {
     if (!hostUid || !authorizedHosts.includes(hostUid) || activeDatabases.length === 0) return;

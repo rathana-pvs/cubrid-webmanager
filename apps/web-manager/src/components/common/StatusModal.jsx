@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeStatusModal } from '../../features/layout/layoutSlice';
 import { Icon } from '../ds/foundation/Icon';
 
@@ -38,7 +38,7 @@ const themes = {
 
 export default function StatusModal() {
   const dispatch = useDispatch();
-  const { statusModal } = useSelector((state) => state.layout);
+  const { statusModal } = useSelector((state) => state.layout, shallowEqual);
   const { isOpen, type, title, message } = statusModal;
   const btnRef = useRef(null);
 

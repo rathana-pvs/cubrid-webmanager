@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeOptimizeDatabaseModal, optimizeDatabase } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 
@@ -180,9 +180,9 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
 
 export default function OptimizeDatabaseModal() {
   const dispatch = useDispatch();
-  const { isOptimizeDatabaseModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isOptimizeDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   
   const [view, setView] = useState(VIEW_FORM);
   const [selectedClassName, setSelectedClassName] = useState('');

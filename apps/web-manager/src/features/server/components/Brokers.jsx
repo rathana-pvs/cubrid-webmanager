@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { fetchBrokerList } from '../../broker/brokerSlice';
 import { openTab } from '../../layout/layoutSlice';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
@@ -9,11 +9,11 @@ import { Table } from '../../../components/ds/layout/Table';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
 
-export default function Brokers({ hostUid, isSection = false }) {
+const Component = function Brokers({ hostUid, isSection = false }) {
   const dispatch = useDispatch();
-  const { brokers, loading } = useSelector((state) => state.broker);
-  const { authorizedHosts } = useSelector((state) => state.host);
-  const { preferences } = useSelector((state) => state.user);
+  const { brokers, loading } = useSelector((state) => state.broker, shallowEqual);
+  const { authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { isManualRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
     hostUid,
     tabId: `brokers_status:${hostUid}`,
@@ -146,3 +146,5 @@ export default function Brokers({ hostUid, isSection = false }) {
   );
 }
 
+
+export default React.memo(Component);

@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { editHost, loginToHost, closeEditHostModal, clearHostError } from '../hostSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
@@ -8,7 +8,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function EditHostModal() {
   const dispatch = useDispatch();
-  const { isEditHostModalOpen, hostToEditUid, hosts, selectedHostUid, loading, error: apiError } = useSelector((state) => state.host);
+  const { isEditHostModalOpen, hostToEditUid, hosts, selectedHostUid, loading, error: apiError } = useSelector((state) => state.host, shallowEqual);
 
   const [formData, setFormData] = useState({
     id: '',

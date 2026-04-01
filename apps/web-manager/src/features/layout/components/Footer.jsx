@@ -1,9 +1,9 @@
-import { useSelector } from 'react-redux';
+import { useSelector, shallowEqual } from 'react-redux';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function Footer() {
-  const { selectedHostUid, hosts, authorizedHosts, hostEnvs } = useSelector((state) => state.host);
+  const { selectedHostUid, hosts, authorizedHosts, hostEnvs } = useSelector((state) => state.host, shallowEqual);
   const currentHost = hosts.find(h => h.uid === selectedHostUid);
   const isConnected = selectedHostUid && authorizedHosts.includes(selectedHostUid);
   const version = hostEnvs[selectedHostUid]?.CUBRIDVER || '11.2.0.4501';

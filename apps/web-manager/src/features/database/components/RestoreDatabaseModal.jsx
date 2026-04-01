@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeRestoreDatabaseModal, fetchBackupList, restoreDatabase } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -61,13 +61,13 @@ const SectionLabel = ({ children, count }) => (
 /* ── main component ─────────────────────────────────────────── */
 export default function RestoreDatabaseModal() {
   const dispatch = useDispatch();
-  const { isRestoreDatabaseModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
+  const { isRestoreDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const {
     databaseBackups,
     databaseBackupsLoading,
   } = useSelector((state) => state.databaseOperation);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const [view, setView] = useState(VIEW_FORM);
   const [errorMsg, setErrorMsg] = useState('');

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeServerVersionModal } from '../hostSlice';
 import { hostApi } from '../hostApi';
 import { Modal } from '../../../components/ds/layout/Modal';
@@ -9,7 +9,7 @@ import { Divider } from '../../../components/ds/layout/Divider';
 
 export default function ServerVersionModal() {
   const dispatch = useDispatch();
-  const { isServerVersionModalOpen, serverVersionHostUid, hosts } = useSelector((state) => state.host);
+  const { isServerVersionModalOpen, serverVersionHostUid, hosts } = useSelector((state) => state.host, shallowEqual);
   const [envData, setEnvData] = useState(null);
   const [loading, setLoading] = useState(false);
 

@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeDatabasePropertyModal } from '../databaseSlice';
 import { hostApi } from '../../host/hostApi';
 import { brokerApi } from '../../broker/brokerApi';
@@ -272,9 +272,9 @@ function AdvancedRow({ param, value, isModified, onValueChange }) {
 
 export default function DatabasePropertyModal() {
   const dispatch = useDispatch();
-  const { isDatabasePropertyModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host);
+  const { isDatabasePropertyModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
   const isAuthorized = selectedHostUid && authorizedHosts.includes(selectedHostUid);
 
   const [view, setView] = useState(VIEW_FORM);

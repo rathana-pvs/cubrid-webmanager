@@ -1,11 +1,11 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeUnloadResultModal } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function UnloadResultModal() {
   const dispatch = useDispatch();
-  const { isUnloadResultModalOpen, unloadResultData } = useSelector((state) => state.databaseUI);
+  const { isUnloadResultModalOpen, unloadResultData } = useSelector((state) => state.databaseUI, shallowEqual);
 
   if (!isUnloadResultModalOpen) return null;
 

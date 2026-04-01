@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeAutoBackupLogModal, fetchAutoBackupLog } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -11,13 +11,13 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function AutoBackupLogModal() {
   const dispatch = useDispatch();
-  const { isAutoBackupLogModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
+  const { isAutoBackupLogModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const {
     autoBackupLogs,
     logsLoading,
   } = useSelector((state) => state.databaseOperation);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);

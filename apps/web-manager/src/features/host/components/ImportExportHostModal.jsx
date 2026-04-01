@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeImportExportModal, addHost } from '../hostSlice';
 import { showStatusModal } from '../../layout/layoutSlice';
 import { exportHostsToXml, parseHostsXml } from '../hostImportExport';
@@ -16,7 +16,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function ImportExportHostModal() {
   const dispatch = useDispatch();
-  const { isImportExportModalOpen, importExportMode, hosts } = useSelector((state) => state.host);
+  const { isImportExportModalOpen, importExportMode, hosts } = useSelector((state) => state.host, shallowEqual);
   const [selectedHosts, setSelectedHosts] = useState([]);
   const [importList, setImportList] = useState([]);
   const [isProcessing, setIsProcessing] = useState(false);

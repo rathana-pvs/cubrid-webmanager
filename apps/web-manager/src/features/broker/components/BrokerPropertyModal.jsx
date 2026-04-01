@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import {
   closeBrokerPropertyModal,
   fetchBrokerConfig,
@@ -111,7 +111,7 @@ const ViewStatus = {
 // ─── Main Component ───────────────────────────────────────────────────────────
 export default function BrokerPropertyModal() {
   const dispatch = useDispatch();
-  const { propertyModal, brokerConfig } = useSelector((state) => state.broker);
+  const { propertyModal, brokerConfig } = useSelector((state) => state.broker, shallowEqual);
   const { isOpen, brokerName, hostUid } = propertyModal;
 
   const [activeTab, setActiveTab] = useState('common');

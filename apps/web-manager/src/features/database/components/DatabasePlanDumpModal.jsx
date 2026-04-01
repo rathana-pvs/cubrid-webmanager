@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closePlanDumpModal, fetchDatabasePlanDump } from '../databaseSlice';
 import LoadingOverlay from '../../../components/common/LoadingOverlay';
 import ErrorOverlay from '../../../components/common/ErrorOverlay';
@@ -13,10 +13,10 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function DatabasePlanDumpModal() {
   const dispatch = useDispatch();
-  const { isPlanDumpModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { planDumpData, planDumpLoading, planDumpError } = useSelector((state) => state.databaseConfiguration);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isPlanDumpModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { planDumpData, planDumpLoading, planDumpError } = useSelector((state) => state.databaseConfiguration, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const [step, setStep] = useState('setup');
   const [planDrop, setPlanDrop] = useState(false);

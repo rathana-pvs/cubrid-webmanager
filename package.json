@@ -24,6 +24,7 @@
     "react-dom": "^19.0.0",
     "react-redux": "^9.2.0",
     "react-router-dom": "^7.9.5",
+    "react-window": "^2.2.7",
     "reflect-metadata": "^0.1.13",
     "rxjs": "^7.8.0",
     "selfsigned": "^3.0.1",

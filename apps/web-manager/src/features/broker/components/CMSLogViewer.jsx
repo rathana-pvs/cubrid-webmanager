@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { fetchCMSLogs } from '../brokerSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';

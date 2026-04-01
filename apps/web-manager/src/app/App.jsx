@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { toggleTheme, toggleSidebar, setIsResizing, setActiveMainTab, closeTab, closeOtherTabs, closeAllTabs, triggerRefreshActiveTab } from '../features/layout/layoutSlice';
 import { openAddHostModal, closeAddHostModal, closeChangePasswordModal, setSelectedHost } from '../features/host/hostSlice';
@@ -72,15 +72,15 @@ import { Icon } from '../components/ds/foundation/Icon';
 
 function DashboardLayout() {
   const dispatch = useDispatch();
-  const { loading: dbCoreLoading } = useSelector((state) => state.database);
-  const { actionLoading: dbUILoading } = useSelector((state) => state.databaseUI);
-  const { operationLoading: dbOpLoading } = useSelector((state) => state.databaseOperation);
+  const { loading: dbCoreLoading } = useSelector((state) => state.database, shallowEqual);
+  const { actionLoading: dbUILoading } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { operationLoading: dbOpLoading } = useSelector((state) => state.databaseOperation, shallowEqual);
   const dbActionLoading = dbCoreLoading || dbOpLoading || dbUILoading;
-  const { theme, isSidebarCollapsed, isResizing, activeMainTab, openTabs, refreshCounter } = useSelector((state) => state.layout);
+  const { theme, isSidebarCollapsed, isResizing, activeMainTab, openTabs, refreshCounter } = useSelector((state) => state.layout, shallowEqual);
   const [isFlashing, setIsFlashing] = useState(false);
-  const { isAddHostModalOpen, hosts, isServiceOperating, serviceOperationType, serviceProgressMessage } = useSelector((state) => state.host);
-  const { isCreateUserModalOpen, createUserDbName, isEditUserModalOpen, editUserData, isDropUserModalOpen } = useSelector((state) => state.user);
-  const { actionLoading: brokerActionLoading } = useSelector((state) => state.broker);
+  const { isAddHostModalOpen, hosts, isServiceOperating, serviceOperationType, serviceProgressMessage } = useSelector((state) => state.host, shallowEqual);
+  const { isCreateUserModalOpen, createUserDbName, isEditUserModalOpen, editUserData, isDropUserModalOpen } = useSelector((state) => state.user, shallowEqual);
+  const { actionLoading: brokerActionLoading } = useSelector((state) => state.broker, shallowEqual);
 
   useEffect(() => {
     if (refreshCounter > 0) {
@@ -418,7 +418,7 @@ function DashboardLayout() {
 }
 
 function ProtectedRoute({ children }) {
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated } = useSelector((state) => state.auth, shallowEqual);
   return isAuthenticated ? children : <Navigate to="/login" replace />;
 }
 

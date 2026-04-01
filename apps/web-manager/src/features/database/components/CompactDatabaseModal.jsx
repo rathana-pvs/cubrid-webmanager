@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeCompactDatabaseModal } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 
@@ -18,9 +18,9 @@ const VIEW_ERROR   = 'error';
 
 export default function CompactDatabaseModal() {
   const dispatch = useDispatch();
-  const { isCompactDatabaseModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isCompactDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   const [verbose, setVerbose] = useState(false);
   const [view, setView] = useState(VIEW_FORM);
   const [errorMsg, setErrorMsg] = useState('');

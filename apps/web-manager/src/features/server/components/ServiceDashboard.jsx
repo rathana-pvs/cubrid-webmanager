@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React, { useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { fetchHostSummary } from '../globalMonitoringSlice';
 import { setActiveMainTab } from '../../layout/layoutSlice';
 import { setSelectedHost, startService, stopService } from '../../host/hostSlice';
@@ -18,12 +18,12 @@ const MetricBar = ({ pct }) => (
   </div>
 );
 
-export default function ServiceDashboard() {
+const Component = function ServiceDashboard() {
   const dispatch = useDispatch();
-  const { hosts, authorizedHosts } = useSelector((state) => state.host);
-  const { summaries } = useSelector((state) => state.globalMonitoring);
-  const { preferences } = useSelector((state) => state.user);
-  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout);
+  const { hosts, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { summaries } = useSelector((state) => state.globalMonitoring, shallowEqual);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
+  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout, shallowEqual);
   const { isManualRefreshing, lastRefreshed, handleRefresh: refreshAll } = usePollingRefresh({
     hostUid: 'global',
     tabId: 'service_dashboard',
@@ -283,3 +283,5 @@ export default function ServiceDashboard() {
     </div>
   );
 }
+
+export default React.memo(Component);

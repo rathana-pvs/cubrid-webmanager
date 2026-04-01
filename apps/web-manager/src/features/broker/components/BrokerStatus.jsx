@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
-import { useEffect, useState, useRef, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect, useState, useRef, useCallback } from 'react';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { fetchDetailedBrokerStatus } from '../brokerSlice';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -21,10 +21,10 @@ const StatusBadge = ({ value }) => {
   );
 };
 
-export default function BrokerStatus({ hostUid, brokerName }) {
+const Component = function BrokerStatus({ hostUid, brokerName }) {
   const dispatch = useDispatch();
-  const { detailedStatus } = useSelector((state) => state.broker);
-  const { preferences } = useSelector((state) => state.user);
+  const { detailedStatus } = useSelector((state) => state.broker, shallowEqual);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
   const status = detailedStatus[brokerName] || { data: {}, loading: false, error: null };
 
   const { isManualRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
@@ -258,3 +258,5 @@ export default function BrokerStatus({ hostUid, brokerName }) {
     </div>
   );
 }
+
+export default React.memo(Component);

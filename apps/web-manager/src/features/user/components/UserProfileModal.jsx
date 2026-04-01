@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { updateAccount, fetchUser } from '../../auth/authSlice';
 import { authApi } from '../../auth/authApi';
 
@@ -9,7 +9,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 
 export default function UserProfileModal({ isOpen, onClose }) {
-  const { user } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth, shallowEqual);
   const [editMode, setEditMode] = useState(null); // 'profile' | 'password' | null
 
   const [profile, setProfile] = useState({

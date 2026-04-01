@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeDatabaseInfoModal, fetchDatabaseParamDump } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -18,10 +18,10 @@ const VIEW_ERROR   = 'error';
 
 export default function DatabaseInfoModal() {
   const dispatch = useDispatch();
-  const { isDatabaseInfoModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database);
-  const { databaseInfoData } = useSelector((state) => state.databaseConfiguration);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isDatabaseInfoModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  const { databaseInfoData } = useSelector((state) => state.databaseConfiguration, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const [view, setView] = useState(VIEW_FORM);
   const [dumpBoth, setDumpBoth] = useState(false);

@@ -1,5 +1,5 @@
-import { useEffect, useState } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import React, { useEffect, useState } from 'react';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { fetchLogContent } from '../brokerSlice';
 import { Icon } from '../../../components/ds/foundation/Icon';
 
@@ -430,4 +430,4 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
   );
 }
 
-export default LogViewer;
+export default React.memo(LogViewer);

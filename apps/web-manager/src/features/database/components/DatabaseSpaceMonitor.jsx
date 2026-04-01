@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React, { useState, useCallback, useMemo, memo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { databaseApi } from '../databaseApi';
 import { openTab } from '../../layout/layoutSlice';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
@@ -356,8 +356,8 @@ const DistributionChart = memo(({ totals }) => (
 
 // ── Main Component ──
 
-export default function DatabaseSpaceMonitor({ hostUid, dbname }) {
-  const { preferences } = useSelector((state) => state.user);
+const Component = function DatabaseSpaceMonitor({ hostUid, dbname }) {
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
 
@@ -432,3 +432,5 @@ export default function DatabaseSpaceMonitor({ hostUid, dbname }) {
     </div>
   );
 }
+
+export default React.memo(Component);

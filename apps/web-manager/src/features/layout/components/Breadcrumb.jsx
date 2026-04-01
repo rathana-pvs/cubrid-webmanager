@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, shallowEqual } from 'react-redux';
 import { MenuItem, MenuDivider } from '../../../components/common/DropdownMenu';
 import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
 import ContextMenuWrapper from '../../../components/common/ContextMenuWrapper';
@@ -16,7 +16,7 @@ export default function Breadcrumb({
 }) {
   const [contextMenu, setContextMenu] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '' });
-  const { dirtyTabs } = useSelector((state) => state.layout);
+  const { dirtyTabs } = useSelector((state) => state.layout, shallowEqual);
 
   useEffect(() => {
     const handleClickOutside = () => setContextMenu(null);

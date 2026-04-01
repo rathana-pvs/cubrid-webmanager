@@ -1,5 +1,5 @@
 import React from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { setAboutCubrid } from '../appBarSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -9,7 +9,7 @@ import { Divider } from '../../../components/ds/foundation/Divider';
 
 export default function AboutModal() {
   const dispatch = useDispatch();
-  const { isAboutCubridOpen } = useSelector((state) => state.appBar);
+  const { isAboutCubridOpen } = useSelector((state) => state.appBar, shallowEqual);
 
   if (!isAboutCubridOpen) return null;
 

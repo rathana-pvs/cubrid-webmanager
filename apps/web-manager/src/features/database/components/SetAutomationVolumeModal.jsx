@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, memo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeSetAutomationVolumeModal, fetchAutoVolumeConfig, updateAutoVolumeConfig } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -125,10 +125,10 @@ const PolicyCard = memo(({ title, icon, description, enabled, onToggle, threshol
 // ── Main Component ─────────────────────────────────────────────
 export default function SetAutomationVolumeModal() {
   const dispatch = useDispatch();
-  const { isSetAutomationVolumeModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { autoVolumeConfigs, autoVolumeLoading } = useSelector((state) => state.databaseConfiguration);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isSetAutomationVolumeModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { autoVolumeConfigs, autoVolumeLoading } = useSelector((state) => state.databaseConfiguration, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const [view, setView] = useState(VIEW_FORM);
   const [errorMsg, setErrorMsg] = useState('');

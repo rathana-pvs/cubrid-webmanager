@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { addHost, clearHostError } from '../hostSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Input } from '../../../components/ds/forms/Input';
@@ -16,7 +16,7 @@ export default function AddHostModal({ isOpen, onClose }) {
   });
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
-  const { loading, error: apiError } = useSelector((state) => state.host);
+  const { loading, error: apiError } = useSelector((state) => state.host, shallowEqual);
 
   useEffect(() => {
     if (isOpen) {

@@ -220,7 +220,7 @@ export default function DatabaseTree({
     databaseClassesLoading,
   } = useSelector(selectStatusStates, shallowEqual);
   
-  const { databaseUsers, databaseUsersLoading } = useSelector((state) => state.user, shallowEqual);
+  const { databaseUsers, databaseUsersLoading } = useSelector((state) => state.user, shallowEqual, shallowEqual);
 
   const handleDbToggle = useCallback((db, isActive, isLoggedIn) => {
     if (!isActive) return;

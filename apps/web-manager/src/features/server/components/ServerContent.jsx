@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React, { useState, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { hostApi } from '../../host/hostApi';
 import { databaseApi } from '../../database/databaseApi';
 import { fetchHostEnv } from '../../host/hostSlice';
@@ -16,12 +16,12 @@ import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsP
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Icon } from '../../../components/ds/foundation/Icon';
 
-export default function ServerContent({ hostUid }) {
+const Component = function ServerContent({ hostUid }) {
   const dispatch = useDispatch();
-  const { databases, activeDatabases } = useSelector((state) => state.database);
-  const { hosts, authorizedHosts } = useSelector((state) => state.host);
-  const { preferences } = useSelector((state) => state.user);
-  const { refreshCounter } = useSelector((state) => state.layout);
+  const { databases, activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  const { hosts, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
+  const { refreshCounter } = useSelector((state) => state.layout, shallowEqual);
   const [autoStartDBs, setAutoStartDBs] = useState([]);
   
   const currentHost = hosts.find(h => h.uid === hostUid);
@@ -62,7 +62,7 @@ export default function ServerContent({ hostUid }) {
     }
   };
 
-  const { activeMainTab } = useSelector((state) => state.layout);
+  const { activeMainTab } = useSelector((state) => state.layout, shallowEqual);
   const isTabActive = activeMainTab === `host:${hostUid}`;
 
 
@@ -146,3 +146,5 @@ export default function ServerContent({ hostUid }) {
     </div>
   );
 }
+
+export default React.memo(Component);

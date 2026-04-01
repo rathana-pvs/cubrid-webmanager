@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { fetchAutoVolumeLog, closeAutoVolumeLogModal } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -11,10 +11,10 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function AutoVolumeLogModal() {
   const dispatch = useDispatch();
-  const { isAutoVolumeLogModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { autoVolumeLogs, logsLoading } = useSelector((state) => state.databaseConfiguration);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isAutoVolumeLogModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { autoVolumeLogs, logsLoading } = useSelector((state) => state.databaseConfiguration, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);

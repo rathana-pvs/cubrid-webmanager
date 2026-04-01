@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { setHostPassword, editHost, loginToHost, closeChangePasswordModal, clearHostError } from '../hostSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
@@ -9,7 +9,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function ChangeHostPasswordModal() {
   const dispatch = useDispatch();
-  const { isChangePasswordModalOpen, changePasswordHostUid, hosts, loading, error: apiError } = useSelector((state) => state.host);
+  const { isChangePasswordModalOpen, changePasswordHostUid, hosts, loading, error: apiError } = useSelector((state) => state.host, shallowEqual);
 
   const [isSuccess, setIsSuccess] = useState(false);
   const [formData, setFormData] = useState({

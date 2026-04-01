@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React, { useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { fetchDashboardData } from '../databaseSlice';
 import DBPerformanceSection from './dashboard/DBPerformanceSection';
 import DBVolumesSection from './dashboard/DBVolumesSection';
@@ -13,12 +13,12 @@ import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsP
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
 
-export default function DatabaseDashboard({ dbname }) {
+const Component = function DatabaseDashboard({ dbname }) {
   const dispatch = useDispatch();
-  const { selectedHostUid, hosts } = useSelector((state) => state.host);
-  const { dashboardData, dashboardLoading } = useSelector((state) => state.databaseMonitoring);
-  const { preferences } = useSelector((state) => state.user);
-  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout);
+  const { selectedHostUid, hosts } = useSelector((state) => state.host, shallowEqual);
+  const { dashboardData, dashboardLoading } = useSelector((state) => state.databaseMonitoring, shallowEqual);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
+  const { refreshCounter, activeMainTab } = useSelector((state) => state.layout, shallowEqual);
 
   const [logModal, setLogModal] = useState({ isOpen: false, brokerName: '', casId: '', type: 'sql' });
   
@@ -210,3 +210,5 @@ export default function DatabaseDashboard({ dbname }) {
     </div>
   );
 }
+
+export default React.memo(Component);

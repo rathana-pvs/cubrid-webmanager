@@ -1,6 +1,6 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React, { useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { fetchDatabaseSpaceInfo } from '../databaseSlice';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
 
@@ -9,10 +9,10 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function VolumeInfoMonitor({ tabId }) {
   const dispatch = useDispatch();
-  const { preferences } = useSelector((state) => state.user);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
   const [, hostUid, dbname, volname] = tabId.split(':');
 
-  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring || {});
+  const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring || {}, shallowEqual);
   const dbSpace = spaceInfo?.[dbname];
   const isLoading = spaceInfoLoading?.[dbname];
 

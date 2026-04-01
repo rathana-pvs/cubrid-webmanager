@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { updatePreferences } from '../userSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -8,7 +8,7 @@ export default function MonitoringSettingsPopover() {
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef(null);
   const dispatch = useDispatch();
-  const { preferences, preferencesLoading } = useSelector((state) => state.user);
+  const { preferences, preferencesLoading } = useSelector((state) => state.user, shallowEqual);
   
   const [localPrefs, setLocalPrefs] = useState(preferences);
 

@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { fetchMonitoringData, clearMonitoring } from '../../monitoringSlice';
 import { Card } from '../../../../components/ds/layout/Card';
 import { Table } from '../../../../components/ds/layout/Table';
@@ -24,7 +24,7 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
   const dispatch = useDispatch();
   const hostData = useSelector((state) => state.monitoring.hostsData[hostUid] || {});
   const { currentStatus = {}, averages = {}, history = [], loading = false, error = null } = hostData;
-  const { authorizedHosts } = useSelector((state) => state.host);
+  const { authorizedHosts } = useSelector((state) => state.host, shallowEqual);
   const isAuthorized = hostUid && authorizedHosts.includes(hostUid);
 
   const [isStopped, setIsStopped] = useState(false);

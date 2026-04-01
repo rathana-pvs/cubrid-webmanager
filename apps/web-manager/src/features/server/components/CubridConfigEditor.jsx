@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { hostApi } from '../../host/hostApi';
 import { showStatusModal, setTabDirty } from '../../layout/layoutSlice';
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -8,7 +8,7 @@ import { Spinner } from '../../../components/ds/foundation/Spinner';
 export default function CubridConfigEditor({ hostUid, confname }) {
   const tabId = `edit_config:${hostUid}:${confname}`;
   const dispatch = useDispatch();
-  const { hosts } = useSelector((state) => state.host);
+  const { hosts } = useSelector((state) => state.host, shallowEqual);
   const currentHost = hosts.find(h => h.uid === hostUid);
   const hostDisplayName = currentHost ? (currentHost.alias || currentHost.id) : 'unknown host';
 

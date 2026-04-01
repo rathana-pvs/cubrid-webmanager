@@ -1,14 +1,14 @@
 import { useEffect, useRef } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { fetchDatabaseStartInfo, fetchDatabaseVolumes } from '../../database/databaseSlice';
 import { fetchBrokerList } from '../../broker/brokerSlice';
 
 export default function MonitoringProvider({ children }) {
   const dispatch = useDispatch();
-  const { preferences } = useSelector((state) => state.user);
-  const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host);
-  const { activeDatabases } = useSelector((state) => state.database);
-  const { activeMainTab } = useSelector((state) => state.layout);
+  const { preferences } = useSelector((state) => state.user, shallowEqual);
+  const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  const { activeMainTab } = useSelector((state) => state.layout, shallowEqual);
   
   const dashboardTimer = useRef(null);
   const brokerTimer = useRef(null);

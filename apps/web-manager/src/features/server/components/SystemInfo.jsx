@@ -1,11 +1,11 @@
 import React from 'react';
-import { useSelector } from 'react-redux';
+import { useSelector, shallowEqual } from 'react-redux';
 import { Card } from '../../../components/ds/layout/Card';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function SystemInfo({ hostUid }) {
-  const { hosts, hostEnvs } = useSelector((state) => state.host);
+  const { hosts, hostEnvs } = useSelector((state) => state.host, shallowEqual);
   const currentHost = hosts.find(h => h.uid === hostUid);
   const envData = hostEnvs[hostUid];
 

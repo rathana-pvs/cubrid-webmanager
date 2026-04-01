@@ -1,12 +1,12 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeDropUserModal, dropDatabaseUser } from '../userSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function DropUserModal() {
   const dispatch = useDispatch();
-  const { isDropUserModalOpen, dropUserData, actionLoading } = useSelector((state) => state.user);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isDropUserModalOpen, dropUserData, actionLoading } = useSelector((state) => state.user, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   if (!isDropUserModalOpen || !dropUserData) return null;
 

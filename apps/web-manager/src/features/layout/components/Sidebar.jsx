@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import {
   fetchHosts,
   setSelectedHost,
@@ -101,9 +101,9 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   const [viewContextMenu, setViewContextMenu] = useState(null);
 
   const dispatch = useDispatch();
-  const { hosts, selectedHostUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors } = useSelector((state) => state.host);
-  const { databases, activeDatabases, loggedInDatabases, loading: dbActionLoading } = useSelector((state) => state.database);
-  const { brokers, actionLoading: brokerActionLoading } = useSelector((state) => state.broker);
+  const { hosts, selectedHostUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors } = useSelector((state) => state.host, shallowEqual);
+  const { databases, activeDatabases, loggedInDatabases, loading: dbActionLoading } = useSelector((state) => state.database, shallowEqual);
+  const { brokers, actionLoading: brokerActionLoading } = useSelector((state) => state.broker, shallowEqual);
 
   useEffect(() => {
     dispatch(fetchHosts());

@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeDeleteHostModal, deleteHost } from '../hostSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
@@ -7,7 +7,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 
 export default function DeleteHostModal() {
   const dispatch = useDispatch();
-  const { isDeleteHostModalOpen, hostToDeleteUid, hostToDeleteAlias, loading, error: apiError } = useSelector((state) => state.host);
+  const { isDeleteHostModalOpen, hostToDeleteUid, hostToDeleteAlias, loading, error: apiError } = useSelector((state) => state.host, shallowEqual);
 
   if (!isDeleteHostModalOpen) return null;
 

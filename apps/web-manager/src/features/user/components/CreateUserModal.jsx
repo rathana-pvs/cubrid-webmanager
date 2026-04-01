@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useSelector, useDispatch } from 'react-redux';
+import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { createDatabaseUser, updateDatabaseUser, fetchDatabaseUsers, clearUserError } from '../userSlice';
 import { fetchDatabaseClasses } from '../../database/databaseSlice';
 
@@ -47,12 +47,12 @@ const encodeCUBRIDAuth = (authObj) => {
 export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }) {
   const dispatch = useDispatch();
   const isEditMode = !!editingUser;
-  const { selectedHostUid } = useSelector((state) => state.host);
-  const { databaseUsers: allUsers, databaseUsersLoading, error: userError, actionLoading } = useSelector((state) => state.user);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
+  const { databaseUsers: allUsers, databaseUsersLoading, error: userError, actionLoading } = useSelector((state) => state.user, shallowEqual);
   const databaseUsers = allUsers[dbname] || [];
   const loading = databaseUsersLoading[dbname];
-  const { databaseClasses, databaseClassesLoading } = useSelector((state) => state.databaseConfiguration);
-  const { activeDatabases } = useSelector((state) => state.database);
+  const { databaseClasses, databaseClassesLoading } = useSelector((state) => state.databaseConfiguration, shallowEqual);
+  const { activeDatabases } = useSelector((state) => state.database, shallowEqual);
   const currentDbClasses = databaseClasses[dbname];
   const isClassesLoading = databaseClassesLoading[dbname];
 

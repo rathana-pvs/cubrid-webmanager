@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeCreateDatabaseModal, createDatabase, fetchCreateDatabaseInfo } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -69,8 +69,8 @@ const typeBadge = (t) => {
 /* ── main component ─────────────────────────────────────────── */
 export default function CreateDatabaseModal() {
   const dispatch = useDispatch();
-  const { isCreateDatabaseModalOpen } = useSelector((state) => state.databaseUI);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isCreateDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const [view, setView] = useState(VIEW_FORM);
   const [step, setStep] = useState(1);

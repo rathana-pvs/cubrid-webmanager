@@ -1,4 +1,4 @@
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { DropdownMenu, SubMenu, MenuItem, MenuDivider } from '../../../components/common/DropdownMenu';
 import { openTab, showStatusModal, setActiveMainTab } from '../layoutSlice';
 import { openAddHostModal, openEditHostModal, startService, stopService, openServerVersionModal, openImportExportModal } from '../../host/hostSlice';
@@ -9,9 +9,9 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function HeaderMenu() {
   const dispatch = useDispatch();
-  const { selectedHostUid } = useSelector((state) => state.host);
-  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database);
-  const { brokers, selectedBroker } = useSelector((state) => state.broker);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
+  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  const { brokers, selectedBroker } = useSelector((state) => state.broker, shallowEqual);
 
   const handleExport = () => {
     dispatch(openImportExportModal('export'));

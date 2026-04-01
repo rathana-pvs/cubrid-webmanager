@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeAutoQueryLogModal, fetchQueryPlanLog } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -11,10 +11,10 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function AutoQueryLogModal() {
   const dispatch = useDispatch();
-  const { isAutoQueryLogModalOpen } = useSelector((state) => state.databaseUI);
-  const { queryPlanLogs, logsLoading } = useSelector((state) => state.databaseOperation);
-  const { selectedDatabase } = useSelector((state) => state.database);
-  const { selectedHostUid } = useSelector((state) => state.host);
+  const { isAutoQueryLogModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { queryPlanLogs, logsLoading } = useSelector((state) => state.databaseOperation, shallowEqual);
+  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const [searchTerm, setSearchTerm] = useState('');
   const [currentPage, setCurrentPage] = useState(1);

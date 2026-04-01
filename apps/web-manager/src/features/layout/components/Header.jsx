@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { logout, fetchUser } from '../../auth/authSlice';
 import { fetchPreferences } from '../../user/userSlice';
 import UserProfileModal from '../../user/components/UserProfileModal';
@@ -14,10 +14,10 @@ import HeaderMenu from './HeaderMenu';
 export default function Header({ theme, toggleTheme }) {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const dispatch = useDispatch();
-  const { user, isAuthenticated, loading: authLoading, error: authError } = useSelector((state) => state.auth);
-  const { selectedHostUid } = useSelector((state) => state.host);
-  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database);
-  const { selectedBroker, brokers } = useSelector((state) => state.broker);
+  const { user, isAuthenticated, loading: authLoading, error: authError } = useSelector((state) => state.auth, shallowEqual);
+  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
+  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  const { selectedBroker, brokers } = useSelector((state) => state.broker, shallowEqual);
 
   useEffect(() => {
     if (isAuthenticated && !user) {
