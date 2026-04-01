@@ -198,7 +198,7 @@ export default function CreateDatabaseModal() {
 
   const isFormValid = () => {
     if (step === 1) return formData.dbName && formData.genericVolPath && formData.logVolPath;
-    if (step === 4) return formData.dbaPassword && formData.dbaPassword === formData.confirmPassword && formData.dbaPassword.length >= 8;
+    if (step === 4) return formData.dbaPassword === formData.confirmPassword && (formData.dbaPassword === '' || formData.dbaPassword.length >= 8);
     return true;
   };
 
@@ -255,11 +255,7 @@ export default function CreateDatabaseModal() {
   const handleClose = () => dispatch(closeCreateDatabaseModal());
 
   const totalStorage = formData.genericVolSize + formData.logVolSize + formData.volumes.reduce((a, v) => a + v.size, 0);
-  const pwRules = [
-    { text: 'At least 8 characters', ok: formData.dbaPassword.length >= 8 },
-    { text: 'Letters and numbers', ok: /[a-zA-Z]/.test(formData.dbaPassword) && /\d/.test(formData.dbaPassword) },
-    { text: 'At least one special symbol', ok: /[!@#$%^&*(),.?":{}|<>]/.test(formData.dbaPassword) },
-  ];
+
 
   /* ─── LOADING view ─── */
   if (view === VIEW_LOADING) {
@@ -709,7 +705,7 @@ export default function CreateDatabaseModal() {
               </div>
               <div className="space-y-1">
                 <Typography variant="h4" className="text-[16px] font-black text-slate-800 dark:text-white tracking-tight">Access Guardian</Typography>
-                <Typography variant="p" className="text-[11px] text-slate-500 font-medium">Initialize the core <span className="font-black text-amber-500 uppercase">dba</span> administrative token.</Typography>
+                <Typography variant="p" className="text-[11px] text-slate-500 font-medium">Initialize the core <span className="font-black text-amber-500 uppercase">dba</span> administrative token (optional).</Typography>
               </div>
             </div>
 
@@ -719,7 +715,7 @@ export default function CreateDatabaseModal() {
                 label="Primary DBA Token"
                 value={formData.dbaPassword}
                 onChange={(e) => handleInputChange('dbaPassword', e.target.value)}
-                placeholder="Strength required"
+                placeholder="Leave empty for no password"
                 icon="key"
               />
               <Input
@@ -733,22 +729,7 @@ export default function CreateDatabaseModal() {
               />
             </div>
 
-            <div className="p-4 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl space-y-3">
-              <div className="flex items-center gap-2 mb-1">
-                <Icon name="security_update_good" size="xs" weight={400} className="text-amber-500" />
-                <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Security Heuristics</span>
-              </div>
-              {pwRules.map((rule, i) => (
-                <div key={i} className="flex items-center gap-3">
-                  <div className={`w-4 h-4 rounded-full flex items-center justify-center ${rule.ok ? 'bg-emerald-500/10 text-emerald-500' : 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-700'}`}>
-                    <Icon name={rule.ok ? 'check' : 'close'} size="10px" weight={900} />
-                  </div>
-                  <span className={`text-[11px] font-bold transition-colors ${rule.ok ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400 dark:text-slate-600'}`}>
-                    {rule.text}
-                  </span>
-                </div>
-              ))}
-            </div>
+
           </div>
         )}
 

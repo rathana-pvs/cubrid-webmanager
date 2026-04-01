@@ -43,7 +43,7 @@ export default function ServerListItem({ host, isSelected, isAuthorized, onConte
             <Typography 
               variant="span" 
               className={`text-[12px] truncate tracking-tight transition-colors 
-                ${isSelected ? 'text-slate-600 dark:text-slate-400 font-bold' : 'text-slate-500 dark:text-slate-500 font-medium group-hover:text-slate-900 dark:group-hover:text-slate-200'}`}
+                ${isSelected ? 'text-amber-600 dark:text-amber-400 font-bold' : 'text-slate-500 dark:text-slate-500 font-medium group-hover:text-slate-900 dark:group-hover:text-slate-200'}`}
 
             >
               {host.alias || host.id}
