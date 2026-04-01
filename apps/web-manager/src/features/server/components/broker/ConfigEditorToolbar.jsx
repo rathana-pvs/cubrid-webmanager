@@ -54,37 +54,36 @@ export default function ConfigEditorToolbar({
       {/* Right: actions */}
       <div className="flex items-center gap-1 shrink-0">
 
-        {/* Add Property — only in table mode, always rendered to avoid layout shift */}
+        {/* Add Property — icon only with border */}
         <button
           onClick={handleAddProperty}
           disabled={viewMode !== 'table' || loading || saving}
           title="Add property"
-          className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors ${
+          className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all ${
             viewMode === 'table'
-              ? 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/5'
+              ? 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95'
               : 'invisible pointer-events-none'
-          } disabled:opacity-40`}
+          } disabled:opacity-30 disabled:cursor-not-allowed shrink-0`}
         >
           <Icon name="add_box" size="sm" weight={300} />
-          Add Property
         </button>
 
-        {/* Undo */}
+        {/* Undo — bordered icon */}
         <button
           onClick={handleUndo}
           disabled={!hasChanges || loading || saving}
           title="Undo changes"
-          className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 disabled:opacity-30 transition-all shrink-0"
         >
           <Icon name="undo" size="sm" weight={300} />
         </button>
 
-        {/* Refresh */}
+        {/* Refresh — bordered icon */}
         <button
           onClick={fetchConfig}
           disabled={loading || saving}
           title="Refresh config"
-          className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-bk-yellow disabled:opacity-30 transition-colors"
+          className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 hover:text-amber-600 dark:hover:text-bk-yellow disabled:opacity-30 transition-all shrink-0"
         >
           <Icon name="refresh" size="sm" weight={300} className={loading ? 'animate-spin' : ''} />
         </button>

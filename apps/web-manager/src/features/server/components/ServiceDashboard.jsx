@@ -1,6 +1,7 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
 import React, { useState } from 'react';
 import { useSelector, useDispatch , shallowEqual } from 'react-redux';
+import { formatSize } from '../../../infrastructure/utils/format';
 import { fetchHostSummary } from '../globalMonitoringSlice';
 import { setActiveMainTab } from '../../layout/layoutSlice';
 import { setSelectedHost, startService, stopService } from '../../host/hostSlice';
@@ -56,17 +57,6 @@ const Component = function ServiceDashboard() {
     }
   };
 
-  const formatSize = (bytes) => {
-    if (!bytes || bytes === 0) return '0 B';
-    const k = 1024, sizes = ['B', 'KB', 'MB', 'GB', 'TB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return `${parseFloat((bytes / Math.pow(k, i)).toFixed(2))} ${sizes[i]}`;
-  };
-
-  const formatGB = (bytes) => {
-    if (!bytes || bytes === 0) return '0.0 GB';
-    return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
-  };
 
   const columns = React.useMemo(() => [
     {
@@ -136,7 +126,7 @@ const Component = function ServiceDashboard() {
         if (!s) return <span className="text-slate-300">—</span>;
         return (
           <div className="min-w-[120px]">
-            <span className="text-[11px] text-slate-700 dark:text-slate-200 font-mono font-semibold">{formatGB(s.memUsed)} / {formatGB(s.memTotal)}</span>
+            <span className="text-[11px] text-slate-700 dark:text-slate-200 font-mono font-semibold">{formatSize(s.memUsed)} / {formatSize(s.memTotal)}</span>
             <MetricBar pct={s.memory} />
           </div>
         );

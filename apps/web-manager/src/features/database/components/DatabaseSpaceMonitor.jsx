@@ -4,6 +4,7 @@ import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { databaseApi } from '../databaseApi';
 import { openTab } from '../../layout/layoutSlice';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
+import { formatSize } from '../../../infrastructure/utils/format';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -25,16 +26,6 @@ const cleanInt = (v) => {
   if (!v) return 0;
   const cleaned = v.toString().replace(/,/g, '').split(' ')[0];
   return parseInt(cleaned) || 0;
-};
-
-const formatSize = (bytes) => {
-  const b = cleanInt(bytes);
-  if (b === 0) return '0 B';
-  if (b >= 1024 ** 4) return `${(b / 1024 ** 4).toFixed(2)} TB`;
-  if (b >= 1024 ** 3) return `${(b / 1024 ** 3).toFixed(2)} GB`;
-  if (b >= 1024 ** 2) return `${(b / 1024 ** 2).toFixed(2)} MB`;
-  if (b >= 1024) return `${(b / 1024).toFixed(2)} KB`;
-  return `${b} B`;
 };
 
 const formatPages = (pages) => cleanInt(pages).toLocaleString();
