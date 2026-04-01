@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { authApi } from '../authApi';
 import { Icon } from '../../../components/ds/foundation/Icon';
+import { Input } from '../../../components/ds/forms/Input';
 
 export default function RegisterPage() {
   const [username, setUsername]             = useState('');
@@ -187,108 +188,69 @@ export default function RegisterPage() {
           <form onSubmit={handleSubmit} className="space-y-4">
 
             {/* Username */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Username</label>
-              <div className="relative group">
-                <Icon name="person_pin" size="sm" weight={300} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 group-focus-within:text-amber-500 transition-colors pointer-events-none" />
-                <input
-                  type="text"
-                  value={username}
-                  autoComplete="username"
-                  onChange={(e) => { setUsername(e.target.value); clearFieldError('username'); }}
-                  className={`${inputBase} pl-10 pr-4 ${errors.username ? inputErr : `${inputFocus} ${inputNorm}`}`}
-                  placeholder="Pick a unique username"
-                />
-              </div>
-              {errors.username && (
-                <p className="text-[11px] text-rose-500 font-medium flex items-center gap-1 ml-0.5">
-                  <Icon name="error" size="12px" weight={400} />{errors.username}
-                </p>
-              )}
-            </div>
+            <Input
+              label="Username"
+              icon="person_pin"
+              placeholder="Pick a unique username"
+              value={username}
+              onChange={(e) => { setUsername(e.target.value); clearFieldError('username'); }}
+              error={errors.username}
+              autoComplete="username"
+            />
 
             {/* Password */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Password</label>
-              <div className="relative group">
-                <span
-                  className={`material-symbols-outlined absolute left-3.5 top-1/2 -translate-y-1/2 text-[18px] transition-colors pointer-events-none ${
-                    strength.level > 0 && password ? strength.text : 'text-slate-400 dark:text-slate-600 group-focus-within:text-amber-500'
-                  }`}
-                >
-                  {strength.level >= 3 ? 'verified_user' : 'fingerprint'}
-                </span>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  autoComplete="new-password"
-                  onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
-                  className={`${inputBase} pl-10 pr-11 ${errors.password ? inputErr : `${inputFocus} ${inputNorm}`}`}
-                  placeholder="Create a strong password"
-                />
+            <Input
+              label="Password"
+              icon={strength.level >= 3 ? 'verified_user' : 'fingerprint'}
+              type={showPassword ? 'text' : 'password'}
+              placeholder="Create a strong password"
+              value={password}
+              onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
+              error={errors.password}
+              autoComplete="new-password"
+              suffix={
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1">
                   <Icon name={showPassword ? 'visibility_off' : 'visibility'} size="sm" weight={300} />
                 </button>
-              </div>
+              }
+            />
 
-              {/* Strength meter */}
-              {password && (
-                <div className="pt-1 animate-in fade-in duration-200">
-                  <div className="flex gap-1 h-0.5 mb-1.5">
-                    {[1, 2, 3, 4].map((i) => (
-                      <div key={i} className={`flex-1 rounded-full transition-all duration-300 ${i <= strength.level ? strength.color : 'bg-slate-200 dark:bg-white/6'}`} />
-                    ))}
-                  </div>
-                  <p className={`text-[10px] font-bold uppercase tracking-widest font-mono ${strength.text}`}>{strength.label}</p>
+            {/* Strength meter */}
+            {password && (
+              <div className="mt-[-10px] mb-2 animate-in fade-in duration-200">
+                <div className="flex gap-1 h-0.5 mb-1.5">
+                  {[1, 2, 3, 4].map((i) => (
+                    <div key={i} className={`flex-1 rounded-full transition-all duration-300 ${i <= strength.level ? strength.color : 'bg-slate-200 dark:bg-white/6'}`} />
+                  ))}
                 </div>
-              )}
-
-              {errors.password && (
-                <p className="text-[11px] text-rose-500 font-medium flex items-center gap-1 ml-0.5">
-                  <Icon name="error" size="12px" weight={400} />{errors.password}
-                </p>
-              )}
-            </div>
+                <p className={`text-[10px] font-bold uppercase tracking-widest font-mono ${strength.text}`}>{strength.label}</p>
+              </div>
+            )}
 
             {/* Confirm Password */}
-            <div className="space-y-1.5">
-              <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Confirm Password</label>
-              <div className="relative group">
-                <Icon name="verified" size="sm" weight={300} className={`absolute left-3.5 top-1/2 -translate-y-1/2 transition-colors pointer-events-none ${
-                  confirmPassword && password === confirmPassword
-                    ? 'text-emerald-500'
-                    : 'text-slate-400 dark:text-slate-600 group-focus-within:text-amber-500'
-                }`} />
-                <input
-                  type={showConfirm ? 'text' : 'password'}
-                  value={confirmPassword}
-                  autoComplete="new-password"
-                  onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError('confirmPassword'); }}
-                  className={`${inputBase} pl-10 pr-11 ${
-                    errors.confirmPassword   ? inputErr
-                    : confirmPassword && password === confirmPassword ? inputOk
-                    : `${inputFocus} ${inputNorm}`
-                  }`}
-                  placeholder="Repeat your password"
-                />
+            <Input
+              label="Confirm Password"
+              icon="verified"
+              type={showConfirm ? 'text' : 'password'}
+              placeholder="Repeat your password"
+              value={confirmPassword}
+              onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError('confirmPassword'); }}
+              error={errors.confirmPassword}
+              autoComplete="new-password"
+              suffix={
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                  className="absolute right-3.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors">
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1">
                   <Icon name={showConfirm ? 'visibility_off' : 'visibility'} size="sm" weight={300} />
                 </button>
-              </div>
+              }
+            />
 
-              {confirmPassword && password === confirmPassword && !errors.confirmPassword && (
-                <p className="text-[11px] text-emerald-500 font-medium flex items-center gap-1 ml-0.5 animate-in fade-in">
-                  <Icon name="check_circle" size="12px" weight={400} />Passwords match
-                </p>
-              )}
-              {errors.confirmPassword && (
-                <p className="text-[11px] text-rose-500 font-medium flex items-center gap-1 ml-0.5">
-                  <Icon name="error" size="12px" weight={400} />{errors.confirmPassword}
-                </p>
-              )}
-            </div>
+            {confirmPassword && password === confirmPassword && !errors.confirmPassword && (
+              <p className="mt-[-10px] text-[11px] text-emerald-500 font-medium flex items-center gap-1 ml-0.5 animate-in fade-in">
+                <Icon name="check_circle" size="12px" weight={400} />Passwords match
+              </p>
+            )}
 
             {/* API error */}
             {apiError && (

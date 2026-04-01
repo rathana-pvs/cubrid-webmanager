@@ -108,15 +108,14 @@ const PolicyCard = memo(({ title, icon, description, enabled, onToggle, threshol
               suffix={<span className="text-[9px] font-bold text-slate-400">MB</span>}
             />
           </div>
-          <div className="space-y-1">
-            <Typography variant="caption" className="text-[10px] font-semibold text-slate-400 block">
-              Extension pages
-            </Typography>
-            <div className="h-10 px-3.5 flex items-center justify-between bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl">
-              <span className="text-[12px] font-mono font-bold text-slate-600 dark:text-slate-300">{extensionUnits.toLocaleString()}</span>
-              <span className="text-[9px] text-slate-400 font-semibold">pages</span>
-            </div>
-          </div>
+            <Input
+              label="Extension pages"
+              size="sm"
+              readOnly
+              value={extensionUnits.toLocaleString()}
+              suffix="pages"
+              inputClassName="font-mono font-bold text-slate-600 dark:text-slate-300"
+            />
         </div>
       </div>
     </div>

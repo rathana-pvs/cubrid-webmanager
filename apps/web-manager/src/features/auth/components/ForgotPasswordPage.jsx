@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/ds/foundation/Icon';
+import { Input } from '../../../components/ds/forms/Input';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail]       = useState('');
@@ -145,21 +146,16 @@ export default function ForgotPasswordPage() {
 
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
-                <div className="space-y-1.5">
-                  <label className="text-[11px] font-bold text-slate-500 uppercase tracking-widest">Email Address</label>
-                  <div className="relative group">
-                    <Icon name="alternate_email" size="sm" weight={300} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400 dark:text-slate-600 group-focus-within:text-amber-500 transition-colors pointer-events-none" />
-                    <input
-                      type="email"
-                      required
-                      value={email}
-                      autoComplete="email"
-                      onChange={(e) => setEmail(e.target.value)}
-                      className={`${inputBase} pl-10 pr-4 ${inputFocus} ${inputNorm}`}
-                      placeholder="admin@organization.com"
-                    />
-                  </div>
-                </div>
+                <Input
+                  label="Email Address"
+                  type="email"
+                  required
+                  icon="alternate_email"
+                  placeholder="admin@organization.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
+                  autoComplete="email"
+                />
 
                 <button
                   type="submit"

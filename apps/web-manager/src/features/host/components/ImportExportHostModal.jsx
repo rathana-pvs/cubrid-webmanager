@@ -8,6 +8,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Table } from '../../../components/ds/layout/Table';
 import { Badge } from '../../../components/ds/foundation/Badge';
 import { Input } from '../../../components/ds/forms/Input';
+import { FileUpload } from '../../../components/ds/forms/FileUpload';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Checkbox } from '../../../components/ds/forms/Checkbox';
 
@@ -199,29 +200,19 @@ export default function ImportExportHostModal() {
     >
       <div className="flex flex-col h-[500px]">
         {importExportMode === 'import' && importList.length === 0 ? (
-          <div className="flex-1 flex flex-col items-center justify-center p-12 text-center">
-            <div className="w-16 h-16 rounded-2xl bg-slate-50 dark:bg-bk-main/30 flex items-center justify-center mb-4 border border-dashed border-slate-200 dark:border-slate-800 animate-in zoom-in duration-300">
-              <Icon name="upload_file" size="sm" weight={300} className="text-slate-300 dark:text-slate-700 text-3xl" />
+            <div className="p-8">
+              <FileUpload
+                label="Import Hosts XML"
+                accept=".xml"
+                onFileSelect={(file) => {
+                  const event = { target: { files: [file] } };
+                  handleFileChange(event);
+                }}
+              />
+              <Typography variant="p" className="text-slate-500 mt-4 text-center text-[11px] max-w-[280px] mx-auto">
+                Select an XML file containing host connections exported from CUBRID Admin.
+              </Typography>
             </div>
-            <Typography variant="h3" className="mb-1">No file selected</Typography>
-            <Typography variant="p" className="text-slate-500 max-w-[280px] mb-8 text-[11px]">
-              Select an XML file containing host connections exported from CUBRID Admin.
-            </Typography>
-            <Button 
-              variant="primary" 
-              icon="folder_open"
-              onClick={() => fileInputRef.current?.click()}
-            >
-              Browse Files
-            </Button>
-            <input 
-              type="file" 
-              ref={fileInputRef} 
-              onChange={handleFileChange} 
-              accept=".xml" 
-              className="hidden" 
-            />
-          </div>
         ) : (
           <>
             <div className="px-4 py-2 bg-slate-50/50 dark:bg-bk-main/20 flex items-center justify-between border-b border-slate-100 dark:border-slate-800">

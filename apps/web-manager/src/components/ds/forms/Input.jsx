@@ -16,6 +16,7 @@ export const Input = forwardRef(({
   onChange,
   value,
   suffix,
+  inputClassName = '',
   ...props
 }, ref) => {
   const isNumber = type === 'number';
@@ -59,7 +60,7 @@ export const Input = forwardRef(({
               : 'focus:border-amber-500/60 dark:focus:border-amber-500/60 focus:ring-4 focus:ring-amber-500/10 hover:border-slate-300 dark:hover:border-white/20'
           } ${
             disabled ? 'opacity-60 cursor-not-allowed' : ''
-          }`}
+          } ${inputClassName}`}
           style={{
             colorScheme: 'light dark',
             WebkitAppearance: 'none',

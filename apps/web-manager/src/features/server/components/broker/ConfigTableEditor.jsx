@@ -1,6 +1,7 @@
 import React from 'react';
 import SelectField from '../../../../components/common/SelectField';
 import { Icon } from '../../../../components/ds/foundation/Icon';
+import { Input } from '../../../../components/ds/forms/Input';
 
 export default function ConfigTableEditor({
   sections,
@@ -56,12 +57,13 @@ export default function ConfigTableEditor({
                         <span className="text-[12px] font-bold">{key}</span>
                       </div>
                     ) : (
-                      <input
+                      <Input
                         id={`property-name-${key}`}
-                        type="text"
+                        size="sm"
                         value={key}
                         onChange={(e) => handleKeyChange(key, e.target.value)}
-                        className="w-full px-4 py-2 bg-transparent outline-none text-slate-700 dark:text-slate-300 text-[12px] font-medium transition-all focus:bg-white dark:focus:bg-white/3 focus:text-amber-600 dark:focus:text-bk-yellow placeholder:text-slate-400"
+                        className="w-full gap-0"
+                        inputClassName="border-none bg-transparent h-[38px]! rounded-none!"
                         placeholder="Property Name"
                       />
                     )}
@@ -100,15 +102,14 @@ export default function ConfigTableEditor({
                           />
                         </div>
                       ) : (
-                        <input
-                          type="text"
+                        <Input
+                          size="sm"
                           value={currentValue}
                           onChange={(e) => handleValueChange(colIdx, key, e.target.value)}
-                          className={`w-full px-4 bg-transparent outline-none transition-all text-[12px] h-[38px] ${
-                            isSelected
-                              ? 'text-amber-600 dark:text-bk-yellow font-bold scale-[1.01] origin-left'
-                              : 'text-slate-700 dark:text-slate-400 font-medium'
-                          } ${isBrokerName ? 'text-sky-600 dark:text-sky-400 font-bold italic' : ''}`}
+                          className="w-full gap-0"
+                          inputClassName={`border-none bg-transparent h-[38px]! rounded-none! ${
+                            isSelected ? 'text-amber-600 dark:text-bk-yellow font-bold translate-x-0.5' : ''
+                          }`}
                         />
                       )}
                       {/* Active cell indicator - YELLOW */}

@@ -76,17 +76,14 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
       {isOpen && (
         <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-110 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[320px]">
           <div className="p-3 border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-bk-main/40">
-            <div className="relative">
-              <Icon name="search" size="sm" weight={300} className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input 
-                autoFocus
-                type="text"
-                placeholder="Lookup schema objects..."
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                className="w-full h-9 pl-9 pr-3 bg-white dark:bg-bk-main border border-slate-200 dark:border-slate-800/80 rounded-xl text-[11px] font-medium text-slate-700 dark:text-white placeholder:text-slate-400 focus:border-bk-yellow/60 outline-hidden transition-all shadow-inner"
-              />
-            </div>
+            <Input 
+              size="sm"
+              icon="search"
+              placeholder="Lookup schema objects..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              autoFocus
+            />
           </div>
 
           <div className="flex-1 overflow-y-auto custom-scrollbar">
