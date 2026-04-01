@@ -1,4 +1,5 @@
 import { CmsError } from '@error/cms/cms-error';
+import { Logger } from '@nestjs/common';
 
 /**
  * Checks if a CMS response indicates a failure (status === 'fail').
@@ -41,6 +42,7 @@ export function checkCmsStatusError(response: any, errorMessage?: string): void 
     const message =
       errorMessage ||
       (response.note ? `CMS request failed: ${response.note}` : 'CMS request failed');
+    Logger.log(message);
     throw CmsError.RequestFailed({
       message: message,
       response: response,

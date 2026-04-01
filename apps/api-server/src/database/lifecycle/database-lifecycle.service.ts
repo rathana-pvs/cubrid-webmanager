@@ -343,6 +343,29 @@ export class DatabaseLifecycleService extends BaseService {
     // Convert exvol from client format to CMS format
     const cmsExvol = request.exvol ? convertExvolArrayToCmsFormat(request.exvol) : [];
 
+    // CUBRID CMS `logsize` expects "pages", but the client request treats `logsize` as "MB".
+    // So convert MB -> pages using `logpagesize` (bytes) before sending to CMS.
+    const logsizeMb = Number(request.logsize);
+    const logpagesizeBytes = Number(request.logpagesize);
+    if (!Number.isFinite(logsizeMb) || logsizeMb <= 0) {
+      throw DatabaseError.InvalidVolumeSize('Log size must be a positive number in MB', {
+        logsize: request.logsize,
+      });
+    }
+    if (!Number.isFinite(logpagesizeBytes) || logpagesizeBytes <= 0) {
+      throw DatabaseError.InvalidVolumeSize('Log page size must be a positive number in bytes', {
+        logpagesize: request.logpagesize,
+      });
+    }
+    const logsizeInPages = Math.floor((logsizeMb * 1024 * 1024) / logpagesizeBytes);
+    if (logsizeInPages <= 0) {
+      throw DatabaseError.InvalidVolumeSize('Log size is too small after MB->pages conversion', {
+        logsizeMb: request.logsize,
+        logpagesizeBytes: request.logpagesize,
+        logsizeInPages,
+      });
+    }
+
     // Build CMS request from client request
     // Convert numeric values to strings as CMS expects string format
     const cmsRequest: CreateDatabaseCmsRequest = {
@@ -350,7 +373,7 @@ export class DatabaseLifecycleService extends BaseService {
       dbname: request.dbname,
       numpage: String(request.numpage),
       pagesize: String(request.pagesize),
-      logsize: String(request.logsize),
+      logsize: String(logsizeInPages),
       logpagesize: String(request.logpagesize),
       genvolpath: request.genvolpath,
       logvolpath: request.logvolpath,
@@ -359,11 +382,11 @@ export class DatabaseLifecycleService extends BaseService {
       overwrite_config_file: request.overwrite_config_file,
     };
 
-    await this.executeCmsRequest<CreateDatabaseCmsRequest, CreateDatabaseCmsResponse>(
+    this.logger.log(JSON.stringify(await this.executeCmsRequest<CreateDatabaseCmsRequest, CreateDatabaseCmsResponse>(
       userId,
       hostUid,
       cmsRequest
-    );
+    )));
 
     return { success: true };
   }
@@ -384,56 +407,43 @@ export class DatabaseLifecycleService extends BaseService {
     hostUid: string,
     request: CreateDatabaseWithConfigRequest
   ): Promise<CreateDatabaseWithConfigResponse> {
-    const { updateUser, setAutoAddVol, setAutoStart, ...createDbRequest } = request;
+    const { username, updateUser, setAutoAddVol, setAutoStart, ...createDbRequest } = request;
 
     const response: CreateDatabaseWithConfigResponse = {
       createDatabase: { success: false },
     };
 
     // 1. Create database
-    try {
-      const createDatabaseResult = await this.createDatabaseInternal(
-        userId,
-        hostUid,
-        createDbRequest
-      );
-      response.createDatabase = {
-        success: true,
-        data: createDatabaseResult,
-      };
+    // IMPORTANT: if `createdb` fails, we should stop immediately and not proceed with the remaining steps.
+    // We let the original domain error bubble up so the API returns a real FAIL response (HTTP error + note).
+    const createDatabaseResult = await this.createDatabaseInternal(
+      userId,
+      hostUid,
+      createDbRequest
+    );
 
-      // 1-1. Start database after successful creation
-      try {
-        const startInfo = await this.startDatabase(userId, hostUid, createDbRequest.dbname);
-        response.startDatabase = {
-          success: true,
-          data: startInfo,
-        };
-      } catch (error: unknown) {
-        const errorMessage = error instanceof Error ? error.message : String(error);
-        const errorStack = error instanceof Error ? error.stack : undefined;
-        const errorCode = (error as any)?.code || (error instanceof Error ? error.name : 'UNKNOWN');
-        const errorDetails = (error as any)?.details;
-        this.logger.error(`Failed to start database: ${errorMessage}`, errorStack);
-        response.startDatabase = {
-          success: false,
-          error: {
-            message: errorMessage || 'Failed to start database',
-            code: errorCode,
-            details: errorDetails,
-          },
-        };
-      }
+    response.createDatabase = {
+      success: true,
+      data: createDatabaseResult,
+    };
+
+    // 1-1. Start database after successful creation
+    try {
+      const startInfo = await this.startDatabase(userId, hostUid, createDbRequest.dbname);
+      response.startDatabase = {
+        success: true,
+        data: startInfo,
+      };
     } catch (error: unknown) {
       const errorMessage = error instanceof Error ? error.message : String(error);
       const errorStack = error instanceof Error ? error.stack : undefined;
       const errorCode = (error as any)?.code || (error instanceof Error ? error.name : 'UNKNOWN');
       const errorDetails = (error as any)?.details;
-      this.logger.error(`Failed to create database: ${errorMessage}`, errorStack);
-      response.createDatabase = {
+      this.logger.error(`Failed to start database: ${errorMessage}`, errorStack);
+      response.startDatabase = {
         success: false,
         error: {
-          message: errorMessage || 'Failed to create database',
+          message: errorMessage || 'Failed to start database',
           code: errorCode,
           details: errorDetails,
         },
@@ -444,13 +454,13 @@ export class DatabaseLifecycleService extends BaseService {
     if (updateUser) {
       try {
         // Use top-level dbname and username (default to "dba" if not provided)
-        const username = request.username || 'dba';
+        const usernameToUse = username || 'dba';
         // For createDatabase, we only update password, so use empty groups and authorization
         const updateUserResult = await this.databaseUserService.updateUser(
           userId,
           hostUid,
           createDbRequest.dbname,
-          username,
+          usernameToUse,
           updateUser.userpass,
           { group: [] },
           []

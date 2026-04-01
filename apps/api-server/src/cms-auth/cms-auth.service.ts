@@ -1,14 +1,10 @@
 import { Injectable, Logger } from '@nestjs/common';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
-import {
-  HostInfo,
-  CheckFileCmsRequest,
-  LoginCmsRequest,
-  LoginCmsResponse,
-  User,
-} from '@type/index';
+import { checkCmsStatusError } from '@common';
+import { HostInfo, LoginCmsRequest, LoginCmsResponse, User } from '@type/index';
 import { UserRepositoryService } from '@repository';
 import { HostError } from '@error/index';
+import { CmsError } from '@error/cms/cms-error';
 
 /**
  * Service for handling authentication with the CMS (Central Management System).
@@ -55,6 +51,14 @@ export class CmsAuthService {
 
     const response = await this.client.postPublic<LoginCmsRequest, LoginCmsResponse>(url, request);
 
+    checkCmsStatusError(response, 'CMS login failed');
+    if (!response.token) {
+      throw CmsError.RequestFailed({
+        message: 'CMS login did not return a token',
+        response,
+      });
+    }
+
     host.token = response.token;
     await this.repository.atomicUpdateUser(userId, async (user: User) => {
       user.host_list[uid] = host;
@@ -88,6 +92,14 @@ export class CmsAuthService {
       url,
       requestData
     );
+
+    checkCmsStatusError(response, 'CMS login failed');
+    if (!response.token) {
+      throw CmsError.RequestFailed({
+        message: 'CMS login did not return a token',
+        response,
+      });
+    }
 
     return response.token;
   }

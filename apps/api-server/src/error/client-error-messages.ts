@@ -30,12 +30,38 @@ function isMeaningfulCmsNote(note: unknown): boolean {
   return true;
 }
 
-function cmsNoteFromPayload(additionalData?: Record<string, any>): unknown {
-  return (
-    additionalData?.response?.note ??
-    additionalData?.cmsResponse?.note ??
-    additionalData?.note
-  );
+/**
+ * CMS 실패 시 클라이언트에 보여줄 문자열 후보를 순서대로 수집합니다.
+ * - `checkCmsStatusError` 경로: `response` 전체 객체 + `response.note`
+ * - Axios HTTP 오류 경로 (`HandleCmsErrors`): `data`에 CMS JSON 본문 (`data.note`)
+ * - 서비스에서 직접 던질 때: `message`만 있는 경우
+ */
+function cmsNoteFromPayload(additionalData?: Record<string, any>): string | undefined {
+  if (!additionalData) {
+    return undefined;
+  }
+
+  const candidates: unknown[] = [
+    additionalData.response?.note,
+    additionalData.cmsResponse?.note,
+    typeof additionalData.data === 'object' && additionalData.data !== null
+      ? (additionalData.data as { note?: unknown }).note
+      : undefined,
+    additionalData.note,
+  ];
+
+  for (const c of candidates) {
+    if (isMeaningfulCmsNote(c)) {
+      return String(c).trim();
+    }
+  }
+
+  const rawMsg = additionalData.message;
+  if (typeof rawMsg === 'string' && rawMsg.trim() !== '') {
+    return rawMsg.trim();
+  }
+
+  return undefined;
 }
 
 /**
@@ -47,9 +73,9 @@ export function getPublicClientErrorMessage(payload: PublicErrorPayload): string
   const { kind, code, additionalData } = payload;
 
   if (kind === 'CMS') {
-    const note = cmsNoteFromPayload(additionalData);
-    if (isMeaningfulCmsNote(note)) {
-      return String(note).trim();
+    const resolved = cmsNoteFromPayload(additionalData);
+    if (resolved) {
+      return resolved;
     }
     switch (code as CmsErrorCode) {
       case CmsErrorCode.INVALID_TOKEN:

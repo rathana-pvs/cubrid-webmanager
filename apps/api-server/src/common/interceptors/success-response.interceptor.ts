@@ -15,6 +15,9 @@ import { StandardResponse } from '@api-interfaces';
  * This ensures a consistent API response structure where clients can easily
  * check the success status of an operation.
  *
+ * Handlers that return nothing (void) or null map to `data: {}` so empty CMS
+ * client payloads are always an object, not null.
+ *
  * @category Interceptors
  * @since 1.0.0
  */
@@ -26,7 +29,7 @@ export class SuccessResponseInterceptor implements NestInterceptor {
     return next.handle().pipe(
       map((data) => {
         const statusCode = response.statusCode || HttpStatus.OK;
-        const responseData = data === undefined ? null : data;
+        const responseData = data == null ? {} : data;
 
         return {
           data: responseData,

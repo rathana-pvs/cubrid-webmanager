@@ -70,6 +70,9 @@ export class GlobalExceptionFilter extends BaseExceptionFilter {
         code: problemDetails.code,
         type: problemDetails.type,
         title: problemDetails.title,
+        /** Same text as top-level `note` — clients that read `data.message` / `data.detail` (e.g. Problem Details) */
+        message: note,
+        detail: note,
       };
 
       const logDetails = exception.toLogDetails(req.url);

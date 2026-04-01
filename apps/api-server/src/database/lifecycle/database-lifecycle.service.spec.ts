@@ -9,6 +9,7 @@ import { DatabaseInfoService } from '../info/database-info.service';
 import { DatabaseUserService } from '../user/database-user.service';
 import { DatabaseConfigService } from '../config/database-config.service';
 import { DatabaseError } from '@error/database/database-error';
+import { DatabaseErrorCode } from '@error/database/database-error-code';
 import { HostError } from '@error/index';
 import { CmsError } from '@error/cms/cms-error';
 import { CreateDatabaseClientResponse, DeleteDatabaseRequest } from '@api-interfaces';
@@ -550,6 +551,10 @@ describe('DatabaseLifecycleService', () => {
           success: true,
           data: mockCreateDatabaseResponse,
         },
+        startDatabase: {
+          success: true,
+          data: mockStartInfoForCreate,
+        },
       });
       expect(databaseUserService.updateUser).not.toHaveBeenCalled();
       expect(databaseConfigService.setAutoAddVol).not.toHaveBeenCalled();
@@ -605,6 +610,10 @@ describe('DatabaseLifecycleService', () => {
           success: true,
           data: mockCreateDatabaseResponse,
         },
+        startDatabase: {
+          success: true,
+          data: mockStartInfoForCreate,
+        },
         updateUser: {
           success: true,
           data: {},
@@ -642,7 +651,7 @@ describe('DatabaseLifecycleService', () => {
     });
 
     it('should handle createDatabase failure and continue with other operations', async () => {
-      const createError = new DatabaseError('Create failed', 'CREATE_FAILED');
+      const createError = DatabaseError.Unknown();
       jest.spyOn(service, 'createDatabaseInternal').mockRejectedValue(createError);
 
       const request = {
@@ -653,23 +662,15 @@ describe('DatabaseLifecycleService', () => {
         setAutoStart: true,
       };
 
-      const result = await service.createDatabase(mockUserId, mockHostUid, request);
+      await expect(service.createDatabase(mockUserId, mockHostUid, request)).rejects.toThrow(createError);
 
-      expect(result.createDatabase).toEqual({
-        success: false,
-        error: {
-          message: 'Create failed',
-          code: 'CREATE_FAILED',
-          details: undefined,
-        },
-      });
-      // Other operations should still be attempted
-      expect(databaseUserService.updateUser).toHaveBeenCalled();
-      expect(databaseConfigService.setAutoStart).toHaveBeenCalled();
+      // createdb가 실패하면 나머지 단계는 중단되어야 함
+      expect(databaseUserService.updateUser).not.toHaveBeenCalled();
+      expect(databaseConfigService.setAutoStart).not.toHaveBeenCalled();
     });
 
     it('should handle updateUser failure but continue with other operations', async () => {
-      const updateError = new DatabaseError('Update user failed', 'UPDATE_USER_FAILED');
+      const updateError = DatabaseError.Unknown();
       databaseUserService.updateUser.mockRejectedValue(updateError);
 
       const request = {
@@ -695,8 +696,8 @@ describe('DatabaseLifecycleService', () => {
       expect(result.updateUser).toEqual({
         success: false,
         error: {
-          message: 'Update user failed',
-          code: 'UPDATE_USER_FAILED',
+          message: DatabaseErrorCode.UNKNOWN,
+          code: DatabaseErrorCode.UNKNOWN,
           details: undefined,
         },
       });
@@ -706,7 +707,7 @@ describe('DatabaseLifecycleService', () => {
     });
 
     it('should handle setAutoAddVol failure but continue with other operations', async () => {
-      const autoAddVolError = new DatabaseError('Set auto-add vol failed', 'SET_AUTO_ADD_VOL_FAILED');
+      const autoAddVolError = DatabaseError.Unknown();
       databaseConfigService.setAutoAddVol.mockRejectedValue(autoAddVolError);
 
       const request = {
@@ -732,8 +733,8 @@ describe('DatabaseLifecycleService', () => {
       expect(result.setAutoAddVol).toEqual({
         success: false,
         error: {
-          message: 'Set auto-add vol failed',
-          code: 'SET_AUTO_ADD_VOL_FAILED',
+          message: DatabaseErrorCode.UNKNOWN,
+          code: DatabaseErrorCode.UNKNOWN,
           details: undefined,
         },
       });
@@ -741,7 +742,7 @@ describe('DatabaseLifecycleService', () => {
     });
 
     it('should handle setAutoStart failure but other operations succeed', async () => {
-      const autoStartError = new DatabaseError('Set auto-start failed', 'SET_AUTO_START_FAILED');
+      const autoStartError = DatabaseError.Unknown();
       databaseConfigService.setAutoStart.mockRejectedValue(autoStartError);
 
       const request = {
@@ -759,21 +760,17 @@ describe('DatabaseLifecycleService', () => {
       expect(result.setAutoStart).toEqual({
         success: false,
         error: {
-          message: 'Set auto-start failed',
-          code: 'SET_AUTO_START_FAILED',
+          message: DatabaseErrorCode.UNKNOWN,
+          code: DatabaseErrorCode.UNKNOWN,
           details: undefined,
         },
       });
     });
 
-    it('should handle multiple failures and return all error statuses', async () => {
-      const createError = new DatabaseError('Create failed', 'CREATE_FAILED');
-      const updateError = new DatabaseError('Update failed', 'UPDATE_FAILED');
-      const autoStartError = new DatabaseError('Auto-start failed', 'AUTO_START_FAILED');
+    it('should fail fast: createdb failure should reject and stop further operations', async () => {
+      const createError = DatabaseError.Unknown();
 
       jest.spyOn(service, 'createDatabaseInternal').mockRejectedValue(createError);
-      databaseUserService.updateUser.mockRejectedValue(updateError);
-      databaseConfigService.setAutoStart.mockRejectedValue(autoStartError);
 
       const request = {
         ...mockCreateDbRequest,
@@ -783,14 +780,61 @@ describe('DatabaseLifecycleService', () => {
         setAutoStart: true,
       };
 
-      const result = await service.createDatabase(mockUserId, mockHostUid, request);
+      await expect(service.createDatabase(mockUserId, mockHostUid, request)).rejects.toThrow(createError);
+      expect(databaseUserService.updateUser).not.toHaveBeenCalled();
+      expect(databaseConfigService.setAutoStart).not.toHaveBeenCalled();
+    });
+  });
 
-      expect(result.createDatabase.success).toBe(false);
-      expect(result.updateUser?.success).toBe(false);
-      expect(result.setAutoStart?.success).toBe(false);
-      expect(result.createDatabase.error?.message).toBe('Create failed');
-      expect(result.updateUser?.error?.message).toBe('Update failed');
-      expect(result.setAutoStart?.error?.message).toBe('Auto-start failed');
+  describe('createDatabaseInternal logsize conversion', () => {
+    it('should convert logsize from MB to CMS pages using logpagesize', async () => {
+      // Arrange: prevent file existence check from blocking the flow
+      (fileService as any).checkfileInternal = jest.fn().mockResolvedValue({
+        existfile: undefined,
+      });
+
+      const request = {
+        dbname: 'testdb',
+        numpage: '32768',
+        pagesize: '16384',
+        logsize: '512', // MB (client contract)
+        logpagesize: '16384', // bytes
+        genvolpath: '/path/to/testdb',
+        logvolpath: '/path/to/testdb',
+        charset: 'en_US.utf8',
+        overwrite_config_file: 'YES' as const,
+        exvol: [
+          {
+            testdb_data_x001: {
+              type: 'data',
+              size: 512,
+              pagesize: 16384,
+              volpath: '/path/to/testdb',
+            },
+          },
+        ],
+      };
+
+      cmsClient.postAuthenticated.mockResolvedValue({
+        __EXEC_TIME: '0 ms',
+        note: 'none',
+        status: 'success',
+        task: 'createdb',
+      });
+
+      // Act
+      await service.createDatabaseInternal(mockUserId, mockHostUid, request as any);
+
+      // Assert: logsize should become pages = floor(MB*1024*1024 / bytesPerPage)
+      // 512 * 1024 * 1024 / 16384 = 32768 pages
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
+        expect.any(String),
+        expect.objectContaining({
+          task: 'createdb',
+          logsize: '32768',
+          logpagesize: '16384',
+        })
+      );
     });
   });
 

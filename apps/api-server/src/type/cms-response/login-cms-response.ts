@@ -1,10 +1,12 @@
+import type { BaseCmsResponse } from './base-cms-response';
+
 /**
- * Represents the response structure for a CMS login request.
- * It typically contains the authentication token upon successful login.
+ * CMS response for task `login` (cm_api).
+ * On failure, `status` is `fail` and `token` may be absent.
  *
  * @category Responses
  * @since 1.0.0
  */
-export type LoginCmsResponse = {
-  token: string;
+export type LoginCmsResponse = BaseCmsResponse & {
+  token?: string;
 };
