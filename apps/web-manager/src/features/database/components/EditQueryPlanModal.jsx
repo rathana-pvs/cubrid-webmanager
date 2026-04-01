@@ -7,6 +7,9 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
+import { Select } from '../../../components/ds/forms/Select';
+import { DatePicker } from '../../../components/ds/forms/DatePicker';
+import { TimePicker } from '../../../components/ds/forms/TimePicker';
 import { Typography } from '../../../components/ds/foundation/Typography';
 
 // view states
@@ -14,67 +17,6 @@ const VIEW_FORM    = 'form';
 const VIEW_LOADING = 'loading';
 const VIEW_SUCCESS = 'success';
 const VIEW_ERROR   = 'error';
-
-// ── Custom Dropdown ──
-const CustomSelect = ({ label, value, options, onChange, icon }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const dropdownRef = useRef(null);
-
-  useEffect(() => {
-    const handleClickOutside = (e) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) setIsOpen(false);
-    };
-    document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, []);
-
-  const selected = options.find(opt => opt.value === value);
-
-  return (
-    <div className="space-y-1.5" ref={dropdownRef}>
-      <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 ml-0.5">{label}</p>
-      <div className="relative">
-        <button
-          type="button"
-          onClick={() => setIsOpen(!isOpen)}
-          className={`w-full h-11 px-3.5 flex items-center justify-between bg-white dark:bg-white/3 border rounded-2xl transition-all font-medium text-[12px] shadow-xs cursor-pointer
-            ${isOpen ? 'border-amber-500 ring-2 ring-amber-500/10' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}
-        >
-          <span className="flex items-center gap-2.5">
-            <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${isOpen ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
-              {icon && <Icon name={icon} size="14px" weight={300} />}
-            </div>
-            <span className={selected ? 'text-slate-900 dark:text-slate-100' : 'text-slate-400'}>
-              {selected ? selected.label : 'Select Recurrence…'}
-            </span>
-          </span>
-          <Icon name="expand_more" size="sm" className={`text-slate-400 transition-transform duration-300 ${isOpen ? 'rotate-180 text-amber-500' : ''}`} />
-        </button>
-
-        {isOpen && (
-          <div className="absolute top-[calc(100%+6px)] left-0 right-0 z-100 bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-            <div className="py-1.5 max-h-[240px] overflow-y-auto custom-scrollbar">
-              {options.map((opt) => (
-                <button
-                  key={opt.value}
-                  type="button"
-                  onClick={() => { onChange(opt.value); setIsOpen(false); }}
-                  className={`w-full px-4 py-3 text-[12px] font-medium transition-all flex items-center justify-between group cursor-pointer
-                    ${value === opt.value ? 'bg-amber-500/10 text-amber-600 dark:text-amber-500' : 'text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5'}`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className={`w-1.5 h-1.5 rounded-full transition-all ${value === opt.value ? 'bg-amber-500 scale-125' : 'bg-slate-300 dark:bg-slate-700 opacity-0 group-hover:opacity-100'}`} />
-                    {opt.label}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
 
 export default function EditQueryPlanModal() {
   const dispatch = useDispatch();
@@ -97,23 +39,6 @@ export default function EditQueryPlanModal() {
     backupTime: '12:00',
     queryString: ''
   });
-
-  const [showCalendar, setShowCalendar] = useState(false);
-  const [showTimePicker, setShowTimePicker] = useState(false);
-  const [viewDate, setViewDate] = useState(new Date());
-
-  const timePickerRef = useRef(null);
-  const calendarRef = useRef(null);
-
-  // Handle clicks outside pickers
-  useEffect(() => {
-    const handleOutside = (e) => {
-      if (timePickerRef.current && !timePickerRef.current.contains(e.target)) setShowTimePicker(false);
-      if (calendarRef.current && !calendarRef.current.contains(e.target)) setShowCalendar(false);
-    };
-    document.addEventListener('mousedown', handleOutside);
-    return () => document.removeEventListener('mousedown', handleOutside);
-  }, []);
 
   // Clear view on modal open
   useEffect(() => {
@@ -152,6 +77,9 @@ export default function EditQueryPlanModal() {
           periodDetail = parts[0].split(',').map(s => isNaN(parseInt(s)) ? s : parseInt(s));
           time = parts[1] || '12:00';
         }
+        
+        // Clean "select" from time if API includes it
+        time = time.replace(/select/gi, '').trim();
 
         setFormData({
           queryId: plan.query_id,
@@ -337,7 +265,6 @@ export default function EditQueryPlanModal() {
             value={formData.queryId}
             disabled
             icon="tag"
-            size="sm"
             className="opacity-50"
           />
         </div>
@@ -354,7 +281,6 @@ export default function EditQueryPlanModal() {
               value={formData.username}
               onChange={e => handleInputChange('username', e.target.value)}
               icon="person"
-              size="sm"
             />
             <Input 
               type="password"
@@ -363,7 +289,6 @@ export default function EditQueryPlanModal() {
               onChange={e => handleInputChange('password', e.target.value)}
               icon="key"
               placeholder="••••••••"
-              size="sm"
             />
           </div>
         </div>
@@ -375,11 +300,11 @@ export default function EditQueryPlanModal() {
              <span className="text-[10px] font-black text-slate-400">Execution Schedule</span>
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <CustomSelect 
+            <Select 
               label="Recurrence Frequency"
               icon="event_repeat"
               value={formData.periodType}
-              onChange={val => handleInputChange('periodType', val)}
+              onChange={e => handleInputChange('periodType', e.target.value)}
               options={[
                 { value: 'DAY', label: 'Daily (Every 24h)' },
                 { value: 'WEEK', label: 'Weekly Precision' },
@@ -387,57 +312,60 @@ export default function EditQueryPlanModal() {
                 { value: 'DATE', label: 'Specific Single Date' }
               ]}
             />
-            
-            <div className="space-y-1" ref={timePickerRef}>
-              <Typography variant="caption" className="text-[10px] font-black text-slate-400 ml-0.5">Start Time</Typography>
-              <div className="relative">
-                <button 
-                  onClick={() => setShowTimePicker(!showTimePicker)}
-                  className={`w-full h-11 px-3.5 flex items-center justify-between bg-white dark:bg-white/3 border rounded-2xl transition-all font-medium text-[12px] shadow-xs cursor-pointer
-                    ${showTimePicker ? 'border-amber-500 ring-2 ring-amber-500/10' : 'border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'}`}
-                >
-                  <span className="flex items-center gap-2.5">
-                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center transition-colors ${showTimePicker ? 'bg-amber-500/10 text-amber-500' : 'bg-slate-100 dark:bg-white/5 text-slate-400'}`}>
-                      <Icon name="history_toggle_off" size="14px" weight={300} />
-                    </div>
-                    <span className="font-mono text-[13px] tracking-tight">{formData.backupTime}</span>
-                  </span>
-                  <Icon name="expand_more" size="sm" className={`text-slate-400 transition-transform ${showTimePicker ? 'rotate-180 text-amber-500' : ''}`} />
-                </button>
-
-                {showTimePicker && (
-                  <div className="absolute top-[calc(100%+6px)] left-0 mt-1.5 z-100 w-[180px] bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-2xl shadow-2xl overflow-hidden flex divide-x divide-slate-100 dark:divide-white/5 h-[220px]">
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                      {Array.from({ length: 24 }, (_, i) => String(i).padStart(2, '0')).map(h => (
-                        <button key={h} onClick={() => handleInputChange('backupTime', `${h}:${formData.backupTime.split(':')[1]}`)} className={`w-full py-2.5 text-[11px] font-black font-mono cursor-pointer ${formData.backupTime.startsWith(h) ? 'bg-amber-500/15 text-amber-600' : 'hover:bg-slate-50 text-slate-400'}`}>{h}</button>
-                      ))}
-                    </div>
-                    <div className="flex-1 overflow-y-auto custom-scrollbar">
-                      {Array.from({ length: 12 }, (_, i) => String(i * 5).padStart(2, '0')).map(m => (
-                        <button key={m} onClick={() => { handleInputChange('backupTime', `${formData.backupTime.split(':')[0]}:${m}`); setShowTimePicker(false); }} className={`w-full py-2.5 text-[11px] font-black font-mono cursor-pointer ${formData.backupTime.endsWith(m) ? 'bg-amber-500/15 text-amber-600' : 'hover:bg-slate-50 text-slate-400'}`}>{m}</button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
+            <TimePicker 
+              label="Start Time"
+              value={formData.backupTime}
+              onChange={e => handleInputChange('backupTime', e.target.value)}
+              icon="history_toggle_off"
+            />
           </div>
         </div>
 
         <div className="mt-[-10px] animate-in fade-in slide-in-from-top-2 duration-300">
           {formData.periodType === 'WEEK' && (
             <div className="grid grid-cols-7 gap-2">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, ix) => (
-                <button key={day} onClick={() => toggleDetail(ix + 1)} className={`h-10 rounded-xl border text-[11px] font-bold transition-all cursor-pointer ${formData.periodDetail.includes(ix + 1) ? 'bg-amber-500 border-amber-500 text-white shadow-lg shadow-amber-500/20' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 text-slate-400 hover:border-amber-500/30'}`}>{day}</button>
-              ))}
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, ix) => {
+                const isSel = formData.periodDetail.includes(ix + 1);
+                return (
+                  <button 
+                    key={day} 
+                    onClick={() => toggleDetail(ix + 1)} 
+                    className={`h-10 rounded-xl border text-[11px] font-black transition-all cursor-pointer 
+                      ${isSel 
+                        ? 'bg-amber-500/15 dark:bg-amber-500/25 border-amber-500/30 text-amber-600 dark:text-amber-400' 
+                        : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 text-slate-400 hover:border-amber-500/30'}`}
+                  >
+                    {day}
+                  </button>
+                );
+              })}
             </div>
           )}
           {formData.periodType === 'MONTH' && (
             <div className="grid grid-cols-8 gap-1.5 p-3.5 bg-slate-50/50 dark:bg-white/1 border border-slate-100 dark:border-white/5 rounded-2xl">
-              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => (
-                <button key={d} onClick={() => toggleDetail(d)} className={`h-8 rounded-lg border text-[11px] font-bold font-mono transition-all cursor-pointer ${formData.periodDetail.includes(d) ? 'bg-amber-500 border-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-white dark:bg-white/4 border-transparent text-slate-400 hover:border-amber-500/30'}`}>{d}</button>
-              ))}
+              {Array.from({ length: 31 }, (_, i) => i + 1).map(d => {
+                const isSel = formData.periodDetail.includes(d);
+                return (
+                  <button 
+                    key={d} 
+                    onClick={() => toggleDetail(d)} 
+                    className={`h-8 rounded-lg border text-[10px] font-black font-mono transition-all cursor-pointer 
+                      ${isSel 
+                        ? 'bg-amber-500/15 dark:bg-amber-500/25 border-amber-500/30 text-amber-600 dark:text-amber-400' 
+                        : 'bg-white dark:bg-white/4 border-transparent text-slate-400 hover:border-amber-500/30'}`}
+                  >
+                    {d}
+                  </button>
+                );
+              })}
             </div>
+          )}
+          {formData.periodType === 'DATE' && (
+            <DatePicker 
+              value={formData.periodDetail}
+              onChange={e => handleInputChange('periodDetail', e.target.value)}
+              icon="calendar_month"
+            />
           )}
         </div>
 

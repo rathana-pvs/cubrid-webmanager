@@ -16,6 +16,7 @@ export const Select = ({
   value,
   onChange,
   placeholder = "Select option",
+  icon,
   ...props
 }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -112,16 +113,21 @@ export const Select = ({
           type="button"
           disabled={disabled}
           onClick={() => !disabled && (isOpen ? setIsOpen(false) : openDropdown())}
-          className={`relative w-full pl-3.5 pr-10 ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium text-left bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-xl focus:outline-hidden transition-all flex items-center ${
+          className={`relative w-full ${icon ? 'pl-11' : 'pl-3.5'} pr-10 ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium text-left bg-slate-50 dark:bg-white/3 border rounded-xl focus:outline-hidden transition-all flex items-center ${
             error
               ? 'border-rose-500/50'
               : isOpen
-                ? 'border-amber-500/50 dark:border-amber-500/50 bg-amber-500/2 dark:bg-amber-500/4'
-                : 'hover:border-slate-300/60 dark:hover:border-white/20'
+                ? 'border-amber-500 ring-4 ring-amber-500/15'
+                : 'border-slate-200 dark:border-white/10 hover:border-slate-300/60 dark:hover:border-white/20'
           } ${
             disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
           }`}
         >
+          {icon && (
+            <div className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${isSm ? 'w-6 h-6' : 'w-7 h-7'} rounded-lg flex items-center justify-center transition-colors ${isOpen ? 'text-amber-500' : 'bg-slate-200/50 dark:bg-white/5 text-slate-400 group-hover:text-slate-500'}`}>
+              <Icon name={icon} size={isSm ? "12px" : "14px"} weight={300} />
+            </div>
+          )}
           <span className={`block truncate ${isSm ? 'text-[12px]' : 'text-[13px]'} font-medium ${
             !selectedOption
               ? 'text-slate-400 dark:text-slate-600'
@@ -134,7 +140,7 @@ export const Select = ({
               name="expand_more"
               size="14px"
               weight={700}
-              className={`text-slate-400 group-hover:text-amber-500 transition-all duration-200 ${isOpen ? 'rotate-180' : ''}`}
+              className={`text-slate-400 group-hover:text-amber-500 transition-all duration-200 ${isOpen ? 'rotate-180 text-amber-500' : ''}`}
             />
           </div>
         </button>
