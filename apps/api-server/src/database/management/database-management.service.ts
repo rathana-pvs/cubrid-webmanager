@@ -6,6 +6,7 @@ import {
   CompactDatabaseRequest,
   CompactDatabaseResponse,
   CopyDbRequest,
+  CmsSuccessClientResponse,
   GetAddVolStatusResponse,
   LoadDatabaseRequest,
   LoadDatabaseResponse,
@@ -93,7 +94,7 @@ export class DatabaseManagementService extends BaseService {
     userId: string,
     hostUid: string,
     request: CopyDbRequest
-  ): Promise<{}> {
+  ): Promise<CmsSuccessClientResponse> {
     const cmsRequest: CopyDbCmsRequest = {
       task: 'copydb',
       srcdbname: request.srcdbname,
@@ -124,7 +125,7 @@ export class DatabaseManagementService extends BaseService {
       });
     }
 
-    return {};
+    return { success: true };
   }
 
   /**
@@ -296,8 +297,7 @@ export class DatabaseManagementService extends BaseService {
       throw error;
     }
 
-    // Success: return empty object
-    return {};
+    return { success: true };
   }
 
   /**
@@ -325,13 +325,13 @@ export class DatabaseManagementService extends BaseService {
       ...(request.class && { class: request.class }),
     };
 
-    const response = await this.executeCmsRequest<
-      OptimizeDatabaseCmsRequest,
-      OptimizeDatabaseCmsResponse
-    >(userId, hostUid, cmsRequest);
+    await this.executeCmsRequest<OptimizeDatabaseCmsRequest, OptimizeDatabaseCmsResponse>(
+      userId,
+      hostUid,
+      cmsRequest
+    );
 
-    // Success: return empty object
-    return {};
+    return { success: true };
   }
 
   /**
@@ -363,8 +363,7 @@ export class DatabaseManagementService extends BaseService {
       CheckDatabaseCmsResponse
     >(userId, hostUid, cmsRequest);
 
-    // Success: return empty object
-    return {};
+    return { success: true };
   }
 
   /**
@@ -396,14 +395,14 @@ export class DatabaseManagementService extends BaseService {
       CompactDatabaseCmsResponse
     >(userId, hostUid, cmsRequest);
 
-    // Return log if present, otherwise return empty object
     if (response.log) {
       return {
+        success: true,
         log: response.log,
       };
     }
 
-    return {};
+    return { success: true };
   }
 
   /**

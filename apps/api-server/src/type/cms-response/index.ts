@@ -45,6 +45,7 @@ export * from './set-auto-add-vol-cms-response';
 export * from './get-auto-add-vol-cms-response';
 export * from './get-db-size-cms-response';
 export * from './copy-db-cms-response';
+export * from './heartbeat-list-cms-response';
 export * from './load-database-cms-response';
 export * from './optimize-database-cms-response';
 export * from './classinfo-cms-response';

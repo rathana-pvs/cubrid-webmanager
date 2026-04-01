@@ -1,4 +1,5 @@
 // Response exports
+export * from './cms-success-client-response';
 export * from './db-response';
 export * from './get-dbs-response';
 export * from './get-hosts-response';
@@ -67,6 +68,7 @@ export * from './delete-database-response';
 export * from './get-db-size-client-response';
 export * from './add-dbmt-user-response';
 export * from './restore-db-client-response';
+export * from './heartbeat-list-client-response';
 export * from './update-dbmt-user-response';
 export * from './get-dbmt-user-info-client-response';
 export * from './delete-dbmt-user-client-response';

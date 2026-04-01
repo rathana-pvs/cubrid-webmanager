@@ -365,7 +365,7 @@ export class DatabaseLifecycleService extends BaseService {
       cmsRequest
     );
 
-    return {};
+    return { success: true };
   }
 
   /**

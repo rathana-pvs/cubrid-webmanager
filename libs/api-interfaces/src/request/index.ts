@@ -59,6 +59,7 @@ export * from './kill-transaction-request';
 export * from './delete-database-request';
 export * from './copy-db-request';
 export * from './restore-db-client-request';
+export * from './heartbeat-list-client-request';
 export * from './add-dbmt-user-request';
 export * from './update-dbmt-user-request';
 export * from './delete-dbmt-user-request';

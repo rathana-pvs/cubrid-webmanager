@@ -194,6 +194,6 @@ export class CmsUserService extends BaseService {
       throw CmsError.RequestFailed({ response, targetid });
     }
 
-    return {};
+    return { success: true };
   }
 }

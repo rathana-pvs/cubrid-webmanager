@@ -50,7 +50,7 @@ export class CmsAuthService {
       port: host.port.toString(),
       id: host.id,
       password: host.password,
-      clientver: '11.4',
+      clientver: '11.4', // Request-shaped only; arbitrary string, no CMS behavior impact
     };
 
     const response = await this.client.postPublic<LoginCmsRequest, LoginCmsResponse>(url, request);
@@ -81,7 +81,7 @@ export class CmsAuthService {
       port: host.port.toString(),
       id: host.id,
       password: host.password,
-      clientver: '13.23',
+      clientver: '13.23', // Same as login: request placeholder, no behavioral effect
     };
 
     const response = await this.client.postPublic<LoginCmsRequest, LoginCmsResponse>(

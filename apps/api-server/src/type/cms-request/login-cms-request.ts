@@ -12,5 +12,6 @@ export type LoginCmsRequest = Omit<BaseCmsRequest, 'token'> & {
   port?: string;
   id: string;
   password: string;
+  /** Protocol-shaped field only; unlike version fields in responses, CMS does not treat this meaningfully. */
   clientver?: string;
 };

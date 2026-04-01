@@ -30,6 +30,7 @@ export * from './set-auto-add-vol-cms-request';
 export * from './get-auto-add-vol-cms-request';
 export * from './get-db-size-cms-request';
 export * from './copy-db-cms-request';
+export * from './heartbeat-list-cms-request';
 export * from './get-all-sys-param-cms-request';
 export * from './set-sys-param-cms-request';
 export * from './get-admin-log-info-cms-request';
