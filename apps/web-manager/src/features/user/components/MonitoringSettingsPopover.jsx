@@ -43,10 +43,10 @@ export default function MonitoringSettingsPopover() {
     <div className="relative" ref={popoverRef}>
       <button 
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] relative group
+        className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all active:scale-[0.98] relative group
           ${isOpen 
             ? 'bg-amber-500/10 text-amber-600 dark:text-bk-yellow border-amber-500/50 dark:border-bk-yellow/50 shadow-xs' 
-            : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5'
+            : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'
           }`}
         title="Monitoring Settings"
       >

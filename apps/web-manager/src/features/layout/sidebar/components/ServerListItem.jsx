@@ -12,8 +12,8 @@ export default function ServerListItem({ host, isSelected, isAuthorized, onConte
       title={`${host.address}:${host.port}`}
       className={`flex flex-col px-3 py-1.5 cursor-pointer transition-all select-none rounded group relative mb-0.5 border
         ${isSelected
-          ? 'bg-amber-50/60 dark:bg-white/6 border-amber-200 dark:border-amber-500/30 shadow-xs'
-          : 'bg-white dark:bg-white/2 border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/4 hover:border-slate-300 dark:hover:border-white/12'
+          ? 'bg-amber-500/5 dark:bg-white/4 border-amber-500/20 dark:border-amber-500/30'
+          : 'bg-white dark:bg-white/2 border-slate-200 dark:border-white/[0.07] hover:bg-slate-50 dark:hover:bg-white/4 hover:border-slate-300 dark:hover:border-white/12 shadow-xs'
         }`}
       onClick={() => {
         dispatch(setSelectedHost(host.uid));
@@ -28,13 +28,13 @@ export default function ServerListItem({ host, isSelected, isAuthorized, onConte
       <div className="flex items-center gap-2.5 relative z-10">
         <div className={`shrink-0 w-7 h-7 rounded flex items-center justify-center transition-all
           ${isSelected 
-            ? 'bg-amber-500 shadow-md shadow-amber-500/20' 
+            ? 'bg-amber-500/15 border border-amber-500/20' 
             : 'bg-slate-100 dark:bg-white/5 text-slate-400 border border-slate-200 dark:border-white/10'}`}>
           <Icon 
             name={isSelected ? 'dns' : 'storage'} 
             size="14px" 
-            className={isSelected ? 'text-white' : 'text-slate-400 group-hover:text-amber-500'} 
-            weight={isSelected ? 400 : 300}
+            className={isSelected ? 'text-amber-600 dark:text-amber-500' : 'text-slate-400 group-hover:text-amber-500'} 
+            weight={isSelected ? 600 : 300}
           />
         </div>
 

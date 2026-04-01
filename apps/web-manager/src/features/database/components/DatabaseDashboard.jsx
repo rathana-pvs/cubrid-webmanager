@@ -196,10 +196,10 @@ export default function DatabaseDashboard({ dbname }) {
           <button
             onClick={handleRefresh}
             disabled={isLoading || isManualRefreshing}
-            className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
+            className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all active:scale-[0.98]
               ${(isLoading || isManualRefreshing)
                 ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
-                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5'}`}
+                : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
             title="Refresh database status"
           >
             <Icon name="refresh" size="18px" className={(isLoading || isManualRefreshing) ? 'animate-spin' : ''} />
@@ -211,7 +211,7 @@ export default function DatabaseDashboard({ dbname }) {
           <div className="w-px h-4 bg-slate-200 dark:bg-white/10 mx-0.5" />
           <button
             onClick={handleExport}
-            className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98] bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5 shadow-sm`}
+            className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all active:scale-[0.98] bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5 shadow-xs`}
             title="Export metrics as CSV"
           >
             <Icon name="ios_share" size="18px" weight={300} />

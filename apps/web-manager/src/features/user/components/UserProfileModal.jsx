@@ -7,34 +7,27 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
-import { Typography } from '../../../components/ds/foundation/Typography';
 
 export default function UserProfileModal({ isOpen, onClose }) {
   const { user } = useSelector((state) => state.auth);
   const [editMode, setEditMode] = useState(null); // 'profile' | 'password' | null
-  
+
   const [profile, setProfile] = useState({
     id: user?.id || '',
     department: user?.department || '',
   });
-
   const [editProfile, setEditProfile] = useState({ ...profile });
   const [passwords, setPasswords] = useState({
     oldPassword: '',
     newPassword: '',
-    confirmPassword: ''
+    confirmPassword: '',
   });
 
   useEffect(() => {
     if (user) {
-      const newProfile = {
-        id: user.id || '',
-        department: user.department || ''
-      };
+      const newProfile = { id: user.id || '', department: user.department || '' };
       setProfile(newProfile);
-      if (!editMode) {
-        setEditProfile(newProfile);
-      }
+      if (!editMode) setEditProfile(newProfile);
     }
   }, [user, editMode]);
 
@@ -42,8 +35,8 @@ export default function UserProfileModal({ isOpen, onClose }) {
   const [error, setError] = useState(null);
 
   const dispatch = useDispatch();
-  const globalLoading = useSelector(state => state.auth.loading);
-  const globalError = useSelector(state => state.auth.error);
+  const globalLoading = useSelector((state) => state.auth.loading);
+  const globalError = useSelector((state) => state.auth.error);
 
   if (!isOpen) return null;
 
@@ -52,14 +45,13 @@ export default function UserProfileModal({ isOpen, onClose }) {
     try {
       if (editMode === 'password') {
         if (!passwords.oldPassword || !passwords.newPassword || !passwords.confirmPassword) {
-          setError("Please fill in all password fields.");
+          setError('Please fill in all password fields.');
           return;
         }
         if (passwords.newPassword !== passwords.confirmPassword) {
-          setError("New passwords do not match.");
+          setError('New passwords do not match.');
           return;
         }
-
         setLoading(true);
         await authApi.updatePassword(passwords.oldPassword, passwords.newPassword);
         setPasswords({ oldPassword: '', newPassword: '', confirmPassword: '' });
@@ -69,15 +61,15 @@ export default function UserProfileModal({ isOpen, onClose }) {
         setLoading(true);
         const resultAction = await dispatch(updateAccount({ department: editProfile.department }));
         if (updateAccount.fulfilled.match(resultAction)) {
-          await dispatch(fetchUser()); // Refresh data from server
+          await dispatch(fetchUser());
           setEditMode(null);
         } else {
-          setError(resultAction.payload || "Failed to update profile");
+          setError(resultAction.payload || 'Failed to update profile');
         }
         setLoading(false);
       }
     } catch (err) {
-      setError(err.response?.data?.message || "An unexpected error occurred");
+      setError(err.response?.data?.message || 'An unexpected error occurred');
       setLoading(false);
     }
   };
@@ -91,39 +83,25 @@ export default function UserProfileModal({ isOpen, onClose }) {
 
   const footer = editMode ? (
     <>
-      <Button 
-        variant="ghost" 
-        onClick={handleCancel}
-        disabled={loading || globalLoading}
-      >
-        Discard
+      <Button variant="ghost" onClick={handleCancel} disabled={loading || globalLoading}>
+        Cancel
       </Button>
-      <Button 
+      <Button
         onClick={handleSave}
         loading={loading || globalLoading}
         icon="check_circle"
         className="min-w-[120px]"
       >
-        {editMode === 'password' ? 'Update' : 'Save'}
+        {editMode === 'password' ? 'Update Password' : 'Save Changes'}
       </Button>
     </>
   ) : (
-    <div className="flex gap-3 w-full">
-      <Button 
-        variant="ghost"
-        className="flex-1"
-        icon="edit_square"
-        onClick={() => setEditMode('profile')}
-      >
-        Modify
+    <div className="flex gap-2 w-full">
+      <Button variant="ghost" className="flex-1" icon="edit_square" onClick={() => setEditMode('profile')}>
+        Edit Profile
       </Button>
-      <Button 
-        variant="ghost"
-        className="flex-1"
-        icon="lock_reset"
-        onClick={() => setEditMode('password')}
-      >
-        Security
+      <Button variant="ghost" className="flex-1" icon="lock_reset" onClick={() => setEditMode('password')}>
+        Change Password
       </Button>
     </div>
   );
@@ -132,64 +110,129 @@ export default function UserProfileModal({ isOpen, onClose }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editMode === 'password' ? 'Change password' : 'Account info'}
-      subtitle={editMode === 'password' ? 'Update your security credentials' : 'Manage your profile details'}
-      icon={editMode === 'password' ? 'key' : 'account_circle'}
-      maxWidth="max-w-[400px]"
+      title={editMode === 'password' ? 'Change Password' : 'Account Profile'}
+      icon={editMode === 'password' ? 'lock_reset' : 'account_circle'}
+      maxWidth="max-w-[420px]"
       footer={footer}
     >
-      <div className="space-y-4">
-        <div className="space-y-1.5">
-          <Typography variant="caption" className="text-slate-500 font-medium ml-1">User ID</Typography>
-          <div className="h-9 px-3 flex items-center bg-slate-50/50 dark:bg-bk-main/20 border border-slate-100 dark:border-white/5 rounded-xl text-[11px] font-bold text-slate-400 dark:text-slate-600 cursor-not-allowed">
-            {profile.id}
-          </div>
-        </div>
+      <div className="space-y-4 p-1">
 
-        {editMode === 'profile' ? (
-          <Input 
-            label="Department"
-            value={editProfile.department}
-            onChange={(e) => setEditProfile(prev => ({ ...prev, department: e.target.value }))}
-            placeholder="Enter department name"
-            className="animate-in slide-in-from-top-1"
-          />
-        ) : editMode === 'password' ? (
-          <div className="space-y-4 animate-in slide-in-from-top-1">
-            <Input 
-              type="password"
-              label="Old password"
-              value={passwords.oldPassword}
-              onChange={(e) => setPasswords(prev => ({ ...prev, oldPassword: e.target.value }))}
-            />
-            <Input 
-              type="password"
-              label="New password"
-              value={passwords.newPassword}
-              onChange={(e) => setPasswords(prev => ({ ...prev, newPassword: e.target.value }))}
-            />
-            <Input 
-              type="password"
-              label="Confirm password"
-              value={passwords.confirmPassword}
-              onChange={(e) => setPasswords(prev => ({ ...prev, confirmPassword: e.target.value }))}
-            />
+        {/* Error Banner */}
+        {(error || globalError) && (
+          <div className="flex items-start gap-3 px-4 py-3 bg-rose-500/5 border border-rose-500/15 rounded-xl">
+            <Icon name="error_outline" size="sm" weight={300} className="text-rose-500 shrink-0 mt-0.5" />
+            <p className="text-[11.5px] text-rose-500 font-medium flex-1 leading-relaxed">{error || globalError}</p>
           </div>
-        ) : (
-          <div className="space-y-1.5">
-            <Typography variant="caption" className="text-slate-500 font-medium ml-1">Department</Typography>
-            <div className="h-9 px-3 flex items-center bg-slate-50/50 dark:bg-bk-main/20 border border-slate-100 dark:border-white/5 rounded-xl text-[11px] font-bold text-slate-700 dark:text-slate-300">
-              {profile.department || 'Not assigned'}
+        )}
+
+        {/* View Mode */}
+        {!editMode && (
+          <>
+            {/* Avatar / Identity Card */}
+            <div className="flex items-center gap-4 p-4 rounded-xl bg-amber-500/5 border border-amber-500/10">
+              <div className="w-12 h-12 rounded-xl bg-amber-500 flex items-center justify-center shrink-0 shadow-sm shadow-amber-500/30">
+                <Icon name="person" size="24px" weight={400} className="text-white" />
+              </div>
+              <div className="min-w-0">
+                <p className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight truncate">
+                  {profile.id || '—'}
+                </p>
+                <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-widest mt-0.5">
+                  Administrator
+                </p>
+              </div>
+            </div>
+
+            {/* Info Card */}
+            <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
+              <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
+                <Icon name="info" size="14px" weight={400} className="text-amber-500" />
+                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Details</span>
+              </div>
+              <div className="divide-y divide-slate-100 dark:divide-white/5">
+                <div className="flex items-center px-4 py-3 gap-3">
+                  <Icon name="badge" size="16px" weight={300} className="text-slate-400 shrink-0" />
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 w-24 shrink-0">User ID</span>
+                  <span className="text-[11.5px] font-bold text-slate-700 dark:text-slate-200 truncate">{profile.id || '—'}</span>
+                </div>
+                <div className="flex items-center px-4 py-3 gap-3">
+                  <Icon name="corporate_fare" size="16px" weight={300} className="text-slate-400 shrink-0" />
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 w-24 shrink-0">Department</span>
+                  <span className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 truncate">{profile.department || 'Not assigned'}</span>
+                </div>
+              </div>
+            </div>
+          </>
+        )}
+
+        {/* Edit Profile Mode */}
+        {editMode === 'profile' && (
+          <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
+            <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
+              <Icon name="edit_square" size="14px" weight={400} className="text-amber-500" />
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Edit Profile</span>
+            </div>
+            <div className="p-4 space-y-3">
+              {/* Read-only User ID */}
+              <div>
+                <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">User ID</label>
+                <div className="h-10 px-3.5 flex items-center gap-2 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/8 rounded-xl">
+                  <Icon name="badge" size="14px" weight={300} className="text-slate-400" />
+                  <span className="text-[12px] font-bold text-slate-400 dark:text-slate-600">{profile.id}</span>
+                  <span className="ml-auto text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">locked</span>
+                </div>
+              </div>
+              <Input
+                label="Department"
+                value={editProfile.department}
+                onChange={(e) => setEditProfile((prev) => ({ ...prev, department: e.target.value }))}
+                placeholder="e.g. Engineering"
+                icon="corporate_fare"
+                disabled={loading || globalLoading}
+              />
             </div>
           </div>
         )}
 
-        {(error || globalError) && (
-          <div className="mt-4 p-3 bg-rose-500/10 border border-rose-500/20 rounded-xl flex items-center gap-2.5 text-rose-500 animate-in slide-in-from-top-1 duration-200">
-            <Icon name="error" size="sm" />
-            <Typography variant="p" className="text-[11px] font-medium">{error || globalError}</Typography>
+        {/* Change Password Mode */}
+        {editMode === 'password' && (
+          <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
+            <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
+              <Icon name="lock" size="14px" weight={400} className="text-amber-500" />
+              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Security</span>
+            </div>
+            <div className="p-4 space-y-3">
+              <Input
+                type="password"
+                label="Current Password"
+                icon="lock"
+                value={passwords.oldPassword}
+                onChange={(e) => setPasswords((prev) => ({ ...prev, oldPassword: e.target.value }))}
+                disabled={loading || globalLoading}
+                placeholder="••••••••"
+              />
+              <Input
+                type="password"
+                label="New Password"
+                icon="key"
+                value={passwords.newPassword}
+                onChange={(e) => setPasswords((prev) => ({ ...prev, newPassword: e.target.value }))}
+                disabled={loading || globalLoading}
+                placeholder="••••••••"
+              />
+              <Input
+                type="password"
+                label="Confirm New Password"
+                icon="key_vertical"
+                value={passwords.confirmPassword}
+                onChange={(e) => setPasswords((prev) => ({ ...prev, confirmPassword: e.target.value }))}
+                disabled={loading || globalLoading}
+                placeholder="••••••••"
+              />
+            </div>
           </div>
         )}
+
       </div>
     </Modal>
   );

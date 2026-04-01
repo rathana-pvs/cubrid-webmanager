@@ -181,7 +181,7 @@ export default function ServerContent({ hostUid }) {
       {/* ── Scrollable Body ── */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         <DatabaseVolumes hostUid={hostUid} />
-        <Brokers hostUid={hostUid} />
+        <Brokers hostUid={hostUid} isSection={true} />
         <SystemStatusSection hostUid={hostUid} isTabActive={isTabActive} />
         <DatabaseListSection dbListDisplay={dbListDisplay} handleAutoStartToggle={handleAutoStartToggle} />
         <SystemInfo hostUid={hostUid} />

@@ -2,7 +2,7 @@ import { Icon } from '../../../../components/ds/foundation/Icon';
 
 export default function SidebarHeader() {
   return (
-    <div className="flex items-center gap-2.5 px-3 py-2.5 border-b border-slate-200 dark:border-white/6 bg-white dark:bg-bk-side shrink-0 select-none">
+    <div className="flex items-center h-14 gap-2.5 px-4 border-b border-slate-200 dark:border-white/6 bg-white dark:bg-bk-side shrink-0 select-none">
       
       {/* Logo */}
       <div className="relative w-7 h-7 rounded-md bg-white dark:bg-white/[0.07] border border-slate-200 dark:border-white/10 shadow-xs flex items-center justify-center p-1 shrink-0">

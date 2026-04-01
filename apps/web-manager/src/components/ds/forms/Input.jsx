@@ -10,6 +10,7 @@ export const Input = forwardRef(({
   required,
   type = 'text',
   className = '',
+  size = 'md',
   disabled = false,
   icon,
   onChange,
@@ -18,6 +19,7 @@ export const Input = forwardRef(({
   ...props
 }, ref) => {
   const isNumber = type === 'number';
+  const isSm = size === 'sm';
 
   const handleAdjust = (delta) => {
     if (disabled || !onChange) return;
@@ -37,8 +39,8 @@ export const Input = forwardRef(({
     >
       <div className="relative group flex items-center">
         {icon && (
-          <div className="absolute left-3.5 h-full flex items-center text-slate-400 group-focus-within:text-bk-yellow transition-colors pointer-events-none">
-            <Icon name={icon} size="md" weight={300} />
+          <div className={`absolute left-3.5 h-full flex items-center text-slate-400 group-focus-within:text-bk-yellow transition-colors pointer-events-none`}>
+            <Icon name={icon} size={isSm ? "14px" : "md"} weight={300} />
           </div>
         )}
         <input
@@ -47,7 +49,7 @@ export const Input = forwardRef(({
           disabled={disabled}
           value={value}
           onChange={onChange}
-          className={`w-full h-10 text-[13px] font-medium bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-hidden transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] ${
+          className={`w-full ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-hidden transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] ${
             icon ? 'pl-11' : 'pl-3.5'
           } ${
             isNumber && suffix ? 'pr-20' : (isNumber ? 'pr-9' : (suffix ? 'pr-12' : 'pr-3.5'))
@@ -77,7 +79,7 @@ export const Input = forwardRef(({
         )}
 
         {isNumber && !disabled && (
-          <div className="absolute right-2 px-1 border-l border-slate-200/50 dark:border-white/5 flex flex-col items-center justify-center gap-0.5 h-6 my-auto pointer-events-none">
+          <div className="absolute right-3 px-1 border-l border-slate-200/50 dark:border-white/5 flex flex-col items-center justify-center gap-0.5 h-6 my-auto pointer-events-none">
             <button
                type="button"
                onClick={() => (props.onStepChange ? props.onStepChange(1) : handleAdjust(1))}

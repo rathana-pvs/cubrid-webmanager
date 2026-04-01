@@ -332,9 +332,7 @@ function DashboardLayout() {
                     />
                   )}
                   {isBrokersStatus && (
-                    <div className="flex-1 overflow-y-auto p-4 bg-slate-50 dark:bg-bk-main">
-                      <Brokers hostUid={tabId.split(':')[1]} />
-                    </div>
+                    <Brokers hostUid={tabId.split(':')[1]} />
                   )}
                   {tabId === 'service_dashboard' && <ServiceDashboard />}
 

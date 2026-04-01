@@ -28,7 +28,7 @@ export const brokerApi = {
   getDatabaseLogs: (hostUid, dbname) => {
     return apiClient.get(`/${hostUid}/log/database/${dbname}`);
   },
-  getBrokerConfig: (hostUid, confname = 'brokerconf') => {
+  getBrokerConfig: (hostUid, confname = 'cubrid_broker.conf') => {
     return apiClient.get(`/${hostUid}/cms-config/all-sys-param`, { params: { confname } });
   },
   updateBrokerConfig: (hostUid, confname, confdata) => {

@@ -175,7 +175,7 @@ export const updateBrokerConfig = createAsyncThunk(
   'broker/updateBrokerConfig',
   async ({ hostUid, confdata }, { dispatch, rejectWithValue }) => {
     try {
-      await brokerApi.updateBrokerConfig(hostUid, 'brokerconf', confdata);
+      await brokerApi.updateBrokerConfig(hostUid, 'cubrid_broker.conf', confdata);
       dispatch(fetchBrokerConfig({ hostUid }));
       return { success: true };
     } catch (err) {
