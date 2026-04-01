@@ -184,7 +184,33 @@ const databaseMonitoringSlice = createSlice({
         state.dashboardData[dbname] = { volumes, locks, performance, brokersCAS, spaceInfo, volumeSummary, pagesize, logpagesize };
         state.dashboardLoading[dbname] = false;
       })
-      // Add other dashboard cases as needed...
+      // Cleanup on tab close to prevent memory leaks
+      .addMatcher(
+        (action) => action.type === 'layout/closeTab',
+        (state, action) => {
+          const tabId = action.payload;
+          const match = tabId.match(/^(?:db|db_space|vol_category|vol_info|table_info|view_info):[^:]+:([^:]+)/) || tabId.match(/^db:(.+)/);
+          if (match) {
+            const dbname = match[1];
+            delete state.dashboardData[dbname];
+            delete state.dashboardLoading[dbname];
+            delete state.dashboardError[dbname];
+            delete state.spaceInfo[dbname];
+            delete state.spaceInfoLoading[dbname];
+          }
+        }
+      )
+      .addMatcher(
+        (action) => action.type === 'layout/closeHostTabs',
+        (state) => {
+          // Reset all monitoring data when host is closed
+          state.dashboardData = {};
+          state.dashboardLoading = {};
+          state.dashboardError = {};
+          state.spaceInfo = {};
+          state.spaceInfoLoading = {};
+        }
+      );
   }
 });
 

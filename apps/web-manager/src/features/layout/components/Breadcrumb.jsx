@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useSelector, shallowEqual } from 'react-redux';
 import { MenuItem, MenuDivider } from '../../../components/common/DropdownMenu';
 import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
@@ -53,22 +53,26 @@ export default function Breadcrumb({
     }
   };
 
+  const others = React.useMemo(() => openTabs.filter(tid => tid !== activeTab), [openTabs, activeTab]);
+  const dirtyOthers = React.useMemo(() => others.filter(tid => dirtyTabs.includes(tid)), [others, dirtyTabs]);
+  const cleanOthers = React.useMemo(() => others.filter(tid => !dirtyTabs.includes(tid)), [others, dirtyTabs]);
+
+  const dirtyOnes = React.useMemo(() => openTabs.filter(tid => dirtyTabs.includes(tid)), [openTabs, dirtyTabs]);
+  const cleanOnes = React.useMemo(() => openTabs.filter(tid => !dirtyTabs.includes(tid)), [openTabs, dirtyTabs]);
+
   const handleCloseOthers = (tabId) => {
-    const others = openTabs.filter(tid => tid !== tabId);
-    const dirtyOthers = others.filter(tid => dirtyTabs.includes(tid));
-    const cleanOthers = others.filter(tid => !dirtyTabs.includes(tid));
+    const targetOthers = openTabs.filter(tid => tid !== tabId);
+    const targetDirtyOthers = targetOthers.filter(tid => dirtyTabs.includes(tid));
+    const targetCleanOthers = targetOthers.filter(tid => !dirtyTabs.includes(tid));
 
-    cleanOthers.forEach(tid => onCloseTab(tid));
+    targetCleanOthers.forEach(tid => onCloseTab(tid));
 
-    if (dirtyOthers.length > 0) {
-      handleCloseTab(dirtyOthers[0], dirtyOthers);
+    if (targetDirtyOthers.length > 0) {
+      handleCloseTab(targetDirtyOthers[0], targetDirtyOthers);
     }
   };
 
   const handleCloseAll = () => {
-    const dirtyOnes = openTabs.filter(tid => dirtyTabs.includes(tid));
-    const cleanOnes = openTabs.filter(tid => !dirtyTabs.includes(tid));
-
     cleanOnes.forEach(tid => onCloseTab(tid));
 
     if (dirtyOnes.length > 0) {

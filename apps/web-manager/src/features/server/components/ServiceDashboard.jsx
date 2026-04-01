@@ -68,7 +68,7 @@ const Component = function ServiceDashboard() {
     return (bytes / (1024 * 1024 * 1024)).toFixed(1) + ' GB';
   };
 
-  const columns = [
+  const columns = React.useMemo(() => [
     {
       header: 'GROUP/HOST',
       accessor: 'alias',
@@ -196,7 +196,7 @@ const Component = function ServiceDashboard() {
         );
       }
     },
-  ];
+  ], [authorizedHosts, summaries]);
 
   return (
     <div className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden font-sans">

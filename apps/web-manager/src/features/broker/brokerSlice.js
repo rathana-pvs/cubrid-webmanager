@@ -362,7 +362,32 @@ const brokerSlice = createSlice({
         const { hostUid } = action.meta.arg;
         state.brokerConfig[hostUid].loading = false;
         state.brokerConfig[hostUid].error = action.payload;
-      });
+      })
+      // Cleanup on tab close to prevent memory leaks
+      .addMatcher(
+        (action) => action.type === 'layout/closeTab',
+        (state, action) => {
+          const tabId = action.payload;
+          const statusMatch = tabId.match(/^broker_status:[^:]+:([^:]+)/);
+          const logMatch = tabId.match(/^log:[^:]+:(.+)/);
+          
+          if (statusMatch) {
+            delete state.detailedStatus[statusMatch[1]];
+          } else if (logMatch) {
+            delete state.viewingLogs[logMatch[1]];
+          }
+        }
+      )
+      .addMatcher(
+        (action) => action.type === 'layout/closeHostTabs',
+        (state, action) => {
+          const hostUid = action.payload;
+          // Clean up logs and config for specifically closed host
+          delete state.adminLogsByHost[hostUid];
+          delete state.cmsLogsByHost[hostUid];
+          delete state.brokerConfig[hostUid];
+        }
+      );
   },
 });
 

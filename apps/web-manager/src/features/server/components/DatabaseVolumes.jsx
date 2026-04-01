@@ -78,7 +78,7 @@ export default function DatabaseVolumes({ hostUid }) {
 
   useEffect(() => { fetchVolumes(); }, [fetchVolumes]);
 
-  const volumeData = volumes?.map((result) => {
+  const volumeData = React.useMemo(() => volumes?.map((result) => {
     if (!result?.spaceinfo) return { id: result.dbname, db: result.dbname, permanent: { display: '-', pct: 0 }, temporary: { display: '-', pct: 0 }, activeLog: '-', archiveLog: '-', storageFree: '-' };
     return {
       id: result.dbname,
@@ -89,9 +89,9 @@ export default function DatabaseVolumes({ hostUid }) {
       archiveLog: getLogColumn(result, 'Archive_log'),
       storageFree: result.freespace ? getSizeFormat(parseInt(result.freespace) * 1024) : '-',
     };
-  }) || [];
+  }) || [], [volumes]);
 
-  const columns = [
+  const columns = React.useMemo(() => [
     {
       header: 'Database',
       accessor: 'db',
@@ -102,7 +102,7 @@ export default function DatabaseVolumes({ hostUid }) {
     { header: 'Active Log', accessor: 'activeLog', render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
     { header: 'Archive Log', accessor: 'archiveLog', render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
     { header: 'Free Storage', accessor: 'storageFree', render: (val) => <span className="font-mono text-[12px] text-emerald-600 dark:text-emerald-400 font-semibold">{val}</span> },
-  ];
+  ], []);
 
   return (
     <Card
