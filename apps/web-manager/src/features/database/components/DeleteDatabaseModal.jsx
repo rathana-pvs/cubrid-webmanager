@@ -9,6 +9,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { Spinner } from '../../../components/ds/foundation/Spinner';
 
 // view states
 const VIEW_FORM    = 'form';
