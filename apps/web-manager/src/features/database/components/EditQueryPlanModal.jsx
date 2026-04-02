@@ -206,7 +206,7 @@ export default function EditQueryPlanModal() {
           title="Schedule Registry Updated"
           message={`Changes to the query plan for ${selectedDatabase} have been committed and re-indexed.`}
           onConfirm={handleClose}
-          confirmText="Confirm & Dismiss"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -240,7 +240,7 @@ export default function EditQueryPlanModal() {
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="ghost" onClick={handleClose}>Discard</Button>
-          <Button variant="primary" onClick={handleSave} icon="save" className="px-8 min-w-[160px]">Save Changes</Button>
+          <Button variant="primary" onClick={handleSave} icon="save" className="min-w-[140px]">Save Changes</Button>
         </div>
       }
     >

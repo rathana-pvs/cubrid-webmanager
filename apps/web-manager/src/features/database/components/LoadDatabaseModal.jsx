@@ -219,7 +219,7 @@ export default function LoadDatabaseModal() {
           title="Injection Finalized"
           message={`Infrastructure for ${selectedDatabase} has been populated with the provided source payload.`}
           onConfirm={handleClose}
-          confirmText="Access Instance"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -256,7 +256,7 @@ export default function LoadDatabaseModal() {
           <Button 
             onClick={handleLoadDatabase}
             icon="play_circle"
-            className="px-6 min-w-[140px]"
+            className="min-w-[140px]"
           >
             Execute Load
           </Button>

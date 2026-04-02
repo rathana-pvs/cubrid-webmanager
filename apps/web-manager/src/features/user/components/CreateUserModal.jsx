@@ -263,7 +263,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
           title={isEditMode ? 'User Updated' : 'User Created'}
           message={isEditMode ? `Credentials and permissions for @${editingUser} are now synchronized.` : `@${formData.name} is now active and ready for use.`}
           onConfirm={onClose}
-          confirmText="Done"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -295,8 +295,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
             <span className="opacity-60 font-mono">{dbname}</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>Cancel</Button>
-            <Button onClick={handleSave} icon={isEditMode ? 'save' : 'person_add'} disabled={!formData.name}>
+            <Button variant="ghost" onClick={onClose}>Discard</Button>
+            <Button onClick={handleSave} icon={isEditMode ? 'save' : 'person_add'} disabled={!formData.name} className="min-w-[140px]">
               {isEditMode ? 'Save Changes' : 'Create User'}
             </Button>
           </div>

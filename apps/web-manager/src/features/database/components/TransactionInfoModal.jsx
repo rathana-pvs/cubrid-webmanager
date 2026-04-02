@@ -147,17 +147,17 @@ export default function TransactionInfoModal() {
               disabled={!selectedTranIndex}
               onClick={handleOpenKillModal}
               icon="cancel"
-              className="px-5! shadow-lg shadow-rose-500/20!"
+              className="min-w-[140px] shadow-lg shadow-rose-500/20!"
             >
               Kill Process
             </Button>
           </div>
           <div className="flex items-center gap-2.5">
-            <Button variant="ghost" onClick={handleClose}>Close Monitor</Button>
+            <Button variant="ghost" onClick={handleClose}>Acknowledge</Button>
             <Button 
               onClick={fetchTransactionInfo}
               icon="refresh"
-              className="min-w-[120px]"
+              className="min-w-[140px]"
             >
               Sync Latest
             </Button>
@@ -165,8 +165,8 @@ export default function TransactionInfoModal() {
         </div>
       }
     >
-      <div className="flex flex-col h-[520px] -m-6 animate-in fade-in slide-in-from-bottom-4 duration-400">
-        <div className="px-6 py-4 flex items-center justify-between bg-slate-50/80 dark:bg-black/20 border-b border-slate-100 dark:border-white/5 shrink-0">
+      <div className="flex flex-col h-[540px] animate-in fade-in slide-in-from-bottom-4 duration-400">
+        <div className="mb-4 flex items-center justify-between bg-slate-50/80 dark:bg-black/20 border border-slate-200 dark:border-white/8 rounded-xl px-4 py-3 shrink-0">
           <div className="flex items-center gap-3">
             <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500 border border-emerald-500/20">
               <Icon name="sensors" size="sm" weight={300} />
@@ -183,8 +183,8 @@ export default function TransactionInfoModal() {
           </div>
         </div>
 
-        <div className="flex-1 min-h-0 bg-white dark:bg-transparent overflow-hidden">
-          <div className="h-full overflow-y-auto custom-scrollbar">
+        <div className="flex-1 min-h-0 relative rounded-xl border border-slate-200 dark:border-white/8 bg-white dark:bg-transparent overflow-hidden">
+          <div className="absolute inset-0 overflow-y-auto overflow-x-hidden custom-scrollbar">
             <table className="w-full text-left border-collapse">
               <thead className="bg-slate-50/50 dark:bg-white/3 text-[10px] font-black text-slate-400 uppercase tracking-[0.15em] border-b border-slate-100 dark:border-white/5 sticky top-0 z-10">
                 <tr>

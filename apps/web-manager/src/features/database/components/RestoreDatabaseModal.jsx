@@ -217,7 +217,7 @@ export default function RestoreDatabaseModal() {
             <span>Database must be stopped before restoration</span>
           </div>
           <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Cancel</Button>
+            <Button variant="secondary" onClick={handleClose}>Discard</Button>
             <Button
               variant="primary"
               onClick={handleRestore}

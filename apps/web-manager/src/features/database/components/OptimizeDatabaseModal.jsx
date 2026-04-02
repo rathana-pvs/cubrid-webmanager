@@ -308,7 +308,7 @@ export default function OptimizeDatabaseModal() {
             </Typography>
           </div>
 
-          <Button variant="secondary" onClick={handleClose}>Done</Button>
+          <Button variant="secondary" onClick={handleClose} className="min-w-[140px]">Acknowledge</Button>
         </div>
       </Modal>
     );
@@ -375,6 +375,7 @@ export default function OptimizeDatabaseModal() {
             onClick={handleOptimize} 
             icon="play_circle"
             disabled={isLoadingClasses}
+            className="min-w-[140px]"
           >
             Execute Tuning
           </Button>

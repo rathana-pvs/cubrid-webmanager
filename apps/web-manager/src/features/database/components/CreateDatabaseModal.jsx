@@ -43,6 +43,35 @@ const VOLUME_TYPES = [
   { value: 'generic', label: 'Generic' }
 ];
 
+const INITIAL_FORM_DATA = {
+  dbName: '',
+  pageSize: 16384,
+  locale: 'en_US.utf8',
+  userDefinedLocale: '',
+  genericVolPath: '',
+  genericVolSize: 512,
+  logVolPath: '',
+  logVolSize: 512,
+  logPageSize: 16384,
+  autoStart: true,
+  volumes: [
+    { name: 'data_vol_001', type: 'data', size: 512, path: '' },
+    { name: 'index_vol_001', type: 'index', size: 512, path: '' },
+    { name: 'temp_vol_001', type: 'temp', size: 512, path: '' }
+  ],
+  autoAddVol: {
+    index: "ON",
+    indexWarn: "0.15",
+    indexExtPage: "32768",
+    data: "ON",
+    dataWarn: "0.15",
+    dataExtPage: "32768"
+  },
+  baseDir: '',
+  dbaPassword: '',
+  confirmPassword: ''
+};
+
 const STEPS = [
   { id: 1, label: 'General', icon: 'settings' },
   { id: 2, label: 'Volumes', icon: 'storage' },
@@ -96,35 +125,7 @@ export default function CreateDatabaseModal() {
   } = useActionState();
 
   const [step, setStep] = useState(1);
-
-  const [formData, setFormData] = useState({
-    dbName: '',
-    pageSize: 16384,
-    locale: 'en_US.utf8',
-    userDefinedLocale: '',
-    genericVolPath: '',
-    genericVolSize: 512,
-    logVolPath: '',
-    logVolSize: 512,
-    logPageSize: 16384,
-    autoStart: true,
-    volumes: [
-      { name: 'data_vol_001', type: 'data', size: 512, path: '' },
-      { name: 'index_vol_001', type: 'index', size: 512, path: '' },
-      { name: 'temp_vol_001', type: 'temp', size: 512, path: '' }
-    ],
-    autoAddVol: {
-      index: "ON",
-      indexWarn: "0.15",
-      indexExtPage: "32768",
-      data: "ON",
-      dataWarn: "0.15",
-      dataExtPage: "32768"
-    },
-    baseDir: '',
-    dbaPassword: '',
-    confirmPassword: ''
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
   const hostEnv = useSelector((state) => state.host.hostEnvs[selectedHostUid]);
 
@@ -132,6 +133,7 @@ export default function CreateDatabaseModal() {
     if (isCreateDatabaseModalOpen && selectedHostUid) {
       setStep(1);
       resetAction();
+      setFormData(INITIAL_FORM_DATA);
       
       // 1. Immediate Population: Use cached system info if available
       const cachedDir = hostEnv?.CUBRID_DATABASES;
@@ -272,7 +274,12 @@ export default function CreateDatabaseModal() {
     }
   };
 
-  const handleClose = () => dispatch(closeCreateDatabaseModal());
+  const handleClose = () => {
+    dispatch(closeCreateDatabaseModal());
+    setStep(1);
+    setFormData(INITIAL_FORM_DATA);
+    resetAction();
+  };
 
   const totalStorage = formData.genericVolSize + formData.logVolSize + formData.volumes.reduce((a, v) => a + v.size, 0);
 
@@ -297,7 +304,7 @@ export default function CreateDatabaseModal() {
           title="Initialization Complete"
           message={`Instance ${formData.dbName} is now active and ready for data ingest.`}
           onConfirm={handleClose}
-          confirmText="Access Instance"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -313,7 +320,7 @@ export default function CreateDatabaseModal() {
           onRetry={handleFinish}
           onCancel={resetAction}
           retryText="Retry Setup"
-          cancelText="Discard"
+          cancelText="Dismiss"
         />
       </Modal>
     );
@@ -344,7 +351,7 @@ export default function CreateDatabaseModal() {
           </div>
 
           <div className="flex items-center gap-2">
-            <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+            <Button variant="ghost" onClick={handleClose}>Discard</Button>
             {step > 1 && (
               <Button variant="outline" onClick={handleBack} icon="chevron_left">
                 Back
@@ -357,11 +364,12 @@ export default function CreateDatabaseModal() {
                 disabled={!isFormValid()}
                 icon="chevron_right"
                 iconPosition="right"
+                className="min-w-[140px]"
               >
                 Continue
               </Button>
             ) : (
-              <Button variant="primary" onClick={handleFinish} icon="done_all">
+              <Button variant="primary" onClick={handleFinish} icon="done_all" className="min-w-[140px]">
                 Create database
               </Button>
             )}

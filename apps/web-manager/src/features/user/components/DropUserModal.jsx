@@ -68,7 +68,7 @@ export default function DropUserModal() {
           title="Identity Purged"
           message={`The account @${dropUserData.userName} has been completely removed from the registry.`}
           onConfirm={handleClose}
-          confirmText="Dismiss Registry"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -98,7 +98,7 @@ export default function DropUserModal() {
       maxWidth="400px"
       footer={
         <div className="flex gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose} className="flex-1">Cancel</Button>
+          <Button variant="ghost" onClick={handleClose} className="flex-1">Discard</Button>
           <Button variant="danger" onClick={handleDrop} className="flex-1">Drop User</Button>
         </div>
       }

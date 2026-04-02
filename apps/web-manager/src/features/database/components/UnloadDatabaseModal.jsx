@@ -25,6 +25,32 @@ const VIEW_LOADING = 'loading';
 const VIEW_SUCCESS = 'success';
 const VIEW_ERROR   = 'error';
 
+const INITIAL_FORM_DATA = {
+  targetDbName: '',
+  targetDirectory: '',
+  dbUsername: '',
+  dbPassword: '',
+  schemaOption: 'All', // All, Selected tables, Not include
+  dataOption: 'Selected tables', // Selected tables, Not include
+  selectedTables: [],
+  asDba: false,
+  splitSchema: false,
+  classOnly: false,
+  skipIndex: false,
+  useDelimitedIdentifier: false,
+  includeReferencedTables: false,
+  usePrefixOutputFile: false,
+  prefixOutputFile: '',
+  useFileForHash: false,
+  fileForHash: '',
+  useCachedPages: false,
+  cachedPages: '',
+  useEstimateInstances: false,
+  estimateInstances: '',
+  useLoFileDirectory: false,
+  loFileDirectory: ''
+};
+
 export default function UnloadDatabaseModal() {
   const dispatch = useDispatch();
   const { isUnloadDatabaseModalOpen: isUnloadDBModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
@@ -45,31 +71,7 @@ export default function UnloadDatabaseModal() {
     isError
   } = useActionState();
 
-  const [formData, setFormData] = useState({
-    targetDbName: '',
-    targetDirectory: '',
-    dbUsername: '',
-    dbPassword: '',
-    schemaOption: 'All', // All, Selected tables, Not include
-    dataOption: 'Selected tables', // Selected tables, Not include
-    selectedTables: [],
-    asDba: false,
-    splitSchema: false,
-    classOnly: false,
-    skipIndex: false,
-    useDelimitedIdentifier: false,
-    includeReferencedTables: false,
-    usePrefixOutputFile: false,
-    prefixOutputFile: '',
-    useFileForHash: false,
-    fileForHash: '',
-    useCachedPages: false,
-    cachedPages: '',
-    useEstimateInstances: false,
-    estimateInstances: '',
-    useLoFileDirectory: false,
-    loFileDirectory: ''
-  });
+  const [formData, setFormData] = useState(INITIAL_FORM_DATA);
 
   const [dynamicTables, setDynamicTables] = useState([]);
   const [isTablesLoading, setIsTablesLoading] = useState(false);
@@ -101,14 +103,14 @@ export default function UnloadDatabaseModal() {
   useEffect(() => {
     if (isUnloadDBModalOpen && selectedDatabase) {
       resetAction();
-      setFormData(prev => ({
-        ...prev,
+      setFormData({
+        ...INITIAL_FORM_DATA,
         targetDbName: selectedDatabase,
         targetDirectory: currentDb?.dbdir || `/home/cubrid/databases/${selectedDatabase}`,
         dbUsername: 'dba',
         dbPassword: '',
         fileForHash: currentDb?.dbdir ? `${currentDb.dbdir}/hashfile` : `/home/cubrid/databases/${selectedDatabase}/hashfile`
-      }));
+      });
       fetchTables();
     }
   }, [isUnloadDBModalOpen, selectedDatabase, currentDb, fetchTables, resetAction]);
@@ -184,7 +186,12 @@ export default function UnloadDatabaseModal() {
     }
   };
 
-  const handleClose = () => dispatch(closeUnloadDatabaseModal());
+  const handleClose = () => {
+    dispatch(closeUnloadDatabaseModal());
+    setFormData(INITIAL_FORM_DATA);
+    setDynamicTables([]);
+    resetAction();
+  };
 
   /* ─── LOADING view ─── */
   if (isLoading) {
@@ -234,7 +241,7 @@ export default function UnloadDatabaseModal() {
             <Button 
               onClick={handleUnloadDatabase}
               icon="upload"
-              className="px-6 min-w-[140px]"
+              className="min-w-[140px]"
             >
               Initialize Export
             </Button>

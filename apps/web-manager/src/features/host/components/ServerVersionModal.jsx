@@ -46,9 +46,9 @@ export default function ServerVersionModal() {
         <Button 
           variant="primary" 
           onClick={() => dispatch(closeServerVersionModal())}
-          className="min-w-[100px]"
+          className="min-w-[140px]"
         >
-          Close
+          Acknowledge
         </Button>
       }
     >

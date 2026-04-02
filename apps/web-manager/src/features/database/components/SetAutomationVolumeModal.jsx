@@ -157,8 +157,11 @@ export default function SetAutomationVolumeModal() {
 
   useEffect(() => {
     if (isSetAutomationVolumeModalOpen && selectedHostUid && selectedDatabase) {
-      dispatch(fetchAutoVolumeConfig({ hostUid: selectedHostUid, dbname: selectedDatabase }));
       resetAction();
+      // Reset local state before fetching new config to avoid stale view
+      setDataEnabled(false);
+      setIndexEnabled(false);
+      dispatch(fetchAutoVolumeConfig({ hostUid: selectedHostUid, dbname: selectedDatabase }));
     }
   }, [isSetAutomationVolumeModalOpen, selectedHostUid, selectedDatabase, dispatch, resetAction]);
 
@@ -215,7 +218,7 @@ export default function SetAutomationVolumeModal() {
           title="Saved Successfully"
           message={`Auto-volume policies for ${selectedDatabase} were saved successfully.`}
           onConfirm={handleClose}
-          confirmText="Dismiss"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -252,16 +255,15 @@ export default function SetAutomationVolumeModal() {
             Page size: 16K
           </Typography>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={handleClose} size="sm">Cancel</Button>
+            <Button variant="ghost" onClick={handleClose}>Discard</Button>
             <Button
               variant="primary"
               onClick={handleSave}
               loading={autoVolumeLoading}
               icon="save"
-              size="sm"
-              className="px-6 shadow-sm shadow-amber-500/20"
+              className="min-w-[140px] shadow-sm shadow-amber-500/20"
             >
-              Save
+              Save Policies
             </Button>
           </div>
         </div>

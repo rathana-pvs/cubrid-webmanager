@@ -144,8 +144,8 @@ export default function LoginDatabaseModal() {
       maxWidth="440px"
       footer={
         <div className="flex items-center justify-between w-full gap-3">
-          <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleLogin} icon="login" className="px-6 min-w-[140px]">Establish Session</Button>
+          <Button variant="ghost" onClick={handleClose}>Discard</Button>
+          <Button variant="primary" onClick={handleLogin} icon="login" className="min-w-[140px]">Establish Session</Button>
         </div>
       }
     >

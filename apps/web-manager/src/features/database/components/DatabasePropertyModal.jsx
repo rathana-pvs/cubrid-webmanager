@@ -307,6 +307,8 @@ export default function DatabasePropertyModal() {
   useEffect(() => {
     if (isDatabasePropertyModalOpen) {
       resetAction();
+      setParams({});
+      setRawLines([]);
       setActiveSidebar(selectedDatabase ? 'Connection Information' : 'Server Parameter');
     }
   }, [isDatabasePropertyModalOpen, selectedDatabase, resetAction]);
@@ -500,7 +502,6 @@ export default function DatabasePropertyModal() {
             {Object.keys(params).length > 0 && (
               <Button 
                 variant="ghost" 
-                size="sm" 
                 icon="restart_alt" 
                 onClick={handleReset}
                 className="text-amber-500 hover:bg-amber-500/5"

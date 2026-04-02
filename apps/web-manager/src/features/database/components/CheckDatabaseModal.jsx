@@ -97,7 +97,7 @@ export default function CheckDatabaseModal() {
           title="Verification Complete"
           message={`Diagnostic scan for ${selectedDatabase} finished without critical errors.`}
           onConfirm={handleClose}
-          confirmText="Dismiss Report"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -113,7 +113,7 @@ export default function CheckDatabaseModal() {
           onRetry={handleCheck}
           onCancel={resetAction}
           retryText="Retry Diagnostics"
-          cancelText="Close"
+          cancelText="Dismiss"
         />
       </Modal>
     );
@@ -136,6 +136,7 @@ export default function CheckDatabaseModal() {
             variant="primary"
             onClick={handleCheck}
             icon="play_circle"
+            className="min-w-[140px]"
           >
             Run Diagnostics
           </Button>

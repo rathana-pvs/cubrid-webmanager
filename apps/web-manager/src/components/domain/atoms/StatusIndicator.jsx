@@ -27,20 +27,17 @@ export const StatusIndicator = ({
         wrapper: 'bg-amber-50 text-amber-600 border-amber-100 dark:bg-amber-900/30 dark:text-amber-400 dark:border-amber-500/20',
         dot: 'bg-amber-500',
         ping: 'bg-amber-400',
-        defaultLabel: 'Unknown',
       };
 
-  const displayLabel = label || baseConfig.defaultLabel;
-
   return (
-    <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 text-[9px] font-medium border rounded-full tracking-tighter ${baseConfig.wrapper}`}>
+    <span className={`inline-flex items-center ${label ? 'gap-1.5 px-2 py-0.5' : 'p-1'} text-[9px] font-medium border rounded-full tracking-tighter ${baseConfig.wrapper}`}>
       <span className="relative flex h-1.5 w-1.5">
         {animate && (
           <span className={`animate-ping absolute inline-flex h-full w-full rounded-full opacity-75 ${baseConfig.ping}`}></span>
         )}
         <span className={`relative inline-flex rounded-full h-1.5 w-1.5 ${baseConfig.dot}`}></span>
       </span>
-      {displayLabel}
+      {label && <span>{label}</span>}
     </span>
   );
 };

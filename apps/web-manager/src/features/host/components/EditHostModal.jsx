@@ -100,7 +100,7 @@ export default function EditHostModal() {
       footer={
         <>
           <Button variant="secondary" onClick={handleClose} disabled={loading}>
-            Cancel
+            Discard
           </Button>
           <Button
             variant="primary"

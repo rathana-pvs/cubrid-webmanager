@@ -97,7 +97,7 @@ export default function RenameDatabaseModal() {
           title="Rename Successful"
           message={`Database ${selectedDatabase} has been renamed to ${newDbName.trim()}.`}
           onConfirm={handleClose}
-          confirmText="Finish"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -113,7 +113,7 @@ export default function RenameDatabaseModal() {
           onRetry={handleRename}
           onCancel={handleClose}
           retryText="Retry Rename"
-          cancelText="Discard"
+          cancelText="Dismiss"
         />
       </Modal>
     );
@@ -135,6 +135,7 @@ export default function RenameDatabaseModal() {
             onClick={handleRename}
             icon="drive_file_rename_outline"
             disabled={!hasNewName || !isNameChanged}
+            className="min-w-[140px]"
           >
             Execute Rename
           </Button>

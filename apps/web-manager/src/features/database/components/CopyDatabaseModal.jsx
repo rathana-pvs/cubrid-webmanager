@@ -149,7 +149,7 @@ export default function CopyDatabaseModal() {
           title="Instance Duplicated"
           message={`Clone ${formData.destName} has been established and registered successfully.`}
           onConfirm={handleClose}
-          confirmText="Finish"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -165,7 +165,7 @@ export default function CopyDatabaseModal() {
           onRetry={handleCopy}
           onCancel={resetAction}
           retryText="Retry Clone"
-          cancelText="Discard"
+          cancelText="Dismiss"
         />
       </Modal>
     );
@@ -182,40 +182,40 @@ export default function CopyDatabaseModal() {
       maxWidth="580px"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>
-            Cancel
-          </Button>
-          <Button
-            onClick={handleCopy}
+          <Button variant="ghost" onClick={handleClose}>Discard</Button>
+          <Button 
+            variant="primary" 
+            onClick={handleCopy} 
             icon="content_copy"
-            disabled={!formData.destName.trim()}
+            className="min-w-[140px]"
           >
-            Execute Clone
+            Initiate Copy
           </Button>
         </div>
       }
     >
       <div className="space-y-6">
         {/* Source -> Destination */}
-        <div className="flex items-center gap-2">
-          <div className="flex-1 flex items-center gap-3 px-4 py-3 bg-slate-50 dark:bg-white/4 border border-slate-100 dark:border-white/8 rounded-2xl">
-            <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/8 flex items-center justify-center shrink-0">
-              <Icon name="database" size="sm" weight={300} className="text-slate-500 dark:text-slate-400" />
-            </div>
-            <div className="min-w-0">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">Source</p>
-              <p className="text-[12px] font-black text-slate-700 dark:text-slate-200 truncate">{selectedDatabase}</p>
+        <div className="flex items-end gap-2">
+          {/* Source Column */}
+          <div className="flex-1 space-y-2">
+            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 pl-1">Source Workspace</p>
+            <div className="flex items-center gap-3 px-4 h-[52px] bg-slate-50 dark:bg-white/4 border border-slate-100 dark:border-white/8 rounded-2xl">
+              <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/8 flex items-center justify-center shrink-0">
+                <Icon name="database" size="sm" weight={300} className="text-slate-500 dark:text-slate-400" />
+              </div>
+              <p className="text-[12.5px] font-black text-slate-700 dark:text-slate-200 truncate">{selectedDatabase}</p>
             </div>
           </div>
 
-          <div className="flex flex-col items-center gap-0 shrink-0">
-            <div className="w-6 h-px bg-amber-500/40" />
-            <div className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-              <Icon name="arrow_forward" size="sm" weight={700} className="text-amber-500 text-[11px]!" />
+          {/* Center Indicator Pillar */}
+          <div className="flex flex-col h-[52px] justify-center shrink-0 px-1">
+            <div className="w-9 h-9 rounded-full bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 flex items-center justify-center relative shadow-[0_0_15px_rgba(245,158,11,0.05)]">
+              <Icon name="chevron_right" size="sm" weight={700} className="text-amber-500 text-[11px]!" />
             </div>
-            <div className="w-6 h-px bg-amber-500/40" />
           </div>
 
+          {/* Destination Column */}
           <div className="flex-1">
             <Input
               label="Clone Identifier"
@@ -224,7 +224,7 @@ export default function CopyDatabaseModal() {
               placeholder="e.g. clone_db"
               autoFocus
               icon="content_copy"
-              className="font-bold!"
+              inputClassName="h-[52px]! font-black!"
             />
           </div>
         </div>

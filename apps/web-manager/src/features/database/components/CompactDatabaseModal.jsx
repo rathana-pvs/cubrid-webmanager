@@ -93,7 +93,7 @@ export default function CompactDatabaseModal() {
           title="Optimization Complete"
           message={`Dynamic storage optimization for ${selectedDatabase} finished successfully.`}
           onConfirm={handleClose}
-          confirmText="Finish"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -109,7 +109,7 @@ export default function CompactDatabaseModal() {
           onRetry={handleCompact}
           onCancel={resetAction}
           retryText="Retry Optimization"
-          cancelText="Close"
+          cancelText="Dismiss"
         />
       </Modal>
     );
@@ -132,6 +132,7 @@ export default function CompactDatabaseModal() {
             variant="primary" 
             onClick={handleCompact} 
             icon="play_circle"
+            className="min-w-[140px]"
           >
             Execute Compaction
           </Button>

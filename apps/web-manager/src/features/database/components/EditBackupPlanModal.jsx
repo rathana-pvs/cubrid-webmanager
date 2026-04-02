@@ -205,7 +205,7 @@ export default function EditBackupPlanModal() {
           title="Schedule Patched"
           message={`Changes to the backup plan for ${selectedDatabase} have been committed and re-indexed.`}
           onConfirm={handleClose}
-          confirmText="Confirm & Dismiss"
+          confirmText="Acknowledge"
         />
       </Modal>
     );

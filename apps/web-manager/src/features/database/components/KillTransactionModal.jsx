@@ -100,6 +100,7 @@ export default function KillTransactionModal({ onTransactionKilled }) {
           title="Transaction Aborted"
           message="System resources released. Transaction state discarded."
           onConfirm={handleClose}
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -133,7 +134,7 @@ export default function KillTransactionModal({ onTransactionKilled }) {
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="ghost" onClick={handleClose}>Discard</Button>
-          <Button variant="danger" onClick={handleKill} icon="bolt" className="px-6 min-w-[140px]">Force Abort</Button>
+          <Button variant="danger" onClick={handleKill} icon="bolt" className="min-w-[140px]">Force Abort</Button>
         </div>
       }
     >

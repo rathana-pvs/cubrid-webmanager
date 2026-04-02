@@ -172,7 +172,7 @@ export default function AddVolumeModal() {
           title="Storage Expanded"
           message={`A new volume "${volName}" has been successfully added to the system registry for ${selectedDatabase}.`}
           onConfirm={handleClose}
-          confirmText="Initialize and Exit"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -188,7 +188,7 @@ export default function AddVolumeModal() {
           onRetry={handleAdd}
           onCancel={resetAction}
           retryText="Retry Registry Expansion"
-          cancelText="Discard"
+          cancelText="Dismiss"
         />
       </Modal>
     );
@@ -216,6 +216,7 @@ export default function AddVolumeModal() {
               onClick={handleAdd}
               icon="add_to_drive"
               disabled={!path || !sizeMB || fetchingStatus}
+              className="min-w-[140px]"
             >
               Provision Volume
             </Button>

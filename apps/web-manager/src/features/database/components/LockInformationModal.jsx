@@ -162,14 +162,20 @@ export default function LockInformationModal() {
             }
           </div>
           <div className="flex items-center gap-3">
-            <button
-              onClick={() => dispatch(closeLockInformationModal())}
+            <Button 
+              variant="ghost" 
+              onClick={() => dispatch(closeLockInformationModal())} 
               disabled={loading}
-              className="text-[12px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors px-4"
             >
-              Close
-            </button>
-            <Button variant="primary" onClick={fetchLockInfo} loading={loading} icon="refresh" className="px-6 min-w-[120px]">
+              Acknowledge
+            </Button>
+            <Button 
+              variant="primary" 
+              onClick={fetchLockInfo} 
+              loading={loading} 
+              icon="refresh" 
+              className="min-w-[140px]"
+            >
               Refresh
             </Button>
           </div>

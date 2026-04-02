@@ -154,7 +154,7 @@ export default function AddQueryPlanModal() {
           title="Schedule Registry Active"
           message={`The automated query task for ${selectedDatabase} has been successfully committed.`}
           onConfirm={handleClose}
-          confirmText="Access Scheduler"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -192,7 +192,7 @@ export default function AddQueryPlanModal() {
             variant="primary"
             onClick={handleSave} 
             icon="play_circle"
-            className="px-8 min-w-[160px]"
+            className="min-w-[140px]"
           >
             Run Schedule
           </Button>

@@ -155,7 +155,7 @@ export default function DeleteQueryPlanModal() {
       maxWidth="440px"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+          <Button variant="ghost" onClick={handleClose}>Discard</Button>
           <Button variant="danger" onClick={handleDelete} icon="delete" className="min-w-[130px]">Execute Discard</Button>
         </div>
       }

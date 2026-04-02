@@ -117,7 +117,7 @@ export default function ChangeHostPasswordModal() {
               onClick={handleClose}
               disabled={loading}
             >
-              Cancel
+              Discard
             </Button>
             <Button 
               variant="primary" 

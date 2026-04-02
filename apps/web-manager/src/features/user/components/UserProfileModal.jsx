@@ -24,12 +24,15 @@ export default function UserProfileModal({ isOpen, onClose }) {
   });
 
   useEffect(() => {
-    if (user) {
-      const newProfile = { id: user.id || '', department: user.department || '' };
+    if (isOpen) {
+      const newProfile = { id: user?.id || '', department: user?.department || '' };
       setProfile(newProfile);
-      if (!editMode) setEditProfile(newProfile);
+      setEditProfile(newProfile);
+      setPasswords({ oldPassword: '', newPassword: '', confirmPassword: '' });
+      setEditMode(null);
+      setError(null);
     }
-  }, [user, editMode]);
+  }, [isOpen, user]);
 
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -84,7 +87,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
   const footer = editMode ? (
     <>
       <Button variant="ghost" onClick={handleCancel} disabled={loading || globalLoading}>
-        Cancel
+        Discard
       </Button>
       <Button
         onClick={handleSave}

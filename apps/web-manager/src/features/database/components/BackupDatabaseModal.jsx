@@ -146,7 +146,7 @@ export default function BackupDatabaseModal() {
           title="Snapshot Secured"
           message={`A complete backup of ${selectedDatabase} has been written to: ${formData.backupDir}.`}
           onConfirm={handleClose}
-          confirmText="Finish"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -162,7 +162,7 @@ export default function BackupDatabaseModal() {
           onRetry={handleBackup}
           onCancel={resetAction}
           retryText="Retry Backup"
-          cancelText="Discard"
+          cancelText="Dismiss"
         />
       </Modal>
     );
@@ -179,8 +179,8 @@ export default function BackupDatabaseModal() {
       maxWidth="600px"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose}>Cancel</Button>
-          <Button variant="primary" onClick={handleBackup} icon="play_circle">
+          <Button variant="secondary" onClick={handleClose}>Discard</Button>
+          <Button variant="primary" onClick={handleBackup} icon="play_circle" className="min-w-[140px]">
             Run Backup
           </Button>
         </div>

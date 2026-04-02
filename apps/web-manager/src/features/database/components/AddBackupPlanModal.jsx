@@ -185,7 +185,7 @@ export default function AddBackupPlanModal() {
           title="Automation Active"
           message={`The backup plan for ${selectedDatabase} is now registered and will execute as scheduled.`}
           onConfirm={handleClose}
-          confirmText="Confirm & Dismiss"
+          confirmText="Acknowledge"
         />
       </Modal>
     );

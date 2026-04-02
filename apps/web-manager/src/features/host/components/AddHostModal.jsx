@@ -74,14 +74,14 @@ export default function AddHostModal({ isOpen, onClose }) {
       footer={
         <>
           <Button variant="secondary" onClick={handleClose} disabled={loading}>
-            Cancel
+            Discard
           </Button>
           <Button
             variant="primary"
             onClick={handleSubmit}
             loading={loading}
             icon="bolt"
-            className="min-w-[130px]"
+            className="min-w-[140px]"
           >
             Connect
           </Button>

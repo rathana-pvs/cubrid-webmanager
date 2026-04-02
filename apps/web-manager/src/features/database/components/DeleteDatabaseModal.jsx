@@ -142,7 +142,7 @@ export default function DeleteDatabaseModal() {
           title="Instance Deleted"
           message={`All volumes and associated metadata for ${selectedDatabase} have been permanently removed.`}
           onConfirm={handleClose}
-          confirmText="Close"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -184,11 +184,12 @@ export default function DeleteDatabaseModal() {
             )}
           </div>
           <div className="flex items-center gap-2.5">
-            <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+            <Button variant="ghost" onClick={handleClose}>Discard</Button>
             <Button
+              variant="danger"
               onClick={handleConfirm}
               icon={step === 1 ? 'arrow_forward' : 'delete_forever'}
-              className="bg-rose-500 hover:bg-rose-600! text-white! border-rose-500!"
+              className="min-w-[140px]"
             >
               {step === 1 ? 'Proceed to verify' : 'Delete permanently'}
             </Button>

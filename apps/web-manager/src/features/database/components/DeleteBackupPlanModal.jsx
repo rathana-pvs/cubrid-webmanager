@@ -92,7 +92,7 @@ export default function DeleteBackupPlanModal() {
           title="Registry Purged"
           message="The plan has been removed from the system scheduler."
           onConfirm={handleClose}
-          confirmText="Dismiss"
+          confirmText="Acknowledge"
         />
       </Modal>
     );
@@ -125,8 +125,8 @@ export default function DeleteBackupPlanModal() {
       maxWidth="440px"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>Cancel</Button>
-          <Button variant="danger" onClick={handleDelete} icon="delete" className="min-w-[130px]">Execute Discard</Button>
+          <Button variant="ghost" onClick={handleClose}>Discard</Button>
+          <Button variant="danger" onClick={handleDelete} icon="delete" className="min-w-[140px]">Execute Discard</Button>
         </div>
       }
     >

@@ -182,7 +182,7 @@ export default function ImportExportHostModal() {
               onClick={() => dispatch(closeImportExportModal())}
               disabled={isProcessing}
             >
-              Cancel
+              Discard
             </Button>
             <Button 
               variant="primary" 
