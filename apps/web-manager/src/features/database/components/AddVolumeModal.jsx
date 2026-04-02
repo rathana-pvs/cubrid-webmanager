@@ -8,6 +8,12 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -77,8 +83,17 @@ export default function AddVolumeModal() {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
+  const { 
+    state, 
+    error, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
   
   const [volStatus, setVolStatus] = useState({ freespace: '', volpath: '' });
   const [volName, setVolName] = useState('');
@@ -92,8 +107,7 @@ export default function AddVolumeModal() {
 
   useEffect(() => {
     if (isAddVolumeModalOpen && selectedHostUid && selectedDatabase) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
+      resetAction();
       const fetchStatus = async () => {
         setFetchingStatus(true);
         try {
@@ -111,15 +125,14 @@ export default function AddVolumeModal() {
       setPurpose('generic');
       setSizeMB(512);
     }
-  }, [isAddVolumeModalOpen, selectedHostUid, selectedDatabase]);
+  }, [isAddVolumeModalOpen, selectedHostUid, selectedDatabase, resetAction]);
 
   if (!isAddVolumeModalOpen) return null;
 
   const handleAdd = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
     
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
 
     try {
       const payload = {
@@ -130,10 +143,9 @@ export default function AddVolumeModal() {
         size_need_mb: `${sizeMB.toFixed(3)}(MB)`
       };
       await dispatch(addVolume({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
-      setView(VIEW_SUCCESS);
+      endSuccess();
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'The volume allocation process was interrupted. Ensure the target directory is writable.'));
-      setView(VIEW_ERROR);
+      endError(err);
     }
   };
 
@@ -141,87 +153,43 @@ export default function AddVolumeModal() {
   const formatSize = (mb) => mb >= 1024 ? `${(mb / 1024).toFixed(1)} GB` : `${mb} MB`;
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
-      <Modal isOpen title="Provisioning Storage" icon="add_to_drive" onClose={handleClose} maxWidth="560px">
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-bk-yellow/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-bk-yellow">
-              <Icon name="storage" size="md" weight={400} className="animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">Allocating Block Storage</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-              Provisioning <span className="font-black text-slate-900 dark:text-white">{formatSize(sizeMB)}</span> for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span> instance.
-            </Typography>
-          </div>
-          <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
-            <div className="h-full bg-bk-yellow rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
-          </div>
-        </div>
+      <Modal isOpen title="Volume Allocation" icon="add_box" onClose={handleClose} maxWidth="720px">
+        <ModalStatusLoading 
+          title="Scaling Foundation" 
+          subtitle={`The system is creating and formatting a new ${purpose} volume for ${selectedDatabase}.`} 
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
-      <Modal isOpen title="Volume Provisioned" icon="add_to_drive" iconVariant="success" onClose={handleClose} maxWidth="560px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-            <Icon name="verified" size="lg" weight={700} className="text-white" />
-          </div>
-
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Storage Expanded
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed max-w-[340px] mx-auto">
-              A new <span className="font-bold text-slate-900 dark:text-white">{formatSize(sizeMB)} {purpose}</span> volume has been successfully attached and mounted.
-            </Typography>
-          </div>
-
-          <Button variant="secondary" onClick={handleClose}>Access Instance</Button>
-        </div>
+      <Modal isOpen title="Allocation Successful" icon="add_box" iconVariant="success" onClose={handleClose} maxWidth="720px">
+        <ModalStatusSuccess 
+          title="Storage Expanded"
+          message={`A new volume "${volName}" has been successfully added to the system registry for ${selectedDatabase}.`}
+          onConfirm={handleClose}
+          confirmText="Initialize and Exit"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Provisioning Failed" icon="add_to_drive" iconVariant="danger" onClose={handleClose} maxWidth="560px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-            <Icon name="error" size="md" weight={300} className="text-white" />
-          </div>
-
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Allocation Interrupted
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">
-              System could not finalize the volume provision for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>.
-            </Typography>
-          </div>
-
-          <div className="w-full max-w-[420px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-            <Typography variant="caption" className="text-rose-400 font-mono leading-relaxed break-words block text-center uppercase tracking-widest text-[10px] font-bold">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>
-              Retry Provision
-            </Button>
-          </div>
-        </div>
+      <Modal isOpen title="Allocation Interrupted" icon="add_box" iconVariant="danger" onClose={resetAction} maxWidth="720px">
+        <ModalStatusError 
+          title="Scaling Failed"
+          error={error}
+          onRetry={handleAdd}
+          onCancel={resetAction}
+          retryText="Retry Registry Expansion"
+          cancelText="Discard"
+        />
       </Modal>
     );
   }
@@ -295,7 +263,7 @@ export default function AddVolumeModal() {
         {/* Purpose Selector */}
         <div className="space-y-4">
           <div className="flex items-center gap-3">
-             <Icon name="architecture" size="14px" weight={400} className="text-bk-yellow" />
+             <Icon name="architecture" size="14px" weight={400} className="text-amber-500" />
              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Storage Optimization</span>
           </div>
           <div className="grid grid-cols-4 gap-2.5">
@@ -335,7 +303,7 @@ export default function AddVolumeModal() {
         {/* Allocation Size */}
         <div className="space-y-5">
            <div className="flex items-center gap-3">
-             <Icon name="straighten" size="14px" weight={400} className="text-bk-yellow" />
+             <Icon name="straighten" size="14px" weight={400} className="text-amber-500" />
              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Allocation Strategy</span>
           </div>
 
@@ -347,8 +315,8 @@ export default function AddVolumeModal() {
                 onClick={() => setSizeMB(preset.mb)}
                 className={`px-3 py-1.5 rounded-xl border text-[10px] font-black transition-all uppercase tracking-[0.1em]
                   ${sizeMB === preset.mb
-                    ? 'bg-bk-yellow/10 border-bk-yellow/40 text-bk-yellow shadow-xs'
-                    : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 text-slate-400 hover:border-bk-yellow/30 hover:text-bk-yellow'
+                    ? 'bg-amber-500/10 border-amber-500/40 text-amber-500 shadow-xs'
+                    : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 text-slate-400 hover:border-amber-500/30 hover:text-amber-500'
                   }`}
               >
                 {preset.label}
@@ -370,7 +338,7 @@ export default function AddVolumeModal() {
             <div className="space-y-1">
               <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 block">Blocks Allocated</span>
               <div className="h-10 px-4 flex items-center justify-between bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-xl">
-                <span className="text-[13px] font-black font-mono text-bk-yellow tabular-nums">{numberOfPages.toLocaleString()}</span>
+                <span className="text-[13px] font-black font-mono text-amber-500 tabular-nums">{numberOfPages.toLocaleString()}</span>
                 <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black">pages</span>
               </div>
             </div>
@@ -381,7 +349,7 @@ export default function AddVolumeModal() {
             <div className="flex items-center justify-between">
               <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Provision Visualizer</span>
               <div className="flex items-center gap-2">
-                <span className={`text-[13px] font-black font-mono ${selectedPurpose?.color || 'text-bk-yellow'}`}>
+                <span className={`text-[13px] font-black font-mono ${selectedPurpose?.color || 'text-amber-500'}`}>
                   {formatSize(sizeMB)}
                 </span>
                 <Icon name="keyboard_double_arrow_right" size="14px" className="text-slate-300 dark:text-white/10" />
@@ -393,7 +361,7 @@ export default function AddVolumeModal() {
                   purpose === 'data' ? 'bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.4)]' :
                   purpose === 'index' ? 'bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.4)]' :
                   purpose === 'temp' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' :
-                  'bg-bk-yellow shadow-[0_0_8px_rgba(255,193,7,0.4)]'
+                  'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
                 }`}
                 style={{ width: `${Math.min((sizeMB / 4096) * 100, 100)}%` }}
               />
@@ -407,7 +375,7 @@ export default function AddVolumeModal() {
         {/* Volume Identification */}
         <div className="space-y-4">
            <div className="flex items-center gap-3">
-             <Icon name="label" size="14px" weight={400} className="text-bk-yellow" />
+             <Icon name="label" size="14px" weight={400} className="text-amber-500" />
              <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Instance Registry</span>
           </div>
           <div className="grid grid-cols-1 gap-4">
@@ -419,12 +387,12 @@ export default function AddVolumeModal() {
         {/* Guidance Disclaimer */}
         <div className="flex items-start gap-4 p-4 bg-slate-50/50 dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-2xl shadow-xs">
           <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-200 dark:border-white/10">
-            <Icon name="shield_lock" size="sm" weight={300} className="text-bk-yellow" />
+            <Icon name="shield_lock" size="sm" weight={300} className="text-amber-500" />
           </div>
           <div className="space-y-0.5">
             <Typography variant="p" className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Privileged Operation</Typography>
             <Typography variant="caption" className="text-slate-500 dark:text-slate-500 font-medium leading-relaxed italic block">
-              Ensure target mount points have <span className="font-bold non-italic text-bk-yellow">write permissions</span> for the engine service account. Configuration updates persist instantly.
+              Ensure target mount points have <span className="font-bold non-italic text-amber-500">write permissions</span> for the engine service account. Configuration updates persist instantly.
             </Typography>
           </div>
         </div>

@@ -10,6 +10,12 @@ import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -23,23 +29,32 @@ export default function DeleteDatabaseModal() {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
-  const [view, setView] = useState(VIEW_FORM);
+  const { 
+    state, 
+    error, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
+
   const [step, setStep] = useState(1); // 1: Review, 2: Auth
   const [deleteBackup, setDeleteBackup] = useState(false);
   const [volumeInfo, setVolumeInfo] = useState([]);
   const [fetchingVolumes, setFetchingVolumes] = useState(false);
   const [dbId, setDbId] = useState('dba');
   const [password, setPassword] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
 
   useEffect(() => {
     if (isDeleteDBModalOpen && selectedDatabase && selectedHostUid) {
       setStep(1);
       setDbId('dba');
       setPassword('');
-      setErrorMsg('');
       setDeleteBackup(false);
-      setView(VIEW_FORM);
+      resetAction();
       setFetchingVolumes(true);
       databaseApi.getVolumeInfo(selectedHostUid, selectedDatabase)
         .then(res => {
@@ -61,7 +76,7 @@ export default function DeleteDatabaseModal() {
         .catch(() => {})
         .finally(() => setFetchingVolumes(false));
     }
-  }, [isDeleteDBModalOpen, selectedDatabase, selectedHostUid]);
+  }, [isDeleteDBModalOpen, selectedDatabase, selectedHostUid, resetAction]);
 
   if (!isDeleteDBModalOpen) return null;
 
@@ -71,7 +86,7 @@ export default function DeleteDatabaseModal() {
       return; 
     }
 
-    setView(VIEW_LOADING);
+    startAction();
     try {
       const loginRes = await databaseApi.loginDatabase(selectedHostUid, selectedDatabase, {
         id: dbId, password,
@@ -84,13 +99,12 @@ export default function DeleteDatabaseModal() {
         })).unwrap();
         
         dispatch(fetchDatabaseStartInfo(selectedHostUid));
-        setView(VIEW_SUCCESS);
+        endSuccess(`Instance "${selectedDatabase}" and all associated volumes have been permanently removed.`);
       } else {
         throw loginRes;
       }
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'Authentication or operation failed. Verify credentials and instance state.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'Authentication or operation failed. Verify credentials and instance state.'));
     }
   };
 
@@ -108,104 +122,44 @@ export default function DeleteDatabaseModal() {
     typeColors[type] || 'text-slate-400 bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10';
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Security Checkpoint" icon="delete_forever" onClose={handleClose} maxWidth="440px">
-        <div className="flex flex-col items-center justify-center py-14 space-y-5 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-rose-500/10" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-rose-500 animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-rose-500/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_10px_3px_rgba(244,63,94,0.3)] animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">Erasing Data Assets</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[280px] mx-auto">
-              Authorizing destruction and removing all physical volumes for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>.
-            </Typography>
-          </div>
-          <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-rose-500 rounded-full" style={{ animation: 'modalSlideRose 1.5s ease-in-out infinite' }} />
-          </div>
-          <style>{`
-            @keyframes modalSlideRose {
-              0%   { transform: translateX(-100%); width: 50%; }
-              50%  { transform: translateX(100%);  width: 60%; }
-              100% { transform: translateX(200%);  width: 50%; }
-            }
-          `}</style>
-        </div>
+        <ModalStatusLoading 
+          title="Erasing Data Assets" 
+          subtitle={`Authorizing destruction and removing all physical volumes for ${selectedDatabase}.`}
+          variant="danger"
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="Operation Complete" icon="delete_forever" iconVariant="success" onClose={handleClose} maxWidth="440px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-              <Icon name="check" size="lg" weight={700} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Instance Deleted
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[280px] mx-auto">
-              All volumes and associated metadata for <span className="font-bold text-slate-900 dark:text-white">{selectedDatabase}</span> have been permanently removed.
-            </Typography>
-          </div>
-
-          <Button variant="secondary" onClick={handleClose}>Close</Button>
-        </div>
+        <ModalStatusSuccess 
+          title="Instance Deleted"
+          message={`All volumes and associated metadata for ${selectedDatabase} have been permanently removed.`}
+          onConfirm={handleClose}
+          confirmText="Close"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title={step === 2 ? 'Authorization Error' : 'Capture Failed'} icon="delete_forever" iconVariant="danger" onClose={handleClose} maxWidth="440px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-              <Icon name="error" size="md" weight={300} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Action Interrupted
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[280px] mx-auto">
-              The destruction sequence for <span className="font-bold text-slate-900 dark:text-white">{selectedDatabase}</span> was halted due to an issue.
-            </Typography>
-          </div>
-
-          <div className="w-full max-w-[340px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">System Log</span>
-            </div>
-            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="danger" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); setPassword(''); }}>
-              Retry
-            </Button>
-          </div>
-        </div>
+      <Modal isOpen title={step === 2 ? 'Authorization Error' : 'Capture Failed'} icon="delete_forever" iconVariant="danger" onClose={resetAction} maxWidth="440px">
+        <ModalStatusError 
+          title="Action Interrupted"
+          error={error}
+          onRetry={step === 2 ? handleConfirm : undefined}
+          onCancel={resetAction}
+          retryText="Retry"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }

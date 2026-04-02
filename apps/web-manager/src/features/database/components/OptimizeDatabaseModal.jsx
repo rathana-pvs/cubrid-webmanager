@@ -53,7 +53,7 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
         disabled={disabled || isLoading}
         onClick={() => setIsOpen(!isOpen)}
         className={`w-full h-11 px-4 flex items-center justify-between bg-white dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl shadow-xs transition-all text-left outline-hidden ${
-          isOpen ? 'ring-2 ring-bk-yellow/20 border-bk-yellow/60' : 'hover:border-bk-yellow/40'
+          isOpen ? 'ring-2 ring-amber-500/20 border-amber-500/60' : 'hover:border-amber-500/40'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
         <div className="flex items-center gap-3 overflow-hidden">
@@ -61,7 +61,7 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
             name={value ? 'table_view' : 'database'} 
             size="sm" 
             weight={300} 
-            className={value ? 'text-bk-yellow' : 'text-slate-400'} 
+            className={value ? 'text-amber-500' : 'text-slate-400'} 
           />
         <span className={`text-[12px] font-bold truncate ${value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
           {value ? value : 'Entire Registry (Global Scan)'}
@@ -69,13 +69,13 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
         </div>
         <div className="flex items-center gap-2 shrink-0">
           {isLoading && <Spinner size="xs" />}
-          <Icon name="expand_more" size="sm" weight={300} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-bk-yellow' : ''}`} />
+          <Icon name="expand_more" size="sm" weight={300} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-500' : ''}`} />
         </div>
       </button>
 
       {isOpen && (
         <div className="absolute top-[calc(100%+8px)] left-0 right-0 bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-110 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col max-h-[320px]">
-          <div className="p-3 border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-bk-main/40">
+          <div className="p-3 border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-background-dark/40">
             <Input 
               size="sm"
               icon="search"
@@ -92,11 +92,11 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
                 type="button"
                 onClick={() => { onChange(''); setIsOpen(false); }}
                 className={`w-full px-4 py-3 flex items-center gap-3 text-left transition-colors border-b border-slate-100 dark:border-slate-800/40 group ${
-                  value === '' ? 'bg-bk-yellow/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'
+                  value === '' ? 'bg-amber-500/10' : 'hover:bg-slate-50 dark:hover:bg-white/5'
                 }`}
               >
-                <div className={`w-2 h-2 rounded-full transition-all ${value === '' ? 'bg-bk-yellow scale-125 shadow-[0_0_8px_rgba(255,188,4,0.6)]' : 'bg-slate-300 dark:bg-slate-700 group-hover:bg-bk-yellow/40'}`}></div>
-                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${value === '' ? 'text-bk-yellow' : 'text-slate-500 dark:text-slate-400'}`}>Entire database</span>
+                <div className={`w-2 h-2 rounded-full transition-all ${value === '' ? 'bg-amber-500 scale-125 shadow-[0_0_8px_rgba(255,188,4,0.6)]' : 'bg-slate-300 dark:bg-slate-700 group-hover:bg-amber-500/40'}`}></div>
+                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${value === '' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}>Entire database</span>
               </button>
             )}
 
@@ -118,7 +118,7 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
               <div className="py-2">
                 <div className="px-4 py-1.5 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-bk-side/95 backdrop-blur-md z-10 border-b border-slate-100 dark:border-slate-800/50 mb-1">
                   <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">User Tables</span>
-                  <span className="text-[9px] bg-slate-100 dark:bg-bk-main/50 px-2 py-0.5 rounded-full text-slate-500 font-mono font-bold">{filteredUserClasses.length}</span>
+                  <span className="text-[9px] bg-slate-100 dark:bg-background-dark/50 px-2 py-0.5 rounded-full text-slate-500 font-mono font-bold">{filteredUserClasses.length}</span>
                 </div>
                 <div className="px-1.5 space-y-0.5">
                   {filteredUserClasses.map((cls) => (
@@ -128,14 +128,14 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
                       onClick={() => { onChange(cls.classname); setIsOpen(false); }}
                       className={`w-full px-3 py-2.5 flex items-center gap-3 text-left transition-all rounded-xl group ${
                         value === cls.classname 
-                          ? 'bg-bk-yellow text-bk-side font-bold shadow-lg shadow-bk-yellow/10' 
-                          : 'text-slate-600 dark:text-slate-400 hover:bg-bk-yellow/5 hover:text-bk-yellow'
+                          ? 'bg-amber-500 text-bk-side font-bold shadow-lg shadow-amber-500/10' 
+                          : 'text-slate-600 dark:text-slate-400 hover:bg-amber-500/5 hover:text-amber-500'
                       }`}
                     >
-                      <Icon name="table" size="sm" weight={300} className={value === cls.classname ? 'text-bk-side' : 'text-slate-400 group-hover:text-bk-yellow'} />
+                      <Icon name="table" size="sm" weight={300} className={value === cls.classname ? 'text-bk-side' : 'text-slate-400 group-hover:text-amber-500'} />
                       <div className="flex flex-col min-w-0">
                         <span className="text-[11px] font-black truncate leading-tight select-none">{cls.classname}</span>
-                        <span className={`text-[9px] font-medium truncate transition-opacity ${value === cls.classname ? 'text-bk-side/60' : 'text-slate-400 group-hover:text-bk-yellow/60'}`}>Owner: {cls.owner}</span>
+                        <span className={`text-[9px] font-medium truncate transition-opacity ${value === cls.classname ? 'text-bk-side/60' : 'text-slate-400 group-hover:text-amber-500/60'}`}>Owner: {cls.owner}</span>
                       </div>
                     </button>
                   ))}
@@ -147,7 +147,7 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
               <div className="py-2 border-t border-slate-100 dark:border-slate-800/80">
                 <div className="px-4 py-1.5 flex items-center justify-between sticky top-0 bg-white/95 dark:bg-bk-side/95 backdrop-blur-md z-10 border-b border-slate-100 dark:border-slate-800/50 mb-1">
                   <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500">Internal Catalog</span>
-                  <span className="text-[9px] bg-slate-100 dark:bg-bk-main/50 px-2 py-0.5 rounded-full text-slate-500 font-mono font-bold">{filteredSystemClasses.length}</span>
+                  <span className="text-[9px] bg-slate-100 dark:bg-background-dark/50 px-2 py-0.5 rounded-full text-slate-500 font-mono font-bold">{filteredSystemClasses.length}</span>
                 </div>
                 <div className="px-1.5 space-y-0.5">
                   {filteredSystemClasses.map((cls) => (
@@ -157,14 +157,14 @@ const ClassSelect = ({ value, userClasses, systemClasses, onChange, disabled, is
                       onClick={() => { onChange(cls.classname); setIsOpen(false); }}
                       className={`w-full px-3 py-2.5 flex items-center gap-3 text-left transition-all rounded-xl group ${
                         value === cls.classname 
-                        ? 'bg-bk-yellow text-bk-side font-bold shadow-lg shadow-bk-yellow/10' 
-                        : 'text-slate-600 dark:text-slate-400 hover:bg-bk-yellow/5 hover:text-bk-yellow'
+                        ? 'bg-amber-500 text-bk-side font-bold shadow-lg shadow-amber-500/10' 
+                        : 'text-slate-600 dark:text-slate-400 hover:bg-amber-500/5 hover:text-amber-500'
                       }`}
                     >
-                      <Icon name="manufacturing" size="sm" weight={300} className={value === cls.classname ? 'text-bk-side' : 'text-slate-400 group-hover:text-bk-yellow'} />
+                      <Icon name="manufacturing" size="sm" weight={300} className={value === cls.classname ? 'text-bk-side' : 'text-slate-400 group-hover:text-amber-500'} />
                       <div className="flex flex-col min-w-0">
                         <span className="text-[11px] font-black truncate leading-tight select-none">{cls.classname}</span>
-                        <span className={`text-[9px] font-medium truncate transition-opacity ${value === cls.classname ? 'text-bk-side/60' : 'text-slate-400 group-hover:text-bk-yellow/60'}`}>System object</span>
+                        <span className={`text-[9px] font-medium truncate transition-opacity ${value === cls.classname ? 'text-bk-side/60' : 'text-slate-400 group-hover:text-amber-500/60'}`}>System object</span>
                       </div>
                     </button>
                   ))}
@@ -260,9 +260,9 @@ export default function OptimizeDatabaseModal() {
         <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-bk-yellow/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-bk-yellow">
+            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500 animate-spin" style={{ animationDuration: '0.9s' }} />
+            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-amber-500/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
+            <div className="absolute inset-0 flex items-center justify-center text-amber-500">
               <Icon name="auto_fix_high" size="md" weight={400} className="animate-pulse" />
             </div>
           </div>
@@ -273,7 +273,7 @@ export default function OptimizeDatabaseModal() {
             </Typography>
           </div>
           <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
-            <div className="h-full bg-bk-yellow rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
+            <div className="h-full bg-amber-500 rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
           </div>
           <style>{`
             @keyframes modalSlide {
@@ -392,8 +392,8 @@ export default function OptimizeDatabaseModal() {
         </div>
 
         <div className="space-y-5">
-          <div className="p-4 bg-bk-yellow/5 border border-bk-yellow/15 rounded-2xl flex gap-4 transition-all">
-            <div className="w-10 h-10 rounded-xl bg-bk-yellow/10 flex items-center justify-center text-bk-yellow border border-bk-yellow/20 shrink-0">
+          <div className="p-4 bg-amber-500/5 border border-amber-500/15 rounded-2xl flex gap-4 transition-all">
+            <div className="w-10 h-10 rounded-xl bg-amber-500/10 flex items-center justify-center text-amber-500 border border-amber-500/20 shrink-0">
               <Icon name="insights" size="md" weight={300} />
             </div>
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-bold leading-relaxed">
@@ -410,7 +410,7 @@ export default function OptimizeDatabaseModal() {
                   <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Traversing Catalog</span>
                 </div>
               ) : (
-                <span className="text-[9px] font-black uppercase tracking-widest text-bk-yellow">{totalTables.toLocaleString()} objects found</span>
+                <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">{totalTables.toLocaleString()} objects found</span>
               )}
             </div>
             

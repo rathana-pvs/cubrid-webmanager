@@ -1,18 +1,19 @@
 import React from 'react';
 
 /**
- * LoadingOverlay - Premium centralized loading design.
- * 
- * Supports dynamic context-aware labels via 'title' and 'subtitle'.
+ * A sleek, high-fidelity loading overlay for in-place actions.
+ * Adopts the premium design from common/LoadingOverlay while maintaining 
+ * context-aware dynamic feedback.
  */
-const LoadingOverlay = ({
-  isVisible,
-  title = 'Processing...',
-  subtitle = '',
-  className = ''
+export const RefreshingOverlay = ({ 
+  show, 
+  title = "Processing...", 
+  subtitle = "",
+  className = "" 
 }) => {
-  if (!isVisible) return null;
+  if (!show) return null;
 
+  // Standardized formatting for action-based text
   // Standardized formatting for action-based text
   const formatText = (text) => {
     if (!text) return "";
@@ -122,4 +123,3 @@ const LoadingOverlay = ({
   );
 };
 
-export default LoadingOverlay;

@@ -197,7 +197,6 @@ const userSlice = createSlice({
       })
       .addCase(createDatabaseUser.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.isCreateUserModalOpen = false;
         // Optionally refetch users or update state manually
       })
       .addCase(createDatabaseUser.rejected, (state, action) => {
@@ -211,7 +210,6 @@ const userSlice = createSlice({
       })
       .addCase(updateDatabaseUser.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.isEditUserModalOpen = false;
       })
       .addCase(updateDatabaseUser.rejected, (state, action) => {
         state.actionLoading = false;
@@ -224,7 +222,6 @@ const userSlice = createSlice({
       })
       .addCase(dropDatabaseUser.fulfilled, (state, action) => {
         state.actionLoading = false;
-        state.isDropUserModalOpen = false;
         const { dbname, userName } = action.payload;
         if (state.databaseUsers[dbname]) {
           state.databaseUsers[dbname] = state.databaseUsers[dbname].filter(u => {

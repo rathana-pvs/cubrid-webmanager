@@ -194,6 +194,8 @@ const initialState = {
   adminLogsByHost: {}, // { hostUid: [logs] }
   loading: false,
   actionLoading: false,
+  lastActionTarget: null, // Track broker name
+  lastActionType: null,   // Track 'start' or 'stop'
   logsLoading: false,
   adminLogsLoading: false,
   cmsLogsByHost: {}, // { hostUid: { accesslog: [], errorlog: [] } }
@@ -270,23 +272,35 @@ const brokerSlice = createSlice({
         state.detailedStatus[brokerName].loading = false;
         state.detailedStatus[brokerName].error = action.payload;
       })
-      .addCase(startBroker.pending, (state) => {
+      .addCase(startBroker.pending, (state, action) => {
         state.actionLoading = true;
+        state.lastActionTarget = action.meta.arg?.brokerName;
+        state.lastActionType = 'start';
       })
       .addCase(startBroker.fulfilled, (state) => {
         state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
       })
       .addCase(startBroker.rejected, (state) => {
         state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
       })
-      .addCase(stopBroker.pending, (state) => {
+      .addCase(stopBroker.pending, (state, action) => {
         state.actionLoading = true;
+        state.lastActionTarget = action.meta.arg?.brokerName;
+        state.lastActionType = 'stop';
       })
       .addCase(stopBroker.fulfilled, (state) => {
         state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
       })
       .addCase(stopBroker.rejected, (state) => {
         state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
       })
       .addCase(fetchBrokerLogs.pending, (state) => {
         state.logsLoading = true;

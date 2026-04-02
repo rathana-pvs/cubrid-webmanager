@@ -67,7 +67,7 @@ export default function AutoBackupLogModal() {
       header: 'Backup ID', 
       accessor: 'backupid',
       render: (val) => (
-        <span className="text-amber-600 dark:text-bk-yellow italic font-mono">{val}</span>
+        <span className="text-amber-600 dark:text-amber-500 italic font-mono">{val}</span>
       )
     },
     { 

@@ -9,6 +9,12 @@ import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -69,9 +75,17 @@ export default function RestoreDatabaseModal() {
   } = useSelector((state) => state.databaseOperation);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
 
   const [formData, setFormData] = useState({ selectedBackup: null, recoveryPath: '', isPartial: false });
   const [filter, setFilter] = useState('all'); // 'all' | 0 | 1 | 2
@@ -105,12 +119,10 @@ export default function RestoreDatabaseModal() {
     if (isRestoreDatabaseModalOpen && selectedHostUid && selectedDatabase) {
       setFormData({ selectedBackup: null, recoveryPath: '', isPartial: false });
       setFilter('all');
-      setView(VIEW_FORM);
-      setErrorMsg('');
-      setSuccessMsg('');
+      resetAction();
       dispatch(fetchBackupList({ hostUid: selectedHostUid, dbname: selectedDatabase }));
     }
-  }, [isRestoreDatabaseModalOpen, selectedHostUid, selectedDatabase, dispatch]);
+  }, [isRestoreDatabaseModalOpen, selectedHostUid, selectedDatabase, dispatch, resetAction]);
 
   if (!isRestoreDatabaseModalOpen) return null;
 
@@ -118,12 +130,11 @@ export default function RestoreDatabaseModal() {
 
   const handleRestore = async () => {
     if (!formData.selectedBackup) {
-      setErrorMsg('Please select a backup point to restore from.');
-      setView(VIEW_ERROR);
+      endError('Please select a backup point to restore from.');
       return;
     }
 
-    setView(VIEW_LOADING);
+    startAction();
     try {
       const backup = allBackups.find(b => b.pathname === formData.selectedBackup);
       await dispatch(restoreDatabase({
@@ -137,11 +148,9 @@ export default function RestoreDatabaseModal() {
           recoverypath: formData.recoveryPath || '',
         }
       })).unwrap();
-      setSuccessMsg(`Successfully restored "${selectedDatabase}" from snapshot ${backup.date || backup.pathname}.`);
-      setView(VIEW_SUCCESS);
+      endSuccess(`Successfully restored "${selectedDatabase}" from snapshot ${backup.date || backup.pathname}.`);
     } catch (error) {
-      setErrorMsg(typeof error === 'string' ? error : (error.message || 'An unexpected error occurred during restore.'));
-      setView(VIEW_ERROR);
+      endError(typeof error === 'string' ? error : (error.message || 'An unexpected error occurred during restore.'));
     }
   };
 
@@ -150,135 +159,44 @@ export default function RestoreDatabaseModal() {
   const levelCounts = { 0: allBackups.filter(b => b.level === 0).length, 1: allBackups.filter(b => b.level === 1).length, 2: allBackups.filter(b => b.level === 2).length };
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
-      <Modal isOpen title="Restoring Database" icon="settings_backup_restore" onClose={handleClose} maxWidth="600px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative w-[72px] h-[72px]">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div
-              className="absolute inset-0 rounded-full border-2 border-transparent border-t-rose-500 animate-spin"
-              style={{ animationDuration: '0.9s' }}
-            />
-            <div
-              className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-rose-500/35 animate-spin"
-              style={{ animationDuration: '1.7s', animationDirection: 'reverse' }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-rose-500 shadow-[0_0_10px_3px_rgba(244,63,94,0.3)] animate-pulse" />
-            </div>
-          </div>
-
-          <div className="space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Reconstructing Instance
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium max-w-[320px] mx-auto leading-relaxed">
-              Applying snapshot volumes to <span className="text-slate-900 dark:text-white font-black">{selectedDatabase}</span>. This may take several minutes.
-            </Typography>
-          </div>
-
-          <div className="w-44 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-rose-500 rounded-full"
-              style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }}
-            />
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/5 border border-rose-500/15">
-            <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-rose-500">In Progress</span>
-          </div>
-
-          <style>{`
-            @keyframes modalSlide {
-              0%   { transform: translateX(-100%); width: 50%; }
-              50%  { transform: translateX(100%);  width: 60%; }
-              100% { transform: translateX(200%);  width: 50%; }
-            }
-          `}</style>
-        </div>
+      <Modal isOpen title="Restoring Database" icon="settings_backup_restore" onClose={handleClose} maxWidth="600px" iconVariant="danger">
+        <ModalStatusLoading 
+          title="Reconstructing Instance" 
+          subtitle={`Applying snapshot volumes to ${selectedDatabase}. This may take several minutes.`}
+          variant="danger"
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
-      <Modal isOpen title="Database Restore" icon="settings_backup_restore" iconVariant="success" onClose={handleClose} maxWidth="600px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-              <Icon name="check" size="lg" weight={700} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Restore Completed
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[340px] mx-auto">
-              Instance <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span> has been successfully rolled back to the selected state.
-            </Typography>
-          </div>
-
-          {successMsg && (
-            <div className="w-full max-w-[420px] bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-4 py-3.5 text-left">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Icon name="history" size="xs" weight={300} className="text-emerald-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Trace Summary</span>
-              </div>
-              <Typography variant="caption" className="text-emerald-600 dark:text-emerald-400/80 font-medium leading-relaxed break-all">
-                {successMsg}
-              </Typography>
-            </div>
-          )}
-
-          <Button variant="secondary" onClick={handleClose}>Close</Button>
-        </div>
+      <Modal isOpen title="Restore Successful" icon="settings_backup_restore" iconVariant="success" onClose={handleClose} maxWidth="600px">
+        <ModalStatusSuccess 
+          title="Restore Completed"
+          message={`Instance ${selectedDatabase} has been successfully rolled back to the selected state.`}
+          onConfirm={handleClose}
+          confirmText="Close"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Database Restore" icon="settings_backup_restore" iconVariant="danger" onClose={handleClose} maxWidth="600px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-              <Icon name="error" size="md" weight={300} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Restoration Interrupted
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[320px] mx-auto">
-              We encountered a critical issue while attempting to reconstruct the instance.
-            </Typography>
-          </div>
-
-          <div className="w-full max-w-[420px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">Error Detail</span>
-            </div>
-            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Close</Button>
-            <Button variant="danger" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>
-              Try Again
-            </Button>
-          </div>
-        </div>
+      <Modal isOpen title="Recovery Failed" icon="restore" iconVariant="danger" onClose={resetAction} maxWidth="900px">
+        <ModalStatusError 
+          title="Transaction Dropped"
+          error={actionError}
+          onRetry={handleRestore}
+          onCancel={resetAction}
+          retryText="Retry Recovery"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }

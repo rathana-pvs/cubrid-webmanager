@@ -68,7 +68,7 @@ export default function AutoVolumeLogModal() {
     { 
       header: 'Volume Name', 
       accessor: 'volname',
-      render: (val) => <span className="text-amber-600 dark:text-bk-yellow font-mono italic">{val}</span>
+      render: (val) => <span className="text-amber-600 dark:text-amber-500 font-mono italic">{val}</span>
     },
     { 
       header: 'Purpose', 

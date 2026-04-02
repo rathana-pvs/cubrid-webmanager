@@ -11,6 +11,12 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -24,8 +30,17 @@ export default function LoadDatabaseModal() {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
 
   const [unloadList, setUnloadList] = useState([]);
   const [selectedUnload, setSelectedUnload] = useState("");
@@ -81,8 +96,7 @@ export default function LoadDatabaseModal() {
 
   useEffect(() => {
     if (isLoadDBModalOpen && selectedDatabase) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
+      resetAction();
       setFormData(prev => ({
         ...prev,
         targetDbName: selectedDatabase,
@@ -98,7 +112,7 @@ export default function LoadDatabaseModal() {
         }
       }).catch(err => console.error("Failed to fetch unload info:", err));
     }
-  }, [isLoadDBModalOpen, selectedDatabase, selectedHostUid]);
+  }, [isLoadDBModalOpen, selectedDatabase, selectedHostUid, resetAction]);
 
   if (!isLoadDBModalOpen) return null;
 
@@ -143,9 +157,7 @@ export default function LoadDatabaseModal() {
   const handleLoadDatabase = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
     
-    setView(VIEW_LOADING);
-    setErrorMsg('');
-
+    startAction();
     try {
       const toYesNo = (val) => (val ? "yes" : "no");
       let loadObject = {};
@@ -179,107 +191,52 @@ export default function LoadDatabaseModal() {
       };
 
       await databaseApi.loadDatabase(selectedHostUid, selectedDatabase, payload);
-      setView(VIEW_SUCCESS);
+      endSuccess(`Infrastructure for ${selectedDatabase} has been populated with the provided source payload.`);
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'The data injection process was interrupted. Verify the source payload integrity.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'The data injection process was interrupted. Verify the source payload integrity.'));
     }
   };
 
   const handleClose = () => dispatch(closeLoadDatabaseModal());
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Loading Instance" icon="download" onClose={handleClose} maxWidth="720px">
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-bk-yellow/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-bk-yellow">
-              <Icon name="download" size="md" weight={400} className="animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">Injecting Instance Payload</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-              Synchronizing schema objects and data records for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>.
-            </Typography>
-          </div>
-          <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
-            <div className="h-full bg-bk-yellow rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
-          </div>
-        </div>
+        <ModalStatusLoading 
+          title="Injecting Instance Payload" 
+          subtitle={`Synchronizing schema objects and data records for ${selectedDatabase}.`}
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="System Synchronized" icon="download" iconVariant="success" onClose={handleClose} maxWidth="720px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-              <Icon name="verified" size="lg" weight={700} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Injection Finalized
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed max-w-[340px] mx-auto">
-              Infrastructure for <span className="font-bold text-slate-900 dark:text-white">{selectedDatabase}</span> has been populated with the provided source payload.
-            </Typography>
-          </div>
-
-          <Button variant="secondary" onClick={handleClose}>Access Instance</Button>
-        </div>
+        <ModalStatusSuccess 
+          title="Injection Finalized"
+          message={`Infrastructure for ${selectedDatabase} has been populated with the provided source payload.`}
+          onConfirm={handleClose}
+          confirmText="Access Instance"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Sychnronization Failed" icon="download" iconVariant="danger" onClose={handleClose} maxWidth="720px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-              <Icon name="error" size="md" weight={300} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Action Interrupted
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">
-              System could not finalize the load process for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>.
-            </Typography>
-          </div>
-
-          <div className="w-full max-w-[420px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">Error Manifest</span>
-            </div>
-            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>
-              Retry Task
-            </Button>
-          </div>
-        </div>
+      <Modal isOpen title="Execution Error" icon="database_upload" iconVariant="danger" onClose={resetAction} maxWidth="700px">
+        <ModalStatusError 
+          title="Transaction Dropped"
+          error={actionError}
+          onRetry={handleLoadDatabase}
+          onCancel={resetAction}
+          retryText="Retry Submission"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }

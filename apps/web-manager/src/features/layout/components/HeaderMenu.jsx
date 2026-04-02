@@ -1,3 +1,5 @@
+import { RefreshingOverlay } from '../../../components/ds/feedback/RefreshingOverlay';
+import { useState } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { DropdownMenu, SubMenu, MenuItem, MenuDivider } from '../../../components/common/DropdownMenu';
 import { openTab, showStatusModal, setActiveMainTab } from '../layoutSlice';
@@ -6,12 +8,76 @@ import { startDatabase, stopDatabase, fetchDatabaseStartInfo } from '../../datab
 import { startBroker, stopBroker, fetchBrokerList } from '../../broker/brokerSlice';
 import { setAboutCubrid } from '../appBarSlice';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { Modal } from '../../../components/ds/layout/Modal';
+import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 
 export default function HeaderMenu() {
   const dispatch = useDispatch();
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
   const { brokers, selectedBroker } = useSelector((state) => state.broker, shallowEqual);
+
+  const { 
+    startAction, 
+    endError, 
+    resetAction,
+    isLoading: menuActionLoading,
+    isError: isMenuActionError,
+    error: menuActionError
+  } = useActionState();
+
+  const [loadingTitle, setLoadingTitle] = useState('Processing...');
+
+  const handleServiceAction = async (action) => {
+    if (!selectedHostUid) return;
+    setLoadingTitle(`${action === 'start' ? 'Starting' : 'Stopping'} Service`);
+    startAction();
+    try {
+      if (action === 'start') {
+        await dispatch(startService(selectedHostUid)).unwrap();
+      } else {
+        await dispatch(stopService(selectedHostUid)).unwrap();
+      }
+      resetAction();
+    } catch (err) {
+      endError(err);
+    }
+  };
+
+  const handleDatabaseAction = async (action) => {
+    if (!selectedDatabase) return;
+    setLoadingTitle(`${action === 'start' ? 'Starting' : 'Stopping'} database : ${selectedDatabase}`);
+    startAction();
+    try {
+      if (action === 'start') {
+        await dispatch(startDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase })).unwrap();
+      } else {
+        await dispatch(stopDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase })).unwrap();
+      }
+      dispatch(fetchDatabaseStartInfo(selectedHostUid));
+      resetAction();
+    } catch (err) {
+      endError(err);
+    }
+  };
+
+  const handleBrokerAction = async (action) => {
+    if (!selectedBroker) return;
+    setLoadingTitle(`${action === 'start' ? 'Starting' : 'Stopping'} Broker: ${selectedBroker}`);
+    startAction();
+    try {
+      if (action === 'start') {
+        await dispatch(startBroker({ hostUid: selectedHostUid, brokerName: selectedBroker })).unwrap();
+      } else {
+        await dispatch(stopBroker({ hostUid: selectedHostUid, brokerName: selectedBroker })).unwrap();
+      }
+      dispatch(fetchBrokerList(selectedHostUid));
+      resetAction();
+    } catch (err) {
+      endError(err);
+    }
+  };
 
   const handleExport = () => {
     dispatch(openImportExportModal('export'));
@@ -27,9 +93,17 @@ export default function HeaderMenu() {
     </span>
   );
 
-
   return (
     <nav className="flex items-center gap-6 font-sans">
+      {/* Loading Overlay - Using direct fixed component call */}
+      {menuActionLoading && (
+        <RefreshingOverlay 
+          show={true} 
+          title={loadingTitle} 
+          className="fixed z-[10002]"
+        />
+      )}
+
       <DropdownMenu label={<MenuLabel>File</MenuLabel>}>
         <MenuItem
           icon="add_box"
@@ -64,76 +138,40 @@ export default function HeaderMenu() {
         <MenuItem
           icon="play_arrow"
           label="Start Service"
-          disabled={!selectedHostUid}
-          onClick={() => dispatch(startService(selectedHostUid))}
+          disabled={!selectedHostUid || menuActionLoading}
+          onClick={() => handleServiceAction('start')}
         />
         <MenuItem
           icon="stop"
           label="Stop Service"
-          disabled={!selectedHostUid}
-          onClick={() => dispatch(stopService(selectedHostUid))}
+          disabled={!selectedHostUid || menuActionLoading}
+          onClick={() => handleServiceAction('stop')}
         />
         <MenuDivider />
         <MenuItem
           icon="database"
           label="Start Database"
-          disabled={!selectedDatabase || activeDatabases.includes(selectedDatabase)}
-          onClick={() => {
-            dispatch(startDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase }))
-              .unwrap()
-              .then(() => {
-                dispatch(fetchDatabaseStartInfo(selectedHostUid));
-              })
-              .catch((err) => {
-                dispatch(showStatusModal({ type: 'error', title: 'Action Failed', message: err }));
-              });
-          }}
+          disabled={!selectedDatabase || activeDatabases.includes(selectedDatabase) || menuActionLoading}
+          onClick={() => handleDatabaseAction('start')}
         />
         <MenuItem
           icon="database_off"
           label="Stop Database"
-          disabled={!selectedDatabase || !activeDatabases.includes(selectedDatabase)}
-          onClick={() => {
-            dispatch(stopDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase }))
-              .unwrap()
-              .then(() => {
-                dispatch(fetchDatabaseStartInfo(selectedHostUid));
-              })
-              .catch((err) => {
-                dispatch(showStatusModal({ type: 'error', title: 'Action Failed', message: err }));
-              });
-          }}
+          disabled={!selectedDatabase || !activeDatabases.includes(selectedDatabase) || menuActionLoading}
+          onClick={() => handleDatabaseAction('stop')}
         />
         <MenuDivider />
         <MenuItem
           icon="hub"
           label="Start Broker"
-          disabled={!selectedBroker || brokers.find(b => b.name === selectedBroker)?.state === 'ON'}
-          onClick={() => {
-            dispatch(startBroker({ hostUid: selectedHostUid, brokerName: selectedBroker }))
-              .unwrap()
-              .then(() => {
-                dispatch(fetchBrokerList(selectedHostUid));
-              })
-              .catch((err) => {
-                dispatch(showStatusModal({ type: 'error', title: 'Action Failed', message: err }));
-              });
-          }}
+          disabled={!selectedBroker || brokers.find(b => b.name === selectedBroker)?.state === 'ON' || menuActionLoading}
+          onClick={() => handleBrokerAction('start')}
         />
         <MenuItem
           icon="hub"
           label="Stop Broker"
-          disabled={!selectedBroker || brokers.find(b => b.name === selectedBroker)?.state !== 'ON'}
-          onClick={() => {
-            dispatch(stopBroker({ hostUid: selectedHostUid, brokerName: selectedBroker }))
-              .unwrap()
-              .then(() => {
-                dispatch(fetchBrokerList(selectedHostUid));
-              })
-              .catch((err) => {
-                dispatch(showStatusModal({ type: 'error', title: 'Action Failed', message: err }));
-              });
-          }}
+          disabled={!selectedBroker || brokers.find(b => b.name === selectedBroker)?.state !== 'ON' || menuActionLoading}
+          onClick={() => handleBrokerAction('stop')}
         />
       </DropdownMenu>
 
@@ -216,6 +254,17 @@ export default function HeaderMenu() {
           onClick={() => dispatch(setAboutCubrid(true))}
         />
       </DropdownMenu>
+      {isMenuActionError && (
+        <Modal isOpen title="Action Failed" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="400px">
+          <ModalStatusError 
+            title="Update Interrupted"
+            error={menuActionError}
+            onRetry={resetAction}
+            onCancel={resetAction}
+            retryText="Dismiss"
+          />
+        </Modal>
+      )}
     </nav>
   );
 }

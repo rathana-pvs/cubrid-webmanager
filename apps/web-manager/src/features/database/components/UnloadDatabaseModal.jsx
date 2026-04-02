@@ -11,6 +11,12 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
 
 // view states
@@ -27,8 +33,17 @@ export default function UnloadDatabaseModal() {
   
   const currentDb = databases.find(db => db.dbname === selectedDatabase);
 
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
 
   const [formData, setFormData] = useState({
     targetDbName: '',
@@ -85,8 +100,7 @@ export default function UnloadDatabaseModal() {
 
   useEffect(() => {
     if (isUnloadDBModalOpen && selectedDatabase) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
+      resetAction();
       setFormData(prev => ({
         ...prev,
         targetDbName: selectedDatabase,
@@ -97,7 +111,7 @@ export default function UnloadDatabaseModal() {
       }));
       fetchTables();
     }
-  }, [isUnloadDBModalOpen, selectedDatabase, currentDb, fetchTables]);
+  }, [isUnloadDBModalOpen, selectedDatabase, currentDb, fetchTables, resetAction]);
 
   if (!isUnloadDBModalOpen) return null;
 
@@ -139,8 +153,7 @@ export default function UnloadDatabaseModal() {
   const handleUnloadDatabase = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
     
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
     try {
       const payload = {
         targetdir: formData.targetDirectory,
@@ -164,83 +177,39 @@ export default function UnloadDatabaseModal() {
       };
 
       const response = await databaseApi.unloadDatabase(selectedHostUid, selectedDatabase, payload);
-      // Instead of manual succession, we use the result modal as intended by legacy
-      // but wrap it in our VIEW_SUCCESS pattern
       dispatch(closeUnloadDatabaseModal());
       dispatch(openUnloadResultModal(response));
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'The extraction process was interrupted. Ensure the target directory is writable.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'The extraction process was interrupted. Ensure the target directory is writable.'));
     }
   };
 
   const handleClose = () => dispatch(closeUnloadDatabaseModal());
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Extracting Instance" icon="upload" onClose={handleClose} maxWidth="740px">
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500 animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-amber-500/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-amber-500">
-              <Icon name="upload" size="md" weight={400} className="animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">Generating Export Payload</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-              Serializing schema and data records for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>.
-            </Typography>
-          </div>
-          <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-500 rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
-          </div>
-        </div>
+        <ModalStatusLoading 
+          title="Generating Export Payload" 
+          subtitle={`Serializing schema and data records for ${selectedDatabase}.`}
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Extraction Failed" icon="upload" iconVariant="danger" onClose={handleClose} maxWidth="740px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-              <Icon name="error" size="md" weight={300} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Action Interrupted
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">
-              System could not finalize the export of <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>.
-            </Typography>
-          </div>
-
-          <div className="w-full max-w-[420px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">Error Manifest</span>
-            </div>
-            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>
-              Retry Task
-            </Button>
-          </div>
-        </div>
+      <Modal isOpen title="Export Failed" icon="upload_file" iconVariant="danger" onClose={resetAction} maxWidth="700px">
+        <ModalStatusError 
+          title="Transaction Dropped"
+          error={actionError}
+          onRetry={handleUnloadDatabase}
+          onCancel={resetAction}
+          retryText="Retry Export"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }

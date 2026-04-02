@@ -57,12 +57,12 @@ export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casI
       <div className="flex flex-col h-[70vh] min-h-[500px] border border-slate-200 dark:border-white/5 rounded-2xl overflow-hidden bg-slate-900 shadow-2xl relative">
         <div className="absolute top-4 left-6 z-10 flex items-center gap-4 pointer-events-none">
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-md border border-white/5 rounded-xl shadow-lg">
-             <Icon name="dns" size="xs" weight={300} className="text-bk-yellow" />
-             <Typography variant="caption" className="font-bold text-white/60">Broker: <span className="text-bk-yellow">{brokerName}</span></Typography>
+             <Icon name="dns" size="xs" weight={300} className="text-amber-500" />
+             <Typography variant="caption" className="font-bold text-white/60">Broker: <span className="text-amber-500">{brokerName}</span></Typography>
           </div>
           <div className="flex items-center gap-2 px-3 py-1.5 bg-slate-800/80 backdrop-blur-md border border-white/5 rounded-xl shadow-lg">
-             <Icon name="fingerprint" size="xs" weight={300} className="text-bk-yellow" />
-             <Typography variant="caption" className="font-bold text-white/60">CAS UID: <span className="text-bk-yellow">{casId}</span></Typography>
+             <Icon name="fingerprint" size="xs" weight={300} className="text-amber-500" />
+             <Typography variant="caption" className="font-bold text-white/60">CAS UID: <span className="text-amber-500">{casId}</span></Typography>
           </div>
         </div>
 

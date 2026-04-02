@@ -16,17 +16,17 @@ export default function UnloadResultModal() {
   }));
 
   return (
-    <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-bk-main/40 backdrop-blur-xs animate-in fade-in duration-200 font-sans text-left">
+    <div className="fixed inset-0 z-110 flex items-center justify-center p-4 bg-background-dark/40 backdrop-blur-xs animate-in fade-in duration-200 font-sans text-left">
       <div className="bg-white dark:bg-bk-side w-full max-w-[500px] rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-slate-200 dark:border-slate-800 overflow-hidden animate-in zoom-in-95 duration-200 flex flex-col max-h-[85vh] relative text-left">
 
         {/* Subtle Top Accent */}
-        <div className="absolute top-0 left-0 right-0 h-[2px] bg-bk-yellow/60"></div>
+        <div className="absolute top-0 left-0 right-0 h-[2px] bg-amber-500/60"></div>
 
         {/* Header - Compact */}
-        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-bk-main/50 shrink-0">
+        <div className="flex items-center justify-between px-5 py-3.5 border-b border-slate-100 dark:border-slate-800 bg-slate-50/50 dark:bg-background-dark/50 shrink-0">
           <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-bk-yellow/10 flex items-center justify-center border border-bk-yellow/20">
-              <Icon name="analytics" size="sm" weight={300} className="text-bk-yellow text-xl" />
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center border border-amber-500/20">
+              <Icon name="analytics" size="sm" weight={300} className="text-amber-500 text-xl" />
             </div>
             <div>
               <h3 className="text-sm font-medium text-slate-900 dark:text-white leading-none">Unload job summary</h3>
@@ -47,9 +47,9 @@ export default function UnloadResultModal() {
             <div className="flex-1 h-px bg-slate-100 dark:bg-slate-800/50"></div>
           </div>
 
-          <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50/20 dark:bg-bk-main/30">
+          <div className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden bg-slate-50/20 dark:bg-background-dark/30">
             <table className="w-full text-left text-[11px] border-collapse">
-              <thead className="bg-slate-50/80 dark:bg-bk-main/50 text-[10px] font-medium text-slate-400 tracking-wide border-b border-slate-100 dark:border-slate-800">
+              <thead className="bg-slate-50/80 dark:bg-background-dark/50 text-[10px] font-medium text-slate-400 tracking-wide border-b border-slate-100 dark:border-slate-800">
                 <tr>
                   <th className="px-4 py-3">Class identifier</th>
                   <th className="px-4 py-3 text-right">Records / Status</th>
@@ -60,7 +60,7 @@ export default function UnloadResultModal() {
                   <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/5 transition-all">
                     <td className="px-4 py-2.5 font-medium text-slate-700 dark:text-slate-300">{row.tableName}</td>
                     <td className="px-4 py-2.5 text-right">
-                      <span className="text-bk-yellow font-bold px-2 py-0.5 rounded-sm bg-bk-yellow/5 border border-bk-yellow/10">
+                      <span className="text-amber-500 font-bold px-2 py-0.5 rounded-sm bg-amber-500/5 border border-amber-500/10">
                         {row.stats}
                       </span>
                     </td>
@@ -81,10 +81,10 @@ export default function UnloadResultModal() {
         </div>
 
         {/* Footer */}
-        <div className="px-5 py-3.5 bg-slate-50 dark:bg-bk-main/80 backdrop-blur-xs flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
+        <div className="px-5 py-3.5 bg-slate-50 dark:bg-background-dark/80 backdrop-blur-xs flex justify-end gap-3 border-t border-slate-100 dark:border-slate-800 shrink-0">
           <button
             onClick={() => dispatch(closeUnloadResultModal())}
-            className="px-8 py-1.5 bg-bk-yellow hover:bg-[#ffd700] active:scale-[0.98] text-bk-side text-[11px] font-medium tracking-wide rounded-sm border border-bk-yellow/50 shadow-xs transition-all flex items-center justify-center min-w-[120px]"
+            className="px-8 py-1.5 bg-amber-500 hover:bg-[#ffd700] active:scale-[0.98] text-bk-side text-[11px] font-medium tracking-wide rounded-sm border border-amber-500/50 shadow-xs transition-all flex items-center justify-center min-w-[120px]"
           >
             Acknowledge
           </button>

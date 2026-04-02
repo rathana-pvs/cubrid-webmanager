@@ -1,6 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { closeCreateDatabaseModal, createDatabase, fetchCreateDatabaseInfo } from '../databaseSlice';
+import { 
+  closeCreateDatabaseModal, 
+  createDatabase, 
+  fetchCreateDatabaseInfo,
+  fetchDatabaseStartInfo 
+} from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
@@ -10,6 +15,12 @@ import { Select } from '../../../components/ds/forms/Select';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -72,10 +83,19 @@ export default function CreateDatabaseModal() {
   const { isCreateDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
-  const [view, setView] = useState(VIEW_FORM);
+  const { 
+    state, 
+    error, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
+
   const [step, setStep] = useState(1);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
 
   const [formData, setFormData] = useState({
     dbName: '',
@@ -111,9 +131,7 @@ export default function CreateDatabaseModal() {
   useEffect(() => {
     if (isCreateDatabaseModalOpen && selectedHostUid) {
       setStep(1);
-      setView(VIEW_FORM);
-      setErrorMsg('');
-      setSuccessMsg('');
+      resetAction();
       
       // 1. Immediate Population: Use cached system info if available
       const cachedDir = hostEnv?.CUBRID_DATABASES;
@@ -147,7 +165,7 @@ export default function CreateDatabaseModal() {
         })
         .catch(() => {});
     }
-  }, [isCreateDatabaseModalOpen, selectedHostUid, dispatch, hostEnv?.CUBRID_DATABASES]);
+  }, [isCreateDatabaseModalOpen, selectedHostUid, dispatch, hostEnv?.CUBRID_DATABASES, resetAction]);
 
   useEffect(() => {
     const { dbName, baseDir } = formData;
@@ -205,7 +223,7 @@ export default function CreateDatabaseModal() {
   const handleFinish = async () => {
     if (!selectedHostUid) return;
 
-    setView(VIEW_LOADING);
+    startAction();
     try {
       const exvol = formData.volumes.map(vol => ({
         [vol.name]: {
@@ -244,11 +262,13 @@ export default function CreateDatabaseModal() {
       };
 
       await dispatch(createDatabase({ hostUid: selectedHostUid, payload })).unwrap();
-      setSuccessMsg(`Database "${formData.dbName}" has been successfully initialized and commissioned.`);
-      setView(VIEW_SUCCESS);
-    } catch (error) {
-      setErrorMsg(typeof error === 'string' ? error : (error.message || 'An unexpected error occurred during database creation.'));
-      setView(VIEW_ERROR);
+      
+      // refetch database list in background to update UI
+      dispatch(fetchDatabaseStartInfo({ hostUid: selectedHostUid, isBackground: true }));
+
+      endSuccess(`Database "${formData.dbName}" has been successfully initialized and commissioned.`);
+    } catch (err) {
+      endError(typeof err === 'string' ? err : (err.message || 'An unexpected error occurred during database creation.'));
     }
   };
 
@@ -258,135 +278,43 @@ export default function CreateDatabaseModal() {
 
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Initializing Instance" icon="add_circle" onClose={handleClose} maxWidth="600px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative w-[72px] h-[72px]">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div
-              className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin"
-              style={{ animationDuration: '0.9s' }}
-            />
-            <div
-              className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-bk-yellow/35 animate-spin"
-              style={{ animationDuration: '1.7s', animationDirection: 'reverse' }}
-            />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <div className="w-2.5 h-2.5 rounded-full bg-bk-yellow shadow-[0_0_10px_3px_rgba(255,193,7,0.3)] animate-pulse" />
-            </div>
-          </div>
-
-          <div className="space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Creating Database Structure
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium max-w-[320px] mx-auto leading-relaxed">
-              Allocating volume space and initializing the system catalog for <span className="text-slate-900 dark:text-white font-black">{formData.dbName}</span>.
-            </Typography>
-          </div>
-
-          <div className="w-44 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-bk-yellow rounded-full"
-              style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }}
-            />
-          </div>
-
-          <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-50 dark:bg-white/4 border border-slate-100 dark:border-white/5">
-            <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow animate-pulse" />
-            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">In Progress</span>
-          </div>
-
-          <style>{`
-            @keyframes modalSlide {
-              0%   { transform: translateX(-100%); width: 50%; }
-              50%  { transform: translateX(100%);  width: 60%; }
-              100% { transform: translateX(200%);  width: 50%; }
-            }
-          `}</style>
-        </div>
+        <ModalStatusLoading 
+          title="Creating Database Structure" 
+          subtitle={`Allocating volume space and initializing the system catalog for ${formData.dbName}.`} 
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="Database Created" icon="add_circle" iconVariant="success" onClose={handleClose} maxWidth="600px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-              <Icon name="verified" size="lg" weight={700} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Initialization Complete
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[340px] mx-auto">
-              Instance <span className="font-black text-slate-900 dark:text-white">{formData.dbName}</span> is now active and ready for data ingest.
-            </Typography>
-          </div>
-
-          {successMsg && (
-            <div className="w-full max-w-[420px] bg-emerald-500/5 border border-emerald-500/15 rounded-xl px-4 py-3.5 text-left">
-              <div className="flex items-center gap-2 mb-1.5">
-                <Icon name="rule" size="xs" weight={300} className="text-emerald-500" />
-                <span className="text-[9px] font-black uppercase tracking-widest text-emerald-500">Status Report</span>
-              </div>
-              <Typography variant="caption" className="text-emerald-600 dark:text-emerald-400/80 font-medium leading-relaxed">
-                {successMsg}
-              </Typography>
-            </div>
-          )}
-
-          <Button variant="secondary" onClick={handleClose}>Access Instance</Button>
-        </div>
+        <ModalStatusSuccess 
+          title="Initialization Complete"
+          message={`Instance ${formData.dbName} is now active and ready for data ingest.`}
+          onConfirm={handleClose}
+          confirmText="Access Instance"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Creation Failed" icon="add_circle" iconVariant="danger" onClose={handleClose} maxWidth="600px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-              <Icon name="error" size="md" weight={300} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Action Interrupted
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[300px] mx-auto">
-              The initialization sequence for <span className="font-bold text-slate-900 dark:text-white">{formData.dbName}</span> was halted.
-            </Typography>
-          </div>
-
-          <div className="w-full max-w-[420px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">System Trace</span>
-            </div>
-            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="danger" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); setStep(1); }}>
-              Retry Setup
-            </Button>
-          </div>
-        </div>
+      <Modal isOpen title="Creation Failed" icon="add_circle" iconVariant="danger" onClose={resetAction} maxWidth="600px">
+        <ModalStatusError 
+          title="Action Interrupted"
+          error={error}
+          onRetry={handleFinish}
+          onCancel={resetAction}
+          retryText="Retry Setup"
+          cancelText="Discard"
+        />
       </Modal>
     );
   }

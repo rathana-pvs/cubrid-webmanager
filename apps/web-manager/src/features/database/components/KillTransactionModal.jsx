@@ -9,6 +9,12 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -22,25 +28,33 @@ export default function KillTransactionModal({ onTransactionKilled }) {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
+
   const [killType, setKillType] = useState('i'); // Default: Kill selected only
 
   useEffect(() => {
     if (isKillTransactionModalOpen) {
-      setView(VIEW_FORM);
+      resetAction();
       setKillType('i');
-      setErrorMsg('');
     }
-  }, [isKillTransactionModalOpen]);
+  }, [isKillTransactionModalOpen, resetAction]);
 
   if (!isKillTransactionModalOpen || !killTransactionData) return null;
 
   const handleKill = async () => {
     if (!selectedHostUid) return;
 
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
 
     try {
       const idx = killTransactionData.tranindex?.match(/\d+/)?.[0] || '';
@@ -52,83 +66,57 @@ export default function KillTransactionModal({ onTransactionKilled }) {
 
       await databaseApi.killTransaction(selectedHostUid, selectedDatabase, payload);
       
-      setView(VIEW_SUCCESS);
+      endSuccess('Transaction state discarded.');
       if (onTransactionKilled) onTransactionKilled();
       
       // Auto close after brief success
       setTimeout(() => {
         dispatch(closeKillTransactionModal());
-      }, 1000);
+      }, 1200);
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'Termination sequence aborted by system controller. Handle remains active.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'Termination sequence aborted by system controller. Handle remains active.'));
     }
   };
 
   const handleClose = () => dispatch(closeKillTransactionModal());
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Terminating Handle" icon="bolt" onClose={handleClose} maxWidth="540px">
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-rose-500/10" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-rose-500 animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-rose-500">
-              <Icon name="bolt" size="md" weight={400} className="animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight text-rose-500">Force Aborting</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-              Initiating rollback and lock release for PID <span className="font-black text-rose-500 font-mono">{killTransactionData.pid}</span>.
-            </Typography>
-          </div>
-        </div>
+        <ModalStatusLoading 
+          title="Force Aborting" 
+          subtitle={`Initiating rollback and lock release for PID ${killTransactionData.pid}.`}
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="Handle Terminated" icon="verified" iconVariant="success" onClose={handleClose} maxWidth="540px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-           <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-            <Icon name="done_all" size="lg" weight={700} className="text-white" />
-          </div>
-          <div className="space-y-1 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Transaction Aborted</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">System resources released. Transaction state discarded.</Typography>
-          </div>
-        </div>
+        <ModalStatusSuccess 
+          title="Transaction Aborted"
+          message="System resources released. Transaction state discarded."
+          onConfirm={handleClose}
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Termination Failed" icon="error" iconVariant="danger" onClose={handleClose} maxWidth="540px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-            <Icon name="emergency_home" size="md" weight={300} className="text-white" />
-          </div>
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight text-rose-500">Signal Interrupted</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">System could not finalize the termination signal for this handle.</Typography>
-          </div>
-          <div className="w-full max-w-[340px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-             <Typography variant="caption" className="text-rose-400 font-mono leading-relaxed break-words block text-center uppercase tracking-widest text-[10px] font-bold">
-              {errorMsg}
-            </Typography>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>Retry Kill</Button>
-          </div>
-        </div>
+      <Modal isOpen title="Termination Failed" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="540px">
+        <ModalStatusError 
+          title="Signal Interrupted"
+          error={actionError}
+          onRetry={handleKill}
+          onCancel={resetAction}
+          retryText="Retry Kill"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }

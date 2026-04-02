@@ -6,6 +6,12 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -19,23 +25,30 @@ export default function DeleteBackupPlanModal() {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
 
   useEffect(() => {
     if (isDeleteBackupPlanModalOpen) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
+      resetAction();
     }
-  }, [isDeleteBackupPlanModalOpen]);
+  }, [isDeleteBackupPlanModalOpen, resetAction]);
 
   if (!isDeleteBackupPlanModalOpen) return null;
 
   const handleDelete = async () => {
     if (!selectedHostUid || !selectedDatabase || !selectedBackupId) return;
     
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
 
     try {
       await dispatch(deleteBackupSchedule({ 
@@ -44,83 +57,59 @@ export default function DeleteBackupPlanModal() {
         payload: { backupid: selectedBackupId } 
       })).unwrap();
       
-      setView(VIEW_SUCCESS);
+      endSuccess(`Backup plan ${selectedBackupId} successfully removed.`);
       dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase }));
       
       // Auto close after brief success
       setTimeout(() => {
         dispatch(closeDeleteBackupPlanModal());
-      }, 1000);
+      }, 1500);
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'System controller rejected the deletion signal. Registry remains active.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'System controller rejected the deletion signal. Registry remains active.'));
     }
   };
 
   const handleClose = () => dispatch(closeDeleteBackupPlanModal());
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
-      <Modal isOpen title="Deleting Plan" icon="delete_forever" onClose={handleClose} maxWidth="440px">
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-rose-500/10" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-rose-500 animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-rose-500">
-              <Icon name="auto_delete" size="md" weight={400} className="animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-rose-500 tracking-tight">Removing Registry</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto text-center">
-              Discarding automation handle <span className="font-black text-rose-500 font-mono">"{selectedBackupId}"</span>.
-            </Typography>
-          </div>
-        </div>
+      <Modal isOpen title="Deleting Plan" icon="delete_forever" onClose={handleClose} maxWidth="440px" iconVariant="danger">
+        <ModalStatusLoading 
+          title="Removing Registry" 
+          subtitle={`Discarding automation handle "${selectedBackupId}".`}
+          variant="danger"
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="Deletion Success" icon="verified" iconVariant="success" onClose={handleClose} maxWidth="440px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-            <Icon name="done_all" size="lg" weight={700} className="text-white" />
-          </div>
-          <div className="space-y-1 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Registry Purged</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">The plan has been removed from the system scheduler.</Typography>
-          </div>
-        </div>
+        <ModalStatusSuccess 
+          title="Registry Purged"
+          message="The plan has been removed from the system scheduler."
+          onConfirm={handleClose}
+          confirmText="Dismiss"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Deletion Failed" icon="error" iconVariant="danger" onClose={handleClose} maxWidth="440px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-            <Icon name="emergency_home" size="md" weight={300} className="text-white" />
-          </div>
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight text-rose-500">Signal Rejected</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">System could not finalize the deletion signal for this backup plan.</Typography>
-          </div>
-          <div className="w-full max-w-[340px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-             <Typography variant="caption" className="text-rose-400 font-mono leading-relaxed break-words block text-center uppercase tracking-widest text-[10px] font-bold">
-              {errorMsg}
-            </Typography>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>Retry Deletion</Button>
-          </div>
-        </div>
+      <Modal isOpen title="Deletion Failed" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="440px">
+        <ModalStatusError 
+          title="Signal Rejected"
+          error={actionError}
+          onRetry={handleDelete}
+          onCancel={resetAction}
+          retryText="Retry Deletion"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }
@@ -154,7 +143,7 @@ export default function DeleteBackupPlanModal() {
         </div>
 
         <div className="p-4 bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl flex items-start gap-3 text-left">
-           <Icon name="info" size="14px" weight={400} className="text-bk-yellow mt-0.5" />
+           <Icon name="info" size="14px" weight={400} className="text-amber-500 mt-0.5" />
            <Typography variant="caption" className="text-slate-500 dark:text-slate-500 font-bold uppercase tracking-tighter leading-relaxed italic">
              This only removes the registry handle. Existing physical backup volumes on disk remain untouched.
            </Typography>

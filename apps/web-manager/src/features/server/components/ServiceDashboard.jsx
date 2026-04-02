@@ -10,8 +10,12 @@ import { Table } from '../../../components/ds/layout/Table';
 import { Card } from '../../../components/ds/layout/Card';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import LoadingOverlay from '../../../components/common/LoadingOverlay';
 import { Badge } from '../../../components/ds/foundation/Badge';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { Modal } from '../../../components/ds/layout/Modal';
+import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 
 const MetricBar = ({ pct }) => (
   <div className="w-full h-1 bg-slate-100 dark:bg-white/6 overflow-hidden mt-1 rounded-full">
@@ -43,17 +47,45 @@ const Component = function ServiceDashboard() {
     dispatch(setActiveMainTab(`host:${hostUid}`));
   };
 
-  const handleStartService = (e, hostUid) => {
+  const { 
+    startAction, 
+    endError, 
+    resetAction,
+    isLoading,
+    isError,
+    error: actionError
+  } = useActionState();
+
+  const [loadingTitle, setLoadingTitle] = useState('Synchronizing Services');
+
+  const handleStartService = async (e, hostUid) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to start all CUBRID services on this host?')) {
-      dispatch(startService(hostUid));
+      setLoadingTitle(`Starting services on ${hostUid}`);
+      startAction();
+      try {
+        await dispatch(startService(hostUid)).unwrap();
+        // Silent success - reset loading state but no modal
+        resetAction();
+        // Refresh specific host summary if needed, but the polling refresh already handles this usually.
+      } catch (err) {
+        endError(typeof err === 'string' ? err : (err.message || 'Service start command rejected by host agent.'));
+      }
     }
   };
 
-  const handleStopService = (e, hostUid) => {
+  const handleStopService = async (e, hostUid) => {
     e.stopPropagation();
     if (window.confirm('Are you sure you want to stop all CUBRID services on this host? This will stop all brokers and databases.')) {
-      dispatch(stopService(hostUid));
+      setLoadingTitle(`Stopping services on ${hostUid}`);
+      startAction();
+      try {
+        await dispatch(stopService(hostUid)).unwrap();
+        // Silent success
+        resetAction();
+      } catch (err) {
+        endError(typeof err === 'string' ? err : (err.message || 'Service termination failed. Check agent logs.'));
+      }
     }
   };
 
@@ -247,7 +279,9 @@ const Component = function ServiceDashboard() {
         </div>
       </header>
 
-      <div className="flex-1 overflow-y-auto p-6 space-y-4">
+      <div className="flex-1 overflow-y-auto p-6 space-y-4 relative">
+        <LoadingOverlay isVisible={isLoading} subtitle={loadingTitle} />
+        
         <Card noPadding className="overflow-hidden border-slate-200 dark:border-white/10 shadow-sm rounded-xl bg-white dark:bg-white/1">
           <Table 
             columns={columns} 
@@ -270,6 +304,18 @@ const Component = function ServiceDashboard() {
           </div>
         )}
       </div>
+
+      {isError && (
+        <Modal isOpen title="Service Error" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="400px">
+          <ModalStatusError 
+            title="Action Aborted"
+            error={actionError}
+            onRetry={resetAction}
+            onCancel={resetAction}
+            retryText="Dismiss"
+          />
+        </Modal>
+      )}
     </div>
   );
 }

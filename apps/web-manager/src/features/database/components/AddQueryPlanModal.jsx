@@ -11,6 +11,12 @@ import { Select } from '../../../components/ds/forms/Select';
 import { DatePicker } from '../../../components/ds/forms/DatePicker';
 import { TimePicker } from '../../../components/ds/forms/TimePicker';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -27,9 +33,17 @@ export default function AddQueryPlanModal() {
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   const { theme } = useSelector((state) => state.layout, shallowEqual);
   
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
 
   const [formData, setFormData] = useState({
     queryId: '',
@@ -44,9 +58,7 @@ export default function AddQueryPlanModal() {
   // Initialization
   useEffect(() => {
     if (isAddQueryPlanModalOpen && selectedDatabase) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
-      setSuccessMsg('');
+      resetAction();
       setFormData({
         queryId: `q_${selectedDatabase}_${Date.now().toString().slice(-4)}`,
         username: 'public',
@@ -57,7 +69,7 @@ export default function AddQueryPlanModal() {
         queryString: ''
       });
     }
-  }, [isAddQueryPlanModalOpen, selectedDatabase]);
+  }, [isAddQueryPlanModalOpen, selectedDatabase, resetAction]);
 
   if (!isAddQueryPlanModalOpen) return null;
 
@@ -83,18 +95,15 @@ export default function AddQueryPlanModal() {
 
   const handleSave = async () => {
     if (!formData.queryId.trim()) {
-       setErrorMsg('A unique Query Identifier is required to register this plan.');
-       setView(VIEW_ERROR);
+       endError('A unique Query Identifier is required to register this plan.');
        return;
     }
     if (!formData.queryString.trim()) {
-      setErrorMsg('No SQL statement provided. The automation payload must contain at least one valid query.');
-      setView(VIEW_ERROR);
+      endError('No SQL statement provided. The automation payload must contain at least one valid query.');
       return;
     }
     
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
 
     let detail = '';
     if (formData.periodType === 'DAY') detail = formData.backupTime;
@@ -117,108 +126,52 @@ export default function AddQueryPlanModal() {
 
     try {
       await dispatch(setAutoExecQuery({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
-      setSuccessMsg(`Plan "${formData.queryId}" has been successfully synchronized and registered with the scheduler.`);
-      setView(VIEW_SUCCESS);
+      endSuccess(`Plan "${formData.queryId}" has been successfully synchronized and registered with the scheduler.`);
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'Operation aborted by system controller. Verify database connectivity and user privileges.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'Operation aborted by system controller. Verify database connectivity and user privileges.'));
     }
   };
 
   const handleClose = () => dispatch(closeAddQueryPlanModal());
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Scheduling Automate" icon="bolt" onClose={handleClose} maxWidth="720px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500 animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-amber-500/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-            <div className="absolute inset-0 flex items-center justify-center">
-              <Icon name="schedule" size="md" weight={400} className="text-amber-500 animate-pulse" />
-            </div>
-          </div>
-
-          <div className="space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Syncing Schedule</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium max-w-[320px] mx-auto leading-relaxed">
-              Registering <span className="text-slate-900 dark:text-white font-black font-mono">{formData.queryId}</span> with the CUBRID Automation Service.
-            </Typography>
-          </div>
-
-          <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-500 rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
-          </div>
-        </div>
+        <ModalStatusLoading 
+          title="Syncing Schedule" 
+          subtitle={`Registering ${formData.queryId} with the CUBRID Automation Service.`}
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="Plan Synchronized" icon="bolt" iconVariant="success" onClose={handleClose} maxWidth="720px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-              <Icon name="verified" size="lg" weight={700} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Schedule Registry Active</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed max-w-[360px] mx-auto">
-              The automated query task for <span className="font-bold text-slate-900 dark:text-white font-mono">{selectedDatabase}</span> has been successfully committed.
-            </Typography>
-          </div>
-
-          {successMsg && (
-            <div className="w-full max-w-[440px] bg-emerald-500/5 border border-emerald-500/15 rounded-2xl px-4 py-3.5 text-left flex gap-3">
-              <Icon name="task_alt" size="sm" weight={300} className="text-emerald-500 shrink-0 mt-0.5" />
-              <Typography variant="caption" className="text-emerald-600 dark:text-emerald-400 font-medium leading-relaxed italic">
-                {successMsg}
-              </Typography>
-            </div>
-          )}
-
-          <Button variant="secondary" onClick={handleClose}>Access Scheduler</Button>
-        </div>
+        <ModalStatusSuccess 
+          title="Schedule Registry Active"
+          message={`The automated query task for ${selectedDatabase} has been successfully committed.`}
+          onConfirm={handleClose}
+          confirmText="Access Scheduler"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Scheduling Interrupted" icon="bolt" iconVariant="danger" onClose={handleClose} maxWidth="720px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-            <Icon name="error" size="md" weight={300} className="text-white" />
-          </div>
-
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Transaction Dropped</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">System controller could not finalize the scheduling registry.</Typography>
-          </div>
-
-          <div className="w-full max-w-[440px] bg-rose-500/5 border border-rose-500/15 rounded-2xl px-5 py-4 text-left">
-            <div className="flex items-center gap-2 mb-2">
-              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">Error Manifest</span>
-            </div>
-            <Typography variant="caption" className="text-rose-400/90 font-mono leading-relaxed block break-words text-[11px] font-medium italic">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>Retry Submission</Button>
-          </div>
-        </div>
+      <Modal isOpen title="Scheduling Interrupted" icon="bolt" iconVariant="danger" onClose={resetAction} maxWidth="720px">
+        <ModalStatusError 
+          title="Transaction Dropped"
+          error={actionError}
+          onRetry={handleSave}
+          onCancel={resetAction}
+          retryText="Retry Submission"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }

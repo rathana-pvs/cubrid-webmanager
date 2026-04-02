@@ -157,7 +157,7 @@ export default function DatabasePlanDumpModal() {
                   Execution Pipeline
                 </Typography>
               </div>
-              <div className="bg-slate-50/50 dark:bg-bk-main/30 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
+              <div className="bg-slate-50/50 dark:bg-background-dark/30 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
                 {planSteps.map((s, i) => (
                   <div key={i} className="flex items-start gap-4 group">
                     <div className="flex flex-col items-center shrink-0">
@@ -267,7 +267,7 @@ export default function DatabasePlanDumpModal() {
             {Object.keys(stats).length > 0 && (
               <div className="grid grid-cols-4 gap-0 border-b border-slate-100 dark:border-white/5 shrink-0">
                 {statCards.map((card, i) => (
-                  <div key={i} className={`p-4 flex flex-col gap-1 ${i < statCards.length - 1 ? 'border-r border-slate-100 dark:border-white/5' : ''} bg-white dark:bg-bk-main/10 hover:bg-slate-50 dark:hover:bg-white/3 transition-colors`}>
+                  <div key={i} className={`p-4 flex flex-col gap-1 ${i < statCards.length - 1 ? 'border-r border-slate-100 dark:border-white/5' : ''} bg-white dark:bg-background-dark/10 hover:bg-slate-50 dark:hover:bg-white/3 transition-colors`}>
                     <div className="flex items-center gap-1.5">
                       <div className={`w-5 h-5 rounded-md flex items-center justify-center ${card.bg} border ${card.border}`}>
                         <Icon name={card.icon} size="10px" weight={300} className={card.color} />
@@ -282,7 +282,7 @@ export default function DatabasePlanDumpModal() {
 
           {/* Plan Entries */}
             <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
-              <div className="px-4 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-bk-main/20 shrink-0">
+              <div className="px-4 py-2.5 flex items-center gap-2 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-background-dark/20 shrink-0">
                 <Icon name="list_alt" size="sm" weight={300} className="text-amber-500" />
                 <Typography variant="label" className="text-[10px] font-black text-slate-500 uppercase tracking-widest">Query Plan Entries</Typography>
               </div>

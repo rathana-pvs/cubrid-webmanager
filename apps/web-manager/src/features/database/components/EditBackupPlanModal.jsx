@@ -9,6 +9,12 @@ import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -28,8 +34,17 @@ export default function EditBackupPlanModal() {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
   
   const [formData, setFormData] = useState({
     backupId: '',
@@ -49,8 +64,7 @@ export default function EditBackupPlanModal() {
 
   useEffect(() => {
     if (isEditBackupPlanModalOpen && selectedDatabase && selectedHostUid) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
+      resetAction();
       dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase }))
         .unwrap()
         .then((data) => {
@@ -91,7 +105,7 @@ export default function EditBackupPlanModal() {
           }
         });
     }
-  }, [isEditBackupPlanModalOpen, selectedDatabase, selectedHostUid, selectedBackupId, dispatch]);
+  }, [isEditBackupPlanModalOpen, selectedDatabase, selectedHostUid, selectedBackupId, dispatch, resetAction]);
 
   if (!isEditBackupPlanModalOpen) return null;
 
@@ -130,8 +144,7 @@ export default function EditBackupPlanModal() {
   const handleSave = async () => {
     if (!selectedDatabase || !selectedHostUid) return;
 
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
 
     let periodDateValue = '';
     if (formData.periodType === 'Weekly') {
@@ -164,80 +177,52 @@ export default function EditBackupPlanModal() {
     try {
       await dispatch(editBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
       dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase }));
-      setView(VIEW_SUCCESS);
+      endSuccess(`Backup plan ${formData.backupId} successfully updated.`);
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'System controller rejected the patch. Verify schema integrity.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'System controller rejected the patch. Verify schema integrity.'));
     }
   };
 
   const handleClose = () => dispatch(closeEditBackupPlanModal());
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Committing Updates" icon="edit" onClose={handleClose} maxWidth="700px">
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-bk-yellow">
-              <Icon name="sync_saved_locally" size="md" weight={400} className="animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">Syncing Registry</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[320px] mx-auto">
-              Patching automation configuration for <span className="font-black text-slate-900 dark:text-white font-mono">{formData.backupId}</span>.
-            </Typography>
-          </div>
-        </div>
+        <ModalStatusLoading 
+          title="Syncing Registry" 
+          subtitle={`Patching automation configuration for ${formData.backupId}.`}
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="Update Successful" icon="verified" iconVariant="success" onClose={handleClose} maxWidth="700px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-            <Icon name="done_all" size="lg" weight={700} className="text-white" />
-          </div>
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Schedule Patched</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed max-w-[360px] mx-auto">
-              Changes to the backup plan for <span className="font-bold text-slate-900 dark:text-white">{selectedDatabase}</span> have been committed and re-indexed.
-            </Typography>
-          </div>
-          <Button variant="secondary" onClick={handleClose}>Confirm & Dismiss</Button>
-        </div>
+        <ModalStatusSuccess 
+          title="Schedule Patched"
+          message={`Changes to the backup plan for ${selectedDatabase} have been committed and re-indexed.`}
+          onConfirm={handleClose}
+          confirmText="Confirm & Dismiss"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Patch Rejected" icon="error" iconVariant="danger" onClose={handleClose} maxWidth="700px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-            <Icon name="edit_off" size="md" weight={300} className="text-white" />
-          </div>
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Execution Halted</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">System could not finalize the schedule modification sequence.</Typography>
-          </div>
-          <div className="w-full max-w-[480px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left shadow-xs">
-            <Typography variant="caption" className="text-rose-400 font-mono leading-relaxed break-words block text-center uppercase tracking-widest text-[10px] font-bold">
-              {errorMsg}
-            </Typography>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>Retry Update</Button>
-          </div>
-        </div>
+      <Modal isOpen title="Patch Rejected" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="700px">
+        <ModalStatusError 
+          title="Execution Halted"
+          error={actionError}
+          onRetry={handleSave}
+          onCancel={resetAction}
+          retryText="Retry Update"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }
@@ -263,7 +248,7 @@ export default function EditBackupPlanModal() {
         {/* Level Presets */}
         <div className="space-y-4">
            <div className="flex items-center gap-3">
-             <Icon name="architecture" size="14px" weight={400} className="text-bk-yellow" />
+             <Icon name="architecture" size="14px" weight={400} className="text-amber-500" />
              <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Abstraction Level</span>
           </div>
           <div className="grid grid-cols-3 gap-3">
@@ -273,18 +258,18 @@ export default function EditBackupPlanModal() {
                 onClick={() => handleInputChange('backupLevel', item.value)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-200 ${
                   formData.backupLevel === item.value
-                    ? 'bg-bk-yellow/10 border-bk-yellow/40 shadow-xs'
+                    ? 'bg-amber-500/10 border-amber-500/40 shadow-xs'
                     : 'bg-white dark:bg-white/1 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
                 }`}
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
-                  formData.backupLevel === item.value ? 'bg-bk-yellow text-slate-900 border-bk-yellow/50' : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent'
+                  formData.backupLevel === item.value ? 'bg-amber-500 text-slate-900 border-amber-500/50' : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent'
                 }`}>
                   <Icon name={item.icon} size="14px" weight={300} />
                 </div>
                 <div className="text-left min-w-0">
                   <div className="flex items-baseline gap-1.5">
-                    <Typography variant="p" className={`font-black text-[11px] leading-none ${formData.backupLevel === item.value ? 'text-bk-yellow' : 'text-slate-700 dark:text-white'}`}>
+                    <Typography variant="p" className={`font-black text-[11px] leading-none ${formData.backupLevel === item.value ? 'text-amber-500' : 'text-slate-700 dark:text-white'}`}>
                       {item.title}
                     </Typography>
                     <Typography variant="caption" className="text-[9px] text-slate-400 dark:text-slate-500 font-bold leading-none">
@@ -306,7 +291,7 @@ export default function EditBackupPlanModal() {
         {/* Recurrence */}
         <div className="space-y-4">
            <div className="flex items-center gap-3">
-             <Icon name="schedule" size="14px" weight={400} className="text-bk-yellow" />
+             <Icon name="schedule" size="14px" weight={400} className="text-amber-500" />
              <span className="text-[10px] font-bold text-slate-400">Execution Schedule</span>
           </div>
           <div className="p-5 bg-slate-50/50 dark:bg-white/1 border border-slate-100 dark:border-white/4 rounded-2xl space-y-6 shadow-xs">
@@ -339,7 +324,7 @@ export default function EditBackupPlanModal() {
                         key={id}
                         type="button"
                         onClick={() => setBulkDays(id)}
-                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[10px] font-bold text-slate-400 hover:border-bk-yellow/50 hover:text-bk-yellow transition-all"
+                        className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[10px] font-bold text-slate-400 hover:border-amber-500/50 hover:text-amber-500 transition-all"
                       >
                          {id.replace('_', ' ')}
                       </button>
@@ -353,8 +338,8 @@ export default function EditBackupPlanModal() {
                         onClick={() => toggleDay(day)}
                         className={`h-9 rounded-xl border text-[11px] font-black transition-all flex items-center justify-center ${
                           (Array.isArray(formData.periodDetail) && formData.periodDetail.includes(day))
-                            ? 'bg-bk-yellow border-bk-yellow text-slate-900 shadow-xs scale-105 z-10'
-                            : 'bg-white dark:bg-white/3 border-slate-200 dark:border-white/4 text-slate-400 hover:border-bk-yellow/40'
+                            ? 'bg-amber-500 border-amber-500 text-slate-900 shadow-xs scale-105 z-10'
+                            : 'bg-white dark:bg-white/3 border-slate-200 dark:border-white/4 text-slate-400 hover:border-amber-500/40'
                         }`}
                       >
                         {day}
@@ -376,8 +361,8 @@ export default function EditBackupPlanModal() {
                         onClick={() => toggleDay(dayValue)}
                         className={`h-11 rounded-xl border text-[11px] font-black transition-all flex items-center justify-center ${
                           isActive
-                            ? 'bg-bk-yellow border-bk-yellow text-slate-900 shadow-xs scale-105'
-                            : 'bg-white dark:bg-white/3 border-slate-200 dark:border-white/4 text-slate-400 hover:border-bk-yellow/40'
+                            ? 'bg-amber-500 border-amber-500 text-slate-900 shadow-xs scale-105'
+                            : 'bg-white dark:bg-white/3 border-slate-200 dark:border-white/4 text-slate-400 hover:border-amber-500/40'
                         }`}
                       >
                         {day}
@@ -407,7 +392,7 @@ export default function EditBackupPlanModal() {
         {/* Operational Options */}
         <div className="space-y-4">
            <div className="flex items-center gap-3">
-             <Icon name="settings_input_component" size="14px" weight={400} className="text-bk-yellow" />
+             <Icon name="settings_input_component" size="14px" weight={400} className="text-amber-500" />
              <span className="text-[10px] font-bold text-slate-400">Optimization Matrix</span>
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -421,14 +406,14 @@ export default function EditBackupPlanModal() {
                 key={opt.field} 
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all cursor-pointer group ${
                   formData[opt.field] 
-                    ? 'bg-bk-yellow/5 border-bk-yellow/30' 
+                    ? 'bg-amber-500/5 border-amber-500/30' 
                     : 'bg-white dark:bg-white/1 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/12'
                 }`}
                 onClick={() => handleInputChange(opt.field, !formData[opt.field])}
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center transition-all shrink-0 border ${
                   formData[opt.field] 
-                    ? 'bg-bk-yellow text-slate-900 border-bk-yellow/40' 
+                    ? 'bg-amber-500 text-slate-900 border-amber-500/40' 
                     : 'bg-slate-50 dark:bg-white/5 border-transparent text-slate-400 group-hover:text-slate-500'
                 }`}>
                   <Icon name={opt.icon} size="12px" weight={300} />
@@ -463,12 +448,12 @@ export default function EditBackupPlanModal() {
               onClick={() => handleInputChange('onlineType', mode.value)}
               className={`w-full flex items-center gap-4 p-4 rounded-2xl border transition-all text-left shadow-xs ${
                 formData.onlineType === mode.value 
-                  ? 'bg-bk-yellow/5 border-bk-yellow/40' 
+                  ? 'bg-amber-500/5 border-amber-500/40' 
                   : 'bg-white dark:bg-white/1 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/12'
               }`}
             >
               <div className={`w-11 h-11 rounded-xl flex items-center justify-center border transition-all shrink-0 ${
-                formData.onlineType === mode.value ? 'bg-bk-yellow text-slate-900 border-bk-yellow/40' : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent'
+                formData.onlineType === mode.value ? 'bg-amber-500 text-slate-900 border-amber-500/40' : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent'
               }`}>
                 <Icon name={mode.icon} size="md" weight={300} />
               </div>
@@ -477,9 +462,9 @@ export default function EditBackupPlanModal() {
                 <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium leading-relaxed block">{mode.desc}</Typography>
               </div>
               <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${
-                formData.onlineType === mode.value ? 'border-bk-yellow shadow-[0_0_8px_rgba(255,193,7,0.3)]' : 'border-slate-300 dark:border-white/10'
+                formData.onlineType === mode.value ? 'border-amber-500 shadow-[0_0_8px_rgba(255,193,7,0.3)]' : 'border-slate-300 dark:border-white/10'
               }`}>
-                {formData.onlineType === mode.value && <div className="w-2.5 h-2.5 rounded-full bg-bk-yellow shadow-xs" />}
+                {formData.onlineType === mode.value && <div className="w-2.5 h-2.5 rounded-full bg-amber-500 shadow-xs" />}
               </div>
             </button>
           ))}

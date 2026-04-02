@@ -11,6 +11,12 @@ import { Select } from '../../../components/ds/forms/Select';
 import { DatePicker } from '../../../components/ds/forms/DatePicker';
 import { TimePicker } from '../../../components/ds/forms/TimePicker';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -26,9 +32,17 @@ export default function EditQueryPlanModal() {
   const { theme } = useSelector((state) => state.layout, shallowEqual);
   const { queryPlans } = useSelector((state) => state.databaseOperation, shallowEqual);
   
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
-  const [successMsg, setSuccessMsg] = useState('');
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
 
   const [formData, setFormData] = useState({
     queryId: '',
@@ -43,15 +57,13 @@ export default function EditQueryPlanModal() {
   // Clear view on modal open
   useEffect(() => {
     if (isEditQueryPlanModalOpen) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
-      setSuccessMsg('');
+      resetAction();
     }
-  }, [isEditQueryPlanModalOpen]);
+  }, [isEditQueryPlanModalOpen, resetAction]);
 
   // Initialization
   useEffect(() => {
-    if (isEditQueryPlanModalOpen && selectedDatabase && selectedQueryPlanId && view === VIEW_FORM) {
+    if (isEditQueryPlanModalOpen && selectedDatabase && selectedQueryPlanId && !isLoading && !isSuccess && !isError) {
       const plans = queryPlans[selectedDatabase] || [];
       let plan = plans.find(p => p.query_id === selectedQueryPlanId);
       
@@ -92,7 +104,7 @@ export default function EditQueryPlanModal() {
         });
       }
     }
-  }, [isEditQueryPlanModalOpen, selectedDatabase, selectedQueryPlanId, queryPlans]);
+  }, [isEditQueryPlanModalOpen, selectedDatabase, selectedQueryPlanId, queryPlans, isLoading, isSuccess, isError, selectedHostUid, dispatch]);
 
   if (!isEditQueryPlanModalOpen) return null;
 
@@ -118,18 +130,15 @@ export default function EditQueryPlanModal() {
 
   const handleSave = async () => {
     if (!formData.queryId.trim()) {
-       setErrorMsg('A unique Query Identifier is required.');
-       setView(VIEW_ERROR);
+       endError('A unique Query Identifier is required.');
        return;
     }
     if (!formData.queryString.trim()) {
-      setErrorMsg('No SQL statement provided.');
-      setView(VIEW_ERROR);
+      endError('No SQL statement provided.');
       return;
     }
     
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
 
     let detail = '';
     if (formData.periodType === 'DAY') detail = formData.backupTime;
@@ -168,71 +177,53 @@ export default function EditQueryPlanModal() {
 
     try {
       await dispatch(setAutoExecQuery({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
-      setSuccessMsg(`Plan "${formData.queryId}" has been successfully updated.`);
-      setView(VIEW_SUCCESS);
+      endSuccess(`Plan "${formData.queryId}" has been successfully updated.`);
       dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: selectedDatabase }));
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'Operation failed.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'Operation failed.'));
     }
   };
 
   const handleClose = () => dispatch(closeEditQueryPlanModal());
 
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
       <Modal isOpen title="Updating Schedule" icon="edit" onClose={handleClose} maxWidth="720px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="size-16 border-4 border-amber-500/10 border-t-amber-500 rounded-full animate-spin"></div>
-          <Typography variant="h4" className="text-[15px] font-black tracking-tight">Syncing Changes</Typography>
-        </div>
+        <ModalStatusLoading 
+          title="Syncing Changes" 
+          subtitle="Committing the new automation sequence to the task controller."
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
       <Modal isOpen title="Update Successful" icon="verified" iconVariant="success" onClose={handleClose} maxWidth="700px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-            <Icon name="done_all" size="lg" weight={700} className="text-white" />
-          </div>
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Schedule Registry Updated</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed max-w-[360px] mx-auto">
-              Changes to the query plan for <span className="font-bold text-slate-900 dark:text-white">{selectedDatabase}</span> have been committed and re-indexed.
-            </Typography>
-          </div>
-          <Button variant="secondary" onClick={handleClose}>Confirm & Dismiss</Button>
-        </div>
+        <ModalStatusSuccess 
+          title="Schedule Registry Updated"
+          message={`Changes to the query plan for ${selectedDatabase} have been committed and re-indexed.`}
+          onConfirm={handleClose}
+          confirmText="Confirm & Dismiss"
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title="Update Failed" icon="error" iconVariant="danger" onClose={handleClose} maxWidth="700px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-            <Icon name="edit_off" size="md" weight={300} className="text-white" />
-          </div>
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Execution Halted</Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">System could not finalize the query schedule modification sequence.</Typography>
-          </div>
-          <div className="w-full max-w-[480px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left shadow-xs">
-            <Typography variant="caption" className="text-rose-400 font-mono leading-relaxed break-words block text-center uppercase tracking-widest text-[10px] font-bold">
-              {errorMsg}
-            </Typography>
-          </div>
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>Dismiss</Button>
-            <Button variant="primary" icon="refresh" onClick={() => setView(VIEW_FORM)}>Retry Update</Button>
-          </div>
-        </div>
+      <Modal isOpen title="Update Failed" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="700px">
+        <ModalStatusError 
+          title="Execution Halted"
+          error={actionError}
+          onRetry={handleSave}
+          onCancel={resetAction}
+          retryText="Retry Update"
+          cancelText="Dismiss"
+        />
       </Modal>
     );
   }

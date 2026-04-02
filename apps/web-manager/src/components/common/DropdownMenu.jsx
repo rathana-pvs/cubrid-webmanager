@@ -1,5 +1,7 @@
-import { useState, useRef, useCallback, useLayoutEffect } from 'react';
+import { useState, useRef, useCallback, useLayoutEffect, createContext, useContext } from 'react';
 import { createPortal } from 'react-dom';
+
+const MenuContext = createContext({ closeMenu: () => {} });
 
 /**
  * Reusable submenu component with hover delay.
@@ -167,6 +169,11 @@ export function DropdownMenu({ label, children, width = 'w-52' }) {
     }
   }, [open, isPositioned]);
 
+  const closeMenu = useCallback(() => {
+    setOpen(false);
+    setIsPositioned(false);
+  }, []);
+
   return (
     <div className="relative font-sans" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
       <button className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium tracking-wide transition-all duration-200
@@ -179,20 +186,22 @@ export function DropdownMenu({ label, children, width = 'w-52' }) {
       </button>
 
       {open && (
-        <div 
-          ref={menuRef}
-          className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-2
-            ${width} bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-xl 
-            shadow-[0_4px_25px_rgba(0,0,0,0.2)] p-1.5 z-1000 animate-in fade-in transition duration-200
-            ${isPositioned ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}
-        >
-          {/* Subtle Top Accent */}
-          <div className="absolute top-0 left-4 right-4 h-[2px] bg-linear-to-r from-transparent via-bk-yellow/30 to-transparent"></div>
-          
-          <div className="space-y-0.5">
-            {children}
+        <MenuContext.Provider value={{ closeMenu }}>
+          <div 
+            ref={menuRef}
+            className={`absolute ${align === 'left' ? 'left-0' : 'right-0'} top-full mt-2
+              ${width} bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-xl 
+              shadow-[0_4px_25px_rgba(0,0,0,0.2)] p-1.5 z-1000 animate-in fade-in transition duration-200
+              ${isPositioned ? 'opacity-100 translate-y-0 scale-100' : 'opacity-0 -translate-y-2 scale-95'}`}
+          >
+            {/* Subtle Top Accent */}
+            <div className="absolute top-0 left-4 right-4 h-[2px] bg-linear-to-r from-transparent via-bk-yellow/30 to-transparent"></div>
+            
+            <div className="space-y-0.5" onClick={(e) => e.stopPropagation()}>
+              {children}
+            </div>
           </div>
-        </div>
+        </MenuContext.Provider>
       )}
     </div>
   );
@@ -202,7 +211,14 @@ export function DropdownMenu({ label, children, width = 'w-52' }) {
  * Enhanced menu item for the professional ecosystem.
  */
 export function MenuItem({ icon, iconColor = '', label, onClick, href, disabled = false }) {
+  const { closeMenu } = useContext(MenuContext);
   const baseClasses = `flex items-center gap-3 px-3 py-2 text-[12px] font-medium tracking-wide transition-all w-full text-left rounded-lg font-sans relative group overflow-hidden`;
+  
+  const handleClick = (e) => {
+    if (disabled) return;
+    if (onClick) onClick(e);
+    closeMenu();
+  };
   const stateClasses = disabled 
     ? 'opacity-30 cursor-not-allowed text-slate-400' 
     : 'text-slate-600 dark:text-slate-300 hover:bg-amber-500/6 dark:hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-500 active:scale-[0.98]';
@@ -228,14 +244,14 @@ export function MenuItem({ icon, iconColor = '', label, onClick, href, disabled 
 
   if (href && !disabled) {
     return (
-      <a className={`${baseClasses} ${stateClasses}`} href={href}>
+      <a className={`${baseClasses} ${stateClasses}`} href={href} onClick={handleClick}>
         {content}
       </a>
     );
   }
 
   return (
-    <button className={`${baseClasses} ${stateClasses}`} onClick={disabled ? undefined : onClick} disabled={disabled}>
+    <button className={`${baseClasses} ${stateClasses}`} onClick={handleClick} disabled={disabled}>
       {content}
     </button>
   );

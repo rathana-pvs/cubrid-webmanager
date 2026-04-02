@@ -10,6 +10,12 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import { 
+  ModalStatusLoading, 
+  ModalStatusSuccess, 
+  ModalStatusError 
+} from '../../../components/ds/feedback/ActionStatus';
 
 // View states
 const VIEW_FORM    = 'form';
@@ -97,8 +103,8 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
     <div className="space-y-2">
       {/* Section Header */}
       <div className="flex items-center gap-2 pb-1">
-        <div className="w-5 h-5 rounded-md bg-bk-yellow/10 flex items-center justify-center">
-          <Icon name={BUFFER_ICONS[type]} size="12px" weight={400} className="text-bk-yellow" />
+        <div className="w-5 h-5 rounded-md bg-amber-500/10 flex items-center justify-center">
+          <Icon name={BUFFER_ICONS[type]} size="12px" weight={400} className="text-amber-500" />
         </div>
         <span className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">{label}</span>
         <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
@@ -112,18 +118,18 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
           onClick={() => setBufferSettings(s => ({ ...s, [type]: 'pages' }))}
           className={`relative text-left p-3 rounded-xl border transition-all duration-150 group ${
             isPages
-              ? 'bg-bk-yellow/[0.02] border-bk-yellow/40'
+              ? 'bg-amber-500/[0.02] border-amber-500/40'
               : 'bg-slate-50/60 dark:bg-white/2 border-slate-100 dark:border-white/6 hover:border-slate-200 dark:hover:border-white/10'
           }`}
         >
-          {isPages && <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-bk-yellow to-transparent opacity-40" />}
+          {isPages && <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-40" />}
           <div className="flex items-center justify-between mb-2">
-            <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isPages ? 'text-bk-yellow' : 'text-slate-400 dark:text-slate-500'}`}>
+            <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isPages ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
               <Icon name="tag" size="10px" weight={700} />
               Pages Count
             </div>
-            <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isPages ? 'border-bk-yellow' : 'border-slate-300 dark:border-slate-700'}`}>
-              {isPages && <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow" />}
+            <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isPages ? 'border-amber-500' : 'border-slate-300 dark:border-slate-700'}`}>
+              {isPages && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
             </div>
           </div>
           <p className="text-[9px] font-mono text-slate-400 dark:text-slate-600 mb-2.5 truncate">{pagesKey}</p>
@@ -145,18 +151,18 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
           onClick={() => setBufferSettings(s => ({ ...s, [type]: 'size' }))}
           className={`relative text-left p-3 rounded-xl border transition-all duration-150 group ${
             isSize
-              ? 'bg-bk-yellow/[0.02] border-bk-yellow/40'
+              ? 'bg-amber-500/[0.02] border-amber-500/40'
               : 'bg-slate-50/60 dark:bg-white/2 border-slate-100 dark:border-white/6 hover:border-slate-200 dark:hover:border-white/10'
           }`}
         >
-          {isSize && <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-bk-yellow to-transparent opacity-40" />}
+          {isSize && <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-40" />}
           <div className="flex items-center justify-between mb-2">
-            <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isSize ? 'text-bk-yellow' : 'text-slate-400 dark:text-slate-500'}`}>
+            <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isSize ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
               <Icon name="straighten" size="10px" weight={700} />
               Physical Size
             </div>
-            <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isSize ? 'border-bk-yellow' : 'border-slate-300 dark:border-slate-700'}`}>
-              {isSize && <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow" />}
+            <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isSize ? 'border-amber-500' : 'border-slate-300 dark:border-slate-700'}`}>
+              {isSize && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
             </div>
           </div>
           <p className="text-[9px] font-mono text-slate-400 dark:text-slate-600 mb-2.5 truncate">{sizeKey}</p>
@@ -194,8 +200,8 @@ function ParamRow({ label, value, defaultValue, onChange, children }) {
   return (
     <div className="flex items-center gap-4 h-9 group hover:bg-slate-50/50 dark:hover:bg-white/2 rounded-lg px-2 -mx-2 transition-colors">
       <div className="w-[320px] shrink-0 flex items-center gap-1.5">
-        {isModified && <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow shrink-0" />}
-        <span className={`text-[10.5px] font-mono truncate transition-colors ${isModified ? 'text-bk-yellow font-bold' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
+        {isModified && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />}
+        <span className={`text-[10.5px] font-mono truncate transition-colors ${isModified ? 'text-amber-500 font-bold' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
           {label}
         </span>
       </div>
@@ -230,11 +236,11 @@ function AdvancedRow({ param, value, isModified, onValueChange }) {
     : param.type.includes('on|off') ? ['on', 'off'] : ['yes', 'no'];
 
   return (
-    <div className={`flex items-center gap-3 h-10 px-4 border-b border-slate-100 dark:border-white/4 last:border-b-0 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors group ${isModified ? 'bg-bk-yellow/3' : ''}`}>
+    <div className={`flex items-center gap-3 h-10 px-4 border-b border-slate-100 dark:border-white/4 last:border-b-0 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors group ${isModified ? 'bg-amber-500/3' : ''}`}>
       <div className="w-[320px] shrink-0 flex items-center gap-3">
         <div className="flex items-center gap-2 min-w-0 flex-1">
-          {isModified && <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow shrink-0 animate-pulse" />}
-          <span className={`text-[10px] font-mono truncate ${isModified ? 'text-bk-yellow font-bold' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'}`}>
+          {isModified && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />}
+          <span className={`text-[10px] font-mono truncate ${isModified ? 'text-amber-500 font-bold' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'}`}>
             {param.key}
           </span>
         </div>
@@ -276,9 +282,18 @@ export default function DatabasePropertyModal() {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
   const isAuthorized = selectedHostUid && authorizedHosts.includes(selectedHostUid);
+  const { 
+    state, 
+    error: actionError, 
+    startAction, 
+    endSuccess, 
+    endError, 
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError
+  } = useActionState();
 
-  const [view, setView] = useState(VIEW_FORM);
-  const [errorMsg, setErrorMsg] = useState('');
   const [activeTab, setActiveTab] = useState('General');
   const [activeSidebar, setActiveSidebar] = useState('Server Parameter');
   const [fetching, setFetching] = useState(false);
@@ -291,11 +306,10 @@ export default function DatabasePropertyModal() {
 
   useEffect(() => {
     if (isDatabasePropertyModalOpen) {
-      setView(VIEW_FORM);
-      setErrorMsg('');
+      resetAction();
       setActiveSidebar(selectedDatabase ? 'Connection Information' : 'Server Parameter');
     }
-  }, [isDatabasePropertyModalOpen, selectedDatabase]);
+  }, [isDatabasePropertyModalOpen, selectedDatabase, resetAction]);
 
   useEffect(() => {
     if (isDatabasePropertyModalOpen && selectedHostUid && isAuthorized) {
@@ -359,8 +373,7 @@ export default function DatabasePropertyModal() {
 
   const handleApply = async () => {
     if (activeSidebar === 'Connection Information') { dispatch(closeDatabasePropertyModal()); return; }
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
     try {
       const saveParams = { ...params };
       ['data', 'sort', 'log'].forEach(prefix => {
@@ -402,18 +415,17 @@ export default function DatabasePropertyModal() {
         if (!found) updatedSection.push(`${key}=${value}`);
       });
       await hostApi.setHostConfig(selectedHostUid, { confname: 'cubridconf', confdata: [...otherBefore, ...updatedSection, ...otherAfter] });
-      setView(VIEW_SUCCESS);
+      endSuccess(`Changes to the ${selectedDatabase || 'kernel'} configuration have been committed and synchronized.`);
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'System controller rejected the configuration patch.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'System controller rejected the configuration patch.'));
     }
   };
 
   useEffect(() => {
     if (!isDatabasePropertyModalOpen) {
-      setTimeout(() => setView(VIEW_FORM), 300);
+      setTimeout(() => resetAction(), 300);
     }
-  }, [isDatabasePropertyModalOpen]);
+  }, [isDatabasePropertyModalOpen, resetAction]);
 
   const handleClose = () => {
     dispatch(closeDatabasePropertyModal());
@@ -430,62 +442,38 @@ export default function DatabasePropertyModal() {
     : [{ id: 'Server Parameter', icon: 'tune', label: 'Server' }];
 
   /* ─── LOADING VIEW ─── */
-  if (view === VIEW_LOADING) return (
+  if (isLoading) return (
     <Modal isOpen title="Syncing Configuration" icon="settings" onClose={handleClose} maxWidth="900px">
-      <div className="flex flex-col items-center justify-center py-28 space-y-8 animate-in fade-in duration-200">
-        <div className="relative w-20 h-20">
-          <div className="absolute inset-0 rounded-full border-2 border-bk-yellow/10" />
-          <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-bk-yellow animate-spin" style={{ animationDuration: '0.8s' }} />
-          <div className="absolute inset-[6px] rounded-full border border-bk-yellow/20 border-b-bk-yellow/60 animate-spin" style={{ animationDuration: '1.4s', animationDirection: 'reverse' }} />
-          <div className="absolute inset-0 flex items-center justify-center">
-            <div className="w-2 h-2 rounded-full bg-bk-yellow shadow-[0_0_8px_3px_rgba(212,163,0,0.4)]" />
-          </div>
-        </div>
-        <div className="text-center space-y-2">
-          <p className="text-[13px] font-black text-slate-900 dark:text-white tracking-tight">Updating Registry</p>
-          <p className="text-[11px] text-slate-500 dark:text-slate-400 font-medium max-w-[300px] italic">Patching cubrid.conf on host runtime…</p>
-        </div>
-      </div>
+      <ModalStatusLoading 
+        title="Updating Registry" 
+        subtitle="The system is patching cubrid.conf on host runtime and synchronizing indices." 
+      />
     </Modal>
   );
 
   /* ─── SUCCESS VIEW ─── */
-  if (view === VIEW_SUCCESS) return (
-    <Modal isOpen={isDatabasePropertyModalOpen} title="Update Successful" icon="check_circle" iconVariant="success" onClose={handleClose} maxWidth="900px">
-      <div className="flex flex-col items-center justify-center py-20 gap-6 text-center animate-in fade-in duration-200">
-        <div className="w-20 h-20 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-          <Icon name="check" size="md" weight={400} className="text-white" />
-        </div>
-        <div className="space-y-1.5">
-          <p className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Configuration Re-Indexed</p>
-          <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium">Changes to the <span className="font-bold text-slate-900 dark:text-slate-200">{selectedDatabase}</span> configuration have been committed and synchronized.</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="secondary" onClick={handleClose} className="px-10">Confirm & Return</Button>
-        </div>
-      </div>
+  if (isSuccess) return (
+    <Modal isOpen title="Update Successful" icon="check_circle" iconVariant="success" onClose={handleClose} maxWidth="900px">
+      <ModalStatusSuccess 
+        title="Configuration Re-Indexed"
+        message={`Changes to the ${selectedDatabase || 'kernel'} configuration have been committed and synchronized.`}
+        onConfirm={handleClose}
+        confirmText="Confirm & Return"
+      />
     </Modal>
   );
 
   /* ─── ERROR VIEW ─── */
-  if (view === VIEW_ERROR) return (
-    <Modal isOpen={isDatabasePropertyModalOpen} title="Update Rejected" icon="error" iconVariant="danger" onClose={handleClose} maxWidth="900px">
-      <div className="flex flex-col items-center justify-center py-20 gap-6 text-center animate-in fade-in duration-200">
-        <div className="w-16 h-16 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(244,63,94,0.3)]">
-          <Icon name="block" size="md" weight={400} className="text-white" />
-        </div>
-        <div className="space-y-1.5">
-          <p className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">Synchronization Halted</p>
-          <p className="text-[11.5px] text-slate-500 dark:text-slate-400 font-medium">The target host rejected the configuration amendment signal.</p>
-        </div>
-        <div className="w-full max-w-[560px] bg-rose-500/5 border border-rose-500/10 rounded-xl px-5 py-3.5">
-          <p className="text-[10.5px] text-rose-400 font-mono break-all text-center">{errorMsg}</p>
-        </div>
-        <div className="flex items-center gap-3">
-          <Button variant="ghost" onClick={handleClose}>Discard Changes</Button>
-          <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>Retry Patch</Button>
-        </div>
-      </div>
+  if (isError) return (
+    <Modal isOpen title="Update Rejected" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="900px">
+      <ModalStatusError 
+        title="Synchronization Halted"
+        error={actionError}
+        onRetry={handleApply}
+        onCancel={resetAction}
+        retryText="Retry Patch"
+        cancelText="Discard Changes"
+      />
     </Modal>
   );
 
@@ -542,18 +530,18 @@ export default function DatabasePropertyModal() {
                 onClick={() => setActiveSidebar(id)}
                 className={`relative w-full flex items-center gap-3 px-4 py-3.5 text-left group ${
                   activeSidebar === id
-                    ? 'bg-bk-yellow/10 text-bk-yellow'
+                    ? 'bg-amber-500/10 text-amber-500'
                     : 'text-slate-500 hover:text-slate-300 hover:bg-white/4'
                 }`}
               >
                 {activeSidebar === id && (
-                  <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-bk-yellow rounded-r-full shadow-[2px_0_8px_rgba(212,163,0,0.4)]" />
+                  <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-amber-500 rounded-r-full shadow-[2px_0_8px_rgba(212,163,0,0.4)]" />
                 )}
                 <Icon
                   name={icon}
                   size="15px"
                   weight={activeSidebar === id ? 500 : 300}
-                  className={activeSidebar === id ? 'text-bk-yellow' : 'text-slate-600 group-hover:text-slate-400'}
+                  className={activeSidebar === id ? 'text-amber-500' : 'text-slate-600 group-hover:text-slate-400'}
                 />
                 <span className="text-[10.5px] font-black uppercase tracking-widest">{label}</span>
               </button>
@@ -563,7 +551,7 @@ export default function DatabasePropertyModal() {
           {selectedDatabase && (
             <div className="px-4 py-3 border-t border-white/5">
               <p className="text-[8.5px] uppercase tracking-widest text-slate-600 font-bold mb-1">Context</p>
-              <p className="text-[10px] font-mono font-black text-bk-yellow/80 truncate">{selectedDatabase}</p>
+              <p className="text-[10px] font-mono font-black text-amber-500/80 truncate">{selectedDatabase}</p>
             </div>
           )}
         </div>
@@ -579,7 +567,7 @@ export default function DatabasePropertyModal() {
                   key={tab}
                   onClick={() => setActiveTab(tab)}
                   className={`relative flex items-center gap-2 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest ${
-                    activeTab === tab ? 'text-bk-yellow' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
+                    activeTab === tab ? 'text-amber-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
                   }`}
                 >
                   <Icon
@@ -589,15 +577,15 @@ export default function DatabasePropertyModal() {
                   />
                   {tab} Registry
                   {activeTab === tab && (
-                    <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-bk-yellow rounded-t-full shadow-[0_0_8px_rgba(212,163,0,0.6)]" />
+                    <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-amber-500 rounded-t-full shadow-[0_0_8px_rgba(212,163,0,0.6)]" />
                   )}
                 </button>
               ))}
               <div className="flex-1" />
               {/* Modified indicator */}
               {Object.keys(params).length > 0 && (
-                <div className="flex items-center gap-1.5 px-4 text-[9px] text-bk-yellow/70 font-bold">
-                  <div className="w-1.5 h-1.5 rounded-full bg-bk-yellow animate-pulse" />
+                <div className="flex items-center gap-1.5 px-4 text-[9px] text-amber-500/70 font-bold">
+                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
                   {Object.keys(params).length} modified
                 </div>
               )}
@@ -608,7 +596,7 @@ export default function DatabasePropertyModal() {
           <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar">
             {fetching ? (
               <div className="h-full flex flex-col items-center justify-center gap-5">
-                <div className="w-10 h-10 border-2 border-bk-yellow/10 border-t-bk-yellow rounded-full animate-spin" />
+                <div className="w-10 h-10 border-2 border-amber-500/10 border-t-amber-500 rounded-full animate-spin" />
                 <div className="text-center">
                   <p className="text-[9.5px] uppercase tracking-[0.2em] text-slate-400 font-black mb-1">Loading</p>
                   <p className="text-[10.5px] text-slate-400 dark:text-slate-500 italic font-medium">Querying host runtime registry…</p>
@@ -619,13 +607,13 @@ export default function DatabasePropertyModal() {
               /* ─── CONNECTION INFO ─── */
               <div className="p-6 space-y-5">
                 {/* Header Banner */}
-                <div className="flex items-center gap-4 p-4 bg-bk-yellow/5 border border-bk-yellow/15 rounded-xl">
-                  <div className="w-10 h-10 rounded-xl bg-bk-yellow/10 border border-bk-yellow/20 flex items-center justify-center shrink-0">
-                    <Icon name="cable" size="md" weight={300} className="text-bk-yellow" />
+                <div className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/15 rounded-xl">
+                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                    <Icon name="cable" size="md" weight={300} className="text-amber-500" />
                   </div>
                   <div>
                     <p className="text-[11px] font-black text-slate-900 dark:text-white tracking-tight">Broker Connection</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Configure how Web Manager connects to <span className="text-bk-yellow font-bold">{selectedDatabase}</span></p>
+                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Configure how Web Manager connects to <span className="text-amber-500 font-bold">{selectedDatabase}</span></p>
                   </div>
                 </div>
 

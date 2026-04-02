@@ -31,6 +31,7 @@ const initialState = {
   isLoginDatabaseModalOpen: false,
   isEditQueryPlanModalOpen: false,
   isDeleteQueryPlanModalOpen: false,
+  // isAddDatabaseModalOpen removed (redundant)
   
   // Modal Data
   deleteDatabaseName: null,
