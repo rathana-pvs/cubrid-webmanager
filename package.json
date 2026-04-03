@@ -12,7 +12,7 @@
     "@nx/nest": "^22.3.3",
     "@reduxjs/toolkit": "^2.10.1",
     "antd": "^5.28.0",
-    "axios": "^1.6.0",
+    "axios": "^1.14.0",
     "bcryptjs": "^3.0.2",
     "framer-motion": "^12.23.24",
     "module-alias": "^2.2.3",

@@ -23,6 +23,8 @@ const MetricBar = ({ pct }) => (
   </div>
 );
 
+import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
+
 const Component = function ServiceDashboard() {
   const dispatch = useDispatch();
   const { hosts, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
@@ -57,36 +59,65 @@ const Component = function ServiceDashboard() {
   } = useActionState();
 
   const [loadingTitle, setLoadingTitle] = useState('Synchronizing Services');
+  const [confirmConfig, setConfirmConfig] = useState({ 
+    isOpen: false, 
+    title: '', 
+    description: '', 
+    confirmLabel: '',
+    variant: 'primary',
+    onConfirm: () => {} 
+  });
 
-  const handleStartService = async (e, hostUid) => {
+  const closeConfirm = () => setConfirmConfig(prev => ({ ...prev, isOpen: false }));
+
+  const handleStartService = (e, row) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to start all CUBRID services on this host?')) {
-      setLoadingTitle(`Starting services on ${hostUid}`);
-      startAction();
-      try {
-        await dispatch(startService(hostUid)).unwrap();
-        // Silent success - reset loading state but no modal
-        resetAction();
-        // Refresh specific host summary if needed, but the polling refresh already handles this usually.
-      } catch (err) {
-        endError(typeof err === 'string' ? err : (err.message || 'Service start command rejected by host agent.'));
+    const hostUid = row.uid;
+    const serverName = row.alias || row.id;
+
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Start Services',
+      description: `Are you sure you want to start all CUBRID services on host "${serverName}"?`,
+      confirmLabel: 'Start Services',
+      variant: 'primary',
+      onConfirm: async () => {
+        closeConfirm();
+        setLoadingTitle(`Starting services on ${serverName}`);
+        startAction();
+        try {
+          await dispatch(startService(hostUid)).unwrap();
+          resetAction();
+        } catch (err) {
+          endError(typeof err === 'string' ? err : (err.message || 'Service start command rejected by host agent.'));
+        }
       }
-    }
+    });
   };
 
-  const handleStopService = async (e, hostUid) => {
+  const handleStopService = (e, row) => {
     e.stopPropagation();
-    if (window.confirm('Are you sure you want to stop all CUBRID services on this host? This will stop all brokers and databases.')) {
-      setLoadingTitle(`Stopping services on ${hostUid}`);
-      startAction();
-      try {
-        await dispatch(stopService(hostUid)).unwrap();
-        // Silent success
-        resetAction();
-      } catch (err) {
-        endError(typeof err === 'string' ? err : (err.message || 'Service termination failed. Check agent logs.'));
+    const hostUid = row.uid;
+    const serverName = row.alias || row.id;
+
+    setConfirmConfig({
+      isOpen: true,
+      title: 'Stop Services',
+      description: `Are you sure you want to stop all CUBRID services on host "${serverName}"? This will terminate all active brokers and databases.`,
+      confirmLabel: 'Stop All Services',
+      variant: 'danger',
+      onConfirm: async () => {
+        closeConfirm();
+        setLoadingTitle(`Stopping services on ${serverName}`);
+        startAction();
+        try {
+          await dispatch(stopService(hostUid)).unwrap();
+          resetAction();
+        } catch (err) {
+          endError(typeof err === 'string' ? err : (err.message || 'Service termination failed. Check agent logs.'));
+        }
       }
-    }
+    });
   };
 
 
@@ -199,16 +230,16 @@ const Component = function ServiceDashboard() {
         const isConnected = authorizedHosts.includes(row.uid);
         if (!isConnected) return null;
         return (
-          <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-1">
             <button 
-              onClick={(e) => handleStartService(e, row.uid)}
+              onClick={(e) => handleStartService(e, row)}
               className="w-7 h-7 flex items-center justify-center rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-emerald-500 hover:bg-emerald-500 hover:text-white transition-all shadow-sm active:scale-90"
               title="Start Services"
             >
               <Icon name="play_arrow" size="16px" weight={400} />
             </button>
             <button 
-              onClick={(e) => handleStopService(e, row.uid)}
+              onClick={(e) => handleStopService(e, row)}
               className="w-7 h-7 flex items-center justify-center rounded-md bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 text-rose-500 hover:bg-rose-500 hover:text-white transition-all shadow-sm active:scale-90"
               title="Stop Services"
             >
@@ -303,6 +334,16 @@ const Component = function ServiceDashboard() {
             </div>
           </div>
         )}
+
+        <ConfirmDialog
+          isOpen={confirmConfig.isOpen}
+          title={confirmConfig.title}
+          description={confirmConfig.description}
+          confirmLabel={confirmConfig.confirmLabel}
+          variant={confirmConfig.variant}
+          onConfirm={confirmConfig.onConfirm}
+          onCancel={closeConfirm}
+        />
       </div>
 
       {isError && (

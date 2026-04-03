@@ -9,7 +9,8 @@ import monitoringApi from './monitoringApi';
  */
 export const fetchHostSummary = createAsyncThunk(
   'globalMonitoring/fetchHostSummary',
-  async (hostUid, { rejectWithValue }) => {
+  async (arg, { getState, rejectWithValue }) => {
+    const hostUid = typeof arg === 'string' ? arg : arg.hostUid;
     try {
       // 1. Fetch concurrent data
       const [hostStat, brokersResponse, dbInfo, envInfo] = await Promise.all([
@@ -72,24 +73,49 @@ export const fetchHostSummary = createAsyncThunk(
         if (b.port) brokerPorts.push(b.port);
       });
 
-      // 5. Build Final Summary Node
+      // 5. CPU Delta Calculation (Legacy Parity)
+      const prev = getState().globalMonitoring.snapshots[hostUid];
+      const snapshot = {
+        user: parseInt(hostStat.cpu_user || 0, 10),
+        kernel: parseInt(hostStat.cpu_kernel || 0, 10),
+        idle: parseInt(hostStat.cpu_idle || 0, 10),
+        iowait: parseInt(hostStat.cpu_iowait || 0, 10),
+      };
+
+      let cpuPercent = 0;
+      if (prev) {
+        const dUser = snapshot.user - prev.user;
+        const dKernel = snapshot.kernel - prev.kernel;
+        const dIdle = snapshot.idle - prev.idle;
+        const dIo = snapshot.iowait - prev.iowait;
+        const total = dUser + dKernel + dIdle + dIo;
+        if (total > 0) {
+          cpuPercent = (dUser / total) * 100;
+        }
+      }
+
+      // 6. Build Final Summary Node
       return {
         hostUid,
-        cpu: parseFloat(hostStat.cpu_user || 0), // Simplification of UserPercent
-        memTotal: parseFloat(hostStat.mem_phy_total || 0),
-        memUsed: parseFloat(hostStat.mem_phy_total || 0) - parseFloat(hostStat.mem_phy_free || 0),
-        disk: hostStat.disk_usage || '0/0',
-        freespaceOnStorage,
-        tps: totalTps,
-        qps: totalQps,
-        errorQ: totalErrorQ,
-        dbOn: dbInfo?.activelist?.active?.length || 0,
-        dbOff: (dbInfo?.dblist?.dbs?.length || 0) - (dbInfo?.activelist?.active?.length || 0),
-        version: envInfo?.os_info || envInfo?.os || 'Unknown',
-        brokerPorts: brokerPorts.join(', '),
-        permFree: totalPagePerm > 0 ? Math.round((freePagePerm * 100) / totalPagePerm) : -1,
-        permTempFree: totalPagePermTemp > 0 ? Math.round((freePagePermTemp * 100) / totalPagePermTemp) : -1,
-        tempTempFree: totalPageTempTemp > 0 ? Math.round((freePageTempTemp * 100) / totalPageTempTemp) : -1,
+        snapshot,
+        summary: {
+          hostUid,
+          cpu: cpuPercent,
+          memTotal: parseFloat(hostStat.mem_phy_total || 0),
+          memUsed: parseFloat(hostStat.mem_phy_total || 0) - parseFloat(hostStat.mem_phy_free || 0),
+          disk: hostStat.disk_usage || '0/0',
+          freespaceOnStorage,
+          tps: totalTps,
+          qps: totalQps,
+          errorQ: totalErrorQ,
+          dbOn: dbInfo?.activelist?.active?.length || 0,
+          dbOff: (dbInfo?.dblist?.dbs?.length || 0) - (dbInfo?.activelist?.active?.length || 0),
+          version: envInfo?.os_info || envInfo?.os || 'Unknown',
+          brokerPorts: brokerPorts.join(', '),
+          permFree: totalPagePerm > 0 ? Math.round((freePagePerm * 100) / totalPagePerm) : -1,
+          permTempFree: totalPagePermTemp > 0 ? Math.round((freePageTempTemp * 100) / totalPagePermTemp) : -1,
+          tempTempFree: totalPageTempTemp > 0 ? Math.round((freePageTempTemp * 100) / totalPageTempTemp) : -1,
+        }
       };
     } catch (err) {
       return rejectWithValue(err.message);
@@ -101,27 +127,33 @@ const globalMonitoringSlice = createSlice({
   name: 'globalMonitoring',
   initialState: {
     summaries: {}, // { [hostUid]: summary }
+    snapshots: {}, // { [hostUid]: { user, kernel, idle, iowait } }
     loading: {},
     error: {}
   },
   reducers: {
     clearSummaries: (state) => {
       state.summaries = {};
+      state.snapshots = {};
     }
   },
   extraReducers: (builder) => {
     builder
       .addCase(fetchHostSummary.pending, (state, action) => {
-        state.loading[action.meta.arg] = true;
+        const hostUid = typeof action.meta.arg === 'string' ? action.meta.arg : action.meta.arg.hostUid;
+        state.loading[hostUid] = true;
       })
       .addCase(fetchHostSummary.fulfilled, (state, action) => {
-        state.loading[action.payload.hostUid] = false;
-        state.summaries[action.payload.hostUid] = action.payload;
-        delete state.error[action.payload.hostUid];
+        const { summary, snapshot, hostUid } = action.payload;
+        state.loading[hostUid] = false;
+        state.summaries[hostUid] = summary;
+        state.snapshots[hostUid] = snapshot;
+        delete state.error[hostUid];
       })
       .addCase(fetchHostSummary.rejected, (state, action) => {
-        state.loading[action.meta.arg] = false;
-        state.error[action.meta.arg] = action.payload;
+        const hostUid = typeof action.meta.arg === 'string' ? action.meta.arg : action.meta.arg.hostUid;
+        state.loading[hostUid] = false;
+        state.error[hostUid] = action.payload;
       });
   }
 });

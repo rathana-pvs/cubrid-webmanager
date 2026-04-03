@@ -39,8 +39,9 @@ export const usePollingRefresh = ({ hostUid, tabId, pollingIntervalSeconds, onFe
   }, []);
 
   const handleRefresh = useCallback(async (silent = false) => {
-    // Only attempt to fetch if the host is authorized
-    if (hostUid && authorizedHosts.includes(hostUid)) {
+    // Only attempt to fetch if the host is authorized, or if it's the global dashboard
+    const isAuthorized = hostUid === 'global' || (hostUid && authorizedHosts.includes(hostUid));
+    if (isAuthorized) {
       if (!silent) setIsManualRefreshing(true);
       try {
         const result = await dispatch(onFetch(silent));
@@ -70,7 +71,8 @@ export const usePollingRefresh = ({ hostUid, tabId, pollingIntervalSeconds, onFe
 
   // 3. Initial Load
   useEffect(() => {
-    if (hostUid && authorizedHosts.includes(hostUid) && !initialLoadDone.current) {
+    const isAuthorized = hostUid === 'global' || (hostUid && authorizedHosts.includes(hostUid));
+    if (isAuthorized && !initialLoadDone.current) {
       initialLoadDone.current = true;
       handleRefresh();
     }
