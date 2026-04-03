@@ -90,8 +90,6 @@ const TablesFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem
             level={4}
             isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `table:${c.classname}`}
             onSelect={() => onSelect(db.dbname, `table:${c.classname}`)}
-            onDoubleClick={() => onTabOpen(`table_info:${selectedHostUid}:${db.dbname}:${c.classname}`)}
-            onContextMenu={(e) => onTableContextMenu(e, db.dbname, c.classname)}
           />
         ))}
       </TreeNode>
@@ -106,8 +104,6 @@ const TablesFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem
             level={3}
             isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `table:${c.classname}`}
             onSelect={() => onSelect(db.dbname, `table:${c.classname}`)}
-            onDoubleClick={() => onTabOpen(`table_info:${selectedHostUid}:${db.dbname}:${c.classname}`)}
-            onContextMenu={(e) => onTableContextMenu(e, db.dbname, c.classname)}
           />
         );
       })}
@@ -161,8 +157,6 @@ const ViewsFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem,
             level={4}
             isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `view:${c.classname}`}
             onSelect={() => onSelect(db.dbname, `view:${c.classname}`)}
-            onDoubleClick={() => onTabOpen(`view_info:${selectedHostUid}:${db.dbname}:${c.classname}`)}
-            onContextMenu={(e) => onViewContextMenu(e, db.dbname, c.classname)}
           />
         ))}
       </TreeNode>
@@ -177,8 +171,6 @@ const ViewsFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem,
             level={3}
             isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `view:${c.classname}`}
             onSelect={() => onSelect(db.dbname, `view:${c.classname}`)}
-            onDoubleClick={() => onTabOpen(`view_info:${selectedHostUid}:${db.dbname}:${c.classname}`)}
-            onContextMenu={(e) => onViewContextMenu(e, db.dbname, c.classname)}
           />
         );
       })}

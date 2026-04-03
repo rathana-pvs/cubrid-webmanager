@@ -49,7 +49,12 @@ export const Input = forwardRef(({
           type={type}
           disabled={disabled}
           value={value}
-          onChange={onChange}
+          onChange={(e) => {
+            if (type === 'number' && e.target.value.length > 1 && e.target.value.startsWith('0')) {
+              e.target.value = Number(e.target.value).toString();
+            }
+            if (onChange) onChange(e);
+          }}
           className={`w-full ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-hidden transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] ${
             icon ? 'pl-11' : 'pl-3.5'
           } ${

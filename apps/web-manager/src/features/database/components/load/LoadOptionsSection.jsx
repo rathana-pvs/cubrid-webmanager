@@ -69,9 +69,9 @@ export default function LoadOptionsSection({ formData, handleCheckBoxChange, han
       {/* Threshold Overrides */}
       <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-white/5">
         <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Threshold Overrides</Typography>
-        <div className="grid grid-cols-1 gap-4">
+        <div className="grid grid-cols-1 gap-2.5">
           {inputs.map(item => (
-            <div key={item.id} className="flex items-center gap-4 bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-3 px-4 transition-all hover:border-slate-200 dark:hover:border-white/10">
+            <div key={item.id} className="flex items-center gap-4 bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-2.5 px-4 transition-all hover:border-slate-200 dark:hover:border-white/10">
               <div className="flex-1 flex items-center gap-3">
                 <div onClick={(e) => e.stopPropagation()}>
                   <Toggle
@@ -81,13 +81,12 @@ export default function LoadOptionsSection({ formData, handleCheckBoxChange, han
                   />
                 </div>
                 <div className="min-w-0">
-                  <Typography variant="p" className={`text-[11px] font-bold leading-none mb-1 transition-colors ${formData.checkBoxes[item.id] ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
+                  <Typography variant="p" className={`text-[11px] font-bold leading-none transition-colors ${formData.checkBoxes[item.id] ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
                     {item.label}
                   </Typography>
-                  <Typography variant="caption" className="text-slate-400 text-[9px] font-medium leading-none block">Override system default</Typography>
                 </div>
               </div>
-              <div className="flex-1 max-w-[240px]">
+              <div className="flex-1 max-w-[220px]">
                 <Input 
                   type={item.type}
                   value={formData.values[item.id]}

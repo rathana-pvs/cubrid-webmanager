@@ -147,7 +147,7 @@ export default function CreateDatabaseModal() {
         }));
       } else {
         // 2. Proactive Fetch: If missing, fetch system environment metadata
-        dispatch(fetchHostEnv(selectedHostUid));
+        // dispatch(fetchHostEnv(selectedHostUid));
       }
 
       // 3. Backend Fallback: Fetch specific create-info
@@ -456,7 +456,7 @@ export default function CreateDatabaseModal() {
                 <div className="space-y-3 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
                   <div className="flex items-center justify-between">
                     <span className="text-[11px] font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
-                      <Icon name="storage" size="14px" weight={400} className="text-amber-500" />
+                       <Icon name="storage" size="14px" weight={400} className="text-amber-500" />
                       Generic Volume
                     </span>
                     <span className="text-[9px] font-black uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-sm border border-amber-500/20">System</span>
@@ -522,7 +522,7 @@ export default function CreateDatabaseModal() {
             </div>
 
             <div className="border border-slate-100 dark:border-white/8 rounded-2xl overflow-hidden bg-white dark:bg-white/1">
-              <div className="grid grid-cols-[1fr_120px_100px_1.5fr_44px] bg-slate-50 dark:bg-white/3 border-b border-slate-100 dark:border-white/8 px-4 py-2.5">
+              <div className="grid grid-cols-[1fr_100px_140px_1.8fr_36px] bg-slate-50 dark:bg-white/3 border-b border-slate-100 dark:border-white/8 pl-4 pr-1 py-2.5">
                 {['Identifier', 'Segment', 'Size MB', 'Absolute Path', ''].map((h, i) => (
                   <span key={i} className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{h}</span>
                 ))}
@@ -530,7 +530,7 @@ export default function CreateDatabaseModal() {
 
               <div className="divide-y divide-slate-100 dark:divide-white/4 max-h-[320px] overflow-y-auto custom-scrollbar">
                 {formData.volumes.map((vol, idx) => (
-                  <div key={idx} className="grid grid-cols-[1fr_120px_100px_1.5fr_44px] items-center gap-0 px-4 py-2 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors group">
+                  <div key={idx} className="grid grid-cols-[1fr_100px_140px_1.8fr_36px] items-center gap-0 pl-4 pr-1 py-2 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors group">
                     <div className="pr-3">
                       <Input value={vol.name} onChange={(e) => handleVolumeChange(idx, 'name', e.target.value)} size="sm" className="font-mono text-[11px]" />
                     </div>
@@ -538,10 +538,10 @@ export default function CreateDatabaseModal() {
                       <Select value={vol.type} onChange={(e) => handleVolumeChange(idx, 'type', e.target.value)} options={VOLUME_TYPES} size="sm" />
                     </div>
                     <div className="pr-3">
-                      <Input type="number" value={vol.size} onChange={(e) => handleVolumeChange(idx, 'size', Number(e.target.value))} size="sm" suffix="MB" />
+                      <Input type="number" value={vol.size} onChange={(e) => handleVolumeChange(idx, 'size', Number(e.target.value))} size="sm" />
                     </div>
                     <div className="pr-1">
-                      <Input value={vol.path} onChange={(e) => handleVolumeChange(idx, 'path', e.target.value)} size="sm" className="font-mono text-[10px]" />
+                      <Input value={vol.path} onChange={(e) => handleVolumeChange(idx, 'path', e.target.value)} size="sm" className="font-mono text-[10px]" title={vol.path} />
                     </div>
                     <button
                       onClick={() => removeVolume(idx)}
@@ -553,11 +553,6 @@ export default function CreateDatabaseModal() {
                 ))}
               </div>
 
-              <div className="flex items-center gap-4 px-4 py-2.5 border-t border-slate-100 dark:border-white/4 bg-slate-50/50 dark:bg-white/1">
-                {VOLUME_TYPES.map(vt => (
-                  <span key={vt.value} className={`text-[9px] font-black uppercase tracking-widest px-2 py-0.5 rounded-lg border ${typeBadge(vt.value)}`}>{vt.label}</span>
-                ))}
-              </div>
             </div>
           </div>
         )}
@@ -664,8 +659,6 @@ export default function CreateDatabaseModal() {
                 error={(formData.confirmPassword && formData.dbaPassword !== formData.confirmPassword) ? "Tokens do not match" : ""}
               />
             </div>
-
-
           </div>
         )}
 
