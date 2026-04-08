@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { editHost, loginToHost, closeEditHostModal, clearHostError } from '../hostSlice';
+import { editHost, loginToHost, closeEditHostModal, clearHostError, setSelectedHost, fetchHostEnv } from '../hostSlice';
+import { fetchDatabaseStartInfo } from '../../database/databaseSlice';
+import { fetchBrokerList } from '../../broker/brokerSlice';
+import { setActiveMainTab } from '../../layout/layoutSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
@@ -71,12 +74,34 @@ export default function EditHostModal() {
       payload.password = formData.password;
     }
 
-    dispatch(editHost({ hostUid: hostToEditUid, payload }))
+    // 1. Capture current target UID
+    const targetUid = hostToEditUid;
+
+    // 2. Perform Edit
+    dispatch(editHost({ hostUid: targetUid, payload }))
       .unwrap()
       .then(() => {
-        if (selectedHostUid === hostToEditUid) {
-          dispatch(loginToHost(hostToEditUid));
-        }
+        // 3. Success on saving changes -> Close modal immediately
+        dispatch(closeEditHostModal());
+        dispatch(clearHostError());
+
+        // 4. Perform Login as follow-up
+        dispatch(loginToHost(targetUid))
+          .unwrap()
+          .then(() => {
+            // 5. Success -> refetch data, show server content
+            dispatch(setSelectedHost(targetUid));
+            dispatch(setActiveMainTab(`host:${targetUid}`));
+            dispatch(fetchDatabaseStartInfo(targetUid));
+            dispatch(fetchBrokerList(targetUid));
+            dispatch(fetchHostEnv(targetUid));
+          })
+          .catch(() => {
+            // Login failed: "just do nothing" (modal is already closed)
+          });
+      })
+      .catch(() => {
+        // Edit failed: just do nothing (modal stays open, error shown by slice)
       });
   };
 
