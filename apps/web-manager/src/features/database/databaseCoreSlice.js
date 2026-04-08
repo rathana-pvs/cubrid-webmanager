@@ -117,6 +117,14 @@ const databaseCoreSlice = createSlice({
     },
     clearDatabaseError: (state) => {
       state.error = null;
+    },
+    resetDatabaseState: (state) => {
+      state.databases = [];
+      state.activeDatabases = [];
+      state.selectedDatabase = null;
+      state.selectedDatabaseSubItem = null;
+      state.loggedInDatabases = [];
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -185,7 +193,8 @@ const databaseCoreSlice = createSlice({
 export const { 
   setSelectedDatabase, 
   setSelectedDatabaseSubItem, 
-  clearDatabaseError 
+  clearDatabaseError,
+  resetDatabaseState 
 } = databaseCoreSlice.actions;
 
 export default databaseCoreSlice.reducer;

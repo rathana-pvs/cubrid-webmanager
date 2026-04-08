@@ -85,7 +85,12 @@ const layoutSlice = createSlice({
     },
     closeHostTabs: (state, action) => {
       const hostUid = action.payload;
-      const tabsToClose = state.openTabs.filter(tab => tab === `host:${hostUid}` || tab.startsWith('db:'));
+      const tabsToClose = state.openTabs.filter(tab => 
+        tab.includes(hostUid) || 
+        // Fallback for database tabs which might not have UID in identifier yet 
+        // (shared model - assumes they belong to the disconnected host if it was active)
+        (tab.startsWith('db:') && state.activeMainTab?.includes(hostUid))
+      );
       state.openTabs = state.openTabs.filter(tab => !tabsToClose.includes(tab));
       state.dirtyTabs = state.dirtyTabs.filter(id => !tabsToClose.includes(id));
       

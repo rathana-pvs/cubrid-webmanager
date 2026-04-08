@@ -14,7 +14,7 @@ import {
 } from '../../host/hostSlice';
 import {
   fetchDatabaseStartInfo, startDatabase, stopDatabase, loginDatabase, registerDatabase,
-  setSelectedDatabase, setSelectedDatabaseSubItem, clearDatabaseError
+  setSelectedDatabase, setSelectedDatabaseSubItem, clearDatabaseError, resetDatabaseState
 } from '../../database/databaseCoreSlice';
 
 import {
@@ -53,10 +53,12 @@ import {
   fetchBrokerList,
   startBroker,
   stopBroker,
-  openBrokerPropertyModal
+  openBrokerPropertyModal,
+  resetBrokerState
 } from '../../broker/brokerSlice';
 import { setActiveMainTab, openTab, closeHostTabs, showStatusModal } from '../layoutSlice';
 import { fetchDatabaseUsers, openCreateUserModal, openEditUserModal, openDropUserModal } from '../../user/userSlice';
+import { clearHostSummary } from '../../server/globalMonitoringSlice';
 import { MenuItem, MenuDivider, SubMenu } from '../../../components/common/DropdownMenu';
 import ContextMenuWrapper from '../../../components/common/ContextMenuWrapper';
 import { SplitPane } from '../../../components/ds/layout/SplitPane';
@@ -555,7 +557,10 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                 dispatch(closeHostTabs(hostUid));
                 if (selectedHostUid === hostUid) {
                   dispatch(setSelectedHost(null));
+                  dispatch(resetDatabaseState());
+                  dispatch(resetBrokerState());
                 }
+                dispatch(clearHostSummary(hostUid));
                 setContextMenu(null);
               }}
             />

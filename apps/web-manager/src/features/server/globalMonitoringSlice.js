@@ -135,6 +135,13 @@ const globalMonitoringSlice = createSlice({
     clearSummaries: (state) => {
       state.summaries = {};
       state.snapshots = {};
+    },
+    clearHostSummary: (state, action) => {
+      const hostUid = action.payload;
+      if (state.summaries[hostUid]) delete state.summaries[hostUid];
+      if (state.snapshots[hostUid]) delete state.snapshots[hostUid];
+      if (state.loading[hostUid]) delete state.loading[hostUid];
+      if (state.error[hostUid]) delete state.error[hostUid];
     }
   },
   extraReducers: (builder) => {
@@ -158,5 +165,5 @@ const globalMonitoringSlice = createSlice({
   }
 });
 
-export const { clearSummaries } = globalMonitoringSlice.actions;
+export const { clearSummaries, clearHostSummary } = globalMonitoringSlice.actions;
 export default globalMonitoringSlice.reducer;

@@ -235,7 +235,13 @@ const hostSlice = createSlice({
       state.serviceProgressMessage = action.payload;
     },
     revokeHostLogin: (state, action) => {
-      state.authorizedHosts = state.authorizedHosts.filter(uid => uid !== action.payload);
+      const hostUid = action.payload;
+      state.authorizedHosts = state.authorizedHosts.filter(uid => uid !== hostUid);
+      // Reset specific host data
+      if (state.hostEnvs[hostUid]) delete state.hostEnvs[hostUid];
+      if (state.hostAuthErrors[hostUid]) delete state.hostAuthErrors[hostUid];
+      // Reset general error if it was likely related to this host
+      state.error = null;
     },
     openDeleteHostModal: (state, action) => {
       state.isDeleteHostModalOpen = true;

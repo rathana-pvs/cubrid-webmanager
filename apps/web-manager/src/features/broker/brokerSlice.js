@@ -230,6 +230,18 @@ const brokerSlice = createSlice({
     },
     closeBrokerPropertyModal: (state) => {
       state.propertyModal.isOpen = false;
+    },
+    resetBrokerState: (state) => {
+      state.brokers = [];
+      state.selectedBroker = null;
+      state.selectedBrokerSubItem = null;
+      state.detailedStatus = {};
+      state.logsByBroker = {};
+      state.viewingLogs = {};
+      state.adminLogsByHost = {};
+      state.cmsLogsByHost = {};
+      state.brokerConfig = {};
+      state.error = null;
     }
   },
   extraReducers: (builder) => {
@@ -409,7 +421,8 @@ export const {
   setSelectedBroker, 
   setSelectedBrokerSubItem, 
   openBrokerPropertyModal, 
-  closeBrokerPropertyModal 
+  closeBrokerPropertyModal,
+  resetBrokerState 
 } = brokerSlice.actions;
 
 export default brokerSlice.reducer;
