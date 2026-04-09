@@ -69,6 +69,7 @@ import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 // Internal Sidebar Components
 import SidebarHeader from '../sidebar/components/SidebarHeader';
@@ -351,12 +352,12 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
 
               <div className="flex items-center gap-2">
                 {isServerListCollapsed && (
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-amber-500/10 border border-amber-500/20 shadow-xs animate-in zoom-in-95 duration-200">
-                    <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse shadow-[0_0_5px_rgba(245,158,11,0.5)]" />
-                    <span className="text-[10px] font-bold text-amber-600 dark:text-amber-500 font-mono tracking-tight">
-                      {hosts.length}
-                    </span>
-                  </div>
+                  <StatusBadge 
+                    label={hosts.length.toString()} 
+                    variant="amber" 
+                    pulse={true} 
+                    className="shadow-xs animate-in zoom-in-95 duration-200" 
+                  />
                 )}
                 {!isServerListCollapsed && (
                   <button

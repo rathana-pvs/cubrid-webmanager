@@ -5,17 +5,9 @@ import { Table } from '../../../../components/ds/layout/Table';
 import { Tabs } from '../../../../components/ds/layout/Tabs';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 import { Icon } from '../../../../components/ds/foundation/Icon';
+import { SectionHeader } from '../../../../components/ds/foundation/SectionHeader';
 
 const typeIcon = { schema: 'code', object: 'dataset', index: 'layers', trigger: 'bolt' };
-
-const SectionHeader = ({ label }) => (
-  <div className="flex items-center gap-3 mb-4">
-    <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">
-      {label}
-    </span>
-    <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-  </div>
-);
 
 const TypeBadge = ({ value }) => (
   <div className="flex items-center gap-2">
@@ -178,7 +170,7 @@ export default function LoadSourceSection({
 
   return (
     <div className="animate-in fade-in duration-300">
-      <SectionHeader label="Source Method" />
+      <SectionHeader title="Source Method" icon="upload_file" />
       <Tabs
         tabs={tabs}
         activeTab={radio}

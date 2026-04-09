@@ -8,6 +8,8 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -146,10 +148,7 @@ export default function RenameDatabaseModal() {
 
         {/* Source identity */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">Source Database</Typography>
-          </div>
+          <SectionHeader title="Source Database" icon="database" />
           <div className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
               <Icon name="database" size="sm" weight={300} className="text-amber-500" />
@@ -175,10 +174,7 @@ export default function RenameDatabaseModal() {
 
         {/* Target identifier */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">Target Identifier</Typography>
-          </div>
+          <SectionHeader title="Target Identifier" icon="label" />
           <Input
             label="New Database Name"
             value={newDbName}
@@ -193,10 +189,7 @@ export default function RenameDatabaseModal() {
 
         {/* Overwrite option */}
         <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-rose-500" />
-            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">Destructive Options</Typography>
-          </div>
+          <SectionHeader title="Destructive Options" icon="warning" />
 
           <div
             className={`flex items-center gap-4 p-4 border rounded-2xl transition-all cursor-pointer select-none ${forcedel ? 'bg-rose-500/4 border-rose-500/20 shadow-[0_2px_16px_rgba(244,63,94,0.06)]' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}
@@ -226,12 +219,9 @@ export default function RenameDatabaseModal() {
               </Typography>
             </div>
           ) : (
-            <div className="flex items-start gap-2.5 px-3 py-2 bg-slate-50/80 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-xl">
-              <Icon name="info" size="xs" weight={300} className="text-slate-400 shrink-0 mt-0.5" />
-              <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium leading-relaxed italic">
-                Ensure the database service is fully stopped before renaming to prevent binary corruption.
-              </Typography>
-            </div>
+            <InfoBanner title="Downtime Required">
+              Ensure the database service is fully stopped before renaming to prevent binary corruption.
+            </InfoBanner>
           )}
         </div>
       </div>

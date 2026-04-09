@@ -4,6 +4,8 @@ import { fetchDashboardLocks } from '../../databaseSlice';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Table } from '../../../../components/ds/layout/Table';
 import { Card } from '../../../../components/ds/layout/Card';
+import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
+import { EmptyState } from '../../../../components/ds/feedback/EmptyState';
 
 export default function DBLockTransactionSection({ locks, pollingProps }) {
   const dispatch = useDispatch();
@@ -41,16 +43,13 @@ export default function DBLockTransactionSection({ locks, pollingProps }) {
       header: 'Lock Mode',
       accessor: 'mode',
       render: (val) => {
-        const isX = val === 'X_LOCK';
+        const isX = val?.includes('X_');
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
-            ${isX
-              ? 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'
-              : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${isX ? 'bg-rose-500 animate-pulse' : 'bg-amber-500'}`} />
-            {val}
-          </span>
+          <StatusBadge 
+            label={val} 
+            variant={isX ? 'rose' : 'amber'} 
+            pulse={isX} 
+          />
         );
       }
     },
@@ -75,7 +74,18 @@ export default function DBLockTransactionSection({ locks, pollingProps }) {
       isCollapsed={isCollapsed}
       onToggle={(v) => setIsCollapsed(v)}
     >
-      <Table columns={columns} data={locks} />
+      <Table 
+        columns={columns} 
+        data={locks} 
+        emptyState={
+          <EmptyState 
+            icon="verified_user" 
+            title="Clean Concurrency" 
+            subtitle="No active transactions or locks are currently contending for resources."
+            py="py-12"
+          />
+        }
+      />
     </Card>
   );
 }

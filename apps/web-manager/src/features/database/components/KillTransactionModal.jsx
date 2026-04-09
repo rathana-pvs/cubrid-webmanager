@@ -9,6 +9,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -182,17 +183,9 @@ export default function KillTransactionModal({ onTransactionKilled }) {
             ]}
           />
 
-          <div className="flex items-start gap-4 p-4 bg-rose-500/5 border border-rose-500/10 rounded-2xl shadow-xs">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 flex items-center justify-center text-rose-500 border border-rose-500/20 shrink-0">
-              <Icon name="warning" size="md" weight={300} />
-            </div>
-            <div className="space-y-1">
-              <Typography variant="p" className="text-[11px] text-rose-600 dark:text-rose-400 font-black uppercase tracking-tight">System Integrity Warning</Typography>
-              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic">
-                Force termination results in an immediate <b>rollback</b> of any uncommitted atomic operations. Lock handles will be released asynchronously by the controller.
-              </Typography>
-            </div>
-          </div>
+          <InfoBanner title="Operational Impact">
+            Force termination results in an immediate rollback of any uncommitted atomic operations. Lock handles will be released asynchronously by the controller.
+          </InfoBanner>
         </div>
       </div>
     </Modal>

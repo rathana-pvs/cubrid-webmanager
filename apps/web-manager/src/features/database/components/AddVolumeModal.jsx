@@ -3,11 +3,13 @@ import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeAddVolumeModal, addVolume } from '../databaseSlice';
 import { databaseApi } from '../databaseApi';
 
-import { Icon } from '../../../components/ds/foundation/Icon';
-import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { Select } from '../../../components/ds/forms/Select';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -250,12 +252,12 @@ export default function AddVolumeModal() {
                   <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">Calculating…</span>
                 </div>
               ) : (
-                <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[12px] font-black text-emerald-600 dark:text-emerald-400 font-mono tabular-nums">
-                    {volStatus.freespace || '—'}
-                  </span>
-                </div>
+                <StatusBadge 
+                  label={volStatus.freespace || '—'} 
+                  variant="emerald" 
+                  pulse={true} 
+                  className="rounded-full tabular-nums text-[12px]" 
+                />
               )}
             </div>
           </div>
@@ -263,10 +265,7 @@ export default function AddVolumeModal() {
 
         {/* Purpose Selector */}
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <Icon name="architecture" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Storage Optimization</span>
-          </div>
+           <SectionHeader title="Storage Optimization" icon="architecture" />
           <div className="grid grid-cols-4 gap-2.5">
             {PURPOSE_OPTIONS.map((opt) => {
               const isActive = purpose === opt.value;
@@ -303,10 +302,7 @@ export default function AddVolumeModal() {
 
         {/* Allocation Size */}
         <div className="space-y-5">
-           <div className="flex items-center gap-3">
-             <Icon name="straighten" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Allocation Strategy</span>
-          </div>
+           <SectionHeader title="Allocation Strategy" icon="straighten" />
 
           <div className="flex flex-wrap gap-1.5 px-0.5">
             {SIZE_PRESETS.map((preset) => (
@@ -375,10 +371,7 @@ export default function AddVolumeModal() {
 
         {/* Volume Identification */}
         <div className="space-y-4">
-           <div className="flex items-center gap-3">
-             <Icon name="label" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[9px] font-black uppercase tracking-widest text-slate-400">Instance Registry</span>
-          </div>
+           <SectionHeader title="Instance Registry" icon="label" />
           <div className="grid grid-cols-1 gap-4">
             <Input label="Volume Identifier" value={volName} onChange={(e) => setVolName(e.target.value)} placeholder="e.g. DATA_VOL_PROD_1 (optional)" icon="badge" size="sm" />
             <Input label="Environment Path" value={path} onChange={(e) => setPath(e.target.value)} placeholder="/var/lib/cubrid/volumes" icon="folder_zip" size="sm" className="font-mono!" />
@@ -386,17 +379,9 @@ export default function AddVolumeModal() {
         </div>
 
         {/* Guidance Disclaimer */}
-        <div className="flex items-start gap-4 p-4 bg-slate-50/50 dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-2xl shadow-xs">
-          <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-200 dark:border-white/10">
-            <Icon name="shield_lock" size="sm" weight={300} className="text-amber-500" />
-          </div>
-          <div className="space-y-0.5">
-            <Typography variant="p" className="text-[11px] font-black text-slate-700 dark:text-slate-200 uppercase tracking-tight">Privileged Operation</Typography>
-            <Typography variant="caption" className="text-slate-500 dark:text-slate-500 font-medium leading-relaxed italic block">
-              Ensure target mount points have <span className="font-bold non-italic text-amber-500">write permissions</span> for the engine service account. Configuration updates persist instantly.
-            </Typography>
-          </div>
-        </div>
+        <InfoBanner title="Privileged Operation" icon="shield_lock">
+          Ensure target mount points have <span className="font-bold non-italic text-amber-500">write permissions</span> for the engine service account. Configuration updates persist instantly.
+        </InfoBanner>
 
       </div>
     </Modal>

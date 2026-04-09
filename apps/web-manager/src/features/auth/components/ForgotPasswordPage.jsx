@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Input } from '../../../components/ds/forms/Input';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 
 export default function ForgotPasswordPage() {
   const [email, setEmail]       = useState('');
@@ -200,11 +201,10 @@ export default function ForgotPasswordPage() {
               </div>
 
               {/* Expiry warning */}
-              <div className="my-6 px-4 py-3 bg-amber-500/5 dark:bg-amber-500/6 border border-amber-500/20 rounded-xl flex items-center gap-2.5 text-left">
-                <Icon name="timer" size="sm" weight={300} className="text-amber-500 shrink-0" />
-                <p className="text-[12px] text-slate-600 dark:text-slate-400">
-                  The link expires in <span className="text-amber-500 font-bold">15 minutes</span>. Check your spam folder if it doesn't arrive.
-                </p>
+              <div className="my-6 text-left">
+                <InfoBanner variant="warning" title="Link Expiry" icon="timer">
+                  The link expires in <span className="font-bold">15 minutes</span>. Check your spam folder if it doesn't arrive.
+                </InfoBanner>
               </div>
 
               <button

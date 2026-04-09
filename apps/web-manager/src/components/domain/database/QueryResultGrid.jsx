@@ -3,6 +3,7 @@ import { Table } from '../../ds/layout/Table';
 import { Badge } from '../../ds/foundation/Badge';
 import { Button } from '../../ds/foundation/Button';
 import { Typography } from '../../ds/foundation/Typography';
+import { InfoBanner } from '../../ds/foundation/InfoBanner';
 
 export const QueryResultGrid = ({
   columns = [],
@@ -15,9 +16,9 @@ export const QueryResultGrid = ({
 }) => {
   if (error) {
     return (
-      <div className="p-4 bg-rose-50 dark:bg-rose-900/10 border border-rose-200 dark:border-rose-900/30 rounded-lg text-rose-600 dark:text-rose-400 font-mono text-sm whitespace-pre-wrap">
+      <InfoBanner variant="danger" title="Query Failed" icon="error_outline" className="m-4">
         {error}
-      </div>
+      </InfoBanner>
     );
   }
 

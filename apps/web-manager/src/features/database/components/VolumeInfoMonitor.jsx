@@ -6,6 +6,8 @@ import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsP
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { PageLoader } from '../../../components/ds/feedback/PageLoader';
+import { EmptyState } from '../../../components/ds/feedback/EmptyState';
 
 export default function VolumeInfoMonitor({ tabId }) {
   const dispatch = useDispatch();
@@ -32,19 +34,24 @@ export default function VolumeInfoMonitor({ tabId }) {
 
   if (isLoading && !volume) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-3 bg-white dark:bg-background-dark">
-        <div className="h-8 w-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-        <Typography variant="p" className="text-xs text-slate-400">Loading volume data…</Typography>
+      <div className="flex-1 flex h-full bg-white dark:bg-background-dark">
+        <PageLoader
+          title="Hydrating Volume Matrix"
+          subtitle="Streaming real-time allocation maps and page distribution from the IO layer..."
+          icon="storage"
+        />
       </div>
     );
   }
 
   if (!volume) {
     return (
-      <div className="flex flex-col items-center justify-center h-full gap-2 bg-white dark:bg-background-dark">
-        <Icon name="inventory_2" size="sm" weight={300} className="text-4xl text-slate-300" />
-        <Typography variant="p" className="text-sm font-semibold text-slate-400">Volume not found</Typography>
-        <Typography variant="caption" className="text-xs text-slate-300">"{volname}" in {dbname}</Typography>
+      <div className="flex-1 flex h-full bg-white dark:bg-background-dark">
+        <EmptyState
+          icon="inventory_2"
+          title="Volume Not Found"
+          subtitle={`"${volname}" could not be resolved in the ${dbname} space catalog.`}
+        />
       </div>
     );
   }
@@ -197,7 +204,7 @@ export default function VolumeInfoMonitor({ tabId }) {
           <div className="flex gap-4 w-full max-w-sm">
             <div className="flex-1 bg-amber-50 dark:bg-amber-500/6 border border-amber-100 dark:border-amber-500/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
-                <span className="w-2. h-2 rounded-full bg-amber-500 shrink-0" />
+                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
                 <Typography variant="label" className="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest">Used</Typography>
               </div>
               <Typography variant="p" className="text-lg font-black text-slate-700 dark:text-slate-200 font-mono">{usedM.toFixed(1)}</Typography>

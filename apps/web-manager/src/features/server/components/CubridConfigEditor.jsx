@@ -7,6 +7,7 @@ import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { Input } from '../../../components/ds/forms/Input';
 import { SearchInput } from '../../../components/ds/forms/SearchInput';
 import { Toggle } from '../../../components/ds/forms/Toggle';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 // ── Parse config text into structured rows ─────────────────────────────────
 function parseConfig(text) {
@@ -301,10 +302,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
 
           {/* Modified badge */}
           {hasChanges && (
-            <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 mr-1">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Modified</span>
-            </div>
+            <StatusBadge label="Modified" variant="amber" pulse={true} className="rounded-md mr-1" />
           )}
 
           {/* Save */}
@@ -347,10 +345,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
                   </div>
                 )}
                 {modifiedCount > 0 && (
-                  <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-                    <span className="w-1 h-1 rounded-full bg-amber-500 animate-pulse" />
-                    {modifiedCount} modified
-                  </div>
+                  <StatusBadge label={`${modifiedCount} modified`} variant="amber" pulse={true} className="rounded-full" />
                 )}
               </div>
 
@@ -451,10 +446,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
               <span>
                 {search ? `${filteredEntries.length} of ${entryCount} params` : `${entryCount} params · ${lineCount} lines total`}
               </span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                Table View
-              </div>
+              <StatusBadge label="Table View" variant="emerald" className="border-none bg-transparent" />
             </div>
           </div>
 
@@ -510,10 +502,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
             {/* Source Footer */}
             <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
               <span>UTF-8 | LF</span>
-              <div className="flex items-center gap-1.5">
-                <span className="h-1.5 w-1.5 rounded-full bg-sky-500" />
-                Source Editor
-              </div>
+              <StatusBadge label="Source Editor" variant="sky" className="border-none bg-transparent" />
             </div>
           </div>
         )}

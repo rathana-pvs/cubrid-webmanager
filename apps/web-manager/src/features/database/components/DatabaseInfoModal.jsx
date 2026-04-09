@@ -8,6 +8,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { Table } from '../../../components/ds/layout/Table';
 
 // view states
@@ -231,10 +232,7 @@ export default function DatabaseInfoModal() {
               <Typography variant="caption" className="font-black uppercase tracking-widest text-amber-600/70 dark:text-amber-400/60 mb-0.5">Target Workspace</Typography>
               <Typography variant="h4" className="text-[14px] font-black text-amber-700 dark:text-amber-400 font-mono truncate">{selectedDatabase}</Typography>
             </div>
-            <div className="shrink-0 flex items-center gap-1.5 px-2 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Environment Ready</span>
-            </div>
+            <StatusBadge label="Environment Ready" variant="emerald" pulse={true} className="rounded-full" />
           </div>
         </div>
 

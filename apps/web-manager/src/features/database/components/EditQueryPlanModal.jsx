@@ -11,6 +11,8 @@ import { Select } from '../../../components/ds/forms/Select';
 import { DatePicker } from '../../../components/ds/forms/DatePicker';
 import { TimePicker } from '../../../components/ds/forms/TimePicker';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -247,10 +249,7 @@ export default function EditQueryPlanModal() {
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
         {/* Identifier */}
         <div className="space-y-4">
-          <div className="flex items-center gap-3">
-             <Icon name="fingerprint" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[10px] font-black text-slate-400">Object Identification</span>
-          </div>
+          <SectionHeader title="Object Identification" icon="fingerprint" />
           <Input 
             label="Query Identifier"
             value={formData.queryId}
@@ -262,10 +261,7 @@ export default function EditQueryPlanModal() {
 
         {/* Security */}
         <div className="space-y-4">
-           <div className="flex items-center gap-3">
-             <Icon name="lock" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[10px] font-black text-slate-400">Secure Context</span>
-          </div>
+           <SectionHeader title="Secure Context" icon="lock" />
           <div className="grid grid-cols-2 gap-4">
             <Input 
               label="Database Username"
@@ -286,10 +282,7 @@ export default function EditQueryPlanModal() {
 
         {/* Schedule */}
         <div className="space-y-4">
-           <div className="flex items-center gap-3">
-             <Icon name="schedule" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[10px] font-black text-slate-400">Execution Schedule</span>
-          </div>
+           <SectionHeader title="Execution Schedule" icon="schedule" />
           <div className="grid grid-cols-2 gap-4">
             <Select 
               label="Recurrence Frequency"
@@ -362,13 +355,11 @@ export default function EditQueryPlanModal() {
 
         {/* SQL Payload */}
         <div className="space-y-4 pt-2">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-               <Icon name="code" size="14px" weight={400} className="text-amber-500" />
-               <span className="text-[10px] font-black text-slate-400">SQL Execution Payload</span>
-            </div>
-            <span className="text-[10px] font-bold text-amber-500/60 bg-amber-500/5 border border-amber-500/10 px-2 py-0.5 rounded-full">Atomic execution</span>
-          </div>
+          <SectionHeader 
+            title="SQL Execution Payload" 
+            icon="code" 
+            badge="Atomic execution"
+          />
           <div className="relative group rounded-3xl overflow-hidden border border-slate-200 dark:border-white/8 bg-white dark:bg-[#1e1e1e] shadow-inner transition-all focus-within:ring-4 focus-within:ring-amber-500/5 focus-within:border-amber-500/40">
             <div className="absolute top-4 left-4 z-10 opacity-40 group-focus-within:opacity-100 transition-opacity pointer-events-none">
               <Icon name="terminal" size="sm" weight={300} className="text-amber-500" />
@@ -403,17 +394,9 @@ export default function EditQueryPlanModal() {
               />
             </div>
           </div>
-          <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl shadow-xs shrink-0">
-            <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-200 dark:border-white/10">
-              <Icon name="info" size="sm" weight={300} className="text-sky-500" />
-            </div>
-            <div className="space-y-0.5">
-              <Typography variant="p" className="text-[11px] font-black text-slate-700 dark:text-slate-200 tracking-tight">System Compliance</Typography>
-              <Typography variant="caption" className="text-slate-500 dark:text-slate-500 font-medium leading-relaxed italic block">
-                Queries are executed on the server side via the task controller. Ensure the DB user has <span className="font-bold non-italic text-amber-500">sufficient privileges</span> for the intended operations.
-              </Typography>
-            </div>
-          </div>
+          <InfoBanner title="System Compliance">
+            Queries are executed on the server side via the task controller. Ensure the DB user has sufficient privileges for the intended operations.
+          </InfoBanner>
         </div>
       </div>
     </Modal>

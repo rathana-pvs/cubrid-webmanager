@@ -8,6 +8,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -196,17 +197,15 @@ export default function CopyDatabaseModal() {
     >
       <div className="space-y-6">
         {/* Source -> Destination */}
-        <div className="flex items-end gap-2">
-          {/* Source Column */}
-          <div className="flex-1 space-y-2">
-            <p className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 pl-1">Source Workspace</p>
+        <div>
+          <SectionHeader title="Cloning Context" icon="swap_horiz" />
+          <div className="flex items-end gap-2">
             <div className="flex items-center gap-3 px-4 h-[52px] bg-slate-50 dark:bg-white/4 border border-slate-100 dark:border-white/8 rounded-2xl">
               <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/8 flex items-center justify-center shrink-0">
                 <Icon name="database" size="sm" weight={300} className="text-slate-500 dark:text-slate-400" />
               </div>
               <p className="text-[12.5px] font-black text-slate-700 dark:text-slate-200 truncate">{selectedDatabase}</p>
             </div>
-          </div>
 
           {/* Center Indicator Pillar */}
           <div className="flex flex-col h-[52px] justify-center shrink-0 px-1">
@@ -227,14 +226,13 @@ export default function CopyDatabaseModal() {
               inputClassName="h-[52px]! font-black!"
             />
           </div>
+          </div>
         </div>
 
         {/* Path configuration */}
-        <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
-          <div className="flex items-center gap-2 mb-4">
-            <Icon name="folder_open" size="14px" weight={400} className="text-amber-500" />
-            <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">Target Paths</span>
-          </div>
+        <div>
+          <SectionHeader title="Target Environment" icon="folder_open" />
+          <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
           <div className="grid grid-cols-1 gap-3">
             {[
               { label: 'Primary Volume Root', field: 'destPath', icon: 'folder' },
@@ -253,9 +251,12 @@ export default function CopyDatabaseModal() {
             ))}
           </div>
         </div>
+      </div>
 
         {/* Action Flags */}
-        <div className="space-y-3">
+        <div>
+          <SectionHeader title="Execution Strategy" icon="tune" />
+          <div className="space-y-3">
           <FlagCard
             icon="sync"
             label="Overwrite Existing Environment"
@@ -271,6 +272,7 @@ export default function CopyDatabaseModal() {
             onChange={v => handleInputChange('deleteSource', v)}
             variant="danger"
           />
+          </div>
         </div>
       </div>
     </Modal>

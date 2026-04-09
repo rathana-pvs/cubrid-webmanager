@@ -6,81 +6,16 @@ import { databaseApi } from '../databaseApi';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
+import { TabGroup } from '../../../components/ds/layout/TabGroup';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
+import { MetricCard } from '../../../components/ds/foundation/MetricCard';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
+import { ProgressBar } from '../../../components/ds/foundation/ProgressBar';
+import { EmptyState } from '../../../components/ds/feedback/EmptyState';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
 
-/* ─── micro helpers ──────────────────────────────────────────── */
-const Divider = () => (
-  <div className="h-px bg-slate-100 dark:bg-white/5 my-5" />
-);
-
-const SectionLabel = ({ children, count }) => (
-  <div className="flex items-center gap-3 mb-3">
-    <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400 dark:text-slate-500 whitespace-nowrap">
-      {children}
-    </span>
-    {count !== undefined && (
-      <span className="text-[9px] font-black px-1.5 py-0.5 rounded-xs bg-amber-500/10 border border-amber-500/20 text-amber-500">
-        {count}
-      </span>
-    )}
-    <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-  </div>
-);
-
-const StatCard = ({ icon, label, value, unit, accent = 'amber' }) => {
-  const colors = {
-    amber:  { ring: 'border-amber-500/20 bg-amber-500/5',    icon: 'text-amber-500',   val: 'text-amber-600 dark:text-amber-400' },
-    sky:    { ring: 'border-sky-500/20 bg-sky-500/5',        icon: 'text-sky-500',     val: 'text-sky-600 dark:text-sky-400' },
-    violet: { ring: 'border-violet-500/20 bg-violet-500/5',  icon: 'text-violet-500',  val: 'text-violet-600 dark:text-violet-400' },
-    rose:   { ring: 'border-rose-500/20 bg-rose-500/5',      icon: 'text-rose-500',    val: 'text-rose-600 dark:text-rose-400' },
-    emerald:{ ring: 'border-emerald-500/20 bg-emerald-500/5',icon: 'text-emerald-500', val: 'text-emerald-600 dark:text-emerald-400' },
-    slate:  { ring: 'border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-white/2', icon: 'text-slate-400', val: 'text-slate-700 dark:text-slate-200' },
-  };
-  const c = colors[accent] || colors.slate;
-  return (
-    <div className={`rounded-xl border p-3.5 flex items-center gap-3 transition-all hover:shadow-xs ${c.ring}`}>
-      <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 bg-white/70 dark:bg-black/20 border border-white/60 dark:border-white/10`}>
-        <Icon name={icon} size="sm" weight={300} className={c.icon} />
-      </div>
-      <div className="min-w-0 flex-1">
-        <div className="text-[9px] font-bold uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-0.5">{label}</div>
-        <div className="flex items-baseline gap-1.5">
-          <span className={`text-[17px] font-mono font-black leading-none ${c.val}`}>{value ?? '—'}</span>
-          {unit && <span className="text-[9px] font-bold text-slate-400 uppercase italic opacity-60">{unit}</span>}
-        </div>
-      </div>
-    </div>
-  );
-};
-
-const IsolationBadge = ({ level }) => {
-  const color = level?.toLowerCase().includes('serializable')
-    ? 'text-rose-500 bg-rose-500/10 border-rose-500/20'
-    : level?.toLowerCase().includes('repeatable')
-    ? 'text-violet-500 bg-violet-500/10 border-violet-500/20'
-    : 'text-sky-500 bg-sky-500/10 border-sky-500/20';
-  return (
-    <span className={`text-[9px] font-black uppercase tracking-tight px-1.5 py-0.5 rounded-sm border whitespace-nowrap ${color}`}>
-      {level || 'UNKNOWN'}
-    </span>
-  );
-};
-
-const EmptyState = ({ icon = 'verified_user', title, subtitle, accent = 'emerald' }) => {
-  const accentClass = { emerald: 'text-emerald-500', amber: 'text-amber-500', slate: 'text-slate-400' };
-  return (
-    <div className="flex flex-col items-center justify-center py-16 gap-4 opacity-40">
-      <div className="w-14 h-14 rounded-2xl bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 flex items-center justify-center">
-        <Icon name={icon} size="lg" weight={100} className={accentClass[accent]} />
-      </div>
-      <div className="text-center">
-        <p className="text-[11px] font-bold font-sans uppercase tracking-[0.15em] text-slate-700 dark:text-slate-300 mb-1">{title}</p>
-        {subtitle && <p className="text-[10px] font-sans text-slate-400 dark:text-slate-500 italic max-w-[260px] leading-relaxed">{subtitle}</p>}
-      </div>
-    </div>
-  );
-};
 
 /* ─── main component ─────────────────────────────────────────── */
 export default function LockInformationModal() {
@@ -210,15 +145,11 @@ export default function LockInformationModal() {
 
             {/* Live counters */}
             <div className="flex items-center gap-2 flex-wrap">
-              <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-black uppercase tracking-widest
-                ${isHighContention
-                  ? 'bg-rose-500/10 border-rose-500/25 text-rose-600 dark:text-rose-400'
-                  : 'bg-emerald-500/10 border-emerald-500/25 text-emerald-600 dark:text-emerald-500'
-                }`}
-              >
-                <span className={`w-1.5 h-1.5 rounded-full ${isHighContention ? 'bg-rose-500 animate-ping' : 'bg-emerald-500'}`} />
-                {isHighContention ? 'High Contention' : 'Low Contention'}
-              </div>
+                <StatusBadge 
+                  label={isHighContention ? 'High Contention' : 'Low Contention'} 
+                  variant={isHighContention ? 'rose' : 'emerald'} 
+                  pulse 
+                />
               {loading && (
                 <div className="flex items-center gap-1.5 text-[10px] text-slate-400 font-mono">
                   <Spinner size="xs" />
@@ -248,29 +179,11 @@ export default function LockInformationModal() {
           </div>
         </div>
 
-        {/* ── Tabs ────────────────────────────────────────────── */}
-        <div className="flex gap-1 p-1 bg-slate-100 dark:bg-white/4 rounded-xl">
-          {TABS.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all duration-200
-                ${activeTab === tab.id
-                  ? 'bg-white dark:bg-bk-side text-amber-500 shadow-md shadow-black/5 dark:shadow-white/5 border border-slate-200 dark:border-white/10'
-                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50/50 dark:hover:bg-white/3'
-                }`}
-            >
-              <Icon name={tab.icon} size="sm" weight={300} className="shrink-0" />
-              <span>{tab.label}</span>
-              {tab.badge !== null && (
-                <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none
-                  ${activeTab === tab.id ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'}`}>
-                  {tab.badge}
-                </span>
-              )}
-            </button>
-          ))}
-        </div>
+        <TabGroup 
+          tabs={TABS} 
+          active={activeTab} 
+          onChange={setActiveTab} 
+        />
 
         {/* ── Tab Content ─────────────────────────────────────── */}
         <div className="min-h-[340px] animate-in fade-in duration-200">
@@ -315,8 +228,14 @@ export default function LockInformationModal() {
                                 {t.pid ?? '—'}
                               </span>
                             </td>
-                            <td className="px-3.5 py-3">
-                              <IsolationBadge level={t.isolevel} />
+                             <td className="px-3.5 py-3">
+                              <StatusBadge 
+                                label={t.isolevel || 'UNKNOWN'} 
+                                variant={
+                                  t.isolevel?.toLowerCase().includes('serializable') ? 'rose' : 
+                                  t.isolevel?.toLowerCase().includes('repeatable') ? 'violet' : 'sky'
+                                } 
+                              />
                             </td>
                             <td className="px-3.5 py-3 text-right">
                               <span className="font-black text-slate-700 dark:text-slate-200">{t.timeout ?? '—'}</span>
@@ -343,12 +262,12 @@ export default function LockInformationModal() {
           {activeTab === 'objects' && (
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="key_visualizer" label="Held Objects"      value={lot.numlocked    ?? 0}    unit="items"   accent="amber"  />
-                <StatCard icon="view_quilt"     label="Allocated Capacity" value={lot.numallocated ?? 5000} unit="entries" accent="sky"    />
-                <StatCard icon="memory"         label="Memory Footprint"   value={lot.sizelock     ?? '—'}  unit="bytes"   accent="violet" />
+                <MetricCard icon="key_visualizer" label="Held Objects"      value={lot.numlocked    ?? 0}    unit="items"   accent="amber"   isLoading={loading} />
+                <MetricCard icon="view_quilt"     label="Allocated Capacity" value={lot.numallocated ?? 5000} unit="entries" accent="sky"     isLoading={loading} />
+                <MetricCard icon="memory"         label="Memory Footprint"   value={lot.sizelock     ?? '—'}  unit="bytes"   accent="violet"  isLoading={loading} />
               </div>
 
-              <SectionLabel count={0}>Contending Object Records</SectionLabel>
+              <SectionHeader title="Contending Object Records" badge={0} icon="view_list" />
 
               <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
                 <table className="w-full text-left border-collapse">
@@ -380,33 +299,29 @@ export default function LockInformationModal() {
           {activeTab === 'params' && (
             <div className="space-y-5">
               <div className="grid grid-cols-2 gap-4">
-                <StatCard icon="timer"      label="Deadlock Check Interval" value={settings.dinterval ?? '—'} unit="ms"     accent="sky"    />
-                <StatCard icon="auto_graph" label="Escalation Threshold"    value={settings.esc       ?? '—'} unit="pages"  accent="amber"  />
+                <MetricCard icon="timer"      label="Deadlock Check Interval" value={settings.dinterval ?? '—'} unit="ms"     accent="sky"    isLoading={loading} />
+                <MetricCard icon="auto_graph" label="Escalation Threshold"    value={settings.esc       ?? '—'} unit="pages"  accent="amber"  isLoading={loading} />
               </div>
 
-              <Divider />
-
-              <SectionLabel>Lock Object Table (LOT) Parameters</SectionLabel>
-              <div className="grid grid-cols-3 gap-3">
-                <StatCard icon="key_visualizer" label="Currently Locked" value={lot.numlocked    ?? 0}    unit="objects" accent="amber"  />
-                <StatCard icon="view_quilt"     label="Max Allocatable"   value={lot.numallocated ?? '—'}  unit="entries" accent="sky"    />
-                <StatCard icon="memory"         label="Memory Block Size"  value={lot.sizelock     ?? '—'}  unit="bytes"   accent="violet" />
-              </div>
-
-              <div className="flex items-start gap-3 mt-2 p-4 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-xl">
-                <div className="w-7 h-7 rounded-lg bg-sky-500/10 border border-sky-500/20 flex items-center justify-center shrink-0 mt-0.5">
-                  <Icon name="info" size="sm" weight={300} className="text-sky-500" />
-                </div>
-                <div>
-                  <Typography variant="p" className="text-[11px] font-bold text-slate-700 dark:text-slate-200 mb-1 uppercase tracking-tight">
-                    Interpretation Guide
-                  </Typography>
-                  <Typography variant="p" className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                    <strong className="font-bold text-slate-600 dark:text-slate-300">Deadlock Interval</strong> — frequency in ms at which CUBRID checks for circular waiting dependencies.{' '}
-                    <strong className="font-bold text-slate-600 dark:text-slate-300">Escalation Threshold</strong> — page count after which row-level locks are promoted to table-level locks to conserve memory.
-                  </Typography>
+              <SectionHeader title="Lock Object Table (LOT) Parameters" icon="table_rows" />
+              <div className="space-y-4 px-1">
+                <ProgressBar 
+                  pct={lot.numallocated > 0 ? (lot.numlocked / lot.numallocated) * 100 : 0} 
+                  label="Table Slot Utilization" 
+                  showValue 
+                  valueLabel={`${lot.numlocked || 0} / ${lot.numallocated || 0} slots`}
+                />
+                <div className="grid grid-cols-3 gap-3">
+                  <MetricCard icon="key_visualizer" label="Currently Locked" value={lot.numlocked    ?? 0}    unit="objects" accent="amber"  isLoading={loading} />
+                  <MetricCard icon="view_quilt"     label="Max Allocatable"   value={lot.numallocated ?? '—'}  unit="entries" accent="sky"    isLoading={loading} />
+                  <MetricCard icon="memory"         label="Memory Block Size"  value={lot.sizelock     ?? '—'}  unit="bytes"   accent="violet" isLoading={loading} />
                 </div>
               </div>
+
+              <InfoBanner title="Interpretation Guide" className="mt-2">
+                <strong className="font-bold text-slate-600 dark:text-slate-300 non-italic">Deadlock Interval</strong> — frequency in ms at which CUBRID checks for circular waiting dependencies.{' '}
+                <strong className="font-bold text-slate-600 dark:text-slate-300 non-italic">Escalation Threshold</strong> — page count after which row-level locks are promoted to table-level locks to conserve memory.
+              </InfoBanner>
             </div>
           )}
 

@@ -107,7 +107,7 @@ export default function DropUserModal() {
         <div className="w-16 h-16 rounded-3xl bg-rose-500/10 flex items-center justify-center mb-6 border border-rose-500/20 shadow-[0_0_20px_rgba(244,63,94,0.1)]">
           <Icon name="person_remove" size="lg" weight={300} className="text-rose-500" />
         </div>
-        <h3 className="text-lg font-black text-slate-900 dark:text-white mb-2 uppercase tracking-tight">Purge Confirmation</h3>
+        <SectionHeader title="Purge Confirmation" icon="person_remove" />
         <p className="text-sm text-slate-500 dark:text-slate-400 mb-2 leading-relaxed">
           Are you sure you want to drop user <span className="font-black text-slate-900 dark:text-white">"@{dropUserData.userName}"</span>?
         </p>

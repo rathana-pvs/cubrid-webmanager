@@ -6,6 +6,7 @@ import { authApi } from '../authApi';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Input } from '../../../components/ds/forms/Input';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 
 export default function LoginPage() {
   const [username, setUsername] = useState('');
@@ -221,10 +222,9 @@ export default function LoginPage() {
 
             {/* API error */}
             {apiError && (
-              <div className="p-3 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-xl flex items-start gap-2.5 animate-in fade-in slide-in-from-top-1 duration-200">
-                <Icon name="error_outline" size="sm" weight={300} className="text-rose-500 shrink-0 mt-0.5" />
-                <p className="text-[12px] text-rose-600 dark:text-rose-400 font-medium leading-snug">{apiError}</p>
-              </div>
+              <InfoBanner variant="danger" title="Authentication Failed">
+                {apiError}
+              </InfoBanner>
             )}
 
             {/* Submit */}

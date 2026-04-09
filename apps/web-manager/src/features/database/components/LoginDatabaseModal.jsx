@@ -9,6 +9,8 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
@@ -133,7 +135,6 @@ export default function LoginDatabaseModal() {
     );
   }
 
-  /* ─── FORM view ─── */
   return (
     <Modal
       isOpen={isLoginDatabaseModalOpen}
@@ -157,13 +158,10 @@ export default function LoginDatabaseModal() {
                <Icon name="database" size="md" weight={300} className="text-amber-500 relative z-10" />
             </div>
             <div className="min-w-0 flex-1">
-              <Typography variant="caption" className="font-black uppercase tracking-widest text-amber-600/70 dark:text-amber-400/60 mb-0.5 leading-none block">Target Workspace</Typography>
-              <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white font-mono truncate">{selectedDatabase}</Typography>
+              <SectionHeader title="Target Workspace" icon="database" />
+              <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white font-mono truncate pl-1">{selectedDatabase}</Typography>
             </div>
-            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">Locked</span>
-            </div>
+            <StatusBadge label="Locked" variant="amber" pulse={true} className="rounded-full" />
           </div>
         </div>
 

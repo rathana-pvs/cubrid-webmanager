@@ -6,6 +6,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -142,12 +143,9 @@ export default function DeleteBackupPlanModal() {
           </Typography>
         </div>
 
-        <div className="p-4 bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl flex items-start gap-3 text-left">
-           <Icon name="info" size="14px" weight={400} className="text-amber-500 mt-0.5" />
-           <Typography variant="caption" className="text-slate-500 dark:text-slate-500 font-bold uppercase tracking-tighter leading-relaxed italic">
-             This only removes the registry handle. Existing physical backup volumes on disk remain untouched.
-           </Typography>
-        </div>
+        <InfoBanner title="Registry Handlers">
+          This only removes the registry handle. Existing physical backup volumes on disk remain untouched.
+        </InfoBanner>
       </div>
     </Modal>
   );

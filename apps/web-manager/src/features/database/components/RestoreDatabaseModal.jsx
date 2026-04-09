@@ -9,12 +9,14 @@ import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { EmptyState } from '../../../components/ds/feedback/EmptyState';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
   ModalStatusSuccess, 
   ModalStatusError 
 } from '../../../components/ds/feedback/ActionStatus';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -247,10 +249,7 @@ export default function RestoreDatabaseModal() {
                 <p className="text-[15px] font-bold font-mono text-rose-700 dark:text-rose-400 leading-none">{selectedDatabase}</p>
               </div>
             </div>
-            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-rose-500/10 border border-rose-500/20">
-              <Icon name="warning" size="12px" className="text-rose-500 animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-600 dark:text-rose-400">Destructive Action</span>
-            </div>
+            <StatusBadge label="Destructive Action" variant="rose" icon="warning" pulse={true} className="rounded-full" />
           </div>
 
           {/* Available level summary */}
@@ -302,26 +301,23 @@ export default function RestoreDatabaseModal() {
               <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">Scanning catalog…</p>
             </div>
           ) : backups.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-14 gap-4 bg-slate-50/50 dark:bg-white/2 border border-dashed border-slate-200 dark:border-white/10 rounded-xl text-center">
-              <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center">
-                <Icon name="search_off" size="lg" weight={100} className="text-slate-300 dark:text-white/20" />
-              </div>
-              <div>
-                <p className="text-[12px] font-bold text-slate-600 dark:text-slate-300 mb-1">
-                  {filter === 'all' ? 'No Backup Records Found' : `No ${LEVEL_META[filter]?.title} Backups Found`}
-                </p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 italic max-w-[240px] leading-relaxed mx-auto">
-                  {filter === 'all'
-                    ? 'Ensure the backup directory is synchronized with this host.'
-                    : 'Try selecting another backup level or view all.'}
-                </p>
-              </div>
-              {filter !== 'all' && (
-                <button onClick={() => setFilter('all')} className="text-[10px] font-bold text-amber-500 hover:text-amber-600 transition-colors underline underline-offset-2 cursor-pointer">
+            <EmptyState
+              icon={filter === 'all' ? 'search_off' : 'filter_list_off'}
+              title={filter === 'all' ? 'No Backup Records Found' : `No ${LEVEL_META[filter]?.title} Backups`}
+              subtitle={
+                filter === 'all'
+                  ? 'Ensure the backup directory is synchronized with this host.'
+                  : 'Try selecting another backup level or view all.'
+              }
+              action={filter !== 'all' && (
+                <button
+                  onClick={() => setFilter('all')}
+                  className="text-[10px] font-bold text-amber-500 hover:text-amber-600 transition-colors underline underline-offset-2 cursor-pointer"
+                >
                   Show all backups
                 </button>
               )}
-            </div>
+            />
           ) : (
             <div className="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
               {backups.map((backup, idx) => {

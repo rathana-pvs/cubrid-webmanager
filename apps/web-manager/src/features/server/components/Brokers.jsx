@@ -8,6 +8,7 @@ import { Card } from '../../../components/ds/layout/Card';
 import { Table } from '../../../components/ds/layout/Table';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 const Component = function Brokers({ hostUid, isSection = false }) {
   const dispatch = useDispatch();
@@ -31,14 +32,11 @@ const Component = function Brokers({ hostUid, isSection = false }) {
       header: 'Status',
       accessor: 'state',
       render: (val) => (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
-          ${val === 'ON'
-            ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-            : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'}`}
-        >
-          <span className={`size-1.5 rounded-full ${val === 'ON' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-          {val}
-        </span>
+        <StatusBadge 
+          label={val} 
+          variant={val === 'ON' ? 'emerald' : 'rose'} 
+          pulse={val === 'ON'} 
+        />
       )
     },
     { header: 'PID',  accessor: 'pid',         render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
@@ -62,10 +60,7 @@ const Component = function Brokers({ hostUid, isSection = false }) {
   const activeCount = brokers.filter(b => b.state === 'ON').length;
 
   const activeBadge = (
-    <span className="inline-flex items-center gap-1.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400 px-2 py-0.5 bg-emerald-500/10 border border-emerald-500/20 rounded-full animate-in fade-in transition duration-300">
-      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-      {activeCount} active
-    </span>
+    <StatusBadge label={`${activeCount} active`} variant="emerald" pulse={true} className="rounded-full" />
   );
 
   const content = (

@@ -8,6 +8,8 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { ProgressBar } from '../../../components/ds/foundation/ProgressBar';
+import { EmptyState } from '../../../components/ds/feedback/EmptyState';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -245,10 +247,19 @@ export default function TransactionInfoModal() {
                 ) : (
                   <tr>
                     <td colSpan="6" className="px-6 py-20 text-center">
-                      <div className="flex flex-col items-center justify-center gap-4 opacity-30">
-                        <Icon name="inventory_2" size="lg" weight={100} className="text-slate-400" />
-                        <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400">Zero Process Context</Typography>
-                      </div>
+                      {transactions.length === 0 ? (
+                        <EmptyState
+                          icon="sentiment_very_satisfied"
+                          title="No Active Transactions"
+                          subtitle="All client operations are complete. No active transaction handles registered."
+                          accent="emerald"
+                        />
+                      ) : (
+                        <div className="flex flex-col items-center justify-center gap-4 opacity-30">
+                          <Icon name="inventory_2" size="lg" weight={100} className="text-slate-400" />
+                          <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400">Zero Process Context</Typography>
+                        </div>
+                      )}
                     </td>
                   </tr>
                 )}

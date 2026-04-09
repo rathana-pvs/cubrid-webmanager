@@ -4,6 +4,7 @@ import { fetchDashboardCAS } from '../../databaseSlice';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Table } from '../../../../components/ds/layout/Table';
 import { Card } from '../../../../components/ds/layout/Card';
+import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
 
 export default function DBBrokersCASSection({ brokersCAS, pollingProps, onViewSQLLog, onViewSlowQueryLog, onRestartCAS }) {
   const dispatch = useDispatch();
@@ -50,14 +51,11 @@ export default function DBBrokersCASSection({ brokersCAS, pollingProps, onViewSQ
       render: (val) => {
         const ready = val === 'READY';
         return (
-          <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
-            ${ready
-              ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-              : 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'}`}
-          >
-            <span className={`w-1.5 h-1.5 rounded-full ${ready ? 'bg-emerald-500 animate-pulse' : 'bg-amber-500'}`} />
-            {val}
-          </span>
+          <StatusBadge 
+            label={val} 
+            variant={ready ? 'emerald' : 'amber'} 
+            pulse={ready} 
+          />
         );
       }
     },
@@ -89,15 +87,9 @@ export default function DBBrokersCASSection({ brokersCAS, pollingProps, onViewSQ
           <Icon name="dns" size="sm" weight={300} className="text-amber-500" />
           <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">CAS Brokers</span>
           <div className="flex items-center gap-2 ml-2">
-            <span className="flex items-center gap-1 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {readyCount} ready
-            </span>
+            <StatusBadge label={`${readyCount} ready`} variant="emerald" pulse={true} className="border-none bg-transparent dark:bg-transparent" />
             <span className="text-slate-200 dark:text-white/10">·</span>
-            <span className="flex items-center gap-1 text-[10px] font-bold text-amber-600 dark:text-amber-400">
-              <span className="w-1.5 h-1.5 rounded-full bg-amber-500" />
-              {busyCount} busy
-            </span>
+            <StatusBadge label={`${busyCount} busy`} variant="amber" pulse={true} className="border-none bg-transparent dark:bg-transparent" />
           </div>
         </div>
       }

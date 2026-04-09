@@ -11,6 +11,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -304,19 +305,9 @@ export default function UnloadDatabaseModal() {
         </div>
 
         {/* Action Disclaimer */}
-        <div className="flex items-start gap-4 p-4 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl shadow-xs">
-          <div className="w-9 h-9 rounded-xl bg-white dark:bg-white/5 flex items-center justify-center shrink-0 border border-slate-200 dark:border-white/10">
-            <Icon name="info" size="sm" weight={300} className="text-sky-500" />
-          </div>
-          <div>
-            <Typography variant="p" className="text-[11px] font-black text-slate-700 dark:text-slate-200 mb-1 leading-tight uppercase tracking-tight">
-              Resource Management
-            </Typography>
-            <Typography variant="p" className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed font-medium">
-              Extraction is executed via the <span className="font-mono text-amber-500/80 italic font-bold">cubrid_unload</span> utility. High-volume datasets may consume significant I/O and CPU resources.
-            </Typography>
-          </div>
-        </div>
+        <InfoBanner title="Resource Management">
+          Extraction is executed via the <span className="font-mono text-amber-500/80 italic font-bold">cubrid_unload</span> utility. High-volume datasets may consume significant I/O and CPU resources.
+        </InfoBanner>
 
       </div>
     </Modal>

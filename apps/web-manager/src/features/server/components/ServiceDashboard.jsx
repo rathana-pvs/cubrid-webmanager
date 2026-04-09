@@ -13,6 +13,7 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 import LoadingOverlay from '../../../components/common/LoadingOverlay';
 import { Badge } from '../../../components/ds/foundation/Badge';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
@@ -336,15 +337,9 @@ const Component = function ServiceDashboard() {
         </Card>
         
         {authorizedHosts.length === 0 && (
-          <div className="p-4 rounded-xl bg-amber-50 dark:bg-amber-500/5 border border-amber-200 dark:border-amber-500/10 flex items-center gap-4 animate-pulse">
-            <div className="w-10 h-10 rounded-lg bg-amber-100 dark:bg-amber-500/10 flex items-center justify-center text-amber-500">
-              <Icon name="dns" size="20px" />
-            </div>
-            <div className="flex flex-col">
-              <Typography variant="body2" className="text-[12px] text-amber-800 dark:text-amber-400 font-bold uppercase tracking-tight">Sensors Offline</Typography>
-              <Typography variant="caption" className="text-[11px] text-amber-600 dark:text-amber-500/70 font-medium">Connect to a host server from the navigator to activate global resource monitoring.</Typography>
-            </div>
-          </div>
+          <InfoBanner variant="warning" title="Sensors Offline" icon="dns" className="animate-pulse">
+            Connect to a host server from the navigator to activate global resource monitoring.
+          </InfoBanner>
         )}
 
         <ConfirmDialog

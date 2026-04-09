@@ -7,6 +7,7 @@ import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Button } from '../../../../components/ds/foundation/Button';
 import { Spinner } from '../../../../components/ds/foundation/Spinner';
 import { Typography } from '../../../../components/ds/foundation/Typography';
+import { InfoBanner } from '../../../../components/ds/foundation/InfoBanner';
 
 const getStatusColor = (p) => {
   if (p > 85) return 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]';
@@ -183,9 +184,9 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
       onToggle={(collapsed) => setIsExpanded(!collapsed)}
     >
       {error && (
-        <div className="px-4 py-2 text-[11px] text-rose-500 bg-rose-50 dark:bg-rose-500/10 border-b border-rose-200 dark:border-rose-500/20">
+        <InfoBanner variant="danger" title="System Status Error" icon="error" className="m-4">
           {typeof error === 'object' ? (error.message || error.note || JSON.stringify(error)) : error}
-        </div>
+        </InfoBanner>
       )}
       <Table columns={columns} data={rows} className="font-mono text-[12px]" />
     </Card>

@@ -395,10 +395,9 @@ const Component = function DatabaseSpaceMonitor({ hostUid, dbname }) {
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         {error && (
-          <div className="p-2.5 bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 rounded-sm flex items-center gap-2.5 text-rose-600 dark:text-rose-400">
-            <Icon name="error" size="xs" weight={300} />
-            <span className="text-[11px] font-medium">{error}</span>
-          </div>
+          <InfoBanner variant="danger" title="Storage Analysis Error" icon="error">
+            {error}
+          </InfoBanner>
         )}
 
         <SummaryCards dbname={dbname} data={data} totals={totals} />

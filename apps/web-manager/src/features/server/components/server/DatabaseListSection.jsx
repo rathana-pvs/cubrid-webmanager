@@ -3,6 +3,7 @@ import { Card } from '../../../../components/ds/layout/Card';
 import { Table } from '../../../../components/ds/layout/Table';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Typography } from '../../../../components/ds/foundation/Typography';
+import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
 
 export default function DatabaseListSection({ dbListDisplay, handleAutoStartToggle }) {
   const columns = [
@@ -43,14 +44,11 @@ export default function DatabaseListSection({ dbListDisplay, handleAutoStartTogg
       header: 'Status',
       accessor: 'status',
       render: (val) => (
-        <span className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider border
-          ${val === 'On'
-            ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-            : 'bg-rose-50 text-rose-600 border-rose-200 dark:bg-rose-500/10 dark:text-rose-400 dark:border-rose-500/20'}`}
-        >
-          <span className={`size-1.5 rounded-full ${val === 'On' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
-          {val}
-        </span>
+        <StatusBadge 
+          label={val} 
+          variant={val === 'On' ? 'emerald' : 'rose'} 
+          pulse={val === 'On'} 
+        />
       )
     },
   ];

@@ -7,6 +7,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 
 export default function UserProfileModal({ isOpen, onClose }) {
   const { user } = useSelector((state) => state.auth, shallowEqual);
@@ -147,11 +148,9 @@ export default function UserProfileModal({ isOpen, onClose }) {
             </div>
 
             {/* Info Card */}
-            <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
-              <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
-                <Icon name="info" size="14px" weight={400} className="text-amber-500" />
-                <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Details</span>
-              </div>
+            <div>
+              <SectionHeader title="Account Details" icon="info" />
+              <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
               <div className="divide-y divide-slate-100 dark:divide-white/5">
                 <div className="flex items-center px-4 py-3 gap-3">
                   <Icon name="badge" size="16px" weight={300} className="text-slate-400 shrink-0" />
@@ -164,17 +163,16 @@ export default function UserProfileModal({ isOpen, onClose }) {
                   <span className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 truncate">{profile.department || 'Not assigned'}</span>
                 </div>
               </div>
+              </div>
             </div>
           </>
         )}
 
         {/* Edit Profile Mode */}
         {editMode === 'profile' && (
-          <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
-            <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
-              <Icon name="edit_square" size="14px" weight={400} className="text-amber-500" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Edit Profile</span>
-            </div>
+          <div>
+            <SectionHeader title="Update Profile" icon="edit_square" />
+            <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
             <div className="p-4 space-y-3">
               {/* Read-only User ID */}
               <div>
@@ -195,15 +193,14 @@ export default function UserProfileModal({ isOpen, onClose }) {
               />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
         {/* Change Password Mode */}
         {editMode === 'password' && (
-          <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
-            <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
-              <Icon name="lock" size="14px" weight={400} className="text-amber-500" />
-              <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Security</span>
-            </div>
+          <div>
+            <SectionHeader title="Security Settings" icon="lock" />
+            <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
             <div className="p-4 space-y-3">
               <Input
                 type="password"
@@ -234,7 +231,8 @@ export default function UserProfileModal({ isOpen, onClose }) {
               />
             </div>
           </div>
-        )}
+        </div>
+      )}
 
       </div>
     </Modal>

@@ -8,6 +8,7 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Icon } from '../../../components/ds/foundation/Icon';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 
 export default function EditHostModal() {
   const dispatch = useDispatch();
@@ -156,97 +157,81 @@ export default function EditHostModal() {
         )}
 
         {/* Section 1: Identity */}
-        <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
-          <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
-            <Icon name="badge" size="14px" weight={400} className="text-amber-500" />
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Identity</span>
-          </div>
-          <div className="p-4">
-            <Input
-              label="Friendly Name"
-              name="alias"
-              value={formData.alias}
-              onChange={handleChange}
-              error={errors.alias}
-              placeholder="e.g. Production Server"
-              icon="label"
-              disabled={loading}
-            />
-          </div>
+        <SectionHeader title="Identity" icon="badge" />
+        <div className="px-1">
+          <Input
+            label="Friendly Name"
+            name="alias"
+            value={formData.alias}
+            onChange={handleChange}
+            error={errors.alias}
+            placeholder="e.g. Production Server"
+            icon="label"
+            disabled={loading}
+          />
         </div>
 
         {/* Section 2: Host Connection */}
-        <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
-          <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
-            <Icon name="lan" size="14px" weight={400} className="text-amber-500" />
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Host</span>
-            {connectionPreview && (
-              <span className="ml-auto text-[10px] font-mono text-amber-600 dark:text-amber-400 bg-amber-500/10 px-2 py-0.5 rounded-md">
-                {connectionPreview}
-              </span>
-            )}
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-4 gap-3">
-              <div className="col-span-3">
-                <Input
-                  label="IP Address / Domain"
-                  name="address"
-                  value={formData.address}
-                  onChange={handleChange}
-                  error={errors.address}
-                  placeholder="localhost"
-                  icon="dns"
-                  disabled={loading}
-                />
-              </div>
-              <div className="col-span-1">
-                <Input
-                  label="Port"
-                  name="port"
-                  type="number"
-                  value={formData.port}
-                  onChange={handleChange}
-                  error={errors.port}
-                  placeholder="8001"
-                  disabled={loading}
-                />
-              </div>
+        <SectionHeader 
+          title="Host" 
+          icon="lan" 
+          className="mt-8"
+        />
+        <div className="px-1">
+          <div className="grid grid-cols-4 gap-3">
+            <div className="col-span-3">
+              <Input
+                label="IP Address / Domain"
+                name="address"
+                value={formData.address}
+                onChange={handleChange}
+                error={errors.address}
+                placeholder="localhost"
+                icon="dns"
+                disabled={loading}
+              />
+            </div>
+            <div className="col-span-1">
+              <Input
+                label="Port"
+                name="port"
+                type="number"
+                value={formData.port}
+                onChange={handleChange}
+                error={errors.port}
+                placeholder="8001"
+                disabled={loading}
+              />
             </div>
           </div>
         </div>
 
         {/* Section 3: Credentials */}
-        <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
-          <div className="px-4 py-2.5 bg-slate-50 dark:bg-white/[0.03] border-b border-slate-200 dark:border-white/8 flex items-center gap-2">
-            <Icon name="lock" size="14px" weight={400} className="text-amber-500" />
-            <span className="text-[10px] font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest">Credentials</span>
-          </div>
-          <div className="p-4">
-            <div className="grid grid-cols-2 gap-3">
-              <Input
-                label="Username"
-                name="id"
-                value={formData.id}
-                onChange={handleChange}
-                error={errors.id}
-                placeholder="admin"
-                icon="person"
-                disabled={loading}
-              />
-              <Input
-                label="New Password"
-                labelExtra="(optional)"
-                type="password"
-                name="password"
-                value={formData.password}
-                onChange={handleChange}
-                error={errors.password}
-                placeholder="Leave blank to keep"
-                icon="key"
-                disabled={loading}
-              />
-            </div>
+        <SectionHeader title="Credentials" icon="lock" className="mt-8" />
+        <div className="px-1">
+          <div className="grid grid-cols-2 gap-3">
+            <Input
+              label="Username"
+              name="id"
+              value={formData.id}
+              onChange={handleChange}
+              error={errors.id}
+              placeholder="admin"
+              icon="person"
+              disabled={loading}
+            />
+            <Input
+              label="New Password"
+              labelExtra="(optional)"
+              type="password"
+              name="password"
+              value={formData.password}
+              onChange={handleChange}
+              error={errors.password}
+              placeholder="Leave blank to keep"
+              icon="key"
+              disabled={loading}
+            />
           </div>
         </div>
 

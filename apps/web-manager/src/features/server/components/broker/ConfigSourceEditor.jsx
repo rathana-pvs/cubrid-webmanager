@@ -1,5 +1,6 @@
 import React, { useRef } from 'react';
 import { Icon } from '../../../../components/ds/foundation/Icon';
+import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
 
 export default function ConfigSourceEditor({ rawContent, handleSourceChange }) {
   const textareaRef = useRef(null);
@@ -88,10 +89,7 @@ export default function ConfigSourceEditor({ rawContent, handleSourceChange }) {
       {/* Footer hint */}
       <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
         <span>Comments preserved in source view</span>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          Source
-        </div>
+        <StatusBadge label="Source" variant="emerald" className="border-none bg-transparent" />
       </div>
     </div>
   );

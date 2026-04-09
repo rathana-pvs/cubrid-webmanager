@@ -1,8 +1,8 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useMemo } from 'react';
 import { createPortal } from 'react-dom';
-import { FormField } from './FormField';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
+import { FormField } from './FormField';
 
 export const Select = ({
   label,
@@ -11,76 +11,71 @@ export const Select = ({
   required,
   options = [],
   className = '',
-  size = 'md',
+  size = 'md', // 'sm' | 'md'
   disabled = false,
   value,
   onChange,
-  placeholder = "Select option",
+  placeholder = 'Select option...',
   icon,
-  ...props
 }) => {
   const [isOpen, setIsOpen] = useState(false);
-  const [dropdownStyle, setDropdownStyle] = useState({});
-  const buttonRef = useRef(null);
   const containerRef = useRef(null);
-  const isSm = size === 'sm';
+  const [dropdownStyle, setDropdownStyle] = useState({});
 
-  const selectedOption = options.find(opt => opt.value === value);
+  const selectedOption = useMemo(
+    () => options.find((opt) => opt.value === value),
+    [options, value]
+  );
 
-  // Compute position from button's screen rect before opening
-  const openDropdown = useCallback(() => {
-    if (!buttonRef.current) return;
-    const rect = buttonRef.current.getBoundingClientRect();
-    setDropdownStyle({
-      position: 'fixed',
-      top: rect.bottom + 4,
-      left: rect.left,
-      width: rect.width,
-      zIndex: 9999,
-    });
-    setIsOpen(true);
-  }, []);
+  const updateDropdownPosition = () => {
+    if (containerRef.current) {
+      const rect = containerRef.current.getBoundingClientRect();
+      setDropdownStyle({
+        position: 'fixed',
+        top: rect.bottom + 4,
+        left: rect.left,
+        width: rect.width,
+        zIndex: 9999,
+      });
+    }
+  };
+
+  useEffect(() => {
+    if (isOpen) {
+      updateDropdownPosition();
+      window.addEventListener('scroll', updateDropdownPosition, true);
+      window.addEventListener('resize', updateDropdownPosition);
+    }
+    return () => {
+      window.removeEventListener('scroll', updateDropdownPosition, true);
+      window.removeEventListener('resize', updateDropdownPosition);
+    };
+  }, [isOpen]);
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (
-        containerRef.current && !containerRef.current.contains(event.target) &&
-        // also check the portal dropdown (rendered outside containerRef)
-        !document.getElementById('select-portal-root')?.contains(event.target)
-      ) {
+      if (containerRef.current && !containerRef.current.contains(event.target)) {
         setIsOpen(false);
       }
     };
-    if (isOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
+    document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isOpen]);
-
-  // Close on scroll (the trigger button moves but the portal stays fixed)
-  useEffect(() => {
-    const handleScroll = () => setIsOpen(false);
-    if (isOpen) {
-      window.addEventListener('scroll', handleScroll, true);
-    }
-    return () => window.removeEventListener('scroll', handleScroll, true);
-  }, [isOpen]);
+  }, []);
 
   const handleSelect = (option) => {
     if (disabled || option.disabled) return;
-    if (onChange) {
-      onChange({ target: { value: option.value, name: props.name } });
-    }
+    onChange({ target: { value: option.value } });
     setIsOpen(false);
   };
 
-  const dropdownEl = isOpen ? createPortal(
+  const isSm = size === 'sm';
+
+  const dropdown = isOpen ? createPortal(
     <div
-      id="select-portal-root"
       style={dropdownStyle}
       className="bg-white dark:bg-[#1A1C1E] border border-slate-200 dark:border-white/10 rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
     >
-      <div className="p-1 max-h-[220px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent flex flex-col gap-0.5">
+      <div className="p-1 px-1.5 max-h-[190px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent flex flex-col gap-0.5">
         {options.length === 0 ? (
           <div className="px-3 py-2 text-[10px] text-slate-400 italic">No options available</div>
         ) : (
@@ -88,14 +83,15 @@ export const Select = ({
             <div
               key={opt.value}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
-              className={`flex items-center justify-between px-3 h-9 rounded-lg text-[13px] font-medium transition-all cursor-pointer group relative overflow-hidden ${
-                opt.value === value
-                  ? 'bg-amber-500/10 text-amber-500 shadow-xs border border-amber-500/20'
-                  : 'text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-white/6 hover:text-slate-900 dark:hover:text-white'
-              } ${
-                opt.disabled ? 'opacity-30 cursor-not-allowed' : ''
-              }`}
+              className={`flex items-center justify-between px-3 h-9 rounded-lg text-[13px] font-medium transition-all cursor-pointer group relative overflow-hidden ${opt.value === value
+                  ? 'bg-amber-500/8 text-amber-500'
+                  : 'text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/4 hover:text-slate-900 dark:hover:text-white'
+                } ${opt.disabled ? 'opacity-30 cursor-not-allowed' : ''
+                }`}
             >
+              {opt.value === value && (
+                <div className="absolute left-0 top-2 bottom-2 w-[3px] bg-amber-500 rounded-r-full" />
+              )}
               <span className="truncate">{opt.label}</span>
             </div>
           ))
@@ -109,42 +105,30 @@ export const Select = ({
     <FormField label={label} description={description} error={error} required={required} className={className}>
       <div className="relative group" ref={containerRef}>
         <button
-          ref={buttonRef}
           type="button"
+          onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
-          onClick={() => !disabled && (isOpen ? setIsOpen(false) : openDropdown())}
-          className={`relative w-full ${icon ? 'pl-11' : 'pl-3.5'} pr-10 ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium text-left bg-slate-50 dark:bg-white/3 border rounded-xl focus:outline-hidden transition-all flex items-center ${
-            error
-              ? 'border-rose-500/50'
-              : isOpen
-                ? 'border-amber-500 ring-4 ring-amber-500/15'
-                : 'border-slate-200 dark:border-white/10 hover:border-slate-300/60 dark:hover:border-white/20'
-          } ${
-            disabled ? 'opacity-60 cursor-not-allowed' : 'cursor-pointer'
-          }`}
+          className={`relative w-full ${icon ? 'pl-11' : 'pl-3.5'} pr-10 ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium text-left bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-xl transition-all outline-hidden
+            ${isOpen ? 'border-amber-500 ring-4 ring-amber-500/10' : 'hover:border-slate-300 dark:hover:border-white/20'}
+            ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}
+          `}
         >
           {icon && (
-            <div className={`absolute left-2.5 top-1/2 -translate-y-1/2 ${isSm ? 'w-6 h-6' : 'w-7 h-7'} rounded-lg flex items-center justify-center transition-colors ${isOpen ? 'text-amber-500' : 'bg-slate-200/50 dark:bg-white/5 text-slate-400 group-hover:text-slate-500'}`}>
-              <Icon name={icon} size={isSm ? "12px" : "14px"} weight={300} />
+            <div className="absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400">
+              <Icon name={icon} size={isSm ? '14px' : '18px'} weight={300} />
             </div>
           )}
-          <span className={`block truncate ${isSm ? 'text-[12px]' : 'text-[13px]'} font-medium ${
-            !selectedOption
-              ? 'text-slate-400 dark:text-slate-600'
-              : 'text-slate-900 dark:text-slate-100'
-          }`}>
+          <span className={`block truncate ${!selectedOption ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>
             {selectedOption ? selectedOption.label : placeholder}
           </span>
-          <div className={`absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center ${isSm ? 'w-6 h-6' : 'w-7 h-7'} pointer-events-none`}>
-            <Icon
-              name="expand_more"
-              size="14px"
-              weight={700}
-              className={`text-slate-400 group-hover:text-amber-500 transition-all duration-200 ${isOpen ? 'rotate-180 text-amber-500' : ''}`}
-            />
+          <div
+            className="absolute right-3 top-1/2 flex items-center justify-center w-5 h-5 text-slate-400 pointer-events-none transition-transform duration-200"
+            style={{ transform: `translateY(-50%) ${isOpen ? 'rotate(180deg)' : ''}` }}
+          >
+            <Icon name="expand_more" size="18px" />
           </div>
         </button>
-        {dropdownEl}
+        {dropdown}
       </div>
     </FormField>
   );

@@ -2,6 +2,7 @@ import React from 'react';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Input } from '../../../../components/ds/forms/Input';
 import { Toggle } from '../../../../components/ds/forms/Toggle';
+import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
 
 function isBool(val = '') {
   const u = val.toUpperCase();
@@ -122,10 +123,7 @@ export default function ConfigTableEditor({
       {/* Footer */}
       <div className="shrink-0 px-4 py-1.5 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
         <span>{allPropertyKeys.length} properties · {sections.length} brokers</span>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-          Table Editor
-        </div>
+        <StatusBadge label="Table Editor" variant="emerald" className="border-none bg-transparent" />
       </div>
     </div>
   );

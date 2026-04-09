@@ -15,6 +15,8 @@ import { Select } from '../../../components/ds/forms/Select';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -79,16 +81,6 @@ const STEPS = [
   { id: 4, label: 'Access', icon: 'lock' },
   { id: 5, label: 'Review', icon: 'fact_check' },
 ];
-
-/* ── helpers ─────────────────────────────────────────────────── */
-function SectionLabel({ icon, children }) {
-  return (
-    <div className="flex items-center gap-2 mb-3">
-      <Icon name={icon} size="14px" weight={400} className="text-amber-500" />
-      <span className="text-[10px] font-black uppercase tracking-[0.15em] text-slate-400 dark:text-slate-500">{children}</span>
-    </div>
-  );
-}
 
 function SummaryRow({ label, value, accent }) {
   return (
@@ -412,7 +404,7 @@ export default function CreateDatabaseModal() {
         {step === 1 && (
           <div className="space-y-5 animate-in fade-in duration-200">
             <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
-              <SectionLabel icon="settings">Basic Configuration</SectionLabel>
+            <SectionHeader title="Basic Configuration" icon="settings" className="mb-4" />
               <div className="grid grid-cols-2 gap-4">
                 <Input
                   label="Database name"
@@ -431,7 +423,7 @@ export default function CreateDatabaseModal() {
             </div>
 
             <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
-              <SectionLabel icon="language">Locale & Encoding</SectionLabel>
+            <SectionHeader title="Locale & Encoding" icon="language" className="mb-4" />
               <Select
                 label="Region locale"
                 value={formData.locale}
@@ -451,7 +443,7 @@ export default function CreateDatabaseModal() {
             </div>
 
             <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
-              <SectionLabel icon="folder_open">Volume Mapping</SectionLabel>
+            <SectionHeader title="Volume Mapping" icon="folder_open" className="mb-4" />
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-3 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
                   <div className="flex items-center justify-between">
@@ -561,7 +553,7 @@ export default function CreateDatabaseModal() {
         {step === 3 && (
           <div className="animate-in fade-in duration-200 space-y-6">
             <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
-              <SectionLabel icon="auto_mode">Automated Volume Expansion</SectionLabel>
+            <SectionHeader title="Automated Volume Expansion" icon="auto_mode" className="mb-4" />
               <Typography variant="p" className="text-[11px] text-slate-500 font-medium mb-4 block">
                 Configure thresholds for automatic storage provisioning when space is low.
               </Typography>
@@ -665,19 +657,13 @@ export default function CreateDatabaseModal() {
         {/* STEP 5: Commisioning Review */}
         {step === 5 && (
           <div className="animate-in fade-in duration-200 space-y-5">
-            <div className="flex items-center gap-4 p-4 bg-emerald-500/5 border border-emerald-500/15 rounded-2xl">
-              <div className="w-10 h-10 rounded-xl bg-emerald-500 flex items-center justify-center text-white shrink-0 shadow-[0_4px_16px_rgba(16,185,129,0.3)]">
-                <Icon name="verified" size="md" weight={400} />
-              </div>
-              <div>
-                <Typography variant="p" className="text-[12.5px] font-black text-slate-800 dark:text-white leading-none">Topology Verified</Typography>
-                <Typography variant="p" className="text-[11px] text-slate-500 font-medium mt-1">Review finalized manifest before deploying to host.</Typography>
-              </div>
-            </div>
+            <InfoBanner title="Topology Verified">
+              Review finalized manifest before deploying to host. All parameters have been validated against host environment constraints.
+            </InfoBanner>
 
             <div className="grid grid-cols-2 gap-4">
               <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
-                <SectionLabel icon="tune">Heuristics</SectionLabel>
+                <SectionHeader title="Heuristics" icon="tune" className="mb-4" />
                 <div className="space-y-0.5 mt-1">
                   <SummaryRow label="Primary Identifier" value={formData.dbName} accent />
                   <SummaryRow label="Base Page Topology" value={`${formData.pageSize / 1024} KB`} />
@@ -687,7 +673,7 @@ export default function CreateDatabaseModal() {
               </div>
 
               <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
-                <SectionLabel icon="hard_drive">Physical Footprint</SectionLabel>
+                <SectionHeader title="Physical Footprint" icon="hard_drive" className="mb-4" />
                 <div className="space-y-0.5 mt-1">
                   <SummaryRow label="Segment Count" value={`${formData.volumes.length + 2}`} />
                   <SummaryRow label="System Volume" value={`${formData.genericVolSize} MB`} />
@@ -701,7 +687,7 @@ export default function CreateDatabaseModal() {
             </div>
 
             <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
-              <SectionLabel icon="auto_mode">Automation Provisioning</SectionLabel>
+              <SectionHeader title="Automation Provisioning" icon="auto_mode" className="mb-4" />
               <div className="grid grid-cols-2 gap-4 mt-2">
                 <div className="p-3 bg-slate-50 dark:bg-white/3 border border-slate-100 dark:border-white/5 rounded-xl">
                   <div className="flex items-center justify-between mb-2">
@@ -728,7 +714,7 @@ export default function CreateDatabaseModal() {
 
             <div className="border border-slate-100 dark:border-white/8 rounded-2xl overflow-hidden shadow-xs">
               <div className="px-4 py-2.5 bg-slate-50/50 dark:bg-white/3 border-b border-slate-100 dark:border-white/8">
-                <SectionLabel icon="storage">Segment Manifest</SectionLabel>
+                <SectionHeader title="Segment Manifest" icon="storage" className="mb-4" />
               </div>
               <div className="divide-y divide-slate-100 dark:divide-white/4 max-h-[160px] overflow-y-auto custom-scrollbar">
                 {[

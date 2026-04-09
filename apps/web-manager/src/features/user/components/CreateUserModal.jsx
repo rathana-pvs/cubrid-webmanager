@@ -9,6 +9,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { SearchInput } from '../../../components/ds/forms/SearchInput';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { TabGroup } from '../../../components/ds/layout/TabGroup';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -306,24 +307,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
       <div className="flex flex-col h-[560px]">
 
         {/* ── Tab bar ─────────────────────────────────────────────────────── */}
-        <div className="flex items-center gap-1 border-b border-slate-100 dark:border-white/5 mb-5 shrink-0">
-          {visibleTabs.map(tab => (
-            <button
-              key={tab.id}
-              onClick={() => setActiveTab(tab.id)}
-              className={`flex items-center gap-2 px-4 py-2.5 text-[11px] font-bold tracking-wide rounded-t-lg transition-all relative ${
-                activeTab === tab.id
-                  ? 'text-amber-500 bg-amber-500/5'
-                  : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/3'
-              }`}
-            >
-              <Icon name={tab.icon} size="xs" />
-              {tab.label}
-              {activeTab === tab.id && (
-                <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-amber-500 rounded-full shadow-[0_0_8px_rgba(245,158,11,0.5)]" />
-              )}
-            </button>
-          ))}
+        <div className="mb-5 shrink-0">
+          <TabGroup tabs={visibleTabs} active={activeTab} onChange={setActiveTab} />
         </div>
 
         {/* ── Tab content ──────────────────────────────────────────────────── */}

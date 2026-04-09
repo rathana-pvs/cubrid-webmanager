@@ -9,6 +9,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -140,12 +141,8 @@ export default function CompactDatabaseModal() {
       }
     >
       <div className="space-y-6">
-        {/* Target */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">Maintenance Target</Typography>
-          </div>
+        <div>
+          <SectionHeader title="Maintenance Target" icon="database" />
           <div className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
             <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
               <Icon name="database" size="sm" weight={300} className="text-amber-500" />
@@ -157,12 +154,8 @@ export default function CompactDatabaseModal() {
           </div>
         </div>
 
-        {/* Pipeline Steps */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">Optimization Pipeline</Typography>
-          </div>
+        <div>
+          <SectionHeader title="Optimization Pipeline" icon="terminal" />
 
           <div className="bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4 space-y-0">
             {pipelineSteps.map((step, i) => (
@@ -187,12 +180,8 @@ export default function CompactDatabaseModal() {
           </div>
         </div>
 
-        {/* Verbose Toggle */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-2">
-            <div className="w-1.5 h-1.5 rounded-full bg-amber-500"></div>
-            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">Execution Options</Typography>
-          </div>
+        <div>
+          <SectionHeader title="Execution Options" icon="tune" />
 
           <div 
             className={`flex items-center gap-4 p-4 border rounded-2xl transition-all cursor-pointer select-none ${verbose ? 'bg-amber-500/4 border-amber-500/20 shadow-[0_2px_16px_rgba(245,158,11,0.06)]' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}

@@ -6,20 +6,8 @@ import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsP
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Card } from '../../../components/ds/layout/Card';
 import { Table } from '../../../components/ds/layout/Table';
-
-/* ── helpers ── */
-const StatusBadge = ({ value }) => {
-  const isActive = value && value !== 'IDLE' && value !== 'OFF';
-  return (
-    <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] font-bold uppercase tracking-wide border
-      ${isActive
-        ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-        : 'bg-slate-100 text-slate-500 border-slate-200 dark:bg-white/4 dark:text-slate-500 dark:border-white/[0.07]'}`}>
-      <span className={`w-1 h-1 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
-      {value || 'IDLE'}
-    </span>
-  );
-};
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 const Component = function BrokerStatus({ hostUid, brokerName }) {
   const dispatch = useDispatch();
@@ -50,12 +38,10 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
   if (status.error) {
     return (
       <div className="flex-1 flex items-center justify-center p-8 bg-white dark:bg-bk-main h-full">
-        <div className="max-w-sm w-full p-5 bg-rose-50 dark:bg-rose-500/6 border border-rose-200 dark:border-rose-500/20 rounded-xl flex items-start gap-3">
-          <Icon name="error_outline" size="sm" weight={300} className="text-rose-500 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-[13px] font-bold text-rose-700 dark:text-rose-400 mb-1">Failed to load status</p>
-            <p className="text-[12px] text-rose-600/70 dark:text-rose-400/60 leading-relaxed">{status.error}</p>
-          </div>
+        <div className="max-w-sm w-full">
+          <InfoBanner variant="danger" title="Failed to load status" icon="error_outline">
+            {status.error}
+          </InfoBanner>
         </div>
       </div>
     );
@@ -73,7 +59,15 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
     { header: 'TPS', accessor: 'as_num_tran', width: '60px', render: (v) => <span className="font-mono">{v}</span> },
     { header: 'Port', accessor: 'as_port', width: '80px', render: (v) => <span className="font-mono">{v}</span> },
     { header: 'Memory', accessor: 'as_psize', width: '100px', render: (v) => <span className="font-mono">{(parseInt(v) / 1024).toFixed(1)} KB</span> },
-    { header: 'Status', accessor: 'as_status', width: '100px', render: (v) => <StatusBadge value={v} /> },
+    { 
+      header: 'Status', 
+      accessor: 'as_status', 
+      width: '100px', 
+      render: (v) => {
+        const isActive = v && v !== 'IDLE' && v !== 'OFF';
+        return <StatusBadge label={v || 'IDLE'} variant={isActive ? 'emerald' : 'slate'} pulse={isActive} />;
+      }
+    },
     { header: 'Database', accessor: 'as_dbname', render: (v) => <span className="text-amber-600/80 dark:text-amber-500/70 font-mono">{v || '—'}</span> },
     { header: 'Last Access', accessor: 'as_last_access_time', render: (v) => <span className="text-slate-400 dark:text-slate-600 text-[11px]">{v}</span> },
     { header: 'Client IP', accessor: 'as_client_ip', render: (v) => <span className="font-mono">{v || '—'}</span> },

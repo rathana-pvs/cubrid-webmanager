@@ -3,11 +3,13 @@ import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeBackupDatabaseModal, backupDatabase, fetchBackupDbInfo } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -20,14 +22,6 @@ const VIEW_FORM    = 'form';
 const VIEW_LOADING = 'loading';
 const VIEW_SUCCESS = 'success';
 const VIEW_ERROR   = 'error';
-
-// Minimal section header
-const SectionHeader = ({ label }) => (
-  <div className="flex items-center gap-3 mb-3">
-    <span className="text-[10px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{label}</span>
-    <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-  </div>
-);
 
 export default function BackupDatabaseModal() {
   const dispatch = useDispatch();
@@ -203,16 +197,13 @@ export default function BackupDatabaseModal() {
                 {selectedDatabase || 'N/A'}
               </Typography>
             </div>
-            <div className="shrink-0 flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20">
-              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 animate-pulse" />
-              <span className="text-[9px] font-bold uppercase tracking-widest text-emerald-600 dark:text-emerald-400">Ready</span>
-            </div>
+            <StatusBadge label="Ready" variant="emerald" pulse={true} className="rounded-full" />
           </div>
         </div>
 
         {/* Backup Level */}
         <div>
-          <SectionHeader label="Backup Strategy" />
+          <SectionHeader title="Backup Strategy" icon="layers" />
           <div className="grid grid-cols-3 gap-2.5">
             {levels.map(item => {
               const isSelected = formData.backupLevel === item.level;
@@ -246,7 +237,7 @@ export default function BackupDatabaseModal() {
 
         {/* Storage Configuration */}
         <div>
-          <SectionHeader label="Storage Configuration" />
+          <SectionHeader title="Storage Configuration" icon="storage" />
           <div className="grid grid-cols-2 gap-x-4 gap-y-4">
             <Input
               label="Volume Name"
@@ -287,7 +278,7 @@ export default function BackupDatabaseModal() {
 
         {/* Options */}
         <div>
-          <SectionHeader label="Options" />
+          <SectionHeader title="Options" icon="tune" />
           <div className="space-y-2">
             {flags.map(opt => {
               const isOn = formData[opt.field];

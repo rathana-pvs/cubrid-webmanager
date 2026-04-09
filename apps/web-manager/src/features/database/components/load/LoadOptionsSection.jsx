@@ -2,13 +2,7 @@ import { Toggle } from '../../../../components/ds/forms/Toggle';
 import { Input } from '../../../../components/ds/forms/Input';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Typography } from '../../../../components/ds/foundation/Typography';
-
-const SectionHeader = ({ label }) => (
-  <div className="flex items-center gap-3 mb-5">
-    <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] whitespace-nowrap">{label}</span>
-    <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-  </div>
-);
+import { SectionHeader } from '../../../../components/ds/foundation/SectionHeader';
 
 function OptionToggle({ label, checked, onChange, icon }) {
   return (
@@ -51,7 +45,7 @@ export default function LoadOptionsSection({ formData, handleCheckBoxChange, han
 
   return (
     <div className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-      <SectionHeader label="Execution Strategy" />
+      <SectionHeader title="Execution Strategy" icon="psychology" />
       
       {/* Behavior Grid */}
       <div className="grid grid-cols-2 gap-3 mb-6">
@@ -68,7 +62,7 @@ export default function LoadOptionsSection({ formData, handleCheckBoxChange, han
 
       {/* Threshold Overrides */}
       <div className="space-y-4 pt-6 border-t border-slate-100 dark:border-white/5">
-        <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 ml-1 block mb-2">Threshold Overrides</Typography>
+        <SectionHeader title="Threshold Overrides" icon="tune" showLine={false} className="mb-2" />
         <div className="grid grid-cols-1 gap-2.5">
           {inputs.map(item => (
             <div key={item.id} className="flex items-center gap-4 bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-2.5 px-4 transition-all hover:border-slate-200 dark:hover:border-white/10">

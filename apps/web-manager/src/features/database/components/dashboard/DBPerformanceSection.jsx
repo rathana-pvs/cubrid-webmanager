@@ -5,12 +5,9 @@ import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Table } from '../../../../components/ds/layout/Table';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 import { Card } from '../../../../components/ds/layout/Card';
+import { ProgressBar } from '../../../../components/ds/foundation/ProgressBar';
 
-const Bar = ({ pct, colorClass }) => (
-  <div className="w-full h-1 bg-slate-100 dark:bg-white/6 rounded-full overflow-hidden mt-1 flex">
-    <div className={`h-full ${colorClass} transition-all duration-700 rounded-full`} style={{ width: `${pct}%` }} />
-  </div>
-);
+
 
 export default function DBPerformanceSection({ dbStats, pollingProps }) {
   const dispatch = useDispatch();
@@ -46,9 +43,13 @@ export default function DBPerformanceSection({ dbStats, pollingProps }) {
       header: 'CPU',
       accessor: 'cpu',
       render: (val, row) => (
-        <div className="min-w-[90px]">
-          <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{val}</span>
-          <Bar pct={row.cpuPct} colorClass={row.cpuPct > 85 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : row.cpuPct > 50 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'} />
+        <div className="min-w-[90px] pr-4">
+          <ProgressBar 
+            pct={row.cpuPct} 
+            showValue 
+            valueLabel={val} 
+            variant="auto"
+          />
         </div>
       )
     },
@@ -56,9 +57,13 @@ export default function DBPerformanceSection({ dbStats, pollingProps }) {
       header: 'Memory',
       accessor: 'memory',
       render: (val, row) => (
-        <div className="min-w-[100px]">
-          <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{val}</span>
-          <Bar pct={row.memPct} colorClass={row.memPct > 85 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : row.memPct > 50 ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'} />
+        <div className="min-w-[100px] pr-4">
+          <ProgressBar 
+            pct={row.memPct} 
+            showValue 
+            valueLabel={val} 
+            variant="auto"
+          />
         </div>
       )
     },
@@ -94,9 +99,13 @@ export default function DBPerformanceSection({ dbStats, pollingProps }) {
       header: 'Buffer Hit',
       accessor: 'hitRatio',
       render: (val, row) => (
-        <div className="min-w-[100px]">
-          <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{val}</span>
-          <Bar pct={row.hitPct} colorClass={row.hitPct < 85 ? 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]' : 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'} />
+        <div className="min-w-[100px] pr-4">
+          <ProgressBar 
+            pct={row.hitPct} 
+            showValue 
+            valueLabel={val} 
+            variant={row.hitPct < 85 ? 'rose' : 'emerald'}
+          />
         </div>
       )
     },

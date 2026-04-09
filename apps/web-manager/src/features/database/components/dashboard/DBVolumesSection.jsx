@@ -5,6 +5,8 @@ import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Table } from '../../../../components/ds/layout/Table';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 import { Card } from '../../../../components/ds/layout/Card';
+import { ProgressBar } from '../../../../components/ds/foundation/ProgressBar';
+import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
 
 export default function DBVolumesSection({ volumes, pollingProps }) {
   const dispatch = useDispatch();
@@ -32,17 +34,7 @@ export default function DBVolumesSection({ volumes, pollingProps }) {
     return () => clearInterval(interval);
   }, [isTabActive, isCollapsed, autoRefresh, refreshInterval, hostUid, dbname]);
 
-  const getFreeSeverity = (pct) => {
-    if (pct < 10) return 'text-rose-500';
-    if (pct < 25) return 'text-amber-500';
-    return 'text-emerald-500';
-  };
 
-  const getBarColor = (usedPct) => {
-    if (usedPct > 85) return 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]';
-    if (usedPct > 50) return 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]';
-    return 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]';
-  };
 
   const cleanInt = (v) => {
     if (typeof v === 'number') return v;
@@ -70,12 +62,13 @@ export default function DBVolumesSection({ volumes, pollingProps }) {
       accessor: 'type',
       render: (val) => {
         const t = (val || '').toUpperCase();
-        const cls = t.includes('PERMANENT')   ? 'bg-blue-50 text-blue-600 border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20'
-                  : t.includes('TEMPORARY')   ? 'bg-amber-50 text-amber-600 border-amber-200 dark:bg-amber-500/10 dark:text-amber-400 dark:border-amber-500/20'
-                  : t.includes('ACTIVE_LOG')  ? 'bg-emerald-50 text-emerald-600 border-emerald-200 dark:bg-emerald-500/10 dark:text-emerald-400 dark:border-emerald-500/20'
-                  : t.includes('ARCHIVE_LOG') ? 'bg-violet-50 text-violet-600 border-violet-200 dark:bg-violet-500/10 dark:text-violet-400 dark:border-violet-500/20'
-                  : 'bg-slate-50 text-slate-500 border-slate-200 dark:bg-slate-500/10 dark:text-slate-400 dark:border-slate-500/20';
-        return <span className={`px-2 py-0.5 rounded-sm text-[10px] font-bold uppercase tracking-wide border ${cls}`}>{val}</span>;
+        let variant = 'slate';
+        if (t.includes('PERMANENT')) variant = 'sky';
+        else if (t.includes('TEMPORARY')) variant = 'amber';
+        else if (t.includes('ACTIVE_LOG')) variant = 'emerald';
+        else if (t.includes('ARCHIVE_LOG')) variant = 'violet';
+        
+        return <StatusBadge label={val} variant={variant} />;
       }
     },
     { header: 'Purpose', accessor: 'purpose', render: (val) => <span className="font-mono text-[12px] text-slate-400">{val}</span> },
@@ -85,30 +78,18 @@ export default function DBVolumesSection({ volumes, pollingProps }) {
       render: (val, row) => {
         const rawFree = cleanInt(val);
         const total = cleanInt(row.total);
-        const freePct = total > 0 ? (rawFree / total) * 100 : 0;
         const used = Math.max(0, total - rawFree);
-        const usedPct = 100 - freePct;
+        const usedPct = total > 0 ? (used / total) * 100 : 0;
         const isNaNData = total === 0;
 
         return (
-          <div className="min-w-[220px] flex flex-col gap-1">
-            <div className="flex justify-between items-end">
-              <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400">
-                <span className="text-slate-700 dark:text-slate-200 font-bold">{used.toLocaleString()}</span> / {total.toLocaleString()}
-              </span>
-
-              <div className="flex items-center gap-2">
-                <span className={`font-mono text-[11px] font-black tracking-tight ${getFreeSeverity(freePct)}`}>
-                  {isNaNData ? '0' : Math.round(freePct)}% <span className="opacity-50 text-[9px] font-bold font-sans uppercase">free</span>
-                </span>
-              </div>
-            </div>
-            <div className="w-full h-1 bg-slate-100 dark:bg-white/6 rounded-full overflow-hidden flex">
-               <div 
-                className={`h-full transition-all duration-700 rounded-full ${getBarColor(usedPct)}`}
-                style={{ width: `${isNaNData ? 0 : usedPct}%` }} 
-              />
-            </div>
+          <div className="min-w-[220px] pr-6">
+            <ProgressBar 
+              pct={isNaNData ? 0 : usedPct} 
+              showValue 
+              valueLabel={`${used.toLocaleString()} / ${total.toLocaleString()}`}
+              variant="auto"
+            />
           </div>
         );
       }

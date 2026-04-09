@@ -9,6 +9,8 @@ import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -247,10 +249,7 @@ export default function EditBackupPlanModal() {
         
         {/* Level Presets */}
         <div className="space-y-4">
-           <div className="flex items-center gap-3">
-             <Icon name="architecture" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500">Abstraction Level</span>
-          </div>
+           <SectionHeader title="Abstraction Level" icon="architecture" />
           <div className="grid grid-cols-3 gap-3">
             {LEVEL_PRESETS.map(item => (
               <button
@@ -290,10 +289,7 @@ export default function EditBackupPlanModal() {
 
         {/* Recurrence */}
         <div className="space-y-4">
-           <div className="flex items-center gap-3">
-             <Icon name="schedule" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[10px] font-bold text-slate-400">Execution Schedule</span>
-          </div>
+           <SectionHeader title="Execution Schedule" icon="schedule" />
           <div className="p-5 bg-slate-50/50 dark:bg-white/1 border border-slate-100 dark:border-white/4 rounded-2xl space-y-6 shadow-xs">
             <div className="flex gap-4">
               <div className="flex-1">
@@ -373,13 +369,9 @@ export default function EditBackupPlanModal() {
               )}
 
               {formData.periodType === 'Daily' && (
-                <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-2xl flex items-center gap-4">
-                  <Icon name="verified" size="md" weight={400} className="text-emerald-500" />
-                  <div className="min-w-0">
-                    <Typography variant="p" className="text-[11px] font-bold text-emerald-500 leading-none mb-1">Standard 24h cycle</Typography>
-                    <Typography variant="caption" className="text-emerald-500/70 font-medium leading-none block italic">Instance synchronized daily at exactly <span className="font-bold text-emerald-500">{formData.backupTime}</span>.</Typography>
-                  </div>
-                </div>
+                <InfoBanner title="Standard 24h cycle">
+                  Instance synchronized daily at exactly <span className="font-bold text-amber-500 font-mono italic non-block">{formData.backupTime}</span>.
+                </InfoBanner>
               )}
 
               {formData.periodType === 'Specific days' && (
@@ -391,10 +383,7 @@ export default function EditBackupPlanModal() {
 
         {/* Operational Options */}
         <div className="space-y-4">
-           <div className="flex items-center gap-3">
-             <Icon name="settings_input_component" size="14px" weight={400} className="text-amber-500" />
-             <span className="text-[10px] font-bold text-slate-400">Optimization Matrix</span>
-          </div>
+           <SectionHeader title="Optimization Matrix" icon="settings_input_component" />
           <div className="grid grid-cols-2 gap-3">
             {[
               { label: 'Delete archive volumes', field: 'deleteArchive', icon: 'auto_delete', desc: 'Automatic log purging' },

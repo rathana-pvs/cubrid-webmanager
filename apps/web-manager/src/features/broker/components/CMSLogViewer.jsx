@@ -3,6 +3,7 @@ import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { fetchCMSLogs } from '../brokerSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 function CMSLogViewer({ hostUid, type }) {
   const dispatch = useDispatch();
@@ -198,10 +199,7 @@ function CMSLogViewer({ hostUid, type }) {
              <span>Showing: {startIndex + 1} - {Math.min(startIndex + pageSize, totalEntries)}</span>
           )}
         </div>
-        <div className="flex items-center gap-1.5">
-          <span className="h-1.5 w-1.5 rounded-full bg-emerald-500"></span>
-          Connected
-        </div>
+        <StatusBadge label="Connected" variant="emerald" className="border-none bg-transparent" />
       </div>
     </div>
   );

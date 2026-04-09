@@ -8,6 +8,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Table } from '../../../components/ds/layout/Table';
 import { SearchInput } from '../../../components/ds/forms/SearchInput';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 
 export default function AutoQueryLogModal() {
   const dispatch = useDispatch();
@@ -116,15 +117,9 @@ export default function AutoQueryLogModal() {
         <div className="flex items-center gap-2.5">
           <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">Status:</Typography>
           {logsLoading ? (
-            <span className="flex items-center gap-1.5 text-[10px] text-sky-500 font-bold animate-pulse">
-              <div className="w-1.5 h-1.5 rounded-full bg-sky-500"></div>
-              Buffering
-            </span>
+            <StatusBadge label="Buffering" variant="sky" pulse={true} className="rounded-full" />
           ) : (
-            <span className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-bold">
-              <div className="w-1.5 h-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]"></div>
-              Synchronized
-            </span>
+            <StatusBadge label="Synchronized" variant="emerald" pulse={false} className="rounded-full" />
           )}
         </div>
         

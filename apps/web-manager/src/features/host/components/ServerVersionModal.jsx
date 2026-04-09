@@ -5,7 +5,7 @@ import { hostApi } from '../hostApi';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
-import { Divider } from '../../../components/ds/layout/Divider';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 
 export default function ServerVersionModal() {
   const dispatch = useDispatch();
@@ -58,17 +58,15 @@ export default function ServerVersionModal() {
         </div>
 
         <div className="w-full space-y-5">
-          <div className="flex flex-col items-center text-center space-y-1">
-            <Typography variant="caption" className="font-bold text-bk-yellow uppercase tracking-widest text-[10px]">
-              Cubrid Version
-            </Typography>
+          <div className="flex flex-col items-center text-center w-full">
+            <SectionHeader title="Cubrid Version" icon="verified" className="justify-center" />
             <Typography variant="p" className="font-mono text-slate-700 dark:text-slate-200 leading-relaxed text-[13px]">
               {envData?.CUBRIDVER || 'Loading...'}
             </Typography>
           </div>
 
-          <div className="space-y-1 pt-2">
-            <Divider label="Environment Details" />
+          <div className="w-full">
+            <SectionHeader title="Environment Details" icon="settings_suggest" />
             <div className="space-y-0.5 pt-2">
               {[
                 { label: 'OS Platform', value: envData?.osinfo },

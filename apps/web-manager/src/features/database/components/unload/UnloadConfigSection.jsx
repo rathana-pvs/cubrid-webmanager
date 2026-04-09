@@ -1,17 +1,10 @@
 import { Input } from '../../../../components/ds/forms/Input';
-import { Icon } from '../../../../components/ds/foundation/Icon';
-
-const SectionHeader = ({ label }) => (
-  <div className="flex items-center gap-3 mb-4">
-    <span className="text-[9px] font-bold text-slate-400 uppercase tracking-widest whitespace-nowrap">{label}</span>
-    <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-  </div>
-);
+import { SectionHeader } from '../../../../components/ds/foundation/SectionHeader';
 
 export default function UnloadConfigSection({ formData, handleInputChange }) {
   return (
     <div>
-      <SectionHeader label="Target Configuration" />
+      <SectionHeader title="Target Configuration" icon="folder_zip" />
       <div className="grid grid-cols-2 gap-4">
         <Input label="Database name" value={formData.targetDbName} disabled />
         <Input

@@ -9,6 +9,9 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
@@ -189,9 +192,9 @@ export default function DeleteDatabaseModal() {
               variant="danger"
               onClick={handleConfirm}
               icon={step === 1 ? 'arrow_forward' : 'delete_forever'}
-              className="min-w-[140px]"
+              className="whitespace-nowrap"
             >
-              {step === 1 ? 'Proceed to verify' : 'Delete permanently'}
+              {step === 1 ? 'Proceed' : 'Delete'}
             </Button>
           </div>
         </div>
@@ -199,34 +202,30 @@ export default function DeleteDatabaseModal() {
     >
       {step === 1 ? (
         <div className="space-y-4 animate-in fade-in duration-200">
-          <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
-            <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
-              <Icon name="database" size="sm" weight={300} className="text-rose-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="caption" className="font-black uppercase tracking-widest text-rose-500/70 mb-0.5">Target database</Typography>
-              <Typography variant="h4" className="text-slate-800 dark:text-slate-100 font-bold text-[14px] leading-none truncate">{selectedDatabase}</Typography>
-            </div>
-            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-rose-500/10 border border-rose-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-rose-500 animate-pulse" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-500">Destructive</span>
+          <div>
+            <SectionHeader title="Target Selection" icon="database" badge="Permanent" />
+            <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
+              <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
+                <Icon name="database" size="sm" weight={300} className="text-rose-500" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Typography variant="p" className="text-slate-800 dark:text-slate-100 font-bold text-[14px] leading-none truncate">{selectedDatabase}</Typography>
+              </div>
+              <StatusBadge label="Destructive" variant="rose" pulse={true} className="rounded-full" />
             </div>
           </div>
 
-          <div className="flex gap-2.5 px-3.5 py-3 bg-amber-500/5 border border-amber-500/15 rounded-xl">
-            <Icon name="warning" size="sm" weight={300} className="text-amber-500 shrink-0 mt-0.5" />
-            <Typography variant="p" className="text-[10.5px] text-slate-600 dark:text-slate-400 font-medium leading-relaxed">
-              This action is <strong className="text-amber-500">permanent</strong>. All database files and logs listed below will be erased and cannot be recovered.
-            </Typography>
-          </div>
+          <InfoBanner title="Critical Warning" variant="warning">
+            This action is <span className="text-amber-500 font-bold non-italic">permanent</span>. All database files and logs listed below will be erased and cannot be recovered.
+          </InfoBanner>
 
-          <div className="rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden">
-            <div className="px-3.5 py-2 bg-slate-50 dark:bg-white/2 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-              <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">Volumes to be deleted</Typography>
-              {volumeInfo.length > 0 && (
-                <span className="text-[9px] font-black text-slate-400 dark:text-slate-500 tracking-wider">{volumeInfo.length} ASSETS</span>
-              )}
-            </div>
+          <div>
+            <SectionHeader 
+              title="Volumes To Be Deleted" 
+              icon="hard_drive" 
+              badge={volumeInfo.length > 0 ? `${volumeInfo.length} Assets` : null} 
+            />
+            <div className="rounded-xl border border-slate-100 dark:border-white/5 overflow-hidden">
 
             {fetchingVolumes ? (
               <div className="flex items-center justify-center gap-2.5 py-10 text-slate-400 dark:text-slate-500">
@@ -259,48 +258,44 @@ export default function DeleteDatabaseModal() {
               </div>
             )}
           </div>
+        </div>
 
-          <div 
-            className={`flex items-center gap-4 p-4 border rounded-2xl transition-all duration-200 cursor-pointer select-none
-              ${deleteBackup
-                ? 'bg-rose-500/5 border-rose-500/25 shadow-[0_2px_16px_rgba(244,63,94,0.04)]'
-                : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}
-            onClick={() => setDeleteBackup(!deleteBackup)}
-          >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all shrink-0
-              ${deleteBackup ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400'}`}>
-              <Icon name="folder_delete" size="xs" weight={300} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="p" className={`font-bold text-[11.5px] tracking-tight transition-colors ${deleteBackup ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>
-                Purge Linked Backups
-              </Typography>
-              <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-0.5 leading-snug">
-                Remove all secondary volumes and snapshots linked to this instance.
-              </Typography>
-            </div>
-            <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-              <Toggle 
-                variant="danger"
-                checked={deleteBackup}
-                onChange={setDeleteBackup}
-              />
+          <div>
+            <SectionHeader title="Recovery Cleanup" icon="folder_delete" />
+            <div 
+              className={`flex items-center gap-4 p-4 border rounded-2xl transition-all duration-200 cursor-pointer select-none
+                ${deleteBackup
+                  ? 'bg-rose-500/5 border-rose-500/25 shadow-[0_2px_16px_rgba(244,63,94,0.04)]'
+                  : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}
+              onClick={() => setDeleteBackup(!deleteBackup)}
+            >
+              <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all shrink-0
+                ${deleteBackup ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400'}`}>
+                <Icon name="folder_delete" size="xs" weight={300} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Typography variant="p" className={`font-bold text-[11.5px] tracking-tight transition-colors ${deleteBackup ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>
+                  Purge Linked Backups
+                </Typography>
+                <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-0.5 leading-snug">
+                  Remove all secondary volumes and snapshots linked to this instance.
+                </Typography>
+              </div>
+              <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
+                <Toggle 
+                  variant="danger"
+                  checked={deleteBackup}
+                  onChange={setDeleteBackup}
+                />
+              </div>
             </div>
           </div>
         </div>
       ) : (
         <div className="space-y-5 py-2 animate-in fade-in duration-200 max-w-[400px] mx-auto">
-          <div className="flex items-center gap-4 p-4 bg-rose-500/5 border border-rose-500/15 rounded-xl">
-            <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
-              <Icon name="lock" size="md" weight={300} className="text-rose-500" />
-            </div>
-            <div>
-              <Typography variant="p" className="text-[12.5px] font-bold text-slate-800 dark:text-white mb-0.5">Authorization required</Typography>
-              <Typography variant="p" className="text-[10.5px] text-slate-500 font-medium leading-relaxed">
-                Confirm your database credentials to permanently delete <span className="text-rose-500 font-bold">{selectedDatabase}</span>.
-              </Typography>
-            </div>
-          </div>
+          <InfoBanner title="Authorization Point">
+            Confirm your database credentials to permanently delete <span className="text-rose-500 font-bold non-italic">{selectedDatabase}</span>.
+          </InfoBanner>
 
           <div className="space-y-3">
             <Input

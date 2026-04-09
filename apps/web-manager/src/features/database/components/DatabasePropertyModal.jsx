@@ -7,9 +7,13 @@ import { brokerApi } from '../../broker/brokerApi';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
+import { TabGroup } from '../../../components/ds/layout/TabGroup';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -102,13 +106,7 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
   return (
     <div className="space-y-2">
       {/* Section Header */}
-      <div className="flex items-center gap-2 pb-1">
-        <div className="w-5 h-5 rounded-md bg-amber-500/10 flex items-center justify-center">
-          <Icon name={BUFFER_ICONS[type]} size="12px" weight={400} className="text-amber-500" />
-        </div>
-        <span className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">{label}</span>
-        <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-      </div>
+      <SectionHeader title={label} icon={BUFFER_ICONS[type]} />
 
       {/* Two Option Cards side by side */}
       <div className="grid grid-cols-2 gap-2">
@@ -283,7 +281,6 @@ export default function DatabasePropertyModal() {
   const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
   const isAuthorized = selectedHostUid && authorizedHosts.includes(selectedHostUid);
   const { 
-    state, 
     error: actionError, 
     startAction, 
     endSuccess, 
@@ -443,6 +440,11 @@ export default function DatabasePropertyModal() {
     ? [{ id: 'Connection Information', icon: 'cable', label: 'Connection' }, { id: 'Server Parameter', icon: 'tune', label: 'Server' }]
     : [{ id: 'Server Parameter', icon: 'tune', label: 'Server' }];
 
+  const SERVER_TABS = [
+    { id: 'General', label: 'General Parameters', icon: 'tune' },
+    { id: 'Advanced', label: 'Advanced Parameters', icon: 'settings_applications' },
+  ];
+
   /* ─── LOADING VIEW ─── */
   if (isLoading) return (
     <Modal isOpen title="Syncing Configuration" icon="settings" onClose={handleClose} maxWidth="900px">
@@ -562,33 +564,16 @@ export default function DatabasePropertyModal() {
 
           {/* Tab bar — only for Server Parameter */}
           {activeSidebar === 'Server Parameter' && (
-            <div className="flex items-center px-1 border-b border-slate-100 dark:border-white/6 bg-slate-50/30 dark:bg-white/1 shrink-0">
-              {['General', 'Advanced'].map(tab => (
-                <button
-                  key={tab}
-                  onClick={() => setActiveTab(tab)}
-                  className={`relative flex items-center gap-2 px-5 py-3.5 text-[10px] font-black uppercase tracking-widest ${
-                    activeTab === tab ? 'text-amber-500' : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200'
-                  }`}
-                >
-                  <Icon
-                    name={tab === 'General' ? 'tune' : 'settings_applications'}
-                    size="12px"
-                    weight={activeTab === tab ? 600 : 300}
-                  />
-                  {tab} Registry
-                  {activeTab === tab && (
-                    <div className="absolute bottom-0 left-4 right-4 h-[2px] bg-amber-500 rounded-t-full shadow-[0_0_8px_rgba(212,163,0,0.6)]" />
-                  )}
-                </button>
-              ))}
-              <div className="flex-1" />
+            <div className="p-4 border-b border-slate-100 dark:border-white/6 flex items-center justify-between">
+              <TabGroup 
+                tabs={SERVER_TABS} 
+                active={activeTab} 
+                onChange={setActiveTab} 
+                fullWidth={false}
+              />
               {/* Modified indicator */}
               {Object.keys(params).length > 0 && (
-                <div className="flex items-center gap-1.5 px-4 text-[9px] text-amber-500/70 font-bold">
-                  <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-                  {Object.keys(params).length} modified
-                </div>
+                <StatusBadge label={`${Object.keys(params).length} modified`} variant="amber" pulse={true} className="rounded-full" />
               )}
             </div>
           )}
@@ -608,15 +593,9 @@ export default function DatabasePropertyModal() {
               /* ─── CONNECTION INFO ─── */
               <div className="p-6 space-y-5">
                 {/* Header Banner */}
-                <div className="flex items-center gap-4 p-4 bg-amber-500/5 border border-amber-500/15 rounded-xl">
-                  <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-                    <Icon name="cable" size="md" weight={300} className="text-amber-500" />
-                  </div>
-                  <div>
-                    <p className="text-[11px] font-black text-slate-900 dark:text-white tracking-tight">Broker Connection</p>
-                    <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Configure how Web Manager connects to <span className="text-amber-500 font-bold">{selectedDatabase}</span></p>
-                  </div>
-                </div>
+                <InfoBanner title="Broker Connection">
+                  Configure how Web Manager connects to {selectedDatabase}. These parameters define how the Web Manager communicates with the CUBRID Broker.
+                </InfoBanner>
 
                 <div className="space-y-3 p-5 bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/6 rounded-xl">
                   <div className="flex items-center gap-4">
@@ -665,12 +644,9 @@ export default function DatabasePropertyModal() {
                   </div>
                 </div>
 
-                <div className="flex items-start gap-3 p-3.5 bg-sky-500/5 border border-sky-500/10 rounded-xl">
-                  <Icon name="info" size="sm" weight={300} className="text-sky-500 shrink-0 mt-0.5" />
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed italic">
-                    Broker parameters define how the Web Manager communicates with the CUBRID Broker. Changes only impact Manager-to-Host synchronization logic.
-                  </p>
-                </div>
+                <InfoBanner title="Synchronization Notice">
+                  Broker parameters define how the Web Manager communicates with the CUBRID Broker. Changes only impact <span className="text-amber-500 font-bold non-italic">Manager-to-Host</span> synchronization logic.
+                </InfoBanner>
               </div>
 
             ) : activeTab === 'General' ? (
@@ -697,13 +673,7 @@ export default function DatabasePropertyModal() {
 
                 {/* Standard Parameters */}
                 <div className="space-y-2">
-                  <div className="flex items-center gap-2 pb-1">
-                    <div className="w-5 h-5 rounded-md bg-slate-100 dark:bg-white/6 flex items-center justify-center">
-                      <Icon name="settings" size="12px" weight={400} className="text-slate-400" />
-                    </div>
-                    <span className="text-[9.5px] font-black uppercase tracking-[0.18em] text-slate-400 dark:text-slate-500">Standard Parameters</span>
-                    <div className="flex-1 h-px bg-slate-100 dark:bg-white/5" />
-                  </div>
+                  <SectionHeader title="Standard Parameters" icon="settings" />
 
                   <div className="rounded-xl border border-slate-100 dark:border-white/6 overflow-hidden">
                     {/* Lock params */}
@@ -754,9 +724,10 @@ export default function DatabasePropertyModal() {
             ) : (
               /* ─── ADVANCED REGISTRY ─── */
               <div>
-                <div className="px-6 py-3 border-b border-slate-100 dark:border-white/6 flex items-center gap-3">
-                  <Icon name="warning_amber" size="sm" weight={300} className="text-amber-400" />
-                  <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium italic">Advanced parameters — changes may affect server stability</p>
+                <div className="px-6 py-6">
+                  <InfoBanner title="Advanced Heuristics">
+                    Advanced parameters — changes may affect server stability and performance. Exercise caution when modifying these values.
+                  </InfoBanner>
                 </div>
                 <div className="border-b border-slate-100 dark:border-white/6">
                   {advancedData.map(p => (

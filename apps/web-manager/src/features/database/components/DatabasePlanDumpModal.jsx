@@ -9,7 +9,11 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
+import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
+import { EmptyState } from '../../../components/ds/feedback/EmptyState';
 
 export default function DatabasePlanDumpModal() {
   const dispatch = useDispatch();
@@ -126,13 +130,8 @@ export default function DatabasePlanDumpModal() {
           <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
 
             {/* Target Banner */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-4 rounded-full bg-amber-500/60" />
-                <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.18em] text-[10px]">
-                  Inspection Target
-                </Typography>
-              </div>
+            <div>
+              <SectionHeader title="Inspection Target" icon="database" />
               <div className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
                 <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                   <Icon name="database" size="sm" weight={300} className="text-amber-500" />
@@ -143,20 +142,13 @@ export default function DatabasePlanDumpModal() {
                     {selectedDatabase}
                   </Typography>
                 </div>
-                <div className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20">
-                  <span className="text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">XASL Cache</span>
-                </div>
+                <StatusBadge label="XASL Cache" variant="amber" />
               </div>
             </div>
 
             {/* Pipeline Steps */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-4 rounded-full bg-amber-500/60" />
-                <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.18em] text-[10px]">
-                  Execution Pipeline
-                </Typography>
-              </div>
+            <div>
+              <SectionHeader title="Execution Pipeline" icon="account_tree" />
               <div className="bg-slate-50/50 dark:bg-background-dark/30 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
                 {planSteps.map((s, i) => (
                   <div key={i} className="flex items-start gap-4 group">
@@ -181,13 +173,8 @@ export default function DatabasePlanDumpModal() {
             </div>
 
             {/* Drop Plans Toggle */}
-            <div className="space-y-3">
-              <div className="flex items-center gap-2">
-                <div className="w-1 h-4 rounded-full bg-amber-500/60" />
-                <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.18em] text-[10px]">
-                  Execution Options
-                </Typography>
-              </div>
+            <div>
+              <SectionHeader title="Execution Options" icon="tune" />
               <div
                 className={`flex items-center gap-4 p-4 border rounded-2xl transition-all cursor-pointer select-none
                   ${planDrop
@@ -230,12 +217,9 @@ export default function DatabasePlanDumpModal() {
 
               {/* Info note */}
               {!planDrop && (
-                <div className="flex items-start gap-2.5 px-3 py-2 bg-slate-50/80 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-xl">
-                  <Icon name="info" size="xs" weight={300} className="text-slate-400 shrink-0 mt-0.5" />
-                  <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium leading-relaxed italic">
-                    Displays query plans currently stored in the server's plan cache to analyze how queries are being executed and optimized.
-                  </Typography>
-                </div>
+                <InfoBanner title="Optimization Profile">
+                  Displays query plans currently stored in the server's plan cache to analyze how queries are being executed and optimized.
+                </InfoBanner>
               )}
             </div>
           </div>
@@ -254,9 +238,7 @@ export default function DatabasePlanDumpModal() {
                 </div>
               </div>
               <div className="flex items-center gap-2">
-                <span className="px-2.5 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-[9px] font-black uppercase tracking-widest text-amber-600 dark:text-amber-400">
-                  XASL Cache
-                </span>
+                <StatusBadge label="XASL Cache" variant="amber" />
                 <span className={`px-2.5 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${lines.length > 0 ? 'bg-emerald-500/10 text-emerald-500 border border-emerald-500/20' : 'bg-slate-500/10 text-slate-500 border border-slate-500/20'}`}>
                   {lines.length > 0 ? `${lines.filter(l => l && l.trim()).length} lines` : 'Empty'}
                 </span>
@@ -315,11 +297,12 @@ export default function DatabasePlanDumpModal() {
                     );
                   })
                 ) : (
-                  <div className="flex flex-col items-center justify-center h-full gap-3 py-20 opacity-40">
-                    <Icon name="subtitles_off" size="xl" weight={100} className="text-slate-400 text-5xl" />
-                    <Typography variant="p" className="text-[11px] font-semibold text-slate-400">No active plans found in cache</Typography>
-                    <Typography variant="caption" className="text-[10px] text-slate-400 italic">The server's plan cache may be empty or inactive</Typography>
-                  </div>
+                  <EmptyState
+                    icon="topic"
+                    title="Awaiting Plan Output"
+                    subtitle="The generated query plan statistics will be rendered here for analysis."
+                    py="py-8"
+                  />
                 )}
               </div>
             </div>
