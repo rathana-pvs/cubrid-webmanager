@@ -258,7 +258,7 @@ export default function DatabaseTree({
 
   if (loading && (!databases || databases.length === 0)) {
     return (
-      <div className="flex flex-col gap-4 p-5 animate-in fade-in duration-500">
+      <div className="flex flex-col gap-4 px-2 py-2 animate-in fade-in duration-500">
         {[1, 2, 3, 4].map(i => (
           <div key={i} className="flex flex-col gap-2">
             <div className="flex items-center gap-2">

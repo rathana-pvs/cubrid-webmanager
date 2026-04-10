@@ -51,7 +51,7 @@ export default function ContextMenuWrapper({ x, y, children, onClose, width = "w
   return (
     <div
       ref={menuRef}
-      className={`fixed z-1000 ${width} bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-xl shadow-[0_4px_25px_rgba(0,0,0,0.2)] py-1.5 max-h-[calc(100vh-36px)] animate-in fade-in zoom-in-95 duration-200 context-menu-container ${isPositioned ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
+      className={`fixed z-1000 ${width} bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-xl shadow-[0_4px_25px_rgba(0,0,0,0.2)] p-1.5 max-h-[calc(100vh-36px)] animate-in fade-in zoom-in-95 duration-200 context-menu-container ${isPositioned ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}
       style={{ top: position.top, left: position.left }}
       onClick={(e) => e.stopPropagation()}
     >

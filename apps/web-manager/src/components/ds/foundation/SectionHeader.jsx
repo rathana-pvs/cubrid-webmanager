@@ -20,7 +20,7 @@ export const SectionHeader = ({
   className = "" 
 }) => {
   return (
-    <div className={`flex items-center gap-3 mb-4 mt-8 first:mt-2 animate-in fade-in slide-in-from-left-2 duration-300 ${className}`}>
+    <div className={`flex items-center gap-2.5 mb-4 mt-8 first:mt-2 animate-in fade-in slide-in-from-left-2 duration-300 ${className}`}>
       {icon ? (
         <div className="flex items-center justify-center w-5 h-5 rounded-md bg-amber-500/10 border border-amber-500/20 shadow-[0_0_10px_rgba(245,158,11,0.05)]">
           <Icon name={icon} size="13px" weight={400} className="text-amber-500" />

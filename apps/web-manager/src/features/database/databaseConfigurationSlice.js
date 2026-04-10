@@ -98,7 +98,13 @@ const initialState = {
 const databaseConfigurationSlice = createSlice({
   name: 'databaseConfiguration',
   initialState,
-  reducers: {},
+  reducers: {
+    resetPlanDumpState: (state) => {
+      state.planDumpError = null;
+      state.planDumpLoading = false;
+      state.planDumpData = {};
+    }
+  },
   extraReducers: (builder) => {
     builder
       .addCase(fetchDatabaseParamDump.pending, (state) => {
@@ -168,4 +174,5 @@ const databaseConfigurationSlice = createSlice({
   }
 });
 
+export const { resetPlanDumpState } = databaseConfigurationSlice.actions;
 export default databaseConfigurationSlice.reducer;

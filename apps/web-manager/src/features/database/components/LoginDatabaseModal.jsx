@@ -150,41 +150,43 @@ export default function LoginDatabaseModal() {
         </div>
       }
     >
-      <form onSubmit={handleLogin} className="space-y-6 pb-2">
-        <div className="relative overflow-hidden rounded-2xl border border-amber-500/20 bg-linear-to-r from-amber-500/8 to-transparent dark:from-amber-500/10 dark:to-transparent p-4">
-          <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 shadow-sm relative group overflow-hidden">
-               <div className="absolute inset-0 bg-amber-500/5 rotate-45 translate-x-3 translate-y-3" />
-               <Icon name="database" size="md" weight={300} className="text-amber-500 relative z-10" />
+      <form onSubmit={handleLogin} className="space-y-6 pb-2 px-1.5">
+        <div className="space-y-4">
+          <SectionHeader title="Target Workspace" icon="database" />
+          <div className="relative overflow-hidden rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/2 p-4 pt-5 pb-5 transition-all hover:border-slate-200 dark:hover:border-white/10 group">
+            <div className="flex items-center justify-between gap-2.5">
+              <div className="min-w-0 flex-1">
+                <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-[10px] block mb-1">Instance Name</Typography>
+                <Typography variant="h4" className="text-[18px] font-black text-slate-800 dark:text-white font-mono truncate">{selectedDatabase}</Typography>
+              </div>
+              <StatusBadge label="Locked" variant="amber" pulse={true} className="rounded-full shadow-sm" />
             </div>
-            <div className="min-w-0 flex-1">
-              <SectionHeader title="Target Workspace" icon="database" />
-              <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white font-mono truncate pl-1">{selectedDatabase}</Typography>
-            </div>
-            <StatusBadge label="Locked" variant="amber" pulse={true} className="rounded-full" />
           </div>
         </div>
 
         <div className="space-y-4">
-          <Input label="Access Principal" value={formData.dbuser} onChange={(e) => handleInputChange('dbuser', e.target.value)} placeholder="dba" icon="account_circle" autoFocus />
-          <div className="relative">
-            <Input type={showPassword ? 'text' : 'password'} label="Cipher Key" value={formData.dbpasswd} onChange={(e) => handleInputChange('dbpasswd', e.target.value)} placeholder="Enter password" icon="password" />
-            <button type="button" tabIndex={-1} onClick={() => setShowPassword(s => !s)} className="absolute right-3 bottom-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
-              <Icon name={showPassword ? 'visibility_off' : 'visibility'} size="16px" weight={300} />
-            </button>
+          <SectionHeader title="Identity & Credentials" icon="lock" />
+          <div className="space-y-4">
+            <Input label="Access Principal" value={formData.dbuser} onChange={(e) => handleInputChange('dbuser', e.target.value)} placeholder="dba" icon="account_circle" autoFocus />
+            <div className="relative">
+              <Input type={showPassword ? 'text' : 'password'} label="Cipher Key" value={formData.dbpasswd} onChange={(e) => handleInputChange('dbpasswd', e.target.value)} placeholder="Enter password" icon="password" />
+              <button type="button" tabIndex={-1} onClick={() => setShowPassword(s => !s)} className="absolute right-3 bottom-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors">
+                <Icon name={showPassword ? 'visibility_off' : 'visibility'} size="16px" weight={300} />
+              </button>
+            </div>
           </div>
-        </div>
 
-        <div className="p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/2 transition-all hover:border-slate-200 dark:hover:border-white/10 group cursor-pointer" onClick={() => setRememberMe(v => !v)}>
-          <div className="flex items-center gap-4">
-            <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all ${rememberMe ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400'}`}>
-              <Icon name={rememberMe ? 'verified' : 'security'} size="sm" weight={300} />
+          <div className="mt-6 p-4 rounded-2xl border border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/2 transition-all hover:border-slate-200 dark:hover:border-white/10 group cursor-pointer" onClick={() => setRememberMe(v => !v)}>
+            <div className="flex items-center gap-4">
+              <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 border transition-all ${rememberMe ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400'}`}>
+                <Icon name={rememberMe ? 'verified' : 'security'} size="sm" weight={300} />
+              </div>
+              <div className="flex-1 min-w-0">
+                <Typography variant="p" className={`text-[12px] font-black transition-colors ${rememberMe ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>Session Persistence</Typography>
+                <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium block leading-none mt-1">Encrypt credentials for background auto-recon</Typography>
+              </div>
+              <Toggle variant="primary" checked={rememberMe} onChange={() => setRememberMe(v => !v)} />
             </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="p" className={`text-[12px] font-black transition-colors ${rememberMe ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>Session Persistence</Typography>
-              <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium block leading-none mt-1">Encrypt credentials for background auto-recon</Typography>
-            </div>
-            <Toggle variant="primary" checked={rememberMe} onChange={() => setRememberMe(v => !v)} />
           </div>
         </div>
       </form>

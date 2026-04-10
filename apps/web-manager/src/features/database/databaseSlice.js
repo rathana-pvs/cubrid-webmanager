@@ -50,7 +50,7 @@ export {
 
 export {
   fetchDatabaseParamDump, fetchDatabasePlanDump, fetchDatabaseClasses, fetchAutoVolumeConfig,
-  updateAutoVolumeConfig, fetchAutoVolumeLog
+  updateAutoVolumeConfig, fetchAutoVolumeLog, resetPlanDumpState
 } from './databaseConfigurationSlice';
 
 // If any component still needs the single reducer, we combine them (not used by store.js anymore)

@@ -2,7 +2,7 @@ import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { setSelectedBroker, setSelectedBrokerSubItem, fetchBrokerLogs } from '../../../broker/brokerSlice';
 import { openTab } from '../../layoutSlice';
 import { TreeNode } from '../../../../components/domain/tree/TreeNode';
-import { Spinner } from '../../../../components/ds/foundation/Spinner';
+import { Skeleton } from '../../../../components/ds/layout/Skeleton';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 
@@ -10,28 +10,39 @@ export default function BrokerTree({ hostUid, onContextMenu }) {
   const dispatch = useDispatch();
   const { brokers, loading, logsByBroker, selectedBroker, selectedBrokerSubItem, logsLoading } = useSelector((state) => state.broker, shallowEqual);
 
-  if (loading) {
+  if (loading && (!brokers || brokers.length === 0)) {
     return (
-      <div className="flex flex-col items-center justify-center py-10 space-y-3">
-        <Spinner size="lg" color="bk-yellow" />
-        <Typography variant="caption" className="text-slate-500 animate-pulse">Scanning brokers...</Typography>
+      <div className="flex flex-col gap-4 p-5 animate-in fade-in duration-500">
+        {[1, 2, 3].map(i => (
+          <div key={i} className="flex flex-col gap-2">
+            <div className="flex items-center gap-2">
+               <Skeleton variant="circular" width="16px" height="16px" className="opacity-40" />
+               <Skeleton variant="text" width="85%" height="18px" className="rounded-md" />
+            </div>
+            <div className="flex items-center gap-2 ml-6 opacity-30">
+               <Skeleton variant="text" width="60%" height="14px" className="rounded-md" />
+            </div>
+          </div>
+        ))}
       </div>
     );
   }
 
   if (!brokers || brokers.length === 0) {
     return (
-      <div className="px-6 py-10 flex flex-col items-center justify-center text-center space-y-2 opacity-60">
-        <Icon name="hub" size="lg" className="text-slate-400 mb-2" weight={200} />
-        <Typography variant="caption" className="text-slate-500 font-medium">
-          No brokers found on this host
+      <div className="px-6 py-12 flex flex-col items-center justify-center text-center space-y-3 opacity-40">
+        <div className="w-12 h-12 rounded-2xl bg-slate-100 dark:bg-white/5 flex items-center justify-center mb-2">
+          <Icon name="hub" size="md" className="text-slate-400" weight={100} />
+        </div>
+        <Typography variant="caption" className="text-slate-500 font-black uppercase tracking-widest text-[10px]">
+          No brokers found
         </Typography>
       </div>
     );
   }
 
   return (
-    <div className="space-y-0.5 px-1 py-1">
+    <div className="space-y-0.5 px-2 py-2">
       {brokers.map((broker) => {
         const isBrokerSelected = selectedBroker === broker.name;
         const brokerLogs = (logsByBroker[broker.name] || []).filter(log => log.path.toLowerCase().endsWith('.log'));
@@ -42,6 +53,7 @@ export default function BrokerTree({ hostUid, onContextMenu }) {
             id={broker.name}
             label={`${broker.name} (${broker.port})`}
             icon="hub"
+            level={1}
             status={broker.state === 'ON' ? 'on' : 'off'}
             isActive={isBrokerSelected && !selectedBrokerSubItem}
             hasChildren={true}
@@ -60,44 +72,39 @@ export default function BrokerTree({ hostUid, onContextMenu }) {
             <TreeNode
               label="SQL Log"
               icon="history_edu"
+              level={2}
               isActive={isBrokerSelected && selectedBrokerSubItem === 'SQL Log'}
               hasChildren={true}
+              isLoading={logsLoading && !logsByBroker[broker.name]}
               onSelect={() => {
                 dispatch(setSelectedBroker(broker.name));
                 dispatch(setSelectedBrokerSubItem('SQL Log'));
               }}
             >
-              <div className="space-y-0.5">
-                {logsLoading && !logsByBroker[broker.name] && (
-                  <div className="px-4 py-2 flex items-center gap-3">
-                    <Spinner size="sm" color="bk-yellow" />
-                    <Typography variant="caption" className="text-slate-400 animate-pulse">Loading log files...</Typography>
-                  </div>
-                )}
-                {brokerLogs.map((log, idx) => {
-                  const fileName = log.path.split('/').pop();
-                  const isLogSelected = isBrokerSelected && selectedBrokerSubItem === log.path;
-                  return (
-                    <TreeNode
-                      key={idx}
-                      label={fileName}
-                      icon="description"
-                      isActive={isLogSelected}
-                      level={2}
-                      onSelect={() => {
-                        dispatch(setSelectedBroker(broker.name));
-                        dispatch(setSelectedBrokerSubItem(log.path));
-                      }}
-                      onDoubleClick={() => dispatch(openTab(`log:${hostUid}:${log.path}`))}
-                    />
-                  );
-                })}
-                {!logsLoading && brokerLogs.length === 0 && (
-                  <div className="px-5 py-2">
-                     <Typography variant="caption" className="italic text-slate-500 opacity-60">No log entries found</Typography>
-                  </div>
-                )}
-              </div>
+              {brokerLogs.map((log, idx) => {
+                const fileName = log.path.split('/').pop();
+                const isLogSelected = isBrokerSelected && selectedBrokerSubItem === log.path;
+                return (
+                  <TreeNode
+                    key={idx}
+                    label={fileName}
+                    icon="description"
+                    isActive={isLogSelected}
+                    level={3}
+                    onSelect={() => {
+                      dispatch(setSelectedBroker(broker.name));
+                      dispatch(setSelectedBrokerSubItem(log.path));
+                    }}
+                    onDoubleClick={() => dispatch(openTab(`log:${hostUid}:${log.path}`))}
+                  />
+                );
+              })}
+              {!logsLoading && brokerLogs.length === 0 && (
+                <div className="px-10 py-3 opacity-30 flex items-center gap-2">
+                    <Icon name="block" size="xs" weight={300} />
+                    <Typography variant="caption" className="italic font-bold uppercase tracking-widest text-[8px]">Index Empty</Typography>
+                </div>
+              )}
             </TreeNode>
           </TreeNode>
         );

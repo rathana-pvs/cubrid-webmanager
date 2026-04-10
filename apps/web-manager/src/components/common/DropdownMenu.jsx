@@ -100,8 +100,8 @@ export function SubMenu({ icon, iconColor = '', label, children, width = 'w-56',
   );
 
   return (
-    <div ref={containerRef} className="relative px-1" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
-      <button className={`w-full text-left px-2.5 py-2 text-[12px] font-medium tracking-wide transition-all rounded-md flex items-center justify-between group relative overflow-hidden
+    <div ref={containerRef} className="relative" onMouseEnter={handleEnter} onMouseLeave={handleLeave}>
+      <button className={`w-full text-left px-3 py-2 text-[12px] font-medium tracking-wide transition-all rounded-md flex items-center justify-between group relative overflow-hidden
         ${open ? 'bg-amber-500/6 dark:bg-amber-500/10 text-amber-600 dark:text-amber-500' : 'text-slate-600 dark:text-slate-400 hover:bg-amber-500/6 dark:hover:bg-amber-500/10 hover:text-amber-600 dark:hover:text-amber-500'}`}>
         
         {/* Decorative hover/open indicator matching TreeNode */}
@@ -212,7 +212,7 @@ export function DropdownMenu({ label, children, width = 'w-52' }) {
  */
 export function MenuItem({ icon, iconColor = '', label, onClick, href, disabled = false }) {
   const { closeMenu } = useContext(MenuContext);
-  const baseClasses = `flex items-center gap-3 px-3 py-2 text-[12px] font-medium tracking-wide transition-all w-full text-left rounded-lg font-sans relative group overflow-hidden`;
+  const baseClasses = `flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium tracking-wide transition-all w-full text-left rounded-lg font-sans relative group overflow-hidden`;
   
   const handleClick = (e) => {
     if (disabled) return;

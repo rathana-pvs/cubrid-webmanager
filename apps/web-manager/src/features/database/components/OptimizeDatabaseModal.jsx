@@ -87,11 +87,11 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
         type="button"
         disabled={disabled || isLoading}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-11 px-4 flex items-center justify-between bg-white dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl shadow-xs transition-all text-left outline-hidden ${
+        className={`w-full h-11 px-3 flex items-center justify-between bg-white dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl shadow-xs transition-all text-left outline-hidden ${
           isOpen ? 'ring-2 ring-amber-500/20 border-amber-500/60' : 'hover:border-amber-500/40'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
-        <div className="flex items-center gap-3 overflow-hidden">
+        <div className="flex items-center gap-2.5 overflow-hidden">
           <Icon 
             name={value ? 'table_view' : 'database'} 
             size="sm" 
@@ -386,7 +386,7 @@ export default function OptimizeDatabaseModal() {
       }
     >
       <div className="space-y-6">
-        <div className="px-1">
+        <div className="px-1.5">
           <SectionHeader title="Target Instance" icon="database" />
           <Input 
             value={selectedDatabase}
@@ -401,7 +401,7 @@ export default function OptimizeDatabaseModal() {
             Regenerating statistics allows the query optimizer to choose the most efficient execution paths for complex JOIN and SELECT operations.
           </InfoBanner>
 
-          <div className="space-y-2">
+          <div className="space-y-2 px-1.5">
             <SectionHeader 
               title="Optimization Scope" 
               icon="tune" 
@@ -416,9 +416,9 @@ export default function OptimizeDatabaseModal() {
             />
 
             {!isLoadingClasses && totalTables > 0 && (
-              <p className="text-[9.5px] text-slate-400 font-medium px-1 flex items-center gap-1.5">
+              <p className="text-[9.5px] text-slate-400 font-medium px-3 flex items-center gap-2">
                 <Icon name="lock_clock" size="10px" weight={400} />
-                Global scans may briefly locking schema metadata during analysis.
+                Global scans may briefly lock schema metadata during analysis.
               </p>
             )}
           </div>

@@ -58,7 +58,7 @@ export const TreeNode = React.memo(({
   };
 
   const summaryClasses = `
-    flex items-center gap-1.5 px-2 py-[5px] w-full text-left transition-all duration-150
+    flex items-center gap-2 px-2 py-[5px] w-full text-left transition-all duration-150
     cursor-pointer list-none rounded select-none group/node relative border border-transparent
     ${isActive
       ? 'bg-amber-500/6 dark:bg-amber-500/10 border-transparent text-amber-600 dark:text-amber-500'

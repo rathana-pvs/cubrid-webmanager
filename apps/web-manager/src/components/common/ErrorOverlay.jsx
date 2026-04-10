@@ -15,7 +15,7 @@ const ErrorOverlay = ({ isVisible, error, title = "Operation Failed", onRetry, o
       {/* Ambient Red Glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[300px] h-[300px] bg-rose-500/5 rounded-full blur-[100px] pointer-events-none"></div>
       
-      <div className="relative z-10 flex flex-col items-center gap-5 text-center px-8 max-w-sm">
+      <div className="relative z-10 flex flex-col items-center gap-6 text-center px-8 w-full max-w-[420px]">
         <div className="relative h-16 w-16 flex items-center justify-center">
             {/* Pulsing Icon Container */}
             <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping duration-[2s]"></div>
@@ -24,11 +24,14 @@ const ErrorOverlay = ({ isVisible, error, title = "Operation Failed", onRetry, o
             </div>
         </div>
 
-        <div className="space-y-2">
-          <h4 className="text-[15px] font-medium text-slate-900 dark:text-white tracking-tight">{title}</h4>
-          <p className="text-[12px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-            {typeof error === 'string' ? error : 'An unexpected error occurred while processing your request.'}
-          </p>
+        <div className="space-y-4 w-full">
+          <h4 className="text-[17px] font-black text-slate-900 dark:text-white tracking-tight">{title}</h4>
+          
+          <div className="max-h-[160px] overflow-y-auto custom-scrollbar px-2">
+            <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono leading-relaxed break-words bg-slate-50 dark:bg-black/20 p-3 rounded-lg border border-slate-100 dark:border-white/5">
+              {typeof error === 'string' ? error : 'An unexpected error occurred while processing your request.'}
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-3 mt-2">

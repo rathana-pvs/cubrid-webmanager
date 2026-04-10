@@ -40,7 +40,7 @@ export const Input = forwardRef(({
     >
       <div className="relative group flex items-center">
         {icon && (
-          <div className={`absolute left-3.5 h-full flex items-center text-slate-400 group-focus-within:text-bk-yellow transition-colors pointer-events-none`}>
+          <div className={`absolute left-3 h-full flex items-center text-slate-400 group-focus-within:text-bk-yellow transition-colors pointer-events-none`}>
             <Icon name={icon} size={isSm ? "14px" : "md"} weight={300} />
           </div>
         )}
@@ -56,9 +56,9 @@ export const Input = forwardRef(({
             if (onChange) onChange(e);
           }}
           className={`w-full ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium bg-slate-50 dark:bg-white/[0.03] border border-slate-200 dark:border-white/10 rounded-xl focus:outline-hidden transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none [appearance:textfield] ${
-            icon ? 'pl-11' : 'pl-3.5'
+            icon ? 'pl-12' : 'pl-3'
           } ${
-            isNumber && suffix ? 'pr-20' : (isNumber ? 'pr-9' : (suffix ? 'pr-12' : 'pr-3.5'))
+            isNumber && suffix ? 'pr-20' : (isNumber ? 'pr-9' : (suffix ? 'pr-12' : 'pr-3'))
           } ${
             error 
               ? 'border-rose-500/50 focus:border-rose-500 focus:ring-4 focus:ring-rose-500/10' 
