@@ -181,7 +181,7 @@ export default function DeleteDatabaseModal() {
         <div className="flex w-full items-center justify-between">
           <div className="flex-1">
             {step === 2 && (
-              <Button variant="ghost" onClick={() => setStep(1)} icon="arrow_back">
+              <Button variant="ghost" onClick={() => setStep(1)}>
                 Back
               </Button>
             )}

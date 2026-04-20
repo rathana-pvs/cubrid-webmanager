@@ -192,6 +192,59 @@ export const fetchHostEnv = createAsyncThunk(
   }
 );
 
+export const fetchCmsUsers = createAsyncThunk(
+  'host/fetchCmsUsers',
+  async (hostUid, { rejectWithValue }) => {
+    try {
+      const response = await hostApi.getCmsUsers(hostUid);
+      // Flatten the nested [ { user: [...] } ] structure from CMS
+      const userlist = (response.userlist || []).flatMap(item => item.user || item);
+      return { hostUid, userlist };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch CMS users');
+    }
+  }
+);
+
+export const addCmsUser = createAsyncThunk(
+  'host/addCmsUser',
+  async ({ hostUid, payload }, { rejectWithValue }) => {
+    try {
+      const response = await hostApi.addCmsUser(hostUid, payload);
+      const userlist = (response.userlist || []).flatMap(item => item.user || item);
+      return { hostUid, userlist };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to add CMS user');
+    }
+  }
+);
+
+export const updateCmsUser = createAsyncThunk(
+  'host/updateCmsUser',
+  async ({ hostUid, payload }, { rejectWithValue }) => {
+    try {
+      const response = await hostApi.updateCmsUser(hostUid, payload);
+      const userlist = (response.userlist || []).flatMap(item => item.user || item);
+      return { hostUid, userlist };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to update CMS user');
+    }
+  }
+);
+
+export const deleteCmsUser = createAsyncThunk(
+  'host/deleteCmsUser',
+  async ({ hostUid, targetid }, { rejectWithValue }) => {
+    try {
+      const response = await hostApi.deleteCmsUser(hostUid, targetid);
+      const userlist = (response.userlist || []).flatMap(item => item.user || item);
+      return { hostUid, userlist };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to delete CMS user');
+    }
+  }
+);
+
 const initialState = {
   isAddHostModalOpen: false,
   isDeleteHostModalOpen: false,
@@ -220,6 +273,11 @@ const initialState = {
   importExportMode: 'export', // 'import' or 'export'
   isChangePasswordModalOpen: false,
   changePasswordHostUid: null,
+  cmsUsers: {}, // { [hostUid]: [] }
+  cmsUsersLoading: {}, // { [hostUid]: boolean }
+  isCmsUserManagementModalOpen: false,
+  isEditCmsUserModalOpen: false,
+  cmsUserToEdit: null, // { hostUid, user }
   error: null,
 };
 
@@ -310,6 +368,20 @@ const hostSlice = createSlice({
     },
     clearLastAddedHostUid: (state) => {
       state.lastAddedHostUid = null;
+    },
+    openCmsUserManagementModal: (state) => {
+      state.isCmsUserManagementModalOpen = true;
+    },
+    closeCmsUserManagementModal: (state) => {
+      state.isCmsUserManagementModalOpen = false;
+    },
+    openEditCmsUserModal: (state, action) => {
+      state.isEditCmsUserModalOpen = true;
+      state.cmsUserToEdit = action.payload; // { hostUid, user } (user is null for add)
+    },
+    closeEditCmsUserModal: (state) => {
+      state.isEditCmsUserModalOpen = false;
+      state.cmsUserToEdit = null;
     },
   },
   extraReducers: (builder) => {
@@ -450,7 +522,52 @@ const hostSlice = createSlice({
       .addCase(fetchHostEnv.fulfilled, (state, action) => {
         const { hostUid, env } = action.payload;
         state.hostEnvs[hostUid] = env;
-      });
+      })
+      // CMS Users fetching
+      .addCase(fetchCmsUsers.pending, (state, action) => {
+        state.cmsUsersLoading[action.meta.arg] = true;
+      })
+      .addCase(fetchCmsUsers.fulfilled, (state, action) => {
+        const { hostUid, userlist } = action.payload;
+        state.cmsUsersLoading[hostUid] = false;
+        state.cmsUsers[hostUid] = userlist;
+      })
+      .addCase(fetchCmsUsers.rejected, (state, action) => {
+        state.cmsUsersLoading[action.meta.arg] = false;
+        state.error = action.payload;
+      })
+      // CMS Users CRUD operations (all return the updated userlist)
+      .addMatcher(
+        (action) =>
+          [addCmsUser.fulfilled, updateCmsUser.fulfilled, deleteCmsUser.fulfilled].some(
+            (type) => action.type === type
+          ),
+        (state, action) => {
+          const { hostUid, userlist } = action.payload;
+          state.cmsUsers[hostUid] = userlist;
+          state.loading = false;
+        }
+      )
+      .addMatcher(
+        (action) =>
+          [addCmsUser.pending, updateCmsUser.pending, deleteCmsUser.pending].some(
+            (type) => action.type === type
+          ),
+        (state) => {
+          state.loading = true;
+          state.error = null;
+        }
+      )
+      .addMatcher(
+        (action) =>
+          [addCmsUser.rejected, updateCmsUser.rejected, deleteCmsUser.rejected].some(
+            (type) => action.type === type
+          ),
+        (state, action) => {
+          state.loading = false;
+          state.error = action.payload;
+        }
+      );
   },
 });
 
@@ -476,6 +593,10 @@ export const {
   clearHostError,
   setServiceProgressMessage,
   clearLastAddedHostUid,
+  openCmsUserManagementModal,
+  closeCmsUserManagementModal,
+  openEditCmsUserModal,
+  closeEditCmsUserModal,
 } = hostSlice.actions;
 
 export default hostSlice.reducer;

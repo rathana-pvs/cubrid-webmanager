@@ -99,7 +99,7 @@ export default function DropUserModal() {
       footer={
         <div className="flex gap-3 w-full">
           <Button variant="ghost" onClick={handleClose} className="flex-1">Discard</Button>
-          <Button variant="danger" onClick={handleDrop} className="flex-1">Drop User</Button>
+          <Button variant="danger" onClick={handleDrop} icon="delete_forever" className="flex-1">Drop User</Button>
         </div>
       }
     >

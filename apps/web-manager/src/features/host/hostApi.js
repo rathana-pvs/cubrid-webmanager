@@ -28,4 +28,16 @@ export const hostApi = {
   setHostPassword: (hostUid, payload) => {
     return apiClient.put(`/${hostUid}/cms-user/set-password`, payload);
   },
+  getCmsUsers: (hostUid) => {
+    return apiClient.get(`/${hostUid}/cms-user`);
+  },
+  addCmsUser: (hostUid, payload) => {
+    return apiClient.post(`/${hostUid}/cms-user`, payload);
+  },
+  updateCmsUser: (hostUid, payload) => {
+    return apiClient.put(`/${hostUid}/cms-user`, payload);
+  },
+  deleteCmsUser: (hostUid, targetid) => {
+    return apiClient.delete(`/${hostUid}/cms-user/${targetid}`);
+  },
 };

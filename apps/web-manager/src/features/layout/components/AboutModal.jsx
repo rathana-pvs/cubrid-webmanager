@@ -62,19 +62,61 @@ export default function AboutModal() {
 
       <Divider className="my-0 opacity-40" />
 
-      {/* Footer */}
-      <div className="pt-5 pb-1 flex flex-col items-center gap-4">
-        <Button
-          variant="primary"
-          size="md"
-          className="w-full"
-          onClick={() => dispatch(setAboutCubrid(false))}
-        >
-          Close
-        </Button>
-        <Typography variant="caption" className="text-slate-400 dark:text-slate-600 text-[10px]">
-          © 2026 CUBRID Corporation. All rights reserved.
-        </Typography>
+        <div className="space-y-0 text-left pt-2">
+           <div className="flex justify-between items-center py-4 group/item">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover/item:bg-bk-yellow/10 group-hover/item:text-bk-yellow transition-colors">
+                <Icon name="terminal" size="xs"  weight={300} />
+              </div>
+              <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px]">Core Version</Typography>
+            </div>
+            <Typography variant="p" className="text-xs text-slate-800 dark:text-slate-200 font-black tracking-widest">12.4.0-STABLE</Typography>
+          </div>
+          <Divider className="my-0 opacity-50" />
+          
+          <div className="flex justify-between items-center py-4 group/item">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover/item:bg-bk-yellow/10 group-hover/item:text-bk-yellow transition-colors">
+                <Icon name="web" size="xs"  weight={300} />
+              </div>
+              <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px]">Web Bridge</Typography>
+            </div>
+            <Typography variant="p" className="text-xs text-slate-800 dark:text-slate-200 font-black tracking-widest">v1.1.2-ALPHA</Typography>
+          </div>
+          <Divider className="my-0 opacity-50" />
+
+          <div className="flex justify-between items-center py-4 group/item">
+            <div className="flex items-center gap-3">
+              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
+                <Icon name="verified" size="xs"  weight={300} />
+              </div>
+              <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px]">Status</Typography>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse"></span>
+              <Typography variant="caption" className="text-emerald-500 font-black uppercase tracking-tighter">Certified Stable</Typography>
+            </div>
+          </div>
+        </div>
+
+        <div className="space-y-5 pt-4">
+          <Button 
+            variant="primary"
+            icon="check_circle"
+            className="w-full h-12 rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-bk-yellow/20"
+            onClick={() => dispatch(setAboutCubrid(false))}
+          >
+            Acknowledge System
+          </Button>
+          <div className="flex flex-col gap-1">
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 tracking-[0.2em] uppercase text-[9px] opacity-60">
+              © 2026 CUBRID Corporation
+            </Typography>
+            <Typography variant="caption" className="font-bold text-slate-300 dark:text-slate-700 tracking-tighter text-[8px]">
+              Engineered with precision for the modern web stack.
+            </Typography>
+          </div>
+        </div>
       </div>
     </Modal>
   );

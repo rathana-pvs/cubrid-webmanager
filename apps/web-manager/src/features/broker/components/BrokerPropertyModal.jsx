@@ -235,13 +235,13 @@ export default function BrokerPropertyModal() {
         viewStatus === ViewStatus.FORM ? (
           <>
             <div className="mr-auto">
-              {modifiedCount > 0 && <Button variant="ghost" onClick={handleReset} icon="restart_alt" className="text-amber-600">Reset</Button>}
+              {modifiedCount > 0 && <Button variant="ghost" onClick={handleReset} className="text-amber-600">Reset</Button>}
             </div>
             <Button variant="ghost" onClick={handleClose}>Discard</Button>
             <Button variant="primary" onClick={handleSave} loading={viewStatus === ViewStatus.SAVING} icon="save" disabled={modifiedCount === 0}>Apply</Button>
           </>
         ) : (
-          <Button variant="primary" onClick={handleClose} className="w-full">Close</Button>
+          <Button variant="primary" onClick={handleClose} icon="check_circle" className="w-full">Close</Button>
         )
       }
     >

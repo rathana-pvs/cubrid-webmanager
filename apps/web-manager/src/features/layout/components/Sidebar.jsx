@@ -13,7 +13,8 @@ import {
   fetchHostEnv,
   setSuggestedHaNodes,
   clearLastAddedHostUid,
-  editHost
+  editHost,
+  openCmsUserManagementModal
 } from '../../host/hostSlice';
 import {
   fetchDatabaseStartInfo, startDatabase, stopDatabase, loginDatabase, registerDatabase,
@@ -88,6 +89,8 @@ import SetAutomationVolumeModal from '../../database/components/SetAutomationVol
 import EditQueryPlanModal from '../../database/components/EditQueryPlanModal';
 import DeleteQueryPlanModal from '../../database/components/DeleteQueryPlanModal';
 import AutoVolumeLogModal from '../../database/components/AutoVolumeLogModal';
+import CMSUserManagementModal from '../../host/components/CMSUserManagementModal';
+import EditCMSUserModal from '../../host/components/EditCMSUserModal';
 
 export default function Sidebar({ isCollapsed, onAddHost }) {
   const sidebarRef = useRef(null);
@@ -633,6 +636,12 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             label="Change Password" 
             disabled={!(selectedHostUid === contextMenu.hostUid && authorizedHosts.includes(contextMenu.hostUid))}
             onClick={() => { dispatch(openChangePasswordModal(contextMenu.hostUid)); setContextMenu(null); }} 
+          />
+          <MenuItem 
+            icon="supervisor_account" 
+            label="User Management" 
+            disabled={!(selectedHostUid === contextMenu.hostUid && authorizedHosts.includes(contextMenu.hostUid))}
+            onClick={() => { dispatch(openCmsUserManagementModal()); setContextMenu(null); }} 
           />
           <MenuItem icon="info" label="Server Version" onClick={() => { dispatch(openServerVersionModal(contextMenu.hostUid)); setContextMenu(null); }} />
         </ContextMenuWrapper>
@@ -1317,6 +1326,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       <EditQueryPlanModal />
       <DeleteQueryPlanModal />
       <AutoVolumeLogModal />
+      <CMSUserManagementModal />
+      <EditCMSUserModal />
       {isSidebarActionError && (
         <Modal isOpen title="Action Failed" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="400px">
           <ModalStatusError 

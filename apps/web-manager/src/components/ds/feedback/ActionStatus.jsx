@@ -60,7 +60,7 @@ export const ModalStatusSuccess = ({
 
     {onConfirm && (
       <div className="flex items-center gap-3">
-        <Button variant="primary" onClick={onConfirm} className="px-10">{confirmText}</Button>
+        <Button variant="primary" onClick={onConfirm} icon="check_circle" className="px-10">{confirmText}</Button>
       </div>
     )}
   </div>

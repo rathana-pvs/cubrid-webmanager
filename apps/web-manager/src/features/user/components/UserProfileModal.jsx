@@ -101,10 +101,10 @@ export default function UserProfileModal({ isOpen, onClose }) {
     </>
   ) : (
     <div className="flex gap-2 w-full">
-      <Button variant="ghost" className="flex-1" icon="edit_square" onClick={() => setEditMode('profile')}>
+      <Button variant="ghost" className="flex-1" onClick={() => setEditMode('profile')}>
         Edit Profile
       </Button>
-      <Button variant="ghost" className="flex-1" icon="lock_reset" onClick={() => setEditMode('password')}>
+      <Button variant="ghost" className="flex-1" onClick={() => setEditMode('password')}>
         Change Password
       </Button>
     </div>

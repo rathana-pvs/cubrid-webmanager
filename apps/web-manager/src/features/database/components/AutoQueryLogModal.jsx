@@ -136,8 +136,6 @@ export default function AutoQueryLogModal() {
       <div className="flex items-center gap-2.5">
         <Button
           variant="secondary"
-          size="sm"
-          icon="close"
           onClick={() => dispatch(closeAutoQueryLogModal())}
           className="min-w-[100px]"
         >
@@ -145,7 +143,6 @@ export default function AutoQueryLogModal() {
         </Button>
         <Button
           variant="primary"
-          size="sm"
           onClick={() => dispatch(fetchQueryPlanLog({ hostUid: selectedHostUid }))}
           loading={logsLoading}
           icon="refresh"

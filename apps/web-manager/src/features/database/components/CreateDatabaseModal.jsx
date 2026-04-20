@@ -345,7 +345,7 @@ export default function CreateDatabaseModal() {
           <div className="flex items-center gap-2">
             <Button variant="ghost" onClick={handleClose}>Discard</Button>
             {step > 1 && (
-              <Button variant="outline" onClick={handleBack} icon="chevron_left">
+              <Button variant="outline" onClick={handleBack}>
                 Back
               </Button>
             )}
@@ -505,7 +505,6 @@ export default function CreateDatabaseModal() {
               </div>
               <Button
                 variant="primary"
-                size="sm"
                 onClick={addVolume}
                 icon="add_box"
               >

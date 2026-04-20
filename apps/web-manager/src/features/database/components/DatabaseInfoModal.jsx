@@ -171,8 +171,8 @@ export default function DatabaseInfoModal() {
         maxWidth="900px"
         footer={
           <div className="flex justify-end gap-3 w-full">
-            <Button variant="outline" onClick={() => setView(VIEW_FORM)} icon="settings">Adjust Settings</Button>
-            <Button variant="primary" onClick={handleClose}>Dismiss</Button>
+            <Button variant="outline" onClick={() => setView(VIEW_FORM)}>Adjust Settings</Button>
+            <Button variant="primary" onClick={handleClose} icon="check_circle">Dismiss</Button>
           </div>
         }
       >
