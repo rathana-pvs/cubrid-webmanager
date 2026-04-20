@@ -123,8 +123,8 @@ export default function DatabasePlanDumpModal() {
         />
 
         {step === 'setup' ? (
-          <div className="space-y-5">
-            {/* Target */}
+          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+
             <div>
               <SectionHeader title="Target Database" icon="database" />
               <div className="px-1.5 flex items-center justify-between p-3 bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/8 rounded-xl">
