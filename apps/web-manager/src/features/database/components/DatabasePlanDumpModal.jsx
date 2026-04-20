@@ -181,7 +181,9 @@ export default function DatabasePlanDumpModal() {
                     <Typography variant="p" className={`font-bold text-[12px] ${planDrop ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>Flush Cache after export</Typography>
                     <Typography variant="caption" className="text-slate-400 text-[10px] block mt-0.5">Clears XASL entries from server memory</Typography>
                   </div>
-                  <Toggle checked={planDrop} onChange={setPlanDrop} />
+                  <div onClick={(e) => e.stopPropagation()}>
+                    <Toggle checked={planDrop} onChange={setPlanDrop} />
+                  </div>
                 </div>
               </div>
 

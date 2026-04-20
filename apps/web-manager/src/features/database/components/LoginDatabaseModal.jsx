@@ -186,7 +186,9 @@ export default function LoginDatabaseModal() {
                 <Typography variant="p" className={`text-[12px] font-black transition-colors ${rememberMe ? 'text-slate-900 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>Session Persistence</Typography>
                 <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium block leading-none mt-1">Encrypt credentials for background auto-recon</Typography>
               </div>
-              <Toggle variant="primary" checked={rememberMe} onChange={() => setRememberMe(v => !v)} />
+              <div onClick={(e) => e.stopPropagation()}>
+                <Toggle variant="primary" checked={rememberMe} onChange={() => setRememberMe(v => !v)} />
+              </div>
             </div>
           </div>
         </div>
