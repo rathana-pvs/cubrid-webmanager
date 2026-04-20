@@ -1,6 +1,3 @@
-import { UserError, UserErrorCode } from '@error';
-import { AuthError } from '@error/auth/auth-error';
-
 /**
  * A method decorator that wraps authentication methods in a try...catch block.
  *

@@ -20,7 +20,7 @@ export function omitPassword<T extends { password: any }>(param: T) {
  * @since 1.0.0
  */
 export function omitPasswordArray<T extends { password: any }>(param: T[]): Omit<T, 'password'>[] {
-  return param.map(({ password, ...rv }) => rv);
+  return param.map(({ password: _password, ...rv }) => rv);
 }
 
 /**

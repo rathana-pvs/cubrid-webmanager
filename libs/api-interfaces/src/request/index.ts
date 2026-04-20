@@ -32,7 +32,6 @@ export * from './backup-db-client-request';
 export * from './set-auto-exec-query-client-request';
 export * from './get-auto-exec-query-client-request';
 export * from './create-database-client-request';
-export * from './database-lifecycle-control-request';
 export * from './sava-database-profile';
 export * from './add-dbname-to-server-client-request';
 export * from './remove-dbname-from-server-client-request';

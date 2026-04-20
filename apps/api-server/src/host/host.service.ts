@@ -2,9 +2,7 @@ import { HandleHostErrors } from '@common';
 import { HostError } from '@error/index';
 import { Injectable, Logger } from '@nestjs/common';
 import { UserRepositoryService } from '@repository';
-import { EncryptionService } from '@security';
 import {
-  HashMap,
   SafeHostList,
   HostInfo,
   User,
@@ -15,7 +13,7 @@ import {
   GetHostsResponse,
   HostResponse,
 } from '@api-interfaces';
-import { omitPassword, omitPasswordArray, omitPasswordHashMap, omitHashMap } from '@util';
+import { omitHashMap } from '@util';
 import { v4 as uuidv4 } from 'uuid';
 
 /**

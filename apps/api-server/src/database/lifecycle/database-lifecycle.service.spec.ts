@@ -239,6 +239,7 @@ describe('DatabaseLifecycleService', () => {
 
     beforeEach(() => {
       jest.spyOn(databaseInfoService, 'startInfo').mockResolvedValue(mockStartInfoResponse as any);
+      jest.spyOn(databaseInfoService as any, 'effectiveHaDbForDbname').mockResolvedValue(false);
     });
 
     it('should successfully start database', async () => {
@@ -257,11 +258,12 @@ describe('DatabaseLifecycleService', () => {
       expect(result).toEqual(mockStartInfoResponse);
     });
 
-    it('should use ha_start when body isHA is true', async () => {
+    it('should use ha_start when effectiveHaDbForDbname is true', async () => {
+      jest.spyOn(databaseInfoService as any, 'effectiveHaDbForDbname').mockResolvedValue(true);
       const haResp = { ...mockBaseResponse, task: 'ha_start' };
       cmsClient.postAuthenticated.mockResolvedValue(haResp);
 
-      await service.startDatabase(mockUserId, mockHostUid, mockDbname, { isHA: true });
+      await service.startDatabase(mockUserId, mockHostUid, mockDbname);
 
       expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
         `https://${mockHost.address}:${mockHost.port}/cm_api`,
@@ -300,6 +302,7 @@ describe('DatabaseLifecycleService', () => {
 
     beforeEach(() => {
       jest.spyOn(databaseInfoService, 'startInfo').mockResolvedValue(mockStartInfoResponse as any);
+      jest.spyOn(databaseInfoService as any, 'effectiveHaDbForDbname').mockResolvedValue(false);
     });
 
     it('should successfully stop database', async () => {
@@ -318,11 +321,12 @@ describe('DatabaseLifecycleService', () => {
       expect(result).toEqual(mockStartInfoResponse);
     });
 
-    it('should use ha_stop when body isHA is true', async () => {
+    it('should use ha_stop when effectiveHaDbForDbname is true', async () => {
+      jest.spyOn(databaseInfoService as any, 'effectiveHaDbForDbname').mockResolvedValue(true);
       const haResp = { ...mockBaseResponse, task: 'ha_stop' };
       cmsClient.postAuthenticated.mockResolvedValue(haResp);
 
-      await service.stopDatabase(mockUserId, mockHostUid, mockDbname, { isHA: true });
+      await service.stopDatabase(mockUserId, mockHostUid, mockDbname);
 
       expect(cmsClient.postAuthenticated).toHaveBeenCalledWith(
         `https://${mockHost.address}:${mockHost.port}/cm_api`,
@@ -370,6 +374,7 @@ describe('DatabaseLifecycleService', () => {
 
     beforeEach(() => {
       jest.spyOn(databaseInfoService, 'startInfo').mockResolvedValue(mockStartInfoResponse as any);
+      jest.spyOn(databaseInfoService as any, 'effectiveHaDbForDbname').mockResolvedValue(false);
     });
 
     it('should successfully restart database', async () => {
@@ -383,12 +388,13 @@ describe('DatabaseLifecycleService', () => {
       expect(result).toEqual(mockStartInfoResponse);
     });
 
-    it('should use ha_stop and ha_start when isHA is true', async () => {
+    it('should use ha_stop and ha_start when effectiveHaDbForDbname is true', async () => {
+      jest.spyOn(databaseInfoService as any, 'effectiveHaDbForDbname').mockResolvedValue(true);
       const haStop = { ...mockBaseResponse, task: 'ha_stop' };
       const haStart = { ...mockStartResponse, task: 'ha_start' };
       cmsClient.postAuthenticated.mockResolvedValueOnce(haStop).mockResolvedValueOnce(haStart);
 
-      await service.restartDatabase(mockUserId, mockHostUid, mockDbname, { isHA: true });
+      await service.restartDatabase(mockUserId, mockHostUid, mockDbname);
 
       expect(cmsClient.postAuthenticated).toHaveBeenNthCalledWith(
         1,

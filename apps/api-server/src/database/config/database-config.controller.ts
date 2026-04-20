@@ -2,7 +2,6 @@ import { Body, Controller, Delete, Get, Logger, Param, Post, Request } from '@ne
 import {
   SetAutoExecQueryClientRequest,
   SetAutoExecQueryClientResponse,
-  GetAutoExecQueryClientRequest,
   GetAutoExecQueryClientResponse,
   SetAutoStartRequest,
   SetAutoStartResponse,

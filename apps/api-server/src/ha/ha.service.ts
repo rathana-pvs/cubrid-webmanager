@@ -3,11 +3,13 @@ import { BaseService, HandleCmsErrors, HandleHostErrors } from '@common';
 import { HostService } from '@host';
 import { Injectable } from '@nestjs/common';
 import {
+  HaReloadCmsRequest,
   HaStartDatabaseCmsRequest,
   HaStopDatabaseCmsRequest,
   HeartbeatListCmsRequest,
 } from '@type/cms-request';
 import {
+  HaReloadCmsResponse,
   HaStartDatabaseCmsResponse,
   HaStopDatabaseCmsResponse,
   HeartbeatListCmsResponse,
@@ -102,6 +104,22 @@ export class HaService extends BaseService {
       dbname,
     };
     return this.executeCmsRequest<HaStopDatabaseCmsRequest, HaStopDatabaseCmsResponse>(
+      userId,
+      hostUid,
+      cmsRequest
+    );
+  }
+
+  /**
+   * CMS `ha_reload` — `{ task: 'ha_reload' }` + token; success envelope `task: 'ha_reload'`.
+   */
+  @HandleHostErrors()
+  @HandleCmsErrors()
+  async haReload(userId: string, hostUid: string): Promise<HaReloadCmsResponse> {
+    const cmsRequest: HaReloadCmsRequest = {
+      task: 'ha_reload',
+    };
+    return this.executeCmsRequest<HaReloadCmsRequest, HaReloadCmsResponse>(
       userId,
       hostUid,
       cmsRequest

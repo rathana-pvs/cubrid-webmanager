@@ -11,6 +11,7 @@ describe('CmsConfigController', () => {
       getAddBrokerInfo: jest.fn(),
       getEnv: jest.fn(),
       getParamDump: jest.fn(),
+      getPlanDump: jest.fn(),
       getStatDump: jest.fn(),
       getAllSystemParam: jest.fn(),
       setSystemParam: jest.fn(),

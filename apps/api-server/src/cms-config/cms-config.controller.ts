@@ -7,6 +7,7 @@ import {
   GetEnvClientResponse,
   GetAllSysParamClientResponse,
   ParamdumpClientResponse,
+  PlandumpClientResponse,
   SetSysParamClientResponse,
   StatdumpClientResponse,
 } from '@api-interfaces';
@@ -124,6 +125,27 @@ export class CmsConfigController {
     );
     const response = await this.cmsConfigService.getStatDump(userId, hostUid, dbname);
     return response;
+  }
+
+  /**
+   * Plan / XASL dump (`plandump`) from a CMS host.
+   * Response includes flattened `lines` and `text` (CMS returns nested `log[].line[]`).
+   *
+   * @route GET /:hostUid/cms-config/plan-dump/:dbname
+   */
+  @Get('plan-dump/:dbname')
+  async planDump(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string
+  ): Promise<PlandumpClientResponse> {
+    const userId = req.user.sub;
+
+    Logger.log(
+      `Getting plandump for host: ${hostUid}, dbname: ${dbname}`,
+      'CmsConfigController'
+    );
+    return await this.cmsConfigService.getPlanDump(userId, hostUid, dbname);
   }
 
   /**

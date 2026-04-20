@@ -1,4 +1,4 @@
-import { Controller, Request } from '@nestjs/common';
+import { Controller } from '@nestjs/common';
 
 /**
  * Controller for handling High Availability (HA) monitoring operations.

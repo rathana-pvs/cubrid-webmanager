@@ -2,8 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { LockService } from './lock.service';
 import * as lockfile from 'proper-lockfile';
 import * as fs from 'fs/promises';
-import { HandleLockFsErrors } from '@common';
-import { LockError } from '@error/lock/lock-error';
 
 // Mock the dependencies
 jest.mock('proper-lockfile');

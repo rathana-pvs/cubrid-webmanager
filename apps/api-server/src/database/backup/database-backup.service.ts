@@ -22,7 +22,6 @@ import {
   BaseService,
   HandleDatabaseErrors,
 } from '@common';
-import { DatabaseError } from '@error/database/database-error';
 import { HostService } from '@host';
 import { Injectable } from '@nestjs/common';
 import {
@@ -396,7 +395,7 @@ export class DatabaseBackupService extends BaseService {
   async getAutoBackupDbErrLog(
     userId: string,
     hostUid: string,
-    request: GetAutoBackupDbErrLogRequest
+    _request: GetAutoBackupDbErrLogRequest
   ): Promise<GetAutoBackupDbErrLogResponse> {
     const cmsRequest: GetAutoBackupDbErrLogCmsRequest = {
       task: 'getautobackupdberrlog',

@@ -354,6 +354,80 @@
 			"description": "Host management endpoints. All endpoints require JWT authentication."
 		},
 		{
+			"name": "HA",
+			"item": [
+				{
+					"name": "HA Heartbeat List",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{\n  \"dbmodeall\": \"y\"\n}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{hostUid}}/ha/heartbeat-list",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{hostUid}}",
+								"ha",
+								"heartbeat-list"
+							]
+						},
+						"description": "Get HA heartbeat information from CMS (`heartbeatlist`).\n\n**URI:**\n```\nPOST /:hostUid/ha/heartbeat-list\n```\n**Example:**\n```\nPOST /host-uid-1/ha/heartbeat-list\n```\n\n**Authentication:** Required (Bearer `{{jwt_token}}`)\n\n**Path Parameters:**\n- `hostUid` - Host unique identifier\n\n**Request Body:**\n```json\n{\n  \"dbmodeall\": \"y\"\n}\n```\n\n**Success Response (200 OK):** Domain data includes `hadbinfolist`, `hanodelist`, etc. (CMS envelope stripped by the server where applicable).\n\n**Note:** The JWT identifies the Web Manager user; the CMS `token` is taken from the stored host session."
+					},
+					"response": []
+				},
+				{
+					"name": "HA Reload",
+					"request": {
+						"method": "POST",
+						"header": [
+							{
+								"key": "Content-Type",
+								"value": "application/json"
+							}
+						],
+						"body": {
+							"mode": "raw",
+							"raw": "{}",
+							"options": {
+								"raw": {
+									"language": "json"
+								}
+							}
+						},
+						"url": {
+							"raw": "{{base_url}}/{{hostUid}}/ha/reload",
+							"host": [
+								"{{base_url}}"
+							],
+							"path": [
+								"{{hostUid}}",
+								"ha",
+								"reload"
+							]
+						},
+						"description": "Reload HA configuration on the CMS host (`ha_reload`). No request fields beyond JSON body placeholder; the server sends `{ \"task\": \"ha_reload\" }` plus the host CMS token.\n\n**URI:**\n```\nPOST /:hostUid/ha/reload\n```\n**Example:**\n```\nPOST /host-uid-1/ha/reload\n```\n\n**Authentication:** Required (Bearer `{{jwt_token}}`)\n\n**Path Parameters:**\n- `hostUid` - Host unique identifier\n\n**Request Body:** Empty JSON object `{}` (ignored).\n\n**Success Response (200 OK) — CMS-shaped payload:**\n```json\n{\n  \"__EXEC_TIME\": \"72 ms\",\n  \"note\": \"none\",\n  \"status\": \"success\",\n  \"task\": \"ha_reload\"\n}\n```"
+					},
+					"response": []
+				}
+			],
+			"description": "High Availability CMS proxy endpoints. JWT required; CMS host token is applied server-side."
+		},
+		{
 			"name": "Database",
 			"item": [
 				{
@@ -372,7 +446,7 @@
 								"start-info"
 							]
 						},
-						"description": "Get database start information for a host. Returns only domain data (BaseCmsResponse fields stripped out).\n\n**URI:**\n```\nGET /:hostUid/database/start-info\n```\n**Example:**\n```\nGET /host-uid-1/database/start-info\n```\n\n**Authentication:** Required\n**Headers:**\n```\nAuthorization: Bearer <JWT_TOKEN>\n```\n\n**Path Parameters:**\n- `hostUid` - Host unique identifier\n\n**Success Response (200 OK):**\n```json\n{\n  \"activelist\": {\n    \"active\": [\n      {\n        \"dbname\": \"demodb\"\n      },\n      {\n        \"dbname\": \"testdb\"\n      }\n    ]\n  },\n  \"dblist\": {\n    \"dbs\": [\n      {\n        \"dbdir\": \"/home/cubrid/databases/demodb\",\n        \"dbname\": \"demodb\",\n        \"isProfileExists\": true\n      },\n      {\n        \"dbdir\": \"/home/cubrid/databases/testdb\",\n        \"dbname\": \"testdb\",\n        \"isProfileExists\": false\n      }\n    ]\n  }\n}\n```\n\n**Error Response (404 Not Found):**\n```json\n{\n  \"statusCode\": 404,\n  \"message\": \"Host not found\",\n  \"error\": \"Not Found\"\n}\n```"
+						"description": "Get database start information for a host. Returns only domain data (BaseCmsResponse fields stripped out).\n\n**URI:**\n```\nGET /:hostUid/database/start-info\n```\n**Example:**\n```\nGET /host-uid-1/database/start-info\n```\n\n**Authentication:** Required\n**Headers:**\n```\nAuthorization: Bearer <JWT_TOKEN>\n```\n\n**Path Parameters:**\n- `hostUid` - Host unique identifier\n\n**Success Response (200 OK):**\n```json\n{\n  \"activelist\": {\n    \"active\": [\n      {\n        \"dbname\": \"demodb\"\n      },\n      {\n        \"dbname\": \"testdb\"\n      }\n    ]\n  },\n  \"dblist\": {\n    \"dbs\": [\n      {\n        \"dbdir\": \"/home/cubrid/databases/demodb\",\n        \"dbname\": \"demodb\",\n        \"isProfileExists\": true,\n        \"isHA\": false\n      },\n      {\n        \"dbdir\": \"/home/cubrid/databases/testdb\",\n        \"dbname\": \"testdb\",\n        \"isProfileExists\": false,\n        \"isHA\": true\n      }\n    ]\n  }\n}\n```\n\n**Note:** `isHA` is set per database when the host is configured for HA (see HA topology rules).\n\n**Error Response (404 Not Found):**\n```json\n{\n  \"statusCode\": 404,\n  \"message\": \"Host not found\",\n  \"error\": \"Not Found\"\n}\n```"
 					},
 					"response": []
 				},

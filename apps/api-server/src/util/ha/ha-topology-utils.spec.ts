@@ -5,6 +5,7 @@ import {
   flattenHanodelist,
   getPerDbHaModeOffDbNames,
   isHostHaModeOnFromCubridConf,
+  parseHaDbListDbNamesFromHaConf,
   resolveCurrentNodeRole,
 } from './ha-topology-utils';
 import type { GetAllSysParamCmsResponse } from '@type/cms-response/get-all-sys-param-cms-response';
@@ -48,6 +49,22 @@ describe('ha-topology-utils', () => {
         'ha_mode=on',
       ]);
       expect([...getPerDbHaModeOffDbNames(conf)]).toEqual(['demodb']);
+    });
+  });
+
+  describe('parseHaDbListDbNamesFromHaConf', () => {
+    it('parses comma-separated ha_db_list under [common]', () => {
+      const conf = mockCubridConf(['[common]', 'ha_db_list=demodb, testdb', 'ha_port_id=59901']);
+      expect([...parseHaDbListDbNamesFromHaConf(conf)].sort()).toEqual(['demodb', 'testdb']);
+    });
+
+    it('returns empty set when ha_db_list is missing or empty', () => {
+      expect([...parseHaDbListDbNamesFromHaConf(mockCubridConf(['[common]', 'ha_port_id=1']))]).toEqual(
+        []
+      );
+      expect([...parseHaDbListDbNamesFromHaConf(mockCubridConf(['[common]', 'ha_db_list=']))]).toEqual(
+        []
+      );
     });
   });
 

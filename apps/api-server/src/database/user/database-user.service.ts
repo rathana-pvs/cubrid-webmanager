@@ -54,7 +54,7 @@ export class DatabaseUserService extends BaseService {
    * @param userId User ID from JWT
    * @returns Database users list
    */
-  async getDatabaseUsers(userId: string) {
+  async getDatabaseUsers(_userId: string) {
     return [];
   }
 

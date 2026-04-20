@@ -8,7 +8,7 @@ import { UserRepositoryService } from '@repository';
 import { HostError } from '@error/index';
 import { CmsError } from '@error/cms/cms-error';
 import type { CmsHostLoginClientResponse } from '@api-interfaces';
-import { DATABASE_CONSTANTS } from '../database/database.constants';
+import { CMS_CONFNAME_CUBRID } from '@database/database.constants';
 import {
   flattenHanodelist,
   isHostHaModeOnFromCubridConf,
@@ -80,11 +80,7 @@ export class CmsAuthService {
   }
 
   private async buildHaLoginPayload(userId: string, uid: string): Promise<CmsHostLoginClientResponse> {
-    const conf = await this.cmsConfigService.getAllSystemParam(
-      userId,
-      uid,
-      DATABASE_CONSTANTS.CUBRID_CONF_NAME
-    );
+    const conf = await this.cmsConfigService.getAllSystemParam(userId, uid, CMS_CONFNAME_CUBRID);
     if (!isHostHaModeOnFromCubridConf(conf)) {
       return { success: true, isHA: false };
     }

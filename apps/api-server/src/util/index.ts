@@ -23,6 +23,7 @@ export {
   convertExvolArrayToCmsFormat,
 } from './cubrid/parse-exvol';
 export {
+  parseHaDbListDbNamesFromHaConf,
   isHostHaModeOnFromCubridConf,
   getPerDbHaModeOffDbNames,
   extractDbNamesFromStartInfo,

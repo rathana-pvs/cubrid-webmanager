@@ -29,7 +29,7 @@ export class AppError extends Error {
     this.name = new.target.name;
   }
 
-  toProblemDetails(requestUrl?: string) {
+  toProblemDetails(_requestUrl?: string) {
     const detailMessage = this.getClientFacingDetailMessage();
 
     const baseResponse = {

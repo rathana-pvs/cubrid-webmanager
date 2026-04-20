@@ -2,11 +2,10 @@ import { Module } from '@nestjs/common';
 import { HostModule } from '@host';
 import { CmsHttpsClientModule } from '@cms-https-client/cms-https-client.module';
 import { CmsConfigModule } from '@cms-config/cms-config.module';
-import { HaModule } from '@ha';
 import { DatabaseInfoService } from './database-info.service';
 
 @Module({
-  imports: [HostModule, CmsHttpsClientModule, CmsConfigModule, HaModule],
+  imports: [HostModule, CmsHttpsClientModule, CmsConfigModule],
   providers: [DatabaseInfoService],
   exports: [DatabaseInfoService],
 })

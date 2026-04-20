@@ -1,5 +1,6 @@
 import { Body, Controller, Logger, Param, Post, Request } from '@nestjs/common';
 import { HeartbeatListClientRequest, HeartbeatListClientResponse } from '@api-interfaces';
+import { HaReloadCmsResponse } from '@type/cms-response';
 import { HaService } from './ha.service';
 import { validateRequiredFields } from '@util';
 
@@ -25,6 +26,22 @@ export class HaController {
     this.logger.log(`Getting HA heartbeat list on host: ${hostUid}`);
     validateRequiredFields(body, ['dbmodeall'], '/ha/heartbeatlist')
     return await this.haService.heartbeatList(userId, hostUid, body);
+  }
+
+  /**
+   * Reload HA configuration on the CMS host.
+   * CMS task: ha_reload
+   *
+   * @route POST /:hostUid/ha/reload
+   */
+  @Post('reload')
+  async haReload(
+    @Request() req,
+    @Param('hostUid') hostUid: string
+  ): Promise<HaReloadCmsResponse> {
+    const userId = req.user.sub;
+    this.logger.log(`HA reload on host: ${hostUid}`);
+    return await this.haService.haReload(userId, hostUid);
   }
 }
 

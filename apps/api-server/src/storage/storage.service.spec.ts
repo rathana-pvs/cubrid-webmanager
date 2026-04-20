@@ -2,8 +2,6 @@ import { Test, TestingModule } from '@nestjs/testing';
 import { StorageService } from './storage.service';
 import { LockService } from '@lock/lock.service';
 import * as fs from 'fs/promises';
-import { resolveUserFilePath } from '@util';
-import { StorageError } from '@error/storage/storage-error';
 
 // Mock dependencies
 jest.mock('fs/promises');

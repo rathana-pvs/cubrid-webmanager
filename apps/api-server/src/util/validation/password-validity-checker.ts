@@ -8,6 +8,6 @@
  * @category Utilities
  * @since 1.0.0
  */
-export function passwordValidityChecker(password: string) {
+export function passwordValidityChecker(_password: string) {
   return true;
 }

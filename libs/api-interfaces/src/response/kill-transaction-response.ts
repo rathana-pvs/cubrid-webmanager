@@ -1,4 +1,4 @@
-import { TransactionEntry, TransactionInfoContainer } from './get-transaction-info-response';
+import { TransactionInfoContainer } from './get-transaction-info-response';
 
 /**
  * Client response type for killing a transaction.

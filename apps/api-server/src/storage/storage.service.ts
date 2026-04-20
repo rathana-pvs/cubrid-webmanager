@@ -1,4 +1,4 @@
-import { StorageErrorCode, StorageError } from '@error/storage/storage-error';
+import { StorageError } from '@error/storage/storage-error';
 import { Injectable } from '@nestjs/common';
 import { getStoragePath, resolveUserFilePath } from '@util';
 import * as fs from 'fs/promises';

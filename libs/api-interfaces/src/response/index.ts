@@ -24,6 +24,7 @@ export * from './get-database-log-list-client-response';
 export * from './load-access-log-client-response';
 export * from './view-log-client-response';
 export * from './paramdump-client-response';
+export * from './plandump-client-response';
 export * from './statdump-client-response';
 export * from './get-all-sys-param-client-response';
 export * from './set-sys-param-client-response';

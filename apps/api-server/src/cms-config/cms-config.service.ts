@@ -6,13 +6,12 @@ import {
   GetEnvClientResponse,
   GetAllSysParamClientResponse,
   ParamdumpClientResponse,
+  PlandumpClientResponse,
   SetSysParamClientResponse,
   StatdumpClientResponse,
 } from '@api-interfaces';
 import {
-  ParamdumpCmsRequest,
   SetSysParamCmsRequest,
-  StatdumpCmsRequest,
   BaseCmsRequest,
   GetAddBrokerInfoCmsRequest,
   BrokerSetParamCmsRequest,
@@ -22,7 +21,9 @@ import { GetEnvCmsResponse } from '@type/cms-response/get-env-cms-response';
 import { GetAllSysParamCmsRequest } from '@type/cms-request/get-all-sys-param-cms-request';
 import { GetAllSysParamCmsResponse } from '@type/cms-response/get-all-sys-param-cms-response';
 import { ParamdumpCmsResponse } from '@type/cms-response/paramdump-cms-response';
+import { PlandumpCmsResponse } from '@type/cms-response/plandump-cms-response';
 import { StatdumpCmsResponse } from '@type/cms-response/statdump-cms-response';
+import { LogContentContainer } from '@type/cms-response/view-log-cms-response';
 import { BaseCmsResponse } from '@type/cms-response/base-cms-response';
 import { BaseService, HandleCmsErrors } from '@common';
 import { ConfigError } from '@error/config/config-error';
@@ -142,6 +143,41 @@ export class CmsConfigService extends BaseService {
     }
 
     throw ConfigError.GetAllSysParamFailed('statdump', {
+      note: response.note || 'Unknown error',
+    });
+  }
+
+  /**
+   * Query plan / XASL-related dump (`plandump`) from a CMS host.
+   * CMS returns lines nested as `log[].line[]`; this flattens to `lines` and `text` for clients.
+   *
+   * @param userId - User ID from JWT
+   * @param hostUid - Host unique identifier
+   * @param dbname - Database name
+   */
+  @HandleCmsErrors({ appErrorFallback: 'config' })
+  async getPlanDump(
+    userId: string,
+    hostUid: string,
+    dbname: string
+  ): Promise<PlandumpClientResponse> {
+    const cmsRequest: BaseCmsRequest & { dbname: string } = {
+      task: 'plandump',
+      dbname,
+    };
+
+    const response = await this.executeCmsRequest<
+      BaseCmsRequest & { dbname: string },
+      PlandumpCmsResponse
+    >(userId, hostUid, cmsRequest);
+
+    if (response.status === 'success') {
+      const { log } = this.extractDomainData(response) as { log: LogContentContainer[] };
+      const lines = this.flattenCmsLogLines(log);
+      return { lines, text: lines.join('\n') };
+    }
+
+    throw ConfigError.GetAllSysParamFailed('plandump', {
       note: response.note || 'Unknown error',
     });
   }
@@ -281,5 +317,15 @@ export class CmsConfigService extends BaseService {
     }
 
     return { success: true };
+  }
+
+  private flattenCmsLogLines(log: LogContentContainer[] | undefined): string[] {
+    const lines: string[] = [];
+    for (const block of log ?? []) {
+      if (Array.isArray(block?.line)) {
+        lines.push(...block.line);
+      }
+    }
+    return lines;
   }
 }

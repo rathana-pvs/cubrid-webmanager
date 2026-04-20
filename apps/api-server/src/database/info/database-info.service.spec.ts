@@ -1,10 +1,10 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import type { GetEnvClientResponse } from '@api-interfaces';
+import { CMS_CONFNAME_HACONF } from '@database/database.constants';
 import { DatabaseInfoService } from './database-info.service';
 import { HostService } from '@host';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
 import { CmsConfigService } from '@cms-config/cms-config.service';
-import { HaService } from '@ha';
 import * as common from '@common';
 import { CmsError } from '@error/cms/cms-error';
 
@@ -33,7 +33,6 @@ describe('DatabaseInfoService', () => {
   let hostService: jest.Mocked<HostService>;
   let cmsClient: jest.Mocked<CmsHttpsClientService>;
   let cmsConfigService: jest.Mocked<CmsConfigService>;
-  let haService: { heartbeatlistInternal: jest.Mock };
 
   const mockHost = {
     uid: 'host-uid-1',
@@ -54,20 +53,15 @@ describe('DatabaseInfoService', () => {
     const mockCmsConfigService = {
       getEnv: jest.fn(),
       getAllSystemParam: jest.fn().mockResolvedValue({
-        conflist: [{ confdata: ['[common]', 'ha_mode=off'] }],
+        conflist: [{ confdata: ['[common]', 'ha_db_list='] }],
       }),
     };
-    const mockHaService = {
-      heartbeatlistInternal: jest.fn(),
-    };
-
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DatabaseInfoService,
         { provide: HostService, useValue: mockHostService },
         { provide: CmsHttpsClientService, useValue: mockCmsClient },
         { provide: CmsConfigService, useValue: mockCmsConfigService },
-        { provide: HaService, useValue: mockHaService },
       ],
     }).compile();
 
@@ -75,7 +69,6 @@ describe('DatabaseInfoService', () => {
     hostService = module.get(HostService);
     cmsClient = module.get(CmsHttpsClientService);
     cmsConfigService = module.get(CmsConfigService);
-    haService = module.get(HaService);
 
     hostService.findHostInternal.mockResolvedValue(mockHost);
     (common.checkCmsTokenError as jest.Mock).mockImplementation(() => {});
@@ -142,15 +135,54 @@ describe('DatabaseInfoService', () => {
       expect(cmsConfigService.getAllSystemParam).toHaveBeenCalledWith(
         mockUserId,
         mockHostUid,
-        'cubridconf'
+        CMS_CONFNAME_HACONF
       );
-      expect(haService.heartbeatlistInternal).not.toHaveBeenCalled();
       expect(result).toEqual({
         activelist: { active: [{ dbname: 'testdb' }] },
         dblist: {
           dbs: [{ dbname: 'testdb', dbdir: '/path', isProfileExists: false, isHA: false }],
         },
       });
+    });
+  });
+
+  describe('effectiveHaDbForDbname', () => {
+    it('returns false when dbname is not in ha_db_list', async () => {
+      cmsConfigService.getAllSystemParam.mockResolvedValue({
+        confname: CMS_CONFNAME_HACONF,
+        conflist: [{ confdata: ['[common]', 'ha_db_list=demodb,otherdb'] }],
+      });
+
+      const result = await service.effectiveHaDbForDbname(mockUserId, mockHostUid, 'testdb');
+
+      expect(cmsConfigService.getAllSystemParam).toHaveBeenCalledWith(
+        mockUserId,
+        mockHostUid,
+        CMS_CONFNAME_HACONF
+      );
+      expect(result).toBe(false);
+    });
+
+    it('returns true when dbname is in ha_db_list', async () => {
+      cmsConfigService.getAllSystemParam.mockResolvedValue({
+        confname: CMS_CONFNAME_HACONF,
+        conflist: [{ confdata: ['[common]', 'ha_db_list=demodb,testdb'] }],
+      });
+
+      const result = await service.effectiveHaDbForDbname(mockUserId, mockHostUid, 'testdb');
+
+      expect(result).toBe(true);
+    });
+
+    it('returns false when ha_db_list is empty', async () => {
+      cmsConfigService.getAllSystemParam.mockResolvedValue({
+        confname: CMS_CONFNAME_HACONF,
+        conflist: [{ confdata: ['[common]', 'ha_port_id=59901'] }],
+      });
+
+      const result = await service.effectiveHaDbForDbname(mockUserId, mockHostUid, 'testdb');
+
+      expect(result).toBe(false);
     });
   });
 

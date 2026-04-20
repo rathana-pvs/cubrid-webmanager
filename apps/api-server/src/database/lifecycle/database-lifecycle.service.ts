@@ -3,7 +3,6 @@ import {
   CreateDatabaseClientResponse,
   CreateDatabaseWithConfigRequest,
   CreateDatabaseWithConfigResponse,
-  DatabaseLifecycleControlRequest,
   DatabaseVolumeInfoClientResponse,
   DeleteDatabaseRequest,
   StartInfoClientResponse,
@@ -27,7 +26,7 @@ import { BaseCmsResponse } from '@type';
 import { DatabaseInfoService } from '../info/database-info.service';
 import { DatabaseUserService } from '../user/database-user.service';
 import { DatabaseConfigService } from '../config/database-config.service';
-import { DATABASE_CONSTANTS } from '../database.constants';
+import { CMS_CONFNAME_CUBRID } from '@database/database.constants';
 import {
   CreateDatabaseCmsRequest,
   DeleteDatabaseCmsRequest,
@@ -106,7 +105,9 @@ export class DatabaseLifecycleService extends BaseService {
   }
 
   /**
-   * Start a database on a host. When `control.isHA` is true, uses `ha_start`; otherwise `startdb`.
+   * Start a database on a host. Uses `ha_start` when server-side HA detection says this DB is HA.
+   * Rule: this DB must appear in `[common]` `ha_db_list` in cubrid_ha.conf (`haconf`).
+   * Otherwise uses `startdb`.
    *
    * @param userId User ID from JWT
    * @param hostUid Host UID
@@ -119,10 +120,9 @@ export class DatabaseLifecycleService extends BaseService {
   async startDatabase(
     userId: string,
     hostUid: string,
-    dbname: string,
-    control?: DatabaseLifecycleControlRequest
+    dbname: string
   ): Promise<StartInfoClientResponse> {
-    const useHa = control?.isHA === true;
+    const useHa = await this.databaseInfoService.effectiveHaDbForDbname(userId, hostUid, dbname);
     const response = useHa
       ? await this.haService.haStart(userId, hostUid, dbname)
       : await this.startNonHaDatabase(userId, hostUid, dbname);
@@ -135,7 +135,9 @@ export class DatabaseLifecycleService extends BaseService {
   }
 
   /**
-   * Stop a database on a host. When `control.isHA` is true, uses `ha_stop`; otherwise `stopdb`.
+   * Stop a database on a host. Uses `ha_stop` when server-side HA detection says this DB is HA.
+   * Rule: this DB must appear in `[common]` `ha_db_list` in cubrid_ha.conf (`haconf`).
+   * Otherwise uses `stopdb`.
    *
    * @param userId User ID from JWT
    * @param hostUid Host UID
@@ -147,10 +149,9 @@ export class DatabaseLifecycleService extends BaseService {
   async stopDatabase(
     userId: string,
     hostUid: string,
-    dbname: string,
-    control?: DatabaseLifecycleControlRequest
+    dbname: string
   ): Promise<StartInfoClientResponse> {
-    const useHa = control?.isHA === true;
+    const useHa = await this.databaseInfoService.effectiveHaDbForDbname(userId, hostUid, dbname);
     const response = useHa
       ? await this.haService.haStop(userId, hostUid, dbname)
       : await this.stopNonHaDatabase(userId, hostUid, dbname);
@@ -164,6 +165,8 @@ export class DatabaseLifecycleService extends BaseService {
 
   /**
    * Restart a database (stop then start).
+   * For both steps, HA selection follows the same rule as start/stop:
+   * DB name must be listed in `[common]` `ha_db_list` in cubrid_ha.conf (`haconf`).
    *
    * @param userId User ID from JWT
    * @param hostUid Host UID
@@ -175,10 +178,9 @@ export class DatabaseLifecycleService extends BaseService {
   async restartDatabase(
     userId: string,
     hostUid: string,
-    dbname: string,
-    control?: DatabaseLifecycleControlRequest
+    dbname: string
   ): Promise<StartInfoClientResponse> {
-    const useHa = control?.isHA === true;
+    const useHa = await this.databaseInfoService.effectiveHaDbForDbname(userId, hostUid, dbname);
 
     const stopResponse = useHa
       ? await this.haService.haStop(userId, hostUid, dbname)
@@ -531,7 +533,7 @@ export class DatabaseLifecycleService extends BaseService {
       try {
         // Use top-level dbname and automatically use "cubridconf" as confname
         const setAutoStartResult = await this.databaseConfigService.setAutoStart(userId, hostUid, {
-          confname: DATABASE_CONSTANTS.CUBRID_CONF_NAME,
+          confname: CMS_CONFNAME_CUBRID,
           dbname: createDbRequest.dbname,
         });
         response.setAutoStart = {
@@ -594,7 +596,7 @@ export class DatabaseLifecycleService extends BaseService {
     // Remove dbname from server parameter in cubridconf if it exists
     try {
       await this.databaseConfigService.removeAutoStart(userId, hostUid, {
-        confname: DATABASE_CONSTANTS.CUBRID_CONF_NAME,
+        confname: CMS_CONFNAME_CUBRID,
         dbname: dbname,
       });
       this.logger.debug(

@@ -23,15 +23,18 @@ import {
   UnloadDatabaseRequest,
   UnloadInfoClientResponse,
 } from '@api-interfaces';
-import { CmsConfigService } from '@cms-config/cms-config.service';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
 import { DatabaseInfoService } from '@database/info/database-info.service';
-import { checkCmsStatusError, checkCmsTokenError, HandleDatabaseErrors } from '@common';
+import {
+  BaseService,
+  checkCmsStatusError,
+  checkCmsTokenError,
+  HandleDatabaseErrors,
+} from '@common';
 import { CmsError } from '@error/cms/cms-error';
 import { DatabaseError } from '@error/database/database-error';
 import { HostService } from '@host';
 import { Injectable } from '@nestjs/common';
-import { BaseService } from '@common';
 import {
   AddVolDbCmsRequest,
   CheckDatabaseCmsRequest,
@@ -358,10 +361,11 @@ export class DatabaseManagementService extends BaseService {
       repairdb: request.repairdb,
     };
 
-    const response = await this.executeCmsRequest<
-      CheckDatabaseCmsRequest,
-      CheckDatabaseCmsResponse
-    >(userId, hostUid, cmsRequest);
+    await this.executeCmsRequest<CheckDatabaseCmsRequest, CheckDatabaseCmsResponse>(
+      userId,
+      hostUid,
+      cmsRequest
+    );
 
     return { success: true };
   }
@@ -540,7 +544,7 @@ export class DatabaseManagementService extends BaseService {
     userId: string,
     hostUid: string,
     dbname: string,
-    request: LockDatabaseRequest
+    _request: LockDatabaseRequest
   ): Promise<LockDatabaseResponse> {
     const cmsRequest: LockDatabaseCmsRequest = {
       task: 'lockdb',

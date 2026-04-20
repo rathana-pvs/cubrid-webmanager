@@ -4,7 +4,7 @@ import { CmsAuthService } from '@cms-auth/cms-auth.service';
 import { UserRepositoryService } from '@repository';
 import { CheckFileCmsRequest, CheckFileCmsResponse, HostInfo } from '@type/index';
 import { CheckFileClientRequest } from '@api-interfaces';
-import { AppError, HostError } from '@error/index';
+import { HostError } from '@error/index';
 import { HandleCmsErrors } from '@common';
 import { CmsError } from '@error/cms/cms-error';
 import { checkCmsTokenError, checkCmsStatusError } from '@common';

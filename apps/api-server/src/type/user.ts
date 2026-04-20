@@ -1,4 +1,3 @@
-import { DBInfo } from './db-info';
 import { HostInfo } from './host-info';
 import { HashMap } from './collections';
 import { UserPreference } from './user-preferencs';

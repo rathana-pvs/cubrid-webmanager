@@ -1,11 +1,7 @@
 import { Body, Controller, Delete, Get, Logger, Post, Put, Request } from '@nestjs/common';
 import { validateRequiredFields } from '@util';
 import { UserService } from './user.service';
-import {
-  UpdateUserDto,
-  UserPreference,
-  UserPreferenceDto,
-} from '@type/index';
+import { UserPreference, UserPreferenceDto } from '@type/index';
 import {
   ChangePasswordRequest,
   DeleteUserRequest,

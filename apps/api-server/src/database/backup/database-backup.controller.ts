@@ -4,7 +4,6 @@ import {
   AddBackupInfoClientResponse,
   DeleteBackupInfoClientRequest,
   DeleteBackupInfoClientResponse,
-  GetBackupInfoClientRequest,
   GetBackupInfoClientResponse,
   SetBackupInfoClientRequest,
   SetBackupInfoClientResponse,

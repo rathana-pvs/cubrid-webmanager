@@ -11,6 +11,28 @@ import type {
 import type { StartInfoCmsResponse } from '@type/cms-response/start-info-cms-response';
 import { parseConfigParamsBySection } from '../config/parse-config-params';
 
+/**
+ * Database names listed in `[common]` `ha_db_list` of cubrid_ha.conf (CMS confname `haconf`).
+ * Values are comma-separated; empty or missing `ha_db_list` yields an empty set (no HA DBs).
+ */
+export function parseHaDbListDbNamesFromHaConf(
+  response: Pick<GetAllSysParamCmsResponse, 'conflist'>
+): Set<string> {
+  const grouped = parseConfigParamsBySection(response as GetAllSysParamCmsResponse);
+  const raw = grouped['common']?.['ha_db_list'];
+  const out = new Set<string>();
+  if (raw === undefined || raw.trim() === '') {
+    return out;
+  }
+  for (const part of raw.split(',')) {
+    const name = part.trim();
+    if (name) {
+      out.add(name);
+    }
+  }
+  return out;
+}
+
 /** Normalized flag from `[common]` (or fallback) `ha_mode` — host-level HA enabled. */
 export function isHostHaModeOnFromCubridConf(
   response: Pick<GetAllSysParamCmsResponse, 'conflist'>

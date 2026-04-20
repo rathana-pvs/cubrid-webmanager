@@ -19,8 +19,6 @@ import { CmsConfigService } from '@cms-config/cms-config.service';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
 import {
   BaseService,
-  checkCmsStatusError,
-  checkCmsTokenError,
   HandleCmsErrors,
   HandleDatabaseErrors,
 } from '@common';
@@ -48,7 +46,7 @@ import {
 } from '@type/cms-response';
 import { GetAllSysParamCmsResponse } from '@type/cms-response/get-all-sys-param-cms-response';
 import { parseConfigParams } from '@util';
-import { DATABASE_CONSTANTS } from '../database.constants';
+import { CMS_CONFNAME_CUBRID } from '@database/database.constants';
 
 /**
  * Service for managing database configuration operations.
@@ -176,7 +174,7 @@ export class DatabaseConfigService extends BaseService {
     hostUid: string,
     request: SetAutoStartRequest
   ): Promise<SetAutoStartResponse> {
-    const confname = DATABASE_CONSTANTS.CUBRID_CONF_NAME;
+    const confname = CMS_CONFNAME_CUBRID;
 
     // Get current configuration from cubridconf
     const currentConfig = await this.cmsConfigService.getAllSystemParam(
@@ -291,7 +289,7 @@ export class DatabaseConfigService extends BaseService {
     hostUid: string,
     request: RemoveAutoStartRequest
   ): Promise<RemoveAutoStartResponse> {
-    const confname = DATABASE_CONSTANTS.CUBRID_CONF_NAME;
+    const confname = CMS_CONFNAME_CUBRID;
 
     // Get current configuration from cubridconf
     const currentConfig = await this.cmsConfigService.getAllSystemParam(
@@ -510,7 +508,7 @@ export class DatabaseConfigService extends BaseService {
   async getAutoExecQueryErrLog(
     userId: string,
     hostUid: string,
-    request: GetAutoExecQueryErrLogRequest
+    _request: GetAutoExecQueryErrLogRequest
   ): Promise<GetAutoExecQueryErrLogResponse> {
     const cmsRequest: GetAutoExecQueryErrLogCmsRequest = {
       task: 'getautoexecqueryerrlog',

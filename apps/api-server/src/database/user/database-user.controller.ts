@@ -136,7 +136,7 @@ export class DatabaseUserController {
    * // GET /host-uid/database/users
    */
   @Get()
-  async getDatabaseUsers(@Request() req, @Param('hostUid') hostUid: string) {
+  async getDatabaseUsers(@Request() req, @Param('hostUid') _hostUid: string) {
     const userId = req.user.sub;
     return await this.databaseUserService.getDatabaseUsers(userId);
   }
