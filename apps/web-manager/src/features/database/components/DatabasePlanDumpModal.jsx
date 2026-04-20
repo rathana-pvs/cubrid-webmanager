@@ -75,8 +75,13 @@ export default function DatabasePlanDumpModal() {
     { label: 'Hit Ratio', value: hitRatio ? `${hitRatio}%` : '—', color: 'text-amber-500' },
     { label: 'Hits', value: stats['Hits'] || '0', color: 'text-emerald-500' },
     { label: 'Misses', value: stats['Miss'] || '0', color: 'text-rose-500' },
-    { label: 'Entries', value: stats['Current entry count'] || '0', color: 'text-sky-500' },
   ];
+  const planSteps = [
+    { icon: 'query_stats', label: 'Inspect' },
+    { icon: 'schema', label: 'Extract' },
+    { icon: 'analytics', label: 'Aggregate' },
+  ];
+
 
   const visibleLines = lines.filter(l => l && l.trim());
 
@@ -123,57 +128,75 @@ export default function DatabasePlanDumpModal() {
         />
 
         {step === 'setup' ? (
-          <div className="space-y-6 animate-in fade-in slide-in-from-right-4 duration-300">
+          <div className="space-y-6 animate-in fade-in zoom-in-95 duration-300">
+            {/* Minimal Target Display */}
+            <div className="flex items-center justify-between p-4 bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-sm">
+                  <Icon name="database" size="sm" weight={300} />
+                </div>
+                <div>
+                  <Typography variant="caption" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Instance</Typography>
+                  <Typography variant="p" className="text-[14px] font-black text-slate-900 dark:text-white font-mono leading-none">{selectedDatabase}</Typography>
+                </div>
+              </div>
+              <StatusBadge label="XASL Cache" variant="amber" />
+            </div>
 
-            <div>
-              <SectionHeader title="Target Database" icon="database" />
-              <div className="px-1.5 flex items-center justify-between p-3 bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/8 rounded-xl">
-                <div className="flex items-center gap-2.5">
-                  <Icon name="database" size="sm" weight={300} className="text-amber-500" />
-                  <Typography variant="p" className="font-bold text-[13px] text-slate-900 dark:text-white font-mono">
-                    {selectedDatabase}
+            {/* Horizontal Pipeline */}
+            <div className="flex items-center justify-between px-2 bg-slate-50/50 dark:bg-white/2 py-3 rounded-xl border border-dashed border-slate-200 dark:border-white/5">
+              {planSteps.map((s, i) => (
+                <React.Fragment key={i}>
+                  <div className="flex items-center gap-2 group">
+                    <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                      <Icon name={s.icon} size="12px" weight={400} />
+                    </div>
+                    <Typography variant="caption" className="text-[10px] font-bold uppercase tracking-tight text-slate-500">{s.label}</Typography>
+                  </div>
+                  {i < planSteps.length - 1 && (
+                    <div className="flex-1 h-px bg-slate-200 dark:bg-white/10 mx-2" />
+                  )}
+                </React.Fragment>
+              ))}
+            </div>
+
+            {/* Focused Options */}
+            <div className="space-y-4">
+              <SectionHeader title="Configuration" icon="tune" />
+              <div 
+                className={`p-4 rounded-2xl border transition-all cursor-pointer select-none group
+                  ${planDrop 
+                    ? 'bg-rose-500/5 border-rose-500/20 shadow-xs' 
+                    : 'bg-white dark:bg-white/2 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20'
+                  }`}
+                onClick={() => setPlanDrop(!planDrop)}
+              >
+                <div className="flex items-center gap-4">
+                  <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all
+                    ${planDrop ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400'}
+                  `}>
+                    <Icon name="delete_sweep" size="xs" weight={300} />
+                  </div>
+                  <div className="flex-1">
+                    <Typography variant="p" className={`font-bold text-[12px] ${planDrop ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>Flush Cache after export</Typography>
+                    <Typography variant="caption" className="text-slate-400 text-[10px] block mt-0.5">Clears XASL entries from server memory</Typography>
+                  </div>
+                  <Toggle checked={planDrop} onChange={setPlanDrop} />
+                </div>
+              </div>
+
+              {planDrop && (
+                <div className="flex items-start gap-2.5 px-3 py-2.5 bg-rose-50/50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-xl animate-in fade-in slide-in-from-top-2">
+                  <Icon name="warning" size="xs" weight={300} className="text-rose-500 shrink-0 mt-0.5" />
+                  <Typography variant="caption" className="text-rose-600 dark:text-rose-400 font-medium leading-relaxed text-[10px]">
+                    This will permanently clear all cached plans. Performance may decrease temporarily.
                   </Typography>
                 </div>
-                <StatusBadge label="XASL Cache" variant="amber" />
-              </div>
+              )}
             </div>
 
-            {/* Options */}
-            <div>
-              <SectionHeader title="Options" icon="tune" />
-              <div className="px-1.5">
-                <div
-                  className={`flex items-center gap-3 p-3 border rounded-xl cursor-pointer select-none transition-all
-                    ${planDrop
-                      ? 'bg-rose-500/5 border-rose-500/20'
-                      : 'bg-white dark:bg-white/2 border-slate-200 dark:border-white/8 hover:border-slate-300 dark:hover:border-white/15'
-                    }`}
-                  onClick={() => setPlanDrop(!planDrop)}
-                >
-                  <div className="flex-1 min-w-0">
-                    <Typography variant="p" className={`font-semibold text-[12px] ${planDrop ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>
-                      Drop plans after dump
-                    </Typography>
-                    <Typography variant="caption" className="text-slate-400 dark:text-slate-500 text-[10px] mt-0.5">
-                      Flush all entries from XASL plan cache after export
-                    </Typography>
-                  </div>
-                  <div onClick={(e) => e.stopPropagation()}>
-                    <Toggle checked={planDrop} onChange={setPlanDrop} />
-                  </div>
-                </div>
-
-                {planDrop && (
-                  <div className="mt-2 flex items-start gap-2 px-3 py-2 bg-rose-50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/15 rounded-lg animate-in fade-in duration-200">
-                    <Icon name="warning" size="xs" weight={300} className="text-rose-500 shrink-0 mt-0.5" />
-                    <Typography variant="caption" className="text-rose-600 dark:text-rose-400 text-[10px] leading-relaxed">
-                      This will <span className="font-bold">clear all cached query plans</span> from server memory. Subsequent queries may be temporarily slower.
-                    </Typography>
-                  </div>
-                )}
-              </div>
-            </div>
           </div>
+
 
         ) : (
           /* Results View */
@@ -230,8 +253,8 @@ export default function DatabasePlanDumpModal() {
                       <span className={`text-[11px] font-mono leading-snug break-all
                         ${isHeader ? 'text-amber-600 dark:text-amber-400 font-bold' :
                           isPlanLine ? 'text-sky-600 dark:text-sky-400 pl-2 border-l border-sky-500/20' :
-                          isStatLine ? 'text-slate-600 dark:text-slate-300' :
-                          'text-slate-500 dark:text-slate-500'}`}
+                            isStatLine ? 'text-slate-600 dark:text-slate-300' :
+                              'text-slate-500 dark:text-slate-500'}`}
                       >
                         {line}
                       </span>
