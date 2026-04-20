@@ -159,6 +159,7 @@ export default function LoginDatabaseModal() {
                 <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-[0.2em] text-[10px] block mb-1">Instance Name</Typography>
                 <Typography variant="h4" className="text-[18px] font-black text-slate-800 dark:text-white font-mono truncate">{selectedDatabase}</Typography>
               </div>
+
               <StatusBadge label="Locked" variant="amber" pulse={true} className="rounded-full shadow-sm" />
             </div>
           </div>

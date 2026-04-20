@@ -174,6 +174,7 @@ export default function DatabasePlanDumpModal() {
               </div>
             </div>
           </div>
+
         ) : (
           /* Results View */
           <div className="flex flex-col -m-6 h-[560px]">
