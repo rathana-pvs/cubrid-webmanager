@@ -10,7 +10,10 @@ import {
   openChangePasswordModal,
   revokeHostLogin,
   openServerVersionModal,
-  fetchHostEnv
+  fetchHostEnv,
+  setSuggestedHaNodes,
+  clearLastAddedHostUid,
+  editHost
 } from '../../host/hostSlice';
 import {
   fetchDatabaseStartInfo, startDatabase, stopDatabase, loginDatabase, registerDatabase,
@@ -119,7 +122,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
 
   const [loadingText, setLoadingText] = useState('Updating Resources...');
 
-  const { hosts, selectedHostUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors } = useSelector((state) => state.host, shallowEqual);
+  const { hosts, selectedHostUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors, haInfo, lastAddedHostUid } = useSelector((state) => state.host, shallowEqual);
   const { databases, activeDatabases, loggedInDatabases } = useSelector((state) => state.database, shallowEqual);
   const { brokers } = useSelector((state) => state.broker, shallowEqual);
 
@@ -150,21 +153,63 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     
     dispatch(loginToHost(uid))
       .unwrap()
-      .then(() => {
+      .then((response) => {
         // Rule #1: Automatically open tab if login is successful
         dispatch(setActiveMainTab('host:' + uid));
         dispatch(fetchDatabaseStartInfo(uid));
         dispatch(fetchBrokerList(uid));
         dispatch(fetchHostEnv(uid));
+
+        // Rule #2: Suggest adding peer nodes if HA is detected
+        // Constraint: Only popup if this was the 'first create' (just added)
+        const isNewlyAdded = lastAddedHostUid === uid;
+
+        if (response.isHA && response.haNodes?.length > 0 && isNewlyAdded) {
+          const undiscovered = response.haNodes.filter(node => {
+            const isSelf = hosts.find(h => {
+              const hAddr = h.address.toLowerCase();
+              const nIp = (node.ip || '').toLowerCase();
+              const nHost = (node.hostname || '').toLowerCase();
+              
+              // Direct match
+              if (hAddr === nIp || hAddr === nHost) return true;
+              
+              // Loopback match
+              const isLoopback = (addr) => addr === 'localhost' || addr === '127.0.0.1';
+              if (isLoopback(hAddr) && (isLoopback(nIp) || isLoopback(nHost))) return true;
+              
+              return false;
+            });
+            return !isSelf;
+          });
+          if (undiscovered.length > 0) {
+            dispatch(setSuggestedHaNodes(undiscovered));
+          }
+        }
+
+        // Always clear the 'newly added' flag after the first login attempt (successful or not)
+        if (isNewlyAdded) {
+          dispatch(clearLastAddedHostUid());
+        }
+
+        // Rule #3: Ensure master has its tag so it matches slaves/replicas in the sidebar
+        const host = hosts.find(h => h.uid === uid);
+        if (host && response.currentNodeType === 'master' && !host.alias?.toLowerCase().includes('(master)')) {
+          const newAlias = `${host.alias || host.id} (master)`;
+          dispatch(editHost({ hostUid: uid, payload: { ...host, alias: newAlias } }));
+        }
       })
       .catch((err) => {
         console.error('Failed to log into host:', err);
       });
-  }, [dispatch]);
+  }, [dispatch, hosts, lastAddedHostUid]);
 
   useEffect(() => {
-    if (selectedHostUid) {
+    if (selectedHostUid && selectedHostUid !== lastProcessedHostUid.current) {
       handleHostLogin(selectedHostUid);
+      lastProcessedHostUid.current = selectedHostUid;
+    } else if (!selectedHostUid) {
+      lastProcessedHostUid.current = null;
     }
   }, [selectedHostUid, handleHostLogin]);
 
@@ -282,9 +327,10 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   }, [closeAllContextMenus]);
 
   const [isServerListCollapsed, setIsServerListCollapsed] = useState(false);
-  const [serverListSize, setServerListSize] = useState(260);
-  const [prevServerListSize, setPrevServerListSize] = useState(260);
+  const [serverListSize, setServerListSize] = useState(320);
+  const [prevServerListSize, setPrevServerListSize] = useState(320);
   const [isTreeCollapsed, setIsTreeCollapsed] = useState(false);
+  const lastProcessedHostUid = useRef(null);
 
   const toggleServerListCollapse = () => {
     setIsServerListCollapsed(!isServerListCollapsed);
@@ -344,8 +390,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                     weight={300}
                   />
                 </div>
-                <Typography variant="caption" className={`font-bold text-[11px] uppercase tracking-widest transition-colors
-                  ${!isServerListCollapsed ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500 group-hover/host-header:text-amber-500'}`}>
+                <Typography variant="caption" className={`font-bold text-[12px] uppercase tracking-widest transition-colors
+                  ${!isServerListCollapsed ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500 group-hover/host-header:text-amber-500'}`}>
                   Server List
                 </Typography>
               </div>
@@ -376,7 +422,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
 
             <div
               ref={hostSectionRef}
-              className={`flex-1 overflow-y-auto p-2 space-y-0.5 bg-slate-50/50 dark:bg-black/20 transition-opacity duration-200 ${isServerListCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
+              className={`flex-1 overflow-y-auto py-1 bg-slate-50/50 dark:bg-black/20 transition-opacity duration-200 ${isServerListCollapsed ? 'opacity-0 pointer-events-none' : 'opacity-100'}`}
               id="host-section"
             >
               {!isServerListCollapsed && (
@@ -404,6 +450,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                       host={host}
                       isSelected={selectedHostUid === host.uid}
                       isAuthorized={authorizedHosts.includes(host.uid)}
+                      haInfo={haInfo[host.uid]}
                       onContextMenu={handleContextMenu}
                     />
                   ))

@@ -25,8 +25,10 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
   const dispatch = useDispatch();
   const hostData = useSelector((state) => state.monitoring.hostsData[hostUid] || {});
   const { currentStatus = {}, averages = {}, history = [], loading = false, error = null } = hostData;
-  const { authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { authorizedHosts, haInfo } = useSelector((state) => state.host, shallowEqual);
   const isAuthorized = hostUid && authorizedHosts.includes(hostUid);
+  const hostHaInfo = haInfo[hostUid] || {};
+  const isHA = hostHaInfo.isHA;
 
   const [isStopped, setIsStopped] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true); // Default to expanded
@@ -164,6 +166,25 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
           <div className="flex items-center gap-2">
             <Icon name="bar_chart" size="sm" weight={300} className="text-amber-500" />
             <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">System Status</span>
+            {isHA && (
+              <div className={`px-1.5 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight flex items-center gap-1 ${
+                hostHaInfo.currentNodeType === 'master' 
+                  ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
+                  : hostHaInfo.currentNodeType === 'replica'
+                    ? 'bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20'
+                    : 'bg-slate-500/10 text-slate-600 dark:text-slate-400 border border-slate-500/20'
+              }`}>
+                <Icon 
+                  name={
+                    hostHaInfo.currentNodeType === 'master' ? 'star' : 
+                    hostHaInfo.currentNodeType === 'slave' ? 'settings_backup_restore' : 
+                    hostHaInfo.currentNodeType === 'replica' ? 'copy_all' : 'hub'
+                  } 
+                  size="12px" 
+                />
+                {hostHaInfo.currentNodeType}
+              </div>
+            )}
             <span className="text-[10px] text-slate-400 font-normal ml-1">
               {isStopped ? '· Paused' : '· Live'}
             </span>
@@ -188,6 +209,42 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
           {typeof error === 'object' ? (error.message || error.note || JSON.stringify(error)) : error}
         </InfoBanner>
       )}
+
+      {isHA && hostData.haHeartbeat && (
+        <div className="mx-4 mt-4 mb-2 p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className="w-8 h-8 rounded-lg bg-amber-500/10 flex items-center justify-center">
+              <Icon name="hub" className="text-amber-500" size="sm" />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-slate-700 dark:text-slate-200 uppercase tracking-wider">HA Cluster Status</p>
+              <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-0.5">
+                {hostData.haHeartbeat.hanodelist?.[0]?.node?.length || 0} nodes active in cluster
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-2">
+            {(hostData.haHeartbeat.hanodelist?.[0]?.node || []).map((node, i) => (
+              <div key={i} className="flex items-center gap-1.5 px-2 py-1 bg-white dark:bg-bk-main rounded-lg border border-slate-200 dark:border-white/5 shadow-xs">
+                <div className={`w-1.5 h-1.5 rounded-full ${
+                  node.state === 'master' ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 
+                  node.state === 'replica' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 
+                  'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
+                }`} />
+                <div className="flex flex-col">
+                  <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-none">{node.hostname}</span>
+                  <span className={`text-[7px] font-black uppercase tracking-tighter mt-0.5 leading-none ${
+                    node.state === 'master' ? 'text-amber-500' : 'text-slate-400'
+                  }`}>
+                    {node.state}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       <Table columns={columns} data={rows} className="font-mono text-[12px]" />
     </Card>
   );

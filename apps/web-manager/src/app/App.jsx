@@ -70,6 +70,7 @@ import ImportExportHostModal from '../features/host/components/ImportExportHostM
 import DatabasePropertyModal from '../features/database/components/DatabasePropertyModal';
 import RenameDatabaseModal from '../features/database/components/RenameDatabaseModal';
 import AddVolumeModal from '../features/database/components/AddVolumeModal';
+import SuggestedHaNodesModal from '../features/host/components/SuggestedHaNodesModal';
 
 import { Icon } from '../components/ds/foundation/Icon';
 
@@ -190,7 +191,7 @@ function DashboardLayout() {
         {/* Flash Overlay */}
         <div className={`fixed inset-0 bg-white/20 dark:bg-white/5 pointer-events-none z-[9999] transition-opacity duration-300 ${isFlashing ? 'opacity-100' : 'opacity-0'}`} />
         
-        <SplitPane split="vertical" defaultSize={288} minSize={200} maxSize={600} className="h-full w-full">
+        <SplitPane split="vertical" defaultSize={320} minSize={240} maxSize={600} className="h-full w-full">
           <Sidebar
             isCollapsed={isSidebarCollapsed}
             onToggleCollapse={() => dispatch(toggleSidebar())}
@@ -368,6 +369,8 @@ function DashboardLayout() {
           <Footer />
           </main>
         </SplitPane>
+
+        <SuggestedHaNodesModal />
 
         <AddHostModal
           isOpen={isAddHostModalOpen}

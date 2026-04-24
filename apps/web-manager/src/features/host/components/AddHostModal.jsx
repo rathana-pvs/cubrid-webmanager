@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { addHost, clearHostError } from '../hostSlice';
+import { addHost, clearHostError, openDiscoveryModal } from '../hostSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Input } from '../../../components/ds/forms/Input';
 import { Button } from '../../../components/ds/foundation/Button';
@@ -17,14 +17,24 @@ export default function AddHostModal({ isOpen, onClose }) {
   });
   const [errors, setErrors] = useState({});
   const dispatch = useDispatch();
-  const { loading, error: apiError } = useSelector((state) => state.host, shallowEqual);
+  const { loading, error: apiError, initialHostData } = useSelector((state) => state.host, shallowEqual);
 
   useEffect(() => {
     if (isOpen) {
-      setFormData({ id: '', address: '', port: '8001', password: '', alias: '' });
+      if (initialHostData) {
+        setFormData({
+          id: initialHostData.id || '',
+          address: initialHostData.address || '',
+          port: String(initialHostData.port || '8001'),
+          password: initialHostData.password || '',
+          alias: initialHostData.alias || '',
+        });
+      } else {
+        setFormData({ id: '', address: '', port: '8001', password: '', alias: '' });
+      }
       setErrors({});
     }
-  }, [isOpen]);
+  }, [isOpen, initialHostData]);
 
   if (!isOpen) return null;
 
@@ -52,12 +62,22 @@ export default function AddHostModal({ isOpen, onClose }) {
       return;
     }
     const payload = { ...formData, port: Number(formData.port) };
-    dispatch(addHost(payload));
+    try {
+      await dispatch(addHost(payload)).unwrap();
+      if (initialHostData) {
+        dispatch(openDiscoveryModal());
+      }
+    } catch (e) {
+      // Error handled by slice
+    }
   };
 
   const handleClose = () => {
     onClose();
     dispatch(clearHostError());
+    if (initialHostData) {
+      dispatch(openDiscoveryModal());
+    }
   };
 
   const connectionPreview = formData.address

@@ -28,7 +28,7 @@ import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
 
 const Component = function ServiceDashboard() {
   const dispatch = useDispatch();
-  const { hosts, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { hosts, authorizedHosts, haInfo } = useSelector((state) => state.host, shallowEqual);
   const { summaries } = useSelector((state) => state.globalMonitoring, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { refreshCounter, activeMainTab } = useSelector((state) => state.layout, shallowEqual);
@@ -68,6 +68,21 @@ const Component = function ServiceDashboard() {
     variant: 'primary',
     onConfirm: () => {} 
   });
+
+  const HA_ROLE_CONFIG = {
+    master: {
+      label: 'MASTER',
+      className: 'bg-amber-500/15 border-amber-500/30 text-amber-600 dark:text-amber-400',
+    },
+    slave: {
+      label: 'SLAVE',
+      className: 'bg-slate-500/10 border-slate-400/20 text-slate-500 dark:text-slate-400',
+    },
+    replica: {
+      label: 'REPLICA',
+      className: 'bg-blue-500/10 border-blue-400/20 text-blue-600 dark:text-blue-400',
+    },
+  };
 
   const closeConfirm = () => setConfirmConfig(prev => ({ ...prev, isOpen: false }));
 
@@ -128,12 +143,65 @@ const Component = function ServiceDashboard() {
       accessor: 'alias',
       render: (val, row) => {
         const isConnected = authorizedHosts.includes(row.uid);
+        
+        const getInferredHaInfo = () => {
+          const info = haInfo[row.uid];
+          if (info?.isHA) return info;
+          const alias = (row.alias || '').toLowerCase();
+          if (alias.includes('(master)')) return { isHA: true, currentNodeType: 'master' };
+          if (alias.includes('(slave)')) return { isHA: true, currentNodeType: 'slave' };
+          if (alias.includes('(replica)')) return { isHA: true, currentNodeType: 'replica' };
+          return null;
+        };
+
+        const activeHaInfo = getInferredHaInfo();
+        const roleConfig = activeHaInfo?.currentNodeType ? HA_ROLE_CONFIG[activeHaInfo.currentNodeType] : null;
+
+        const displayName = (val || row.id)
+          .replace(/\s*\(master\)/i, '')
+          .replace(/\s*\(slave\)/i, '')
+          .replace(/\s*\(replica\)/i, '')
+          .trim();
+
         return (
-          <div className="flex items-center gap-2">
-            <Icon name={isConnected ? 'dns' : 'storage'} size="16px" className={isConnected ? 'text-amber-500' : 'text-slate-400'} />
-            <div className="flex flex-col">
-              <span className="text-[13px] font-bold text-slate-700 dark:text-slate-200 leading-tight">{val || row.id}</span>
-              {isConnected && <span className="text-[10px] text-slate-400 font-normal">Active</span>}
+          <div className="flex items-center gap-3 py-0.5">
+            {/* Server icon box with connection status */}
+            <div className="relative shrink-0">
+              <div className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-all duration-200 ${
+                isConnected
+                  ? 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]'
+                  : 'bg-slate-100 dark:bg-white/4 border-slate-200 dark:border-white/8'
+              }`}>
+                <Icon
+                  name="dns"
+                  size="18px"
+                  className={isConnected ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}
+                  weight={isConnected ? 400 : 300}
+                />
+              </div>
+              {/* Connection status dot */}
+              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-background-dark flex items-center justify-center ${
+                isConnected ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-white/20'
+              }`}>
+                {isConnected && <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-60" />}
+              </span>
+            </div>
+
+            {/* Name + role + address */}
+            <div className="flex flex-col min-w-0">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className={`text-[13px] font-bold leading-tight truncate ${
+                  isConnected ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'
+                }`}>{displayName}</span>
+                {roleConfig && (
+                  <span className={`inline-flex items-center px-1.5 h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 ${roleConfig.className}`}>
+                    {roleConfig.label}
+                  </span>
+                )}
+              </div>
+              <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate mt-0.5">
+                {row.address || row.ip || 'localhost'}:{row.port}
+              </span>
             </div>
           </div>
         );
