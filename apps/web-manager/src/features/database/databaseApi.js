@@ -55,10 +55,10 @@ export const databaseApi = {
   },
 
   loginDatabase: (hostUid, dbname, payload) => {
-    return apiClient.post(`/${hostUid}/database/users/login/${dbname}`, payload);
+    return apiClient.post(`/${hostUid}/database/users/login/${encodeURIComponent(dbname)}`, payload);
   },
   registerDatabase: (hostUid, dbname, payload) => {
-    return apiClient.post(`/${hostUid}/database/register/${dbname}`, payload);
+    return apiClient.post(`/${hostUid}/database/register/${encodeURIComponent(dbname)}`, payload);
   },
   addBackupSchedule: (hostUid, dbname, payload) => {
     return apiClient.post(`/${hostUid}/database/backup-schedule/${dbname}`, payload);

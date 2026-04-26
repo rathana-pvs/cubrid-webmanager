@@ -186,6 +186,20 @@ const databaseCoreSlice = createSlice({
         state.actionLoading = false;
         if (dbname) state.loggingInDatabases[dbname] = false;
         state.error = action.payload;
+      })
+      .addCase(registerDatabase.pending, (state) => {
+        state.actionLoading = true;
+        state.error = null;
+      })
+      .addCase(registerDatabase.fulfilled, (state, action) => {
+        state.actionLoading = false;
+        if (action.payload.response) {
+          parseDbResponse(state, action.payload.response);
+        }
+      })
+      .addCase(registerDatabase.rejected, (state, action) => {
+        state.actionLoading = false;
+        state.error = action.payload;
       });
   }
 });

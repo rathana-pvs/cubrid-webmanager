@@ -73,7 +73,10 @@ export default function LoginDatabaseModal() {
       await dispatch(loginDatabase({ 
         hostUid: selectedHostUid, 
         dbname: selectedDatabase, 
-        payload: formData 
+        payload: {
+          id: formData.dbuser,
+          password: formData.dbpasswd
+        } 
       })).unwrap();
 
       dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname: selectedDatabase }));
