@@ -1,40 +1,32 @@
 import { Injectable } from '@nestjs/common';
-import * as crypto from 'crypto';
+import { parseCliArgs } from './parse-cli-args';
+import { deriveSecretKeyHexFromSeedSalt } from './master-key';
 
 /**
- * Service for managing application configuration.
- *
- * This service handles the parsing and validation of command-line arguments
- * and provides access to configuration values throughout the application.
- * It generates cryptographic keys from provided seed and salt values.
+ * Application configuration from env (after `loadRuntimeEnv`) with optional CLI overrides.
+ * Encryption key: PBKDF2(SEED, SALT) — set `SEED` and `SALT` in env or `/etc/cubrid-webmanager.env`.
  *
  * @category Infrastructure Services
  * @since 1.0.0
- * @example
- * ```typescript
- * // Start application with required arguments
- * node app.js --SEED=myseed --SALT=mysalt --PORT=8080
- * ```
  */
 @Injectable()
 export class ConfigService {
-  public seed!: string;
-  public salt!: string;
   public port: string = '8080';
   public secret_key!: string;
   public environment: string = 'development';
   public allowedOrigins: string[] = [];
 
   constructor() {
-    const args = parseArgs(process.argv.slice(2));
+    const args = parseCliArgs(process.argv.slice(2));
 
-    if (!args.SEED || !args.SALT) {
+    const seed = args.SEED ?? process.env.SEED;
+    const salt = args.SALT ?? process.env.SALT;
+    if (!seed || !salt) {
       throw new Error(
-        'SEED and SALT must be provided as command-line arguments (e.g., --SEED=... --SALT=...).'
+        'SEED and SALT are required (env or CLI, e.g. SEED=... SALT=... in .env).'
       );
     }
-    this.seed = args.SEED;
-    this.salt = args.SALT;
+    this.secret_key = deriveSecretKeyHexFromSeedSalt(seed, salt);
 
     if (args.PORT) {
       const portNumber = parseInt(args.PORT, 10);
@@ -44,83 +36,57 @@ export class ConfigService {
         );
       }
       this.port = args.PORT;
+    } else if (process.env.PORT) {
+      const portNumber = parseInt(process.env.PORT, 10);
+      if (isNaN(portNumber) || portNumber <= 0 || portNumber > 65535) {
+        throw new Error(
+          `Invalid PORT in environment: "${process.env.PORT}". Port must be a number between 1 and 65535.`
+        );
+      }
+      this.port = process.env.PORT;
     } else {
       this.port = '8080';
     }
 
-    this.environment = args.ENVIRONMENT || 'development';
+    this.environment = (
+      args.ENVIRONMENT ??
+      args.ENV ??
+      process.env.ENVIRONMENT ??
+      'development'
+    ).toLowerCase();
     console.log('[ConfigService] Environment:', this.environment);
-    this.setAllowedOrigins(args.ALLOWED_ORIGINS);
 
-    const derived = crypto.pbkdf2Sync(this.seed, this.salt, 100_000, 32, 'sha256');
-    this.secret_key = derived.toString('hex');
+    const allowedFromEnvOrArg =
+      args.ALLOWED_ORIGINS ?? process.env.ALLOWED_ORIGINS;
+    this.setAllowedOrigins(allowedFromEnvOrArg);
   }
 
-  /**
-   * Gets the derived secret key for encryption operations.
-   *
-   * The secret key is derived from the provided SEED and SALT using PBKDF2
-   * with 100,000 iterations and SHA-256 hashing algorithm.
-   *
-   * @returns The secret key as a hexadecimal string
-   */
   getSecretKey(): string {
     return this.secret_key;
   }
 
-  /**
-   * Gets the configured port number for the server.
-   *
-   * @returns The port number as a string (default: '8080')
-   */
   getPort(): string {
     return this.port;
   }
 
-  /**
-   * Gets the current environment.
-   *
-   * @returns The environment string ('development' or 'production')
-   */
   getEnvironment(): string {
     return this.environment;
   }
 
-  /**
-   * Gets the allowed origins for CORS.
-   *
-   * @returns Array of allowed origins
-   */
   getAllowedOrigins(): string[] {
     return this.allowedOrigins;
   }
 
-  /**
-   * Sets allowed origins based on environment.
-   */
   private setAllowedOrigins(allowedOrigins?: string): void {
     if (this.environment === 'production') {
       if (allowedOrigins) {
-        this.allowedOrigins = allowedOrigins.split(',');
+        this.allowedOrigins = allowedOrigins.split(',').map((s) => s.trim());
       } else {
-        this.allowedOrigins = []; // Default to no origins in production if not specified
+        this.allowedOrigins = [];
       }
     } else {
       this.allowedOrigins = ['*'];
     }
-    console.log('[ConfigService] Allowed Origins:', this.allowedOrigins); // DEBUG
+    console.log('[ConfigService] Allowed Origins:', this.allowedOrigins);
   }
-}
-
-function parseArgs(argv: string[]): Record<string, string> {
-  const result: Record<string, string> = {};
-
-  for (const arg of argv) {
-    if (arg.startsWith('--')) {
-      const [key, value] = arg.slice(2).split('=');
-      result[key] = value;
-    }
-  }
-
-  return result;
 }

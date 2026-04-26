@@ -38,7 +38,7 @@ export default defineConfig({
       }
     })
   ],
-  /** Nx 모노레포·`tools/serve-web-manager.js`와 동일: 루트 `dist/apps/web-manager` */
+  /** Same output as `tools/serve-web-manager.js`: root `dist/apps/web-manager` */
   build: {
     outDir: '../../dist/apps/web-manager',
     emptyOutDir: true,

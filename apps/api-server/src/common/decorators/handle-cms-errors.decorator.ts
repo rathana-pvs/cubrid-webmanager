@@ -4,10 +4,10 @@ import { AxiosError } from 'axios';
 
 export type HandleCmsErrorsOptions = {
   /**
-   * Axios/HTTP 예외를 CmsError로 매핑 (기본 true).
+   * Maps Axios/HTTP exceptions to CmsError (default: true).
    */
   mapHttpErrors?: boolean;
-  /** AppError·기타 → ConfigError.Unknown('config') 또는 CmsError.Unknown('cms') */
+  /** AppError/other errors -> ConfigError.Unknown('config') or CmsError.Unknown('cms') */
   appErrorFallback?: 'config' | 'cms';
 };
 
@@ -100,9 +100,9 @@ function handleCatch(
 }
 
 /**
- * CMS 관련 예외 처리 단일 데코레이터.
- * - HTTP(Axios) → CmsError
- * - 선택: 그 외 AppError를 Config/Cms Unknown으로 매핑 (cms-config·cms-user 등)
+ * Unified decorator for CMS-related error handling.
+ * - HTTP(Axios) -> CmsError
+ * - Optional: map other AppError instances to Config/Cms Unknown (cms-config, cms-user, etc.)
  */
 export function HandleCmsErrors(options?: HandleCmsErrorsOptions) {
   const mapHttpErrors = options?.mapHttpErrors !== false;

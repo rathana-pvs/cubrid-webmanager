@@ -1,85 +1,88 @@
 # CUBRID Web Manager
 
-CUBRID 데이터베이스 관리를 위한 모던 웹 애플리케이션입니다.
+A modern web application for CUBRID database administration.
 
-## 프로젝트 구조
+## Project Structure
 
-```
+```text
 cubrid-webmanager/
 ├── apps/
-│   ├── web-manager/     # [REACT] The modern UI
-│   ├── api-server/       # [NESTJS] Logic & CUBRID connection
-│   └── desktop-shell/   # [ELECTRON] Future desktop wrapper
+│   ├── web-manager/      # React frontend
+│   ├── api-server/       # NestJS backend
+│   └── desktop-shell/    # Electron wrapper (future)
 ├── libs/
-│   ├── cubrid-driver/   # Shared logic to connect to CUBRID database
-│   ├── api-interfaces/  # TypeScript types (Shared by React, Nest, and Electron)
-│   └── ui-components/   # Reusable Database tables, charts, and editors
+│   ├── cubrid-driver/    # Shared CUBRID access logic
+│   ├── api-interfaces/   # Shared TypeScript interfaces
+│   └── ui-components/    # Reusable UI components
 ├── nx.json
 └── package.json
 ```
 
-## 시작하기
+## Getting Started
 
-### 의존성 설치
+### Install Dependencies
 
 ```bash
 npm install
 ```
 
-### 개발 서버 실행
+### Run Development Servers
 
 #### Frontend (React)
+
 ```bash
 nx serve web-manager
 ```
 
 #### Backend (NestJS)
+
 ```bash
-# 기본 설정으로 실행 (SEED=seed, SALT=salt, PORT=8080)
+# Run with default values (SEED=seed, SALT=salt, PORT=8080)
 nx serve api-server
 
-# 커스텀 인자 전달 (--args 플래그 사용)
+# Run with custom CLI args
 nx serve api-server --args="--SEED=myseed --SALT=mysalt --PORT=8081"
 
-# 또는 configuration 사용
+# Or use an Nx configuration
 nx serve api-server --configuration=dev-with-port
 ```
 
-**중요**: API 서버는 다음 커맨드라인 인자가 필수입니다:
-- `--SEED={string}`: 암호화 시드 값 (필수)
-- `--SALT={string}`: 암호화 솔트 값 (필수)
-- `--PORT={number}`: 서버 포트 번호 (선택, 기본값: 8080)
+Required API CLI args:
+- `--SEED={string}`: encryption seed (required)
+- `--SALT={string}`: encryption salt (required)
+- `--PORT={number}`: server port (optional, default: 8080)
 
-### 빌드
+### Build
 
 ```bash
-# Frontend 빌드
+# Frontend
 nx build web-manager
 
-# Backend 빌드
+# Backend
 nx build api-server
 ```
 
-### 실행 파일 빌드 (pkg)
+### Build Executables (`pkg`)
 
-`pkg`를 사용하여 단일 실행 파일로 빌드할 수 있습니다:
+You can build single-file executables with `pkg`:
 
 ```bash
-# 모든 플랫폼용 실행 파일 빌드 (Windows, Linux, macOS)
+# Build for all platforms (Windows, Linux, macOS)
 nx build:exe api-server --configuration=all
 
-# 특정 플랫폼만 빌드
-nx build:exe api-server --configuration=windows   # Windows만
-nx build:exe api-server --configuration=linux    # Linux만
-nx build:exe api-server --configuration=macos     # macOS만
+# Build for one platform
+nx build:exe api-server --configuration=windows
+nx build:exe api-server --configuration=linux
+nx build:exe api-server --configuration=macos
 ```
 
-빌드된 실행 파일은 `dist/executables/` 디렉토리에 생성됩니다:
+Output files are generated in `dist/executables/`:
 - Windows: `api-server.exe`
 - Linux: `api-server-linux`
 - macOS: `api-server-macos`
 
-**실행 파일 사용법:**
+Run examples:
+
 ```bash
 # Windows
 dist/executables/api-server.exe --SEED=seed --SALT=salt --PORT=8080
@@ -91,39 +94,36 @@ dist/executables/api-server.exe --SEED=seed --SALT=salt --PORT=8080
 ./dist/executables/api-server-macos --SEED=seed --SALT=salt --PORT=8080
 ```
 
-**pkg 설정:**
-- `pkg` 설정은 루트 `package.json`의 `pkg` 필드에 정의되어 있습니다.
-- 빌드 시 이 설정이 자동으로 빌드된 `package.json`에 복사됩니다.
-- 플랫폼별 타겟을 변경하려면 루트 `package.json`의 `pkg.targets`를 수정하거나, configuration을 사용하세요.
+Notes:
+- `pkg` settings are defined in the root `package.json` (`pkg` field).
+- Build settings are copied into the built `package.json`.
+- To change targets, edit `pkg.targets` in root `package.json` or use Nx configurations.
+- Webpack bundles dependencies, so executables run without a separate Node.js install.
+- TypeScript path aliases are resolved at build time.
 
-**참고:**
-- webpack이 모든 의존성을 번들링하므로, 실행 파일은 Node.js 없이도 독립적으로 실행됩니다.
-- TypeScript path alias는 빌드 시점에 해결되므로, 실행 파일에서도 정상적으로 작동합니다.
-- `pkg`는 pre-built 바이너리를 사용하므로 빌드 도구가 필요 없고 안정적입니다.
+## Tech Stack
 
-## 기술 스택
+- Frontend: React 19, Vite, Ant Design, Redux Toolkit
+- Backend: NestJS 11, TypeScript
+- Monorepo: Nx 22.3.3
 
-- **Frontend**: React 19, Vite, Ant Design, Redux Toolkit
-- **Backend**: NestJS 11, TypeScript
-- **Monorepo**: Nx 22.3.3
+## Nx Monorepo Notes
 
-## Nx Monorepo 구조 이해하기
+This workspace uses a single root `package.json` to manage dependencies for all projects.
 
-Nx monorepo는 **단일 `package.json`**으로 모든 프로젝트의 의존성을 관리합니다.
+### Core Concepts
 
-### 핵심 개념
+- Root `package.json`: central dependency management
+- `project.json`: per-app/per-lib build and run config (not dependency definitions)
+- Path aliases: TypeScript resolves aliases like `@api-interfaces`, `@auth`
+- Bundling: webpack bundles code during build
 
-- **루트 `package.json`**: 모든 npm 패키지 의존성을 한 곳에서 관리
-- **`project.json`**: 각 앱/라이브러리의 빌드/실행 설정 (의존성 관리 아님)
-- **Path Alias**: TypeScript가 `@api-interfaces`, `@auth` 등을 실제 경로로 해결
-- **번들링**: webpack이 빌드 시 모든 코드를 하나로 묶음
+### Why No `package.json` Per App?
 
-### 왜 각 앱에 `package.json`이 없을까?
+Compared with multi-project repos that have one `package.json` per project, Nx here uses:
+- single dependency management
+- reduced duplication
+- consistent package versions
+- easy sharing through `libs/`
 
-일반적인 멀티 프로젝트는 각 프로젝트마다 `package.json`이 있지만, Nx monorepo는:
-- ✅ **단일 의존성 관리**: 루트 `package.json` 하나로 모든 프로젝트 관리
-- ✅ **중복 제거**: 같은 패키지가 여러 곳에 설치되지 않음
-- ✅ **버전 통일**: 모든 프로젝트가 같은 버전 사용
-- ✅ **공유 라이브러리**: `libs/`의 코드를 쉽게 공유
-
-자세한 내용은 [`docs/NX_STRUCTURE.md`](./docs/NX_STRUCTURE.md)를 참고하세요.
+See [`docs/NX_STRUCTURE.md`](./docs/NX_STRUCTURE.md) for more details.

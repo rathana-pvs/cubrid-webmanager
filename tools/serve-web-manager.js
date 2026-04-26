@@ -1,12 +1,11 @@
 #!/usr/bin/env node
 
 /**
- * 간단한 정적 파일 서버
- * web-manager 빌드 결과물을 서빙합니다.
- * 
- * 사용법:
- *   node serve-web-manager.js [포트번호]
- *   예: node serve-web-manager.js 4200
+ * Simple static file server for web-manager build output.
+ *
+ * Usage:
+ *   node serve-web-manager.js [port]
+ *   example: node serve-web-manager.js 4200
  */
 
 const http = require('http');
@@ -16,7 +15,7 @@ const path = require('path');
 const PORT = process.argv[2] ? parseInt(process.argv[2], 10) : 4200;
 const BUILD_DIR = path.join(__dirname, '..', 'dist', 'apps', 'web-manager');
 
-// MIME 타입 매핑
+// MIME type map
 const mimeTypes = {
   '.html': 'text/html',
   '.js': 'application/javascript',
@@ -53,7 +52,7 @@ function serveFile(filePath, res) {
 }
 
 const server = http.createServer((req, res) => {
-  // CORS 헤더 추가 (필요한 경우)
+  // CORS headers (if needed)
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
@@ -64,14 +63,14 @@ const server = http.createServer((req, res) => {
     return;
   }
 
-  // URL 정규화
+  // Normalize URL
   let filePath = req.url === '/' ? '/index.html' : req.url;
-  filePath = filePath.split('?')[0]; // 쿼리 문자열 제거
+  filePath = filePath.split('?')[0]; // Remove query string
   
-  // 실제 파일 경로
+  // Resolve full file path
   const fullPath = path.join(BUILD_DIR, filePath);
 
-  // 보안: BUILD_DIR 밖으로 나가는 경로 차단
+  // Security: block path traversal outside BUILD_DIR
   if (!fullPath.startsWith(BUILD_DIR)) {
     res.writeHead(403, { 'Content-Type': 'text/plain' });
     res.end('403 Forbidden');
@@ -80,7 +79,7 @@ const server = http.createServer((req, res) => {
 
   fs.stat(fullPath, (err, stats) => {
     if (err || !stats.isFile()) {
-      // 파일이 없으면 index.html로 fallback (SPA 라우팅 지원)
+      // Fallback to index.html for SPA routing
       const indexPath = path.join(BUILD_DIR, 'index.html');
       serveFile(indexPath, res);
       return;
@@ -90,29 +89,29 @@ const server = http.createServer((req, res) => {
   });
 });
 
-// 빌드 디렉토리 확인
+// Verify build directory
 if (!fs.existsSync(BUILD_DIR)) {
-  console.error(`❌ 빌드 디렉토리를 찾을 수 없습니다: ${BUILD_DIR}`);
-  console.error('먼저 다음 명령어로 빌드하세요:');
+  console.error(`❌ Build directory not found: ${BUILD_DIR}`);
+  console.error('Build first with:');
   console.error('  nx build web-manager');
   process.exit(1);
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Web Manager 서버가 시작되었습니다!`);
-  console.log(`📁 서빙 디렉토리: ${BUILD_DIR}`);
-  console.log(`🌐 접속 주소: http://localhost:${PORT}`);
-  console.log(`   또는: http://0.0.0.0:${PORT}`);
-  console.log(`\n종료하려면 Ctrl+C를 누르세요.`);
+  console.log(`🚀 Web Manager server started`);
+  console.log(`📁 Serving directory: ${BUILD_DIR}`);
+  console.log(`🌐 URL: http://localhost:${PORT}`);
+  console.log(`   or: http://0.0.0.0:${PORT}`);
+  console.log(`\nPress Ctrl+C to stop.`);
 });
 
-// 에러 처리
+// Error handling
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`❌ 포트 ${PORT}가 이미 사용 중입니다.`);
-    console.error(`다른 포트를 사용하세요: node serve-web-manager.js [포트번호]`);
+    console.error(`❌ Port ${PORT} is already in use.`);
+    console.error(`Use another port: node serve-web-manager.js [port]`);
   } else {
-    console.error('❌ 서버 오류:', err);
+    console.error('❌ Server error:', err);
   }
   process.exit(1);
 });

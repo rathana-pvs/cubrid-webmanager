@@ -5,7 +5,7 @@
  */
 export { omitPassword, omitPasswordArray, omitPasswordHashMap, omitHashMap } from './redaction/omit_password';
 export { passwordValidityChecker } from './validation/password-validity-checker';
-export { getOrCreateSSLCert } from './ssl/ssl-util';
+export { getOrCreateSSLCert, getHttpsOptions } from './ssl/ssl-util';
 export { getStoragePath, resolveUserFilePath } from './resolve-storage-path';
 export { isValidIPv4, isValidIPv6 } from './network/ip-checker';
 export { DBAuthResolver, ResolvedDBAuth } from './auth/db-auth-resolver';

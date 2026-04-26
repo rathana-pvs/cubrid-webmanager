@@ -3,6 +3,7 @@ import * as fs from 'fs/promises';
 import * as path from 'path';
 import * as lockfile from 'proper-lockfile';
 import { HandleLockFsErrors } from '@common';
+import { getStoragePath } from '@util';
 
 /**
  * Service for managing file locking operations.
@@ -33,7 +34,7 @@ export interface FileLock {
 
 @Injectable()
 export class LockService {
-  private readonly storageDir = path.join(process.cwd(), 'storage');
+  private readonly storageDir = getStoragePath();
 
   /**
    * Resolves the absolute path for a given filename within the storage directory.

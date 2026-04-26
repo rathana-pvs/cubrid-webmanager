@@ -31,10 +31,10 @@ function isMeaningfulCmsNote(note: unknown): boolean {
 }
 
 /**
- * CMS 실패 시 클라이언트에 보여줄 문자열 후보를 순서대로 수집합니다.
- * - `checkCmsStatusError` 경로: `response` 전체 객체 + `response.note`
- * - Axios HTTP 오류 경로 (`HandleCmsErrors`): `data`에 CMS JSON 본문 (`data.note`)
- * - 서비스에서 직접 던질 때: `message`만 있는 경우
+ * Collect candidate user-facing strings for CMS failures in priority order.
+ * - `checkCmsStatusError` path: full `response` object + `response.note`
+ * - Axios HTTP error path (`HandleCmsErrors`): CMS JSON body in `data` (`data.note`)
+ * - Service-thrown errors: only `message` may exist
  */
 function cmsNoteFromPayload(additionalData?: Record<string, any>): string | undefined {
   if (!additionalData) {

@@ -1,13 +1,15 @@
+import { loadRuntimeEnv } from './config/load-runtime-env';
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module';
 import 'module-alias/register';
-import { getOrCreateSSLCert } from '@util';
+import { getHttpsOptions } from '@util';
 import { GlobalExceptionFilter } from '@error/global-filter';
 import { ConfigService } from '@config/config.service';
 import { SuccessResponseInterceptor, LoggingInterceptor } from '@common'; // Updated import
 
 async function bootstrap() {
-  const httpsOptions = getOrCreateSSLCert();
+  loadRuntimeEnv();
+  const httpsOptions = getHttpsOptions();
   const app = await NestFactory.create(AppModule, { httpsOptions });
   const configService = app.get(ConfigService);
   const port: string = configService.getPort();

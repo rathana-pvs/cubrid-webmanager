@@ -45,22 +45,10 @@
     },
     "serve": {
       "executor": "nx:run-commands",
-      "defaultConfiguration": "development",
       "dependsOn": ["build"],
       "options": {
         "command": "node dist/apps/api-server/main.js",
-        "cwd": "."
-      },
-      "configurations": {
-        "development": {
-          "command": "node dist/apps/api-server/main.js --SEED=seed --SALT=salt --PORT=8080"
-        },
-        "production": {
-          "command": "node dist/apps/api-server/main.js --SEED=seed --SALT=salt --PORT=8080"
-        },
-        "dev-with-port": {
-          "command": "node dist/apps/api-server/main.js --SEED=seed --SALT=salt --PORT=8081"
-        }
+        "cwd": "{workspaceRoot}"
       }
     },
     "test": {

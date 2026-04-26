@@ -2,6 +2,33 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as selfsigned from 'selfsigned';
 
+export type HttpsKeyCert = { key: Buffer; cert: Buffer };
+
+/**
+ * Production: reads PEM paths from `SSL_CERT_PATH` and `SSL_KEY_PATH` (e.g. under `/etc`).
+ * Non-production: self-signed certs next to the executable / project (see `getOrCreateSSLCert`).
+ */
+export function getHttpsOptions(): HttpsKeyCert {
+  const certPath = process.env.SSL_CERT_PATH?.trim();
+  const keyPath = process.env.SSL_KEY_PATH?.trim();
+  const env = (process.env.ENVIRONMENT || '').toLowerCase();
+
+  if (certPath && keyPath) {
+    return {
+      cert: fs.readFileSync(certPath),
+      key: fs.readFileSync(keyPath),
+    };
+  }
+
+  if (env === 'production') {
+    throw new Error(
+      'Production requires SSL_CERT_PATH and SSL_KEY_PATH (PEM files, e.g. under /etc).'
+    );
+  }
+
+  return getOrCreateSSLCert();
+}
+
 /**
  * Retrieves existing SSL certificates or generates new self-signed certificates if they don't exist.
  * Certificates are stored in an 'ssl' directory relative to the executable path (for pkg) or project root.
@@ -10,7 +37,7 @@ import * as selfsigned from 'selfsigned';
  * @category Utilities
  * @since 1.0.0
  */
-export function getOrCreateSSLCert() {
+export function getOrCreateSSLCert(): HttpsKeyCert {
   const isPkg = !!(process as any).pkg;
   const baseDir = isPkg ? path.dirname(process.execPath) : path.resolve(__dirname, '..', '..');
 
