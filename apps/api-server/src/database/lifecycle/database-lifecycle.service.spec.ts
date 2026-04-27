@@ -171,7 +171,6 @@ describe('DatabaseLifecycleService', () => {
             dbname: 'testdb',
             dbdir: '/path/to/testdb',
             isProfileExists: false,
-            isHA: false,
           },
         ],
       },
@@ -195,7 +194,6 @@ describe('DatabaseLifecycleService', () => {
               dbname: 'testdb',
               dbdir: '/path/to/testdb',
               isProfileExists: true,
-              isHA: false,
             },
           ],
         },
@@ -972,7 +970,7 @@ describe('DatabaseLifecycleService', () => {
     });
 
     it('should throw HostError if host is not found', async () => {
-      hostService.findHostInternal.mockRejectedValue(
+      cmsConfigService.getAllSystemParam.mockRejectedValue(
         HostError.NoSuchHost({ hostUid: mockHostUid })
       );
       const request: DeleteDatabaseRequest = {
@@ -982,6 +980,21 @@ describe('DatabaseLifecycleService', () => {
       await expect(
         service.deleteDatabase(mockUserId, mockHostUid, mockDbname, request)
       ).rejects.toThrow(HostError);
+    });
+
+    it('should throw DatabaseError when host is HA (deletedb blocked)', async () => {
+      cmsConfigService.getAllSystemParam.mockResolvedValue({
+        conflist: [{ confdata: ['[common]', 'ha_mode=ON'] }],
+      } as any);
+      const request: DeleteDatabaseRequest = {
+        delbackup: 'y',
+      };
+
+      await expect(
+        service.deleteDatabase(mockUserId, mockHostUid, mockDbname, request)
+      ).rejects.toThrow(DatabaseError);
+
+      expect(cmsClient.postAuthenticated).not.toHaveBeenCalled();
     });
 
     it('should throw CmsError if CMS request fails', async () => {
@@ -997,32 +1010,40 @@ describe('DatabaseLifecycleService', () => {
       ).rejects.toThrow(CmsError);
     });
 
-    it('should throw DatabaseError if CMS token error occurs', async () => {
-      (common.checkCmsTokenError as jest.Mock).mockImplementation(() => {
-        throw DatabaseError.InvalidParameter('Invalid CMS token');
-      });
-      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+    it('should throw CmsError when executeCmsRequest reports invalid token', async () => {
+      const execSpy = jest
+        .spyOn(service as any, 'executeCmsRequest')
+        .mockRejectedValueOnce(CmsError.InvalidToken({ response: { note: 'invalid token' } }));
       const request: DeleteDatabaseRequest = {
         delbackup: 'y',
       };
 
       await expect(
         service.deleteDatabase(mockUserId, mockHostUid, mockDbname, request)
-      ).rejects.toThrow(DatabaseError);
+      ).rejects.toThrow(CmsError);
+
+      execSpy.mockRestore();
     });
 
-    it('should throw DatabaseError if CMS status is fail', async () => {
-      (common.checkCmsStatusError as jest.Mock).mockImplementation(() => {
-        throw DatabaseError.InvalidParameter('CMS status failed');
-      });
-      cmsClient.postAuthenticated.mockResolvedValue(mockSuccessResponse);
+    it('should throw CmsError if CMS status is fail', async () => {
+      const actualCommon = jest.requireActual<typeof import('@common')>('@common');
+      (common.checkCmsStatusError as jest.Mock).mockImplementation(
+        actualCommon.checkCmsStatusError as (...args: unknown[]) => void
+      );
+
+      cmsClient.postAuthenticated.mockResolvedValue({
+        __EXEC_TIME: '0 ms',
+        note: 'operation failed',
+        status: 'fail',
+        task: 'deletedb',
+      } as any);
       const request: DeleteDatabaseRequest = {
         delbackup: 'y',
       };
 
       await expect(
         service.deleteDatabase(mockUserId, mockHostUid, mockDbname, request)
-      ).rejects.toThrow(DatabaseError);
+      ).rejects.toThrow(CmsError);
     });
   });
 });

@@ -21,7 +21,6 @@ import {
   UserVerifyRequest,
   UserVerifyResponse,
 } from '@api-interfaces';
-import { ValidationError } from '@error/validation/validation-error';
 import { validateRequiredFields } from '@util';
 
 /**
@@ -142,20 +141,20 @@ export class DatabaseUserController {
   }
 
   /**
-   * Login to a database using profile or client-provided credentials.
+   * Login to a database using client-provided credentials.
    *
-   * - If profile exists: only dbname is required (id, password not needed in body)
-   * - If profile doesn't exist: dbname + id + password are required
+   * - Requires `id` and `password` in request body
+   * - Does not fallback to stored profile
    *
    * @route POST /:hostUid/database/users/login/:dbname
    * @param req Express request (contains authenticated user)
    * @param hostUid Host unique identifier from path parameter
    * @param dbname Database name from path parameter
-   * @param body Request body containing optional `id`, `password` (required if no profile)
+   * @param body Request body containing `id`, `password`
    * @returns boolean True on success
    * @example
    * // POST /host-uid/database/users/login/demodb
-   * // Body (if no profile): { "id": "user", "password": "pass" }
+   * // Body: { "id": "user", "password": "pass" }
    */
   @Post('login/:dbname')
   async loginDatabase(
@@ -165,30 +164,38 @@ export class DatabaseUserController {
     @Body() body: Omit<DatabaseLoginClientRequest, 'hostUid' | 'dbname'>
   ): Promise<boolean> {
     const userId = req.user.sub;
+    validateRequiredFields(body, ['id', 'password'], `database/users/login/${dbname}`, this.logger);
+    this.logger.log(`Logging in to database: ${dbname} on host: ${hostUid}`);
+    return await this.databaseUserService.loginDatabase(
+      userId,
+      hostUid,
+      dbname,
+      body.id,
+      body.password
+    );
+  }
 
-    // Try to validate id/password - if missing, will use profile instead
-    try {
-      validateRequiredFields(body, ['id', 'password'], `database/users/login/${dbname}`, this.logger);
-      // If validation passes, use provided credentials
-      this.logger.log(`Logging in to database: ${dbname} on host: ${hostUid}`);
-      return await this.databaseUserService.loginDatabase(
-        userId,
-        hostUid,
-        dbname,
-        body.id,
-        body.password
-      );
-    } catch (error) {
-      // If ValidationError (id/password are missing), don't pass parameters to use profile
-      // DBAuthResolver.resolve uses == null check, so undefined is handled correctly
-      if (error instanceof ValidationError) {
-        this.logger.log(`Logging in to database: ${dbname} on host: ${hostUid} (using profile)`);
-        return await this.databaseUserService.loginDatabase(userId, hostUid, dbname);
-      } else {
-        // Re-throw non-validation errors
-        throw error;
-      }
-    }
+  /**
+   * Login to a database using stored profile credentials only.
+   *
+   * - Uses `host.dbProfiles[dbname]`
+   * - Fails if profile is missing
+   *
+   * @route POST /:hostUid/database/users/login-with-profile/:dbname
+   * @param req Express request (contains authenticated user)
+   * @param hostUid Host unique identifier from path parameter
+   * @param dbname Database name from path parameter
+   * @returns boolean True on success
+   */
+  @Post('login-with-profile/:dbname')
+  async loginDatabaseWithProfile(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string
+  ): Promise<boolean> {
+    const userId = req.user.sub;
+    this.logger.log(`Logging in to database: ${dbname} on host: ${hostUid} (using profile)`);
+    return await this.databaseUserService.loginDatabase(userId, hostUid, dbname);
   }
 
   /**

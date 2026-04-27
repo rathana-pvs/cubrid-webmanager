@@ -71,6 +71,7 @@ export class CmsAuthService {
     }
 
     host.token = response.token;
+    host.initialLogin = false;
     await this.repository.atomicUpdateUser(userId, async (user: User) => {
       user.host_list[uid] = host;
       return user;

@@ -13,8 +13,6 @@ export type StartInfoClientResponse = {
       dbdir: string;
       dbname: string;
       isProfileExists: boolean;
-      /** True when this DB participates in HA on this host (startinfo + heartbeat + cubridconf). */
-      isHA: boolean;
     }[];
   };
 };

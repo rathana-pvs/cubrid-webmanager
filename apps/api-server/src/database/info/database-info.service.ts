@@ -10,6 +10,7 @@ import { BaseCmsRequest, BaseCmsResponse } from '@type';
 import { StartInfoCmsResponse } from '@type/cms-response';
 import { CMS_CONFNAME_HACONF } from '@database/database.constants';
 import { parseHaDbListDbNamesFromHaConf } from '@util';
+import { mapStartInfoToClientResponse } from './start-info.mapper';
 
 /**
  * Service for database information (read-only) used across database modules.
@@ -56,8 +57,6 @@ export class DatabaseInfoService extends BaseService {
 
   /**
    * Get start information for databases on a host (client shape with isProfileExists).
-   * Per-DB `isHA` is derived from cubrid_ha.conf (CMS `haconf`): the DB name must appear
-   * in `[common]` `ha_db_list`. If it is not listed, the DB is treated as non-HA.
    *
    * @param userId User ID from JWT
    * @param hostUid Host UID
@@ -67,34 +66,12 @@ export class DatabaseInfoService extends BaseService {
   @HandleDatabaseErrors()
   async startInfo(userId: string, hostUid: string): Promise<StartInfoClientResponse> {
     const host = await this.hostService.findHostInternal(userId, hostUid);
-    const [cmsStart, haConf] = await Promise.all([
-      this.startInfoInternal(userId, hostUid),
-      this.cmsConfigService.getAllSystemParam(userId, hostUid, CMS_CONFNAME_HACONF),
-    ]);
-    const dataOnly = this.extractDomainData(cmsStart);
-    const dbProfiles = host.dbProfiles || {};
-    const dbs = dataOnly.dblist?.[0]?.dbs || [];
-    const activeList = dataOnly.activelist?.[0]?.active || [];
-
-    const haDbNames = parseHaDbListDbNamesFromHaConf(haConf);
-
-    const clientResponse: StartInfoClientResponse = {
-      activelist: { active: activeList },
-      dblist: {
-        dbs: dbs.map((db) => ({
-          ...db,
-          isProfileExists: !!dbProfiles[db.dbname],
-          isHA: haDbNames.has((db.dbname ?? '').trim()),
-        })),
-      },
-    };
-
-    return clientResponse;
+    const cmsStart = await this.startInfoInternal(userId, hostUid);
+    return mapStartInfoToClientResponse(cmsStart, host.dbProfiles);
   }
 
   /**
-   * Same rules as per-DB `isHA` in {@link startInfo}: DB name must be in `ha_db_list`
-   * in cubrid_ha.conf (`haconf`).
+   * True when `dbname` is listed in `[common]` `ha_db_list` in cubrid_ha.conf (`haconf`).
    * Used by database start/stop/restart to choose `ha_*` vs `startdb`/`stopdb`.
    */
   @HandleDatabaseErrors()

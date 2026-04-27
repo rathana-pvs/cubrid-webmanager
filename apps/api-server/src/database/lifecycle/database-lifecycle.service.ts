@@ -39,7 +39,7 @@ import {
   DeleteDatabaseCmsResponse,
   DbSpaceInfoCmsResponse,
 } from '@type/cms-response';
-import { convertExvolArrayToCmsFormat } from '@util';
+import { convertExvolArrayToCmsFormat, isHostHaModeOnFromCubridConf } from '@util';
 
 /**
  * Service for managing database lifecycle operations.
@@ -324,6 +324,22 @@ export class DatabaseLifecycleService extends BaseService {
   ): Promise<CreateDatabaseClientResponse> {
     const host = await this.hostService.findHostInternal(userId, hostUid);
 
+    const cubridConf = await this.cmsConfigService.getAllSystemParam(
+      userId,
+      hostUid,
+      CMS_CONFNAME_CUBRID
+    );
+    if (isHostHaModeOnFromCubridConf(cubridConf)) {
+      throw DatabaseError.InvalidParameter(
+        'Cannot create databases on hosts configured for HA.',
+        {
+          hostUid,
+          dbname: request.dbname,
+          reason: 'HA_HOST_CREATE_DB_BLOCKED',
+        }
+      );
+    }
+
     // Collect files to check before parsing exvol
     const filesToCheck: string[] = [];
 
@@ -579,6 +595,22 @@ export class DatabaseLifecycleService extends BaseService {
     dbname: string,
     request: DeleteDatabaseRequest
   ): Promise<StartInfoClientResponse> {
+    const cubridConf = await this.cmsConfigService.getAllSystemParam(
+      userId,
+      hostUid,
+      CMS_CONFNAME_CUBRID
+    );
+    if (isHostHaModeOnFromCubridConf(cubridConf)) {
+      throw DatabaseError.InvalidParameter(
+        'Cannot delete databases on hosts configured for HA.',
+        {
+          hostUid,
+          dbname,
+          reason: 'HA_HOST_DELETE_DB_BLOCKED',
+        }
+      );
+    }
+
     const cmsRequest: DeleteDatabaseCmsRequest = {
       task: 'deletedb',
       dbname: dbname,

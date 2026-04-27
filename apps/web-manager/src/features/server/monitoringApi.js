@@ -19,6 +19,14 @@ export const monitoringApi = {
    */
   getBrokerList: (hostUid) => 
     apiClient.get(`/${hostUid}/broker/list`),
+
+  /**
+   * Get HA heartbeat list
+   * @param {string} hostUid
+   * @returns {Promise<any>}
+   */
+  getHaHeartbeatList: (hostUid) =>
+    apiClient.post(`/${hostUid}/ha/heartbeat-list`, { dbmodeall: 'y' }),
 };
 
 export default monitoringApi;

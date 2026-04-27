@@ -4,13 +4,23 @@ import monitoringApi from './monitoringApi';
 // Thunk to fetch all monitoring data in parallel
 export const fetchMonitoringData = createAsyncThunk(
   'monitoring/fetchAll',
-  async (hostUid, { rejectWithValue }) => {
+  async (hostUid, { getState, rejectWithValue }) => {
     try {
-      const [hostStat, brokers] = await Promise.all([
+      const state = getState();
+      const haInfo = state.host.haInfo[hostUid];
+      const isHA = haInfo?.isHA;
+
+      const promises = [
         monitoringApi.getHostStat(hostUid),
         monitoringApi.getBrokerList(hostUid)
-      ]);
-      return { hostStat, brokers };
+      ];
+
+      if (isHA) {
+        promises.push(monitoringApi.getHaHeartbeatList(hostUid));
+      }
+
+      const [hostStat, brokers, haHeartbeat] = await Promise.all(promises);
+      return { hostStat, brokers, haHeartbeat };
     } catch (error) {
       return rejectWithValue(error.response?.data || error.message);
     }
@@ -63,7 +73,7 @@ const monitoringSlice = createSlice({
         if (!hostData) return;
         
         hostData.loading = false;
-        const { hostStat, brokers } = action.payload;
+        const { hostStat, brokers, haHeartbeat } = action.payload;
         const now = Date.now();
 
         // 1. Calculate TPS/QPS from brokers
@@ -109,8 +119,20 @@ const monitoringSlice = createSlice({
         };
 
         // 5. Update History
-        hostData.history.push({ timestamp: now, cpu: cpuUsage, memory: memUsage, tps: totalTps, qps: totalQps, disk: hostStat.disk_usage });
+        hostData.history.push({ 
+          timestamp: now, 
+          cpu: cpuUsage, 
+          memory: memUsage, 
+          tps: totalTps, 
+          qps: totalQps, 
+          disk: hostStat.disk_usage 
+        });
         hostData.history = hostData.history.filter(h => now - h.timestamp < MAX_HISTORY_MS);
+
+        // 6. Update HA Heartbeat Info if available
+        if (haHeartbeat) {
+          hostData.haHeartbeat = haHeartbeat;
+        }
 
         // 6. Calculate Averages
         const historyLen = hostData.history.length;

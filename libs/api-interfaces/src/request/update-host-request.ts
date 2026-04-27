@@ -10,4 +10,4 @@ import { HostInfo } from '@type/host-info';
  * @since 1.0.0
  */
 
-export type UpdateHostRequest = Omit<HostInfo, 'uid'>;
+export type UpdateHostRequest = Omit<HostInfo, 'uid' | 'initialLogin'>;

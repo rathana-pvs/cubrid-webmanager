@@ -164,7 +164,7 @@ export const loginToHost = createAsyncThunk(
   async (hostUid, { rejectWithValue }) => {
     try {
       const response = await hostApi.loginToHost(hostUid);
-      // The API returns { data: false } or just false on failure
+      // The API returns { success: true, isHA: boolean, ... }
       if (
         response === false ||
         response?.data === false ||
@@ -172,7 +172,7 @@ export const loginToHost = createAsyncThunk(
       ) {
         return rejectWithValue('Host login failed (bad credentials or unavailable)');
       }
-      return hostUid;
+      return { hostUid, ...response };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.response?.data?.error || `Failed to login to host ${hostUid}`);
     }
@@ -204,6 +204,11 @@ const initialState = {
   hosts: [],
   authorizedHosts: [], // Array of hostUids that have active forwarded sessions
   hostEnvs: {}, // Cache of environment info (version, paths, etc) indexed by hostUid
+  haInfo: JSON.parse(localStorage.getItem('cubrid_ha_info') || '{}'), // Cache of HA info (isHA, currentNodeType, haNodes) indexed by hostUid
+  suggestedHaNodes: [], // Peer nodes discovered after HA login
+  isDiscoveryModalOpen: false, // Visibility of the discovery modal
+  initialHostData: null, // Data to pre-fill AddHostModal
+  lastAddedHostUid: null, // Tracks newly added host to trigger discovery ONLY on first login
   selectedHostUid: null,
   loading: false,
   isLoggingIntoHost: false,
@@ -222,11 +227,13 @@ const hostSlice = createSlice({
   name: 'host',
   initialState,
   reducers: {
-    openAddHostModal: (state) => {
+    openAddHostModal: (state, action) => {
       state.isAddHostModalOpen = true;
+      state.initialHostData = action.payload || null;
     },
     closeAddHostModal: (state) => {
       state.isAddHostModalOpen = false;
+      state.initialHostData = null;
     },
     setSelectedHost: (state, action) => {
       state.selectedHostUid = action.payload;
@@ -265,6 +272,20 @@ const hostSlice = createSlice({
       state.isServerVersionModalOpen = true;
       state.serverVersionHostUid = action.payload;
     },
+    setSuggestedHaNodes: (state, action) => {
+      state.suggestedHaNodes = action.payload;
+      state.isDiscoveryModalOpen = action.payload.length > 0;
+    },
+    clearSuggestedHaNodes: (state) => {
+      state.suggestedHaNodes = [];
+      state.isDiscoveryModalOpen = false;
+    },
+    openDiscoveryModal: (state) => {
+      state.isDiscoveryModalOpen = true;
+    },
+    closeDiscoveryModal: (state) => {
+      state.isDiscoveryModalOpen = false;
+    },
     closeServerVersionModal: (state) => {
       state.isServerVersionModalOpen = false;
       state.serverVersionHostUid = null;
@@ -287,6 +308,9 @@ const hostSlice = createSlice({
     clearHostError: (state) => {
       state.error = null;
     },
+    clearLastAddedHostUid: (state) => {
+      state.lastAddedHostUid = null;
+    },
   },
   extraReducers: (builder) => {
     builder
@@ -308,6 +332,15 @@ const hostSlice = createSlice({
       })
       .addCase(addHost.fulfilled, (state, action) => {
         state.loading = false;
+        
+        // Track the newly added host UID
+        const prevUids = state.hosts.map(h => h.uid);
+        const newHost = action.payload.find(h => !prevUids.includes(h.uid));
+        if (newHost) {
+          state.lastAddedHostUid = newHost.uid;
+          state.selectedHostUid = newHost.uid;
+        }
+
         state.hosts = action.payload; // Payload is the full updated host list array
         state.isAddHostModalOpen = false; // Auto close modal on success
       })
@@ -326,9 +359,12 @@ const hostSlice = createSlice({
       .addCase(loginToHost.fulfilled, (state, action) => {
         state.isLoggingIntoHost = false;
         state.loading = false;
-        if (!state.authorizedHosts.includes(action.payload)) {
-          state.authorizedHosts.push(action.payload);
+        const { hostUid, ...haInfo } = action.payload;
+        if (!state.authorizedHosts.includes(hostUid)) {
+          state.authorizedHosts.push(hostUid);
         }
+        state.haInfo[hostUid] = haInfo;
+        localStorage.setItem('cubrid_ha_info', JSON.stringify(state.haInfo));
       })
       .addCase(loginToHost.rejected, (state, action) => {
         state.isLoggingIntoHost = false;
@@ -349,6 +385,10 @@ const hostSlice = createSlice({
         state.authorizedHosts = state.authorizedHosts.filter(uid => uid !== action.payload);
         state.isDeleteHostModalOpen = false;
         state.hostToDeleteUid = null;
+        delete state.haInfo[action.payload];
+        delete state.hostEnvs[action.payload];
+        delete state.hostAuthErrors[action.payload];
+        localStorage.setItem('cubrid_ha_info', JSON.stringify(state.haInfo));
       })
       .addCase(deleteHost.rejected, (state, action) => {
         state.loading = false;
@@ -425,12 +465,17 @@ export const {
   closeEditHostModal,
   openServerVersionModal,
   closeServerVersionModal,
+  setSuggestedHaNodes,
+  clearSuggestedHaNodes,
+  openDiscoveryModal,
+  closeDiscoveryModal,
   openImportExportModal,
   closeImportExportModal,
   openChangePasswordModal,
   closeChangePasswordModal,
   clearHostError,
   setServiceProgressMessage,
+  clearLastAddedHostUid,
 } = hostSlice.actions;
 
 export default hostSlice.reducer;

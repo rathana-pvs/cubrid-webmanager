@@ -19,13 +19,25 @@ export function parseHaDbListDbNamesFromHaConf(
   response: Pick<GetAllSysParamCmsResponse, 'conflist'>
 ): Set<string> {
   const grouped = parseConfigParamsBySection(response as GetAllSysParamCmsResponse);
-  const raw = grouped['common']?.['ha_db_list'];
+  const commonSectionKey = Object.keys(grouped).find((k) => k.trim().toLowerCase() === 'common');
+  if (!commonSectionKey) {
+    return new Set<string>();
+  }
+
+  const commonParams = grouped[commonSectionKey] ?? {};
+  const haDbListKey = Object.keys(commonParams).find(
+    (k) => k.trim().toLowerCase() === 'ha_db_list'
+  );
+  const raw = haDbListKey ? commonParams[haDbListKey] : undefined;
   const out = new Set<string>();
   if (raw === undefined || raw.trim() === '') {
     return out;
   }
-  for (const part of raw.split(',')) {
-    const name = part.trim();
+
+  // Allow inline comments and quoted db names in config values.
+  const valueWithoutComment = raw.replace(/[;#].*$/, '').trim();
+  for (const part of valueWithoutComment.split(',')) {
+    const name = part.trim().replace(/^['"]+|['"]+$/g, '');
     if (name) {
       out.add(name);
     }

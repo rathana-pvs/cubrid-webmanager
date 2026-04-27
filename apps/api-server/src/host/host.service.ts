@@ -51,7 +51,12 @@ export class HostService {
   async getHostList(userId: string): Promise<GetHostsResponse> {
     this.logger.log(`Getting host list for user: ${userId}`);
     const user: User = await this.repository.loadUserById(userId);
-    const hosts = user.host_list;
+    const hosts = Object.fromEntries(
+      Object.entries(user.host_list).map(([uid, host]) => [
+        uid,
+        { ...host, initialLogin: host.initialLogin ?? true },
+      ])
+    );
     const hostCount = Object.keys(hosts).length;
     this.logger.log(`Found ${hostCount} hosts for user: ${userId}`);
 
@@ -116,6 +121,7 @@ export class HostService {
       const newHost: HostInfo = {
         uid: uuidv4(),
         ...hostInfo,
+        initialLogin: true,
         dbProfiles: {},
       };
 
@@ -207,6 +213,7 @@ export class HostService {
         address: hostInfo.address ?? existingHost.address,
         port: hostInfo.port ?? existingHost.port,
         password: hostInfo.password ?? existingHost.password,
+        initialLogin: existingHost.initialLogin ?? true,
         alias: hostInfo.alias ?? existingHost.alias,
         token: hostInfo.token ?? existingHost.token,
         dbProfiles: hostInfo.dbProfiles ?? existingHost.dbProfiles ?? {},
@@ -243,7 +250,7 @@ export class HostService {
       throw HostError.NoSuchHost({ hostUid });
     }
 
-    return host;
+    return { ...host, initialLogin: host.initialLogin ?? true };
   }
 
   /**
@@ -266,6 +273,7 @@ export class HostService {
     }
 
     const { password, token, dbProfiles, ...hostResponse } = host;
+    hostResponse.initialLogin = host.initialLogin ?? true;
     return hostResponse as HostResponse;
   }
 

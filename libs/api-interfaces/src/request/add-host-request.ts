@@ -8,4 +8,4 @@ import { HostInfo } from '@type/host-info';
  * @category Requests
  * @since 1.0.0
  */
-export type AddHostRequest = Omit<HostInfo, 'uid' | 'dbProfiles' | 'token'>;
+export type AddHostRequest = Omit<HostInfo, 'uid' | 'dbProfiles' | 'token' | 'initialLogin'>;

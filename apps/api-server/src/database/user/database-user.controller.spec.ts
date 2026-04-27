@@ -1,6 +1,7 @@
 import { Test, TestingModule } from '@nestjs/testing';
 import { DatabaseUserController } from './database-user.controller';
 import { DatabaseUserService } from './database-user.service';
+import { ValidationError } from '@error/validation/validation-error';
 
 describe('DatabaseUserController', () => {
   let controller: DatabaseUserController;
@@ -185,6 +186,30 @@ describe('DatabaseUserController', () => {
         'dba',
         'pass'
       );
+      expect(result).toBe(true);
+    });
+
+    it('should throw ValidationError when id/password are missing', async () => {
+      const body = {};
+
+      await expect(
+        controller.loginDatabase(mockReq, 'host-uid-1', 'demodb', body)
+      ).rejects.toThrow(ValidationError);
+      expect(service.loginDatabase).not.toHaveBeenCalled();
+    });
+  });
+
+  describe('loginDatabaseWithProfile', () => {
+    it('should call service.loginDatabase without credentials', async () => {
+      service.loginDatabase.mockResolvedValue(true);
+
+      const result = await controller.loginDatabaseWithProfile(
+        mockReq,
+        'host-uid-1',
+        'demodb'
+      );
+
+      expect(service.loginDatabase).toHaveBeenCalledWith('user-123', 'host-uid-1', 'demodb');
       expect(result).toBe(true);
     });
   });
