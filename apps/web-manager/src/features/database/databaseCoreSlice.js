@@ -40,9 +40,11 @@ export const stopDatabase = createAsyncThunk(
 
 export const loginDatabase = createAsyncThunk(
   'database/loginDatabase',
-  async ({ hostUid, dbname, payload = {} }, { rejectWithValue }) => {
+  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
     try {
-      const response = await databaseApi.loginDatabase(hostUid, dbname, payload);
+      const response = payload 
+        ? await databaseApi.loginDatabase(hostUid, dbname, payload)
+        : await databaseApi.loginDatabaseWithProfile(hostUid, dbname);
       return { dbname, ...response };
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || err.response?.data?.error || `Failed to login to database ${dbname}`);
