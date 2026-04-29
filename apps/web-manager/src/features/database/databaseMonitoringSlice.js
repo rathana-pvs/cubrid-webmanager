@@ -4,13 +4,25 @@ import { brokerApi } from '../broker/brokerApi';
 
 export const fetchDatabaseVolumes = createAsyncThunk(
   'database/fetchDatabaseVolumes',
-  async (arg, { rejectWithValue }) => {
-    const { hostUid, activeDatabases } = arg;
+  async (arg, { rejectWithValue, getState }) => {
+    const hostUid = typeof arg === 'string' ? arg : arg.hostUid;
+    let activeDatabases = arg?.activeDatabases;
+    
+    if (!activeDatabases) {
+      activeDatabases = getState().database.activeDatabases;
+    }
+
     if (!activeDatabases || activeDatabases.length === 0) return [];
+    
     try {
-      const allRequest = activeDatabases.map(dbname =>
-        databaseApi.getVolumeInfo(hostUid, dbname).catch(() => null)
-      );
+      const allRequest = activeDatabases.map(async (dbname) => {
+        try {
+          const res = await databaseApi.getVolumeInfo(hostUid, dbname);
+          return { ...res, dbname }; // Inject dbname for mapping
+        } catch (e) {
+          return null;
+        }
+      });
       const responses = await Promise.all(allRequest);
       return responses.filter(res => res !== null);
     } catch (err) {

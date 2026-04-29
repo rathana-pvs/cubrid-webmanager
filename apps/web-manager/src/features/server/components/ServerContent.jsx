@@ -31,9 +31,14 @@ const Component = function ServerContent({ hostUid }) {
     hostUid,
     tabId: `host:${hostUid}`,
     pollingIntervalSeconds: preferences.dashboardInterval,
-    onFetch: (silent) => async (dispatch) => {
+    onFetch: (silent) => async (dispatch, getState) => {
+      // 1. First fetch database status to get the current active list
+      await dispatch(fetchDatabaseStartInfo(silent ? { hostUid, isBackground: true } : hostUid));
+      
+      // 2. Then fetch other data, ensuring we use the updated active databases list
+      const { activeDatabases } = getState().database;
+      
       await Promise.all([
-        dispatch(fetchDatabaseStartInfo(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchBrokerList(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchHostEnv(hostUid)),
         dispatch(fetchDatabaseVolumes({ hostUid, activeDatabases })),
