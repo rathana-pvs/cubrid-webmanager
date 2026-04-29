@@ -48,7 +48,6 @@ export const Modal = ({
       {/* Backdrop */}
       <div
         className="fixed inset-0 bg-bk-main/40 backdrop-blur-xs transition-opacity"
-        onClick={onClose}
         aria-hidden="true"
       />
 

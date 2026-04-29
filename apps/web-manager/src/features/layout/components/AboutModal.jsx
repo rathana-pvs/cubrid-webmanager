@@ -4,14 +4,7 @@ import { setAboutCubrid } from '../appBarSlice';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Button } from '../../../components/ds/foundation/Button';
-import { Icon } from '../../../components/ds/foundation/Icon';
-import { Divider } from '../../../components/ds/foundation/Divider';
-
-const INFO_ROWS = [
-  { icon: 'terminal',  label: 'Core Version', value: '12.4.0' },
-  { icon: 'web',       label: 'Web Manager',  value: '1.1.2' },
-  { icon: 'code',      label: 'Stack',        value: 'React · NestJS · Nx' },
-];
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 
 export default function AboutModal() {
   const dispatch = useDispatch();
@@ -23,97 +16,67 @@ export default function AboutModal() {
     <Modal
       isOpen={isAboutCubridOpen}
       onClose={() => dispatch(setAboutCubrid(false))}
-      maxWidth="max-w-[380px]"
-      hideFooter
+      title="About CUBRID"
+      icon="info"
+      maxWidth="420px"
+      subtitle="Modern database management interface"
+      footer={
+        <Button 
+          variant="primary" 
+          onClick={() => dispatch(setAboutCubrid(false))}
+          className="min-w-[140px]"
+        >
+          Acknowledge
+        </Button>
+      }
     >
-      {/* Logo + Title */}
-      <div className="flex flex-col items-center gap-3 pt-2 pb-6 text-center">
-        <div className="w-14 h-14 bg-slate-100 dark:bg-white/6 rounded-2xl flex items-center justify-center">
-          <img src="/cubrid-logo.png" alt="CUBRID Logo" className="w-9 h-9 object-contain" />
-        </div>
-        <div>
-          <Typography variant="h1" className="text-xl font-black text-slate-800 dark:text-white tracking-tight">
-            CUBRID Web Manager
-          </Typography>
-          <Typography variant="caption" className="text-slate-400 dark:text-slate-500 text-[11px]">
-            Modern database management interface
-          </Typography>
-        </div>
-      </div>
-
-      <Divider className="my-0 opacity-40" />
-
-      {/* Info rows */}
-      <div className="py-2">
-        {INFO_ROWS.map(({ icon, label, value }) => (
-          <div key={label} className="flex items-center justify-between py-3 px-1">
-            <div className="flex items-center gap-2.5">
-              <Icon name={icon} size="xs" weight={300} className="text-slate-400" />
-              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 text-[12px]">
-                {label}
-              </Typography>
-            </div>
-            <Typography variant="caption" className="text-slate-700 dark:text-slate-300 font-semibold text-[12px]">
-              {value}
-            </Typography>
-          </div>
-        ))}
-      </div>
-
-      <Divider className="my-0 opacity-40" />
-
-        <div className="space-y-0 text-left pt-2">
-           <div className="flex justify-between items-center py-4 group/item">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover/item:bg-bk-yellow/10 group-hover/item:text-bk-yellow transition-colors">
-                <Icon name="terminal" size="xs"  weight={300} />
-              </div>
-              <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px]">Core Version</Typography>
-            </div>
-            <Typography variant="p" className="text-xs text-slate-800 dark:text-slate-200 font-black tracking-widest">12.4.0-STABLE</Typography>
-          </div>
-          <Divider className="my-0 opacity-50" />
-          
-          <div className="flex justify-between items-center py-4 group/item">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 group-hover/item:bg-bk-yellow/10 group-hover/item:text-bk-yellow transition-colors">
-                <Icon name="web" size="xs"  weight={300} />
-              </div>
-              <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px]">Web Bridge</Typography>
-            </div>
-            <Typography variant="p" className="text-xs text-slate-800 dark:text-slate-200 font-black tracking-widest">v1.1.2-ALPHA</Typography>
-          </div>
-          <Divider className="my-0 opacity-50" />
-
-          <div className="flex justify-between items-center py-4 group/item">
-            <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-500">
-                <Icon name="verified" size="xs"  weight={300} />
-              </div>
-              <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[10px]">Status</Typography>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_10px_rgba(16,185,129,0.8)] animate-pulse"></span>
-              <Typography variant="caption" className="text-emerald-500 font-black uppercase tracking-tighter">Certified Stable</Typography>
-            </div>
-          </div>
+      <div className="flex flex-col items-center space-y-6 pt-2">
+        {/* Logo Section */}
+        <div className="w-24 h-24 p-3 bg-white dark:bg-white/5 rounded-2xl border border-slate-100 dark:border-white/10 shadow-xs flex items-center justify-center animate-in zoom-in duration-300">
+          <img src="/cubrid-logo.png" alt="CUBRID logo" className="w-full h-auto object-contain" />
         </div>
 
-        <div className="space-y-5 pt-4">
-          <Button 
-            variant="primary"
-            icon="check_circle"
-            className="w-full h-12 rounded-2xl font-black uppercase tracking-[0.2em] shadow-lg shadow-bk-yellow/20"
-            onClick={() => dispatch(setAboutCubrid(false))}
-          >
-            Acknowledge System
-          </Button>
-          <div className="flex flex-col gap-1">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 tracking-[0.2em] uppercase text-[9px] opacity-60">
-              © 2026 CUBRID Corporation
-            </Typography>
-            <Typography variant="caption" className="font-bold text-slate-300 dark:text-slate-700 tracking-tighter text-[8px]">
+        <div className="w-full space-y-5">
+          {/* Main Info */}
+          <div className="flex flex-col items-center text-center w-full">
+            <SectionHeader title="CUBRID Web Manager" icon="verified" className="justify-center" />
+            <Typography variant="p" className="text-slate-500 dark:text-slate-400 text-[13px] mt-1">
               Engineered with precision for the modern web stack.
+            </Typography>
+          </div>
+
+          {/* Details Section */}
+          <div className="w-full">
+            <SectionHeader title="System Details" icon="settings_suggest" />
+            <div className="space-y-0.5 pt-2">
+              {[
+                { label: 'Core Version', value: '12.4.0-STABLE' },
+                { label: 'Web Bridge', value: 'v1.1.2-ALPHA' },
+                { label: 'Stack', value: 'React · NestJS · Nx' },
+                { label: 'Status', value: 'Certified Stable', isStatus: true }
+              ].map((item, idx) => (
+                <div key={idx} className="flex justify-between items-center py-2 border-b border-slate-50 dark:border-white/5 last:border-0">
+                  <Typography variant="caption" className="text-slate-400 font-medium">{item.label}</Typography>
+                  <div className="flex items-center gap-1.5">
+                    {item.isStatus && (
+                      <span className="size-1.5 rounded-full bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)] animate-pulse"></span>
+                    )}
+                    <Typography 
+                      variant="caption" 
+                      className={`font-mono text-[12px] font-bold ${item.isStatus ? 'text-emerald-500' : 'text-slate-700 dark:text-slate-200'}`}
+                    >
+                      {item.value}
+                    </Typography>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Copyright Section */}
+          <div className="pt-4 border-t border-slate-50 dark:border-white/5 text-center">
+            <Typography variant="caption" className="text-slate-400 dark:text-slate-500 text-[10px] tracking-widest uppercase">
+              © 2026 CUBRID Corporation
             </Typography>
           </div>
         </div>

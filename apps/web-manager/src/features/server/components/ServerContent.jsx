@@ -9,6 +9,7 @@ import { fetchBrokerList } from '../../broker/brokerSlice';
 import DatabaseVolumes from './DatabaseVolumes';
 import Brokers from './Brokers';
 import SystemInfo from './SystemInfo';
+import { fetchDatabaseVolumes } from '../../database/databaseMonitoringSlice';
 
 import SystemStatusSection from './server/SystemStatusSection';
 import DatabaseListSection from './server/DatabaseListSection';
@@ -35,6 +36,7 @@ const Component = function ServerContent({ hostUid }) {
         dispatch(fetchDatabaseStartInfo(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchBrokerList(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchHostEnv(hostUid)),
+        dispatch(fetchDatabaseVolumes({ hostUid, activeDatabases })),
         fetchAutoStartInfo()
       ]);
     }
