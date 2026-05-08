@@ -92,8 +92,7 @@ export default function EditQueryPlanModal() {
           time = parts[1] || '12:00';
         }
         
-        // Clean "select" from time if API includes it
-        time = time.replace(/select/gi, '').trim();
+        time = time.trim();
 
         setFormData({
           queryId: plan.query_id,

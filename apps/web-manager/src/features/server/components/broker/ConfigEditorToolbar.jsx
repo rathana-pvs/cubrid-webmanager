@@ -2,22 +2,14 @@ import React from 'react';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../../components/ds/foundation/Spinner';
 
-const VIEWS = [
-  { key: 'table',  label: 'Table Editor',  icon: 'table_chart' },
-  { key: 'source', label: 'Source View',   icon: 'code'        },
-];
-
 export default function ConfigEditorToolbar({
   hostDisplayName,
-  viewMode,
-  setViewMode,
   hasChanges,
   loading,
   saving,
   handleUndo,
   fetchConfig,
   handleSave,
-  handleAddProperty,
 }) {
   return (
     <div className="shrink-0 px-4 py-2.5 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 z-10">
@@ -33,40 +25,8 @@ export default function ConfigEditorToolbar({
         </div>
       </div>
 
-      {/* Center: view switcher pill */}
-      <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 shrink-0">
-        {VIEWS.map(v => (
-          <button
-            key={v.key}
-            onClick={() => setViewMode(v.key)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors whitespace-nowrap ${
-              viewMode === v.key
-                ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-bk-yellow'
-                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-            }`}
-          >
-            <Icon name={v.icon} size="sm" weight={300} />
-            {v.label}
-          </button>
-        ))}
-      </div>
-
       {/* Right: actions */}
       <div className="flex items-center gap-1 shrink-0">
-
-        {/* Add Property — icon only with border */}
-        <button
-          onClick={handleAddProperty}
-          disabled={viewMode !== 'table' || loading || saving}
-          title="Add property"
-          className={`w-8 h-8 flex items-center justify-center rounded-lg border transition-all ${
-            viewMode === 'table'
-              ? 'border-slate-200 dark:border-white/10 text-slate-600 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95'
-              : 'invisible pointer-events-none'
-          } disabled:opacity-30 disabled:cursor-not-allowed shrink-0`}
-        >
-          <Icon name="add_box" size="sm" weight={300} />
-        </button>
 
         {/* Undo — bordered icon */}
         <button

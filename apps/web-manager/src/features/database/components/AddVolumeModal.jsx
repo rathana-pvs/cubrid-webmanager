@@ -36,28 +36,6 @@ const PURPOSE_OPTIONS = [
     activeBorder: 'border-sky-500/40',
   },
   {
-    value: 'index',
-    label: 'Index',
-    icon: 'list_alt',
-    desc: 'B-tree Acceleration',
-    color: 'text-violet-500',
-    bg: 'bg-violet-500/10',
-    border: 'border-violet-500/25',
-    activeBg: 'bg-violet-500/8',
-    activeBorder: 'border-violet-500/40',
-  },
-  {
-    value: 'generic',
-    label: 'Generic',
-    icon: 'full_stacked_bar_chart',
-    desc: 'Mixed Use',
-    color: 'text-amber-500',
-    bg: 'bg-amber-500/10',
-    border: 'border-amber-500/25',
-    activeBg: 'bg-amber-500/8',
-    activeBorder: 'border-amber-500/40',
-  },
-  {
     value: 'temp',
     label: 'Temporary',
     icon: 'timer',
@@ -99,7 +77,7 @@ export default function AddVolumeModal() {
   
   const [volStatus, setVolStatus] = useState({ freespace: '', volpath: '' });
   const [volName, setVolName] = useState('');
-  const [purpose, setPurpose] = useState('generic');
+  const [purpose, setPurpose] = useState('data');
   const [path, setPath] = useState('');
   const [sizeMB, setSizeMB] = useState(512);
   const [fetchingStatus, setFetchingStatus] = useState(false);
@@ -124,7 +102,7 @@ export default function AddVolumeModal() {
       };
       fetchStatus();
       setVolName('');
-      setPurpose('generic');
+      setPurpose('data');
       setSizeMB(512);
     }
   }, [isAddVolumeModalOpen, selectedHostUid, selectedDatabase, resetAction]);
@@ -266,7 +244,7 @@ export default function AddVolumeModal() {
         {/* Purpose Selector */}
         <div className="space-y-4">
            <SectionHeader title="Storage Optimization" icon="architecture" />
-          <div className="grid grid-cols-4 gap-2.5">
+          <div className="grid grid-cols-2 gap-2.5">
             {PURPOSE_OPTIONS.map((opt) => {
               const isActive = purpose === opt.value;
               return (
@@ -356,9 +334,7 @@ export default function AddVolumeModal() {
               <div
                 className={`h-full rounded-full transition-all duration-700 ease-out ${
                   purpose === 'data' ? 'bg-sky-500 shadow-[0_0_8px_rgba(14,165,233,0.4)]' :
-                  purpose === 'index' ? 'bg-violet-500 shadow-[0_0_8px_rgba(139,92,246,0.4)]' :
-                  purpose === 'temp' ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' :
-                  'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.4)]'
+                  'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]'
                 }`}
                 style={{ width: `${Math.min((sizeMB / 4096) * 100, 100)}%` }}
               />
