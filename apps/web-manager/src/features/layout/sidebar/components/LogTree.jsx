@@ -6,7 +6,7 @@ import { Skeleton } from '../../../../components/ds/layout/Skeleton';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 
-export default function LogTree({ hostUid }) {
+export default function LogTree({ hostUid, onDbLogContextMenu }) {
   const dispatch = useDispatch();
   const { databases } = useSelector((state) => state.database, shallowEqual);
   const { brokers, logsByBroker, logsLoading, adminLogsByHost, adminLogsLoading, cmsLogsByHost, selectedBrokerSubItem, dbLogsByDbName, dbLogsLoading } = useSelector((state) => state.broker, shallowEqual);
@@ -211,6 +211,7 @@ export default function LogTree({ hostUid }) {
                 }
               }}
               isLoading={dbLogsLoading && !dbLogsByDbName[db.dbname]}
+              onContextMenu={(e) => onDbLogContextMenu && onDbLogContextMenu(e, db.dbname)}
             >
                   {(dbLogsByDbName[db.dbname] || []).map((log, lIdx) => {
                     const fileName = log.path.split('/').pop();

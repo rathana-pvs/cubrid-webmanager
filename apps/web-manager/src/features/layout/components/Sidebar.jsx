@@ -110,8 +110,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   const [brokerRootContextMenu, setBrokerRootContextMenu] = useState(null);
 
   const [backupItemContextMenu, setBackupItemContextMenu] = useState(null);
-  const [tableContextMenu, setTableContextMenu] = useState(null);
-  const [viewContextMenu, setViewContextMenu] = useState(null);
+  const [sqlLogContextMenu, setSqlLogContextMenu] = useState(null);
+  const [dbLogContextMenu, setDbLogContextMenu] = useState(null);
 
   const dispatch = useDispatch();
   const { 
@@ -147,8 +147,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     setJobAutomationContextMenu(null);
     setBrokerRootContextMenu(null);
     setBackupItemContextMenu(null);
-    setTableContextMenu(null);
-    setViewContextMenu(null);
+    setSqlLogContextMenu(null);
+    setDbLogContextMenu(null);
   }, []);
 
   const handleHostLogin = useCallback((uid) => {
@@ -243,6 +243,20 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     setBrokerContextMenu({ mouseX: e.clientX, mouseY: e.clientY, broker: brokerName, state });
   };
 
+  const handleSqlLogContextMenu = (e, brokerName) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllContextMenus();
+    setSqlLogContextMenu({ mouseX: e.clientX, mouseY: e.clientY, broker: brokerName });
+  };
+
+  const handleDbLogContextMenu = (e, dbName) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllContextMenus();
+    setDbLogContextMenu({ mouseX: e.clientX, mouseY: e.clientY, db: dbName });
+  };
+
   const handleUsersContextMenu = (e, dbName) => {
     e.preventDefault();
     e.stopPropagation();
@@ -300,19 +314,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     setBackupItemContextMenu({ mouseX: e.clientX, mouseY: e.clientY, db: dbName, planId });
   };
 
-  const handleTableContextMenu = (e, dbName, tableName) => {
-    e.preventDefault();
-    e.stopPropagation();
-    closeAllContextMenus();
-    setTableContextMenu({ mouseX: e.clientX, mouseY: e.clientY, db: dbName, table: tableName });
-  };
-
-  const handleViewContextMenu = (e, dbName, viewName) => {
-    e.preventDefault();
-    e.stopPropagation();
-    closeAllContextMenus();
-    setViewContextMenu({ mouseX: e.clientX, mouseY: e.clientY, db: dbName, view: viewName });
-  };
 
   useEffect(() => {
     const handleOutsideAction = (e) => {
@@ -549,13 +550,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
 
 
                   <div className={`mt-2 ${(!authorizedHosts.includes(selectedHostUid) || isLoggingIntoHost) ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`} id="db-tree-container">
-                    <div className="px-3 flex items-center gap-3 mb-4 opacity-50">
-                      <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
-                      <Typography variant="caption" className="font-bold text-slate-500 dark:text-slate-400 uppercase tracking-widest text-[9px]">
-                        {activeTab === 'db' ? 'Databases' : activeTab === 'broker' ? 'Brokers' : 'Logs'}
-                      </Typography>
-                      <div className="h-px flex-1 bg-slate-200 dark:bg-white/5"></div>
-                    </div>
                     <div className={activeTab !== 'db' ? 'hidden' : ''}>
                       <DatabaseTree
                         onContextMenu={handleDbContextMenu}
@@ -567,15 +561,17 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                         onBackupItemContextMenu={handleBackupItemContextMenu}
                         onQueryPlanContextMenu={handleQueryPlanContextMenu}
                         onQueryItemContextMenu={handleQueryItemContextMenu}
-                        onTableContextMenu={handleTableContextMenu}
-                        onViewContextMenu={handleViewContextMenu}
                       />
                     </div>
                     <div className={activeTab !== 'broker' ? 'hidden' : ''}>
-                      <BrokerTree hostUid={selectedHostUid} onContextMenu={handleBrokerContextMenu} />
+                      <BrokerTree 
+                        hostUid={selectedHostUid} 
+                        onContextMenu={handleBrokerContextMenu} 
+                        onSqlLogContextMenu={handleSqlLogContextMenu} 
+                      />
                     </div>
                     <div className={activeTab !== 'log' ? 'hidden' : ''}>
-                      <LogTree hostUid={selectedHostUid} />
+                      <LogTree hostUid={selectedHostUid} onDbLogContextMenu={handleDbLogContextMenu} />
                     </div>
                   </div>
                     </div>
@@ -1007,6 +1003,44 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         </ContextMenuWrapper>
       )}
 
+      {sqlLogContextMenu && (
+        <ContextMenuWrapper x={sqlLogContextMenu.mouseX} y={sqlLogContextMenu.mouseY} onClose={() => setSqlLogContextMenu(null)}>
+          <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">SQL Logs: {sqlLogContextMenu.broker}</Typography>
+            <Icon name="history_edu" size="xs" className="opacity-30" weight={300} />
+          </div>
+          <MenuItem
+            icon="visibility"
+            label="View All Logs"
+            onClick={() => {
+              if (selectedHostUid) {
+                dispatch(openTab(`all_logs:${selectedHostUid}:${sqlLogContextMenu.broker}`));
+              }
+              setSqlLogContextMenu(null);
+            }}
+          />
+        </ContextMenuWrapper>
+      )}
+
+      {dbLogContextMenu && (
+        <ContextMenuWrapper x={dbLogContextMenu.mouseX} y={dbLogContextMenu.mouseY} onClose={() => setDbLogContextMenu(null)}>
+          <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Server Logs: {dbLogContextMenu.db}</Typography>
+            <Icon name="dns" size="xs" className="opacity-30" weight={300} />
+          </div>
+          <MenuItem
+            icon="visibility"
+            label="View All Logs"
+            onClick={() => {
+              if (selectedHostUid) {
+                dispatch(openTab(`all_db_logs:${selectedHostUid}:${dbLogContextMenu.db}`));
+              }
+              setDbLogContextMenu(null);
+            }}
+          />
+        </ContextMenuWrapper>
+      )}
+
       {usersContextMenu && (
         <ContextMenuWrapper x={usersContextMenu.mouseX} y={usersContextMenu.mouseY} onClose={() => setUsersContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
@@ -1267,56 +1301,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               setQueryItemContextMenu(null);
             }}
           />
-        </ContextMenuWrapper>
-      )}
-      {tableContextMenu && (
-        <ContextMenuWrapper x={tableContextMenu.mouseX} y={tableContextMenu.mouseY} onClose={() => setTableContextMenu(null)}>
-          <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <div className="flex flex-col">
-              <Typography variant="caption" className="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest text-[9px] truncate">{tableContextMenu.table}</Typography>
-              <Typography variant="label" className="text-[8px] text-slate-400 font-mono mt-0.5">{tableContextMenu.db}</Typography>
-            </div>
-            <Icon name="table_rows" size="xs" className="opacity-30" weight={300} />
-          </div>
-          <MenuItem 
-            icon="info" 
-            label="Show Info" 
-            onClick={() => {
-              dispatch(openTab(`table_info:${selectedHostUid}:${tableContextMenu.db}:${tableContextMenu.table}`));
-              setTableContextMenu(null);
-            }} 
-          />
-          <MenuItem icon="grid_on" label="View Data" />
-          <MenuItem icon="edit" label="Edit Table" />
-          <MenuDivider />
-          <MenuItem icon="key" label="Indices" />
-          <MenuItem icon="link" label="Foreign Keys" />
-          <MenuDivider />
-          <MenuItem icon="difference" label="Rename Table" />
-          <MenuItem icon="delete_forever" label="Drop Table" />
-        </ContextMenuWrapper>
-      )}
-
-      {viewContextMenu && (
-        <ContextMenuWrapper x={viewContextMenu.mouseX} y={viewContextMenu.mouseY} onClose={() => setViewContextMenu(null)}>
-          <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <div className="flex flex-col">
-              <Typography variant="caption" className="font-bold text-slate-700 dark:text-slate-200 uppercase tracking-widest text-[9px] truncate">{viewContextMenu.view}</Typography>
-              <Typography variant="label" className="text-[8px] text-slate-400 font-mono mt-0.5">{viewContextMenu.db}</Typography>
-            </div>
-            <Icon name="grid_view" size="xs" className="opacity-30" weight={300} />
-          </div>
-          <MenuItem 
-            icon="info" 
-            label="Show Info" 
-            onClick={() => {
-              dispatch(openTab(`view_info:${selectedHostUid}:${viewContextMenu.db}:${viewContextMenu.view}`));
-              setViewContextMenu(null);
-            }} 
-          />
-          <MenuItem icon="grid_on" label="View Data" />
-          <MenuDivider />
-          <MenuItem icon="delete_forever" label="Drop View" />
         </ContextMenuWrapper>
       )}
 

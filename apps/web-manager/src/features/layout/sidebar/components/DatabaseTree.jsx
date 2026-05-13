@@ -12,7 +12,6 @@ import {
 import { 
   fetchDatabaseParamDump, 
   fetchDatabasePlanDump, 
-  fetchDatabaseClasses, 
   fetchAutoVolumeConfig 
 } from '../../../database/databaseConfigurationSlice';
 import { fetchDatabaseUsers } from '../../../user/userSlice';
@@ -40,143 +39,8 @@ const selectStatusStates = (state) => ({
   queryPlansLoading: state.databaseOperation.queryPlansLoading,
   spaceInfo: state.databaseMonitoring.spaceInfo,
   spaceInfoLoading: state.databaseMonitoring.spaceInfoLoading,
-  databaseClasses: state.databaseConfiguration.databaseClasses,
-  databaseClassesLoading: state.databaseConfiguration.databaseClassesLoading,
 });
 
-// Tables Folder
-const TablesFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem, classes, isLoading, onSelect, onTabOpen, selectedHostUid, onTableContextMenu }) => {
-  const dispatch = useDispatch();
-  const isSelected = selectedDatabase === db.dbname && selectedDatabaseSubItem === 'Tables';
-
-  const allUserClasses = classes?.userclass?.[0]?.class || [];
-  const allSystemClasses = classes?.systemclass?.[0]?.class || [];
-
-  const userTables = allUserClasses.filter(c => c.virtual === 'normal');
-  const systemTables = allSystemClasses.filter(c => c.virtual === 'normal');
-  const totalCount = userTables.length;
-
-  return (
-    <TreeNode
-      id="Tables"
-      label={`Tables${totalCount > 0 ? `(${totalCount})` : ''}`}
-      icon="table_chart"
-      level={2}
-      isActive={isSelected}
-      hasChildren={true}
-      isLoading={isLoading}
-      onToggle={() => {
-        if (selectedHostUid && !classes && !isLoading) {
-          dispatch(fetchDatabaseClasses({ hostUid: selectedHostUid, dbname: db.dbname }));
-        }
-      }}
-      onSelect={() => onSelect(db.dbname, 'Tables')}
-    >
-      <TreeNode
-        id="System tables"
-        label="System tables"
-        icon="settings_applications"
-        level={3}
-        isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === 'System tables'}
-        hasChildren={true}
-        onSelect={() => onSelect(db.dbname, 'System tables')}
-      >
-        {systemTables.map(c => (
-          <TreeNode
-            key={c.classname}
-            id={c.classname}
-            label={c.classname}
-            icon="description"
-            level={4}
-            isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `table:${c.classname}`}
-            onSelect={() => onSelect(db.dbname, `table:${c.classname}`)}
-          />
-        ))}
-      </TreeNode>
-
-      {userTables.map(c => {
-        return (
-          <TreeNode
-            key={c.classname}
-            id={c.classname}
-            label={c.classname}
-            icon="table_rows"
-            level={3}
-            isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `table:${c.classname}`}
-            onSelect={() => onSelect(db.dbname, `table:${c.classname}`)}
-          />
-        );
-      })}
-    </TreeNode>
-  );
-});
-
-// Views Folder
-const ViewsFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem, classes, isLoading, onSelect, onTabOpen, selectedHostUid, onViewContextMenu }) => {
-  const dispatch = useDispatch();
-  const isSelected = selectedDatabase === db.dbname && selectedDatabaseSubItem === 'Views';
-
-  const allUserClasses = classes?.userclass?.[0]?.class || [];
-  const allSystemClasses = classes?.systemclass?.[0]?.class || [];
-
-  const userViews = allUserClasses.filter(c => c.virtual === 'view');
-  const systemViews = allSystemClasses.filter(c => c.virtual === 'view');
-  const totalCount = userViews.length;
-
-  return (
-    <TreeNode
-      id="Views"
-      label={`Views${totalCount > 0 ? `(${totalCount})` : ''}`}
-      icon="visibility"
-      level={2}
-      isActive={isSelected}
-      hasChildren={true}
-      isLoading={isLoading}
-      onToggle={() => {
-        if (selectedHostUid && !classes && !isLoading) {
-          dispatch(fetchDatabaseClasses({ hostUid: selectedHostUid, dbname: db.dbname }));
-        }
-      }}
-      onSelect={() => onSelect(db.dbname, 'Views')}
-    >
-      <TreeNode
-        id="System views"
-        label="System views"
-        icon="settings_applications"
-        level={3}
-        isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === 'System views'}
-        hasChildren={true}
-        onSelect={() => onSelect(db.dbname, 'System views')}
-      >
-        {systemViews.map(c => (
-          <TreeNode
-            key={c.classname}
-            id={c.classname}
-            label={c.classname}
-            icon="description"
-            level={4}
-            isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `view:${c.classname}`}
-            onSelect={() => onSelect(db.dbname, `view:${c.classname}`)}
-          />
-        ))}
-      </TreeNode>
-
-      {userViews.map(c => {
-        return (
-          <TreeNode
-            key={c.classname}
-            id={c.classname}
-            label={c.classname}
-            icon="grid_view"
-            level={3}
-            isActive={selectedDatabase === db.dbname && selectedDatabaseSubItem === `view:${c.classname}`}
-            onSelect={() => onSelect(db.dbname, `view:${c.classname}`)}
-          />
-        );
-      })}
-    </TreeNode>
-  );
-});
 
 export default function DatabaseTree({ 
   onContextMenu, 
@@ -188,9 +52,7 @@ export default function DatabaseTree({
   onQueryPlanContextMenu,
   onQueryItemContextMenu,
   onJobAutomationContextMenu,
-  onBackupItemContextMenu,
-  onTableContextMenu,
-  onViewContextMenu
+  onBackupItemContextMenu
 }) {
   const dispatch = useDispatch();
   const selectedHostUid = useSelector((state) => state.host.selectedHostUid);
@@ -208,8 +70,6 @@ export default function DatabaseTree({
     spaceInfo, 
     spaceInfoLoading,
     loggingInDatabases,
-    databaseClasses,
-    databaseClassesLoading,
   } = useSelector(selectStatusStates, shallowEqual);
   
   const { databaseUsers, databaseUsersLoading } = useSelector((state) => state.user, shallowEqual, shallowEqual);
@@ -314,29 +174,6 @@ export default function DatabaseTree({
             onContextMenu={(e) => onContextMenu(e, db.dbname, isActive)}
           >
             {/* Level 2 items */}
-            <TablesFolder 
-              db={db}
-              selectedDatabase={selectedDatabase}
-              selectedDatabaseSubItem={selectedDatabaseSubItem}
-              classes={databaseClasses[db.dbname]}
-              isLoading={databaseClassesLoading[db.dbname]}
-              onSelect={handleSelectSubItem}
-              onTabOpen={handleTabOpen}
-              selectedHostUid={selectedHostUid}
-              onTableContextMenu={onTableContextMenu}
-            />
-
-            <ViewsFolder 
-              db={db}
-              selectedDatabase={selectedDatabase}
-              selectedDatabaseSubItem={selectedDatabaseSubItem}
-              classes={databaseClasses[db.dbname]}
-              isLoading={databaseClassesLoading[db.dbname]}
-              onSelect={handleSelectSubItem}
-              onTabOpen={handleTabOpen}
-              selectedHostUid={selectedHostUid}
-              onViewContextMenu={onViewContextMenu}
-            />
 
             <UsersFolder 
               db={db}

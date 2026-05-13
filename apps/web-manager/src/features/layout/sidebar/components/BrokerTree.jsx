@@ -6,7 +6,7 @@ import { Skeleton } from '../../../../components/ds/layout/Skeleton';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 
-export default function BrokerTree({ hostUid, onContextMenu }) {
+export default function BrokerTree({ hostUid, onContextMenu, onSqlLogContextMenu }) {
   const dispatch = useDispatch();
   const { brokers, loading, logsByBroker, selectedBroker, selectedBrokerSubItem, logsLoading } = useSelector((state) => state.broker, shallowEqual);
 
@@ -80,6 +80,7 @@ export default function BrokerTree({ hostUid, onContextMenu }) {
                 dispatch(setSelectedBroker(broker.name));
                 dispatch(setSelectedBrokerSubItem('SQL Log'));
               }}
+              onContextMenu={(e) => onSqlLogContextMenu && onSqlLogContextMenu(e, broker.name)}
             >
               {brokerLogs.map((log, idx) => {
                 const fileName = log.path.split('/').pop();

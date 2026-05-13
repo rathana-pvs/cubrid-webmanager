@@ -396,11 +396,25 @@ const brokerSlice = createSlice({
           const tabId = action.payload;
           const statusMatch = tabId.match(/^broker_status:[^:]+:([^:]+)/);
           const logMatch = tabId.match(/^log:[^:]+:(.+)/);
+          const allLogsMatch = tabId.match(/^all_logs:[^:]+:([^:]+)/);
+          const allDbLogsMatch = tabId.match(/^all_db_logs:[^:]+:([^:]+)/);
           
           if (statusMatch) {
             delete state.detailedStatus[statusMatch[1]];
           } else if (logMatch) {
             delete state.viewingLogs[logMatch[1]];
+          } else if (allLogsMatch) {
+            const brokerName = allLogsMatch[1];
+            const logs = state.logsByBroker[brokerName] || [];
+            logs.forEach(log => {
+              delete state.viewingLogs[log.path];
+            });
+          } else if (allDbLogsMatch) {
+            const dbname = allDbLogsMatch[1];
+            const logs = state.dbLogsByDbName[dbname] || [];
+            logs.forEach(log => {
+              delete state.viewingLogs[log.path];
+            });
           }
         }
       )

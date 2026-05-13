@@ -58,6 +58,7 @@ import StatusModal from '../components/common/StatusModal';
 import LoadingOverlay from '../components/common/LoadingOverlay';
 import LogViewer from '../features/broker/components/LogViewer';
 import CMSLogViewer from '../features/broker/components/CMSLogViewer';
+import AllLogsViewer from '../features/broker/components/AllLogsViewer';
 import BrokerStatus from '../features/broker/components/BrokerStatus';
 import BrokerPropertyModal from '../features/broker/components/BrokerPropertyModal';
 import Brokers from '../features/server/components/Brokers';
@@ -114,6 +115,10 @@ function DashboardLayout() {
       const parts = tabId.split(':');
       const path = parts[parts.length - 1];
       acc[tabId] = path.split('/').pop();
+    } else if (tabId.startsWith('all_logs:')) {
+      acc[tabId] = `All Logs: ${tabId.split(':')[2]}`;
+    } else if (tabId.startsWith('all_db_logs:')) {
+      acc[tabId] = `All Server Logs: ${tabId.split(':')[2]}`;
     } else if (tabId.startsWith('cms-access:')) {
       acc[tabId] = 'Manager Access';
     } else if (tabId.startsWith('cms-error:')) {
@@ -293,6 +298,8 @@ function DashboardLayout() {
               const isEditConfig = tabId.startsWith('edit_config:');
               const isBrokerConfig = tabId.startsWith('broker_config:');
               const isLogViewer = tabId.startsWith('log:');
+              const isAllLogs = tabId.startsWith('all_logs:');
+              const isAllDbLogs = tabId.startsWith('all_db_logs:');
               const isCmsAccessLog = tabId.startsWith('cms-access:');
               const isCmsErrorLog = tabId.startsWith('cms-error:');
               const isBrokerStatus = tabId.startsWith('broker_status:');
@@ -336,6 +343,20 @@ function DashboardLayout() {
                     <LogViewer
                       hostUid={tabId.split(':')[1]}
                       path={tabId.split(':').slice(2).join(':')}
+                    />
+                  )}
+                  {isAllLogs && (
+                    <AllLogsViewer
+                      type="broker"
+                      hostUid={tabId.split(':')[1]}
+                      targetName={tabId.split(':')[2]}
+                    />
+                  )}
+                  {isAllDbLogs && (
+                    <AllLogsViewer
+                      type="database"
+                      hostUid={tabId.split(':')[1]}
+                      targetName={tabId.split(':')[2]}
                     />
                   )}
                   {isCmsAccessLog && (
