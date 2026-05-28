@@ -17,6 +17,14 @@ const desktopBridge: DesktopBridge = {
   finishWorkspaceSetup: (workspaceRoot) =>
     ipcRenderer.invoke('desktop:finish-workspace-setup', workspaceRoot),
   revealSettingsFile: () => ipcRenderer.invoke('desktop:reveal-settings-file'),
+  onCloseActiveTab: (callback) => {
+    const subscription = () => callback();
+    ipcRenderer.on('desktop:close-active-tab', subscription);
+    return () => {
+      ipcRenderer.removeListener('desktop:close-active-tab', subscription);
+    };
+  },
+  closeWindow: () => ipcRenderer.invoke('desktop:close-window'),
 };
 
 contextBridge.exposeInMainWorld('desktopConfig', {

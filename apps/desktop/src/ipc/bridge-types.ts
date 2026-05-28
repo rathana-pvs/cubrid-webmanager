@@ -19,6 +19,8 @@ export type DesktopBridge = {
   resetWorkspaceRoot: () => Promise<{ ok: true }>;
   finishWorkspaceSetup: (workspaceRoot: string) => Promise<{ ok: boolean }>;
   revealSettingsFile: () => Promise<{ settingsPath: string; portableRoot: string }>;
+  onCloseActiveTab: (callback: () => void) => () => void;
+  closeWindow: () => Promise<void>;
 };
 
 declare global {

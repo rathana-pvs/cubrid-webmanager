@@ -110,4 +110,11 @@ export function registerDesktopIpcHandlers(): void {
     notifyWorkspaceSetupComplete();
     return { ok: true };
   });
+
+  ipcMain.handle('desktop:close-window', async () => {
+    const window = getMainWindow();
+    if (window && !window.isDestroyed()) {
+      window.close();
+    }
+  });
 }

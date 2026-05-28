@@ -13,7 +13,7 @@ import { useCM } from '../../../constants/useCM';
 const Component = function BrokerStatus({ hostUid, brokerName }) {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { detailedStatus } = useSelector((state) => state.broker, shallowEqual);
+  const { brokers, detailedStatus } = useSelector((state) => state.broker, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const status = detailedStatus[brokerName] || { data: {}, loading: false, error: null };
 
@@ -51,7 +51,16 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
 
   const asInfo = status.data?.asinfo || [];
   const jobInfo = status.data?.jobinfo || [];
-  const basicInfo = status.data?.binfo?.[0] || {};
+  const brokerFromList = brokers?.find((b) => b.name === brokerName) || {};
+  const basicInfo = {
+    pid: status.data?.binfo?.[0]?.pid || brokerFromList.pid,
+    port: status.data?.binfo?.[0]?.port || brokerFromList.port,
+    job_queue: status.data?.binfo?.[0]?.job_queue ?? brokerFromList.jq,
+    auto_add_as: status.data?.binfo?.[0]?.auto_add_as || brokerFromList.auto,
+    sql_log_mode: status.data?.binfo?.[0]?.sql_log_mode || brokerFromList.sqll,
+    long_transaction_time: status.data?.binfo?.[0]?.long_transaction_time || brokerFromList.long_tran_time,
+    long_query_time: status.data?.binfo?.[0]?.long_query_time || brokerFromList.long_query_time,
+  };
 
   /* Table Columns Definitions */
   const asColumns = [
@@ -118,7 +127,7 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
             </div>
             <div className="flex items-center gap-1.5 mt-0.5">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
-              <span className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">{CM.brokerStatus}</span>
+              <span className="text-[10px] text-slate-400 font-mono tracking-tight leading-none">{CM.brokerStatus}</span>
             </div>
           </div>
         </div>

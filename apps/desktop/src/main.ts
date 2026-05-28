@@ -60,6 +60,17 @@ async function bootstrap(): Promise<void> {
   const mainWindow = createAppWindow(DESKTOP_API_BASE_URL);
   setMainWindow(mainWindow);
 
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (
+      input.type === 'keyDown' &&
+      (input.control || input.meta) &&
+      input.key.toLowerCase() === 'w'
+    ) {
+      event.preventDefault();
+      mainWindow.webContents.send('desktop:close-active-tab');
+    }
+  });
+
   mainWindow.on('close', () => {
     clearRendererAuthToken(mainWindow);
     if (!isQuitting) {

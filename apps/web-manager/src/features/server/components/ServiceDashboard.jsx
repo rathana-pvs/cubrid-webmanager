@@ -240,9 +240,6 @@ const Component = function ServiceDashboard() {
                     {row.hostCount} nodes
                   </span>
                 </div>
-                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                  {row.defaultHostUid ? `default: ${row.defaultHostUid}` : 'no default node'}
-                </span>
               </div>
             </div>
           );
@@ -276,14 +273,14 @@ const Component = function ServiceDashboard() {
             <div className="w-6 h-6 shrink-0" />
             {/* Server icon box with connection status */}
             <div className="relative shrink-0">
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center border transition-all duration-200 ${
+              <div className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all duration-200 ${
                 isConnected
                   ? 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]'
                   : 'bg-slate-100 dark:bg-white/4 border-slate-200 dark:border-white/8'
               }`}>
                 <Icon
                   name="dns"
-                  size="18px"
+                  size="16px"
                   className={isConnected ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}
                   weight={isConnected ? 400 : 300}
                 />
@@ -328,9 +325,30 @@ const Component = function ServiceDashboard() {
         );
       }
     },
-    { header: CM.address, accessor: 'ip', render: (v) => <span className="font-mono text-[11px] text-slate-500">{v || CM.localhost}</span> },
-    { header: CM.port, accessor: 'port', render: (v) => <span className="font-mono text-[11px] text-slate-500">{v}</span> },
-    { header: CM.userLabel, accessor: 'user', render: (v, row) => <span className="text-[12px] text-slate-600 dark:text-slate-400">{row.user || row.id}</span> },
+    { 
+      header: CM.address, 
+      accessor: 'address', 
+      render: (v, row) => {
+        if (row._type === 'group') return <span className="text-slate-300">—</span>;
+        return <span className="font-mono text-[11px] text-slate-500">{v || row.ip || CM.localhost}</span>;
+      } 
+    },
+    { 
+      header: CM.port, 
+      accessor: 'port', 
+      render: (v, row) => {
+        if (row._type === 'group') return <span className="text-slate-300">—</span>;
+        return <span className="font-mono text-[11px] text-slate-500">{v}</span>;
+      } 
+    },
+    { 
+      header: CM.userLabel, 
+      accessor: 'user', 
+      render: (v, row) => {
+        if (row._type === 'group') return <span className="text-slate-300">—</span>;
+        return <span className="text-[12px] text-slate-600 dark:text-slate-400">{row.user || row.id}</span>;
+      } 
+    },
     { 
       header: CM.permanent, 
       accessor: 'permFree',

@@ -19,17 +19,6 @@ export default function Breadcrumb({
   const [contextMenu, setContextMenu] = useState(null);
   const [confirmModal, setConfirmModal] = useState({ isOpen: false, onConfirm: null, title: '', message: '' });
   const { dirtyTabs } = useSelector((state) => state.layout, shallowEqual);
-
-  useEffect(() => {
-    const handleClickOutside = () => setContextMenu(null);
-    window.addEventListener('click', handleClickOutside);
-    window.addEventListener('scroll', handleClickOutside, true);
-    return () => {
-      window.removeEventListener('click', handleClickOutside);
-      window.removeEventListener('scroll', handleClickOutside, true);
-    };
-  }, []);
-
   const handleCloseTab = (tabId, queue = []) => {
     if (dirtyTabs.includes(tabId)) {
       onTabChange(tabId);
@@ -54,6 +43,39 @@ export default function Breadcrumb({
       }
     }
   };
+
+  useEffect(() => {
+    const handleClickOutside = () => setContextMenu(null);
+    window.addEventListener('click', handleClickOutside);
+    window.addEventListener('scroll', handleClickOutside, true);
+    return () => {
+      window.removeEventListener('click', handleClickOutside);
+      window.removeEventListener('scroll', handleClickOutside, true);
+    };
+  }, []);
+
+  useEffect(() => {
+    const handleKeyDown = (e) => {
+      if ((e.ctrlKey || e.metaKey) && (e.key === 'w' || e.key === 'W')) {
+        if (activeTab) {
+          e.preventDefault();
+          handleCloseTab(activeTab);
+        }
+      }
+    };
+    const handleCloseActiveTabEvent = (e) => {
+      if (activeTab) {
+        e.preventDefault();
+        handleCloseTab(activeTab);
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    window.addEventListener('in-app:close-active-tab', handleCloseActiveTabEvent);
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      window.removeEventListener('in-app:close-active-tab', handleCloseActiveTabEvent);
+    };
+  }, [activeTab, handleCloseTab]);
 
   const others = React.useMemo(() => openTabs.filter(tid => tid !== activeTab), [openTabs, activeTab]);
   const dirtyOthers = React.useMemo(() => others.filter(tid => dirtyTabs.includes(tid)), [others, dirtyTabs]);

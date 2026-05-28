@@ -75,7 +75,7 @@ export const Input = forwardRef(({
         />
 
         {suffix && (
-          <div className={`absolute select-none flex items-center justify-center animate-in fade-in duration-300 ${isNumber ? 'right-9' : 'right-3.5'}`}>
+          <div className={`absolute inset-y-0 select-none flex items-center justify-center animate-in fade-in duration-300 ${isNumber ? 'right-9' : 'right-3.5'}`}>
             {typeof suffix === 'string' ? (
               <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-md border border-slate-200/50 dark:border-white/5">
                 {suffix}
@@ -88,6 +88,7 @@ export const Input = forwardRef(({
           <div className="absolute right-3 px-1 border-l border-slate-200/50 dark:border-white/5 flex flex-col items-center justify-center gap-0.5 h-6 my-auto pointer-events-none">
             <button
                type="button"
+               tabIndex="-1"
                onClick={() => (props.onStepChange ? props.onStepChange(1) : handleAdjust(1))}
                className="w-4 h-2.5 flex items-center justify-center text-slate-400 hover:text-bk-yellow transition-all active:scale-95 pointer-events-auto"
             >
@@ -95,6 +96,7 @@ export const Input = forwardRef(({
             </button>
             <button
                type="button"
+               tabIndex="-1"
                onClick={() => (props.onStepChange ? props.onStepChange(-1) : handleAdjust(-1))}
                className="w-4 h-2.5 flex items-center justify-center text-slate-400 hover:text-bk-yellow transition-all active:scale-95 pointer-events-auto"
             >

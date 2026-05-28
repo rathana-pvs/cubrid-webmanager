@@ -160,7 +160,7 @@ function DashboardLayout() {
 
   useEffect(() => {
     const handleKeyDown = (e) => {
-      if (e.key === 'F5') {
+      if (e.key === 'F5' || ((e.ctrlKey || e.metaKey) && (e.key === 'r' || e.key === 'R'))) {
         e.preventDefault();
         dispatch(triggerRefreshActiveTab());
       }
@@ -478,6 +478,19 @@ function RootRedirect() {
 }
 
 function App() {
+  useEffect(() => {
+    if (window.desktopBridge?.onCloseActiveTab) {
+      const unsubscribe = window.desktopBridge.onCloseActiveTab(() => {
+        const event = new CustomEvent('in-app:close-active-tab', { cancelable: true });
+        window.dispatchEvent(event);
+        if (!event.defaultPrevented) {
+          window.desktopBridge.closeWindow();
+        }
+      });
+      return unsubscribe;
+    }
+  }, []);
+
   return (
     <Routes>
       <Route path="/" element={<RootRedirect />} />

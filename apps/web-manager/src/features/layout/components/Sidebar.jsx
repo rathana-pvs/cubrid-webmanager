@@ -460,7 +460,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               onContextMenu={handleHostRootContextMenu}
             >
               {!isServerListCollapsed && (
-                hostsLoading ? (
+                (hostsLoading && hosts.length === 0) ? (
                   <div className="flex items-center justify-center py-8">
                     <Spinner size="md" />
                   </div>

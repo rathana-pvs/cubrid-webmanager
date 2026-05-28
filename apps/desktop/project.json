@@ -28,7 +28,7 @@
         { "target": "build-electron", "projects": "web-manager" }
       ],
       "options": {
-        "command": "npx electron apps/desktop",
+        "command": "npx electron apps/desktop --no-sandbox",
         "cwd": "{workspaceRoot}"
       }
     },

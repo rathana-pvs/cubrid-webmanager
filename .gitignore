@@ -117,3 +117,7 @@ local-e2e/
 playwright-report/
 test-results/
 cwm-workspace/
+
+# Desktop Local Runtime Data
+desktop-settings.json
+cwm-vault/

@@ -155,23 +155,23 @@ export default function LoginDatabaseModal() {
           placeholder="dba"
           autoFocus
         />
-        <div className="relative">
-          <Input
-            type={showPassword ? 'text' : 'password'}
-            label={CM.password}
-            value={formData.dbpasswd}
-            onChange={(e) => handleInputChange('dbpasswd', e.target.value)}
-            icon="password"
-          />
-          <button
-            type="button"
-            tabIndex={-1}
-            onClick={() => setShowPassword((s) => !s)}
-            className="absolute right-3 bottom-[11px] text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
-          >
-            <Icon name={showPassword ? 'visibility_off' : 'visibility'} size="16px" weight={300} />
-          </button>
-        </div>
+        <Input
+          type={showPassword ? 'text' : 'password'}
+          label={CM.password}
+          value={formData.dbpasswd}
+          onChange={(e) => handleInputChange('dbpasswd', e.target.value)}
+          icon="password"
+          suffix={
+            <button
+              type="button"
+              tabIndex={-1}
+              onClick={() => setShowPassword((s) => !s)}
+              className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-300 transition-colors p-1 flex items-center justify-center"
+            >
+              <Icon name={showPassword ? 'visibility_off' : 'visibility'} size="16px" weight={300} />
+            </button>
+          }
+        />
 
         <div className="flex items-center justify-between gap-3 pt-1">
           <Typography variant="caption" className="text-slate-500">{CM.savePassword}</Typography>

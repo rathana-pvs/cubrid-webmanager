@@ -213,7 +213,7 @@ export default function RegisterPage() {
               autoComplete="new-password"
               suffix={
                 <button type="button" onClick={() => setShowPassword(!showPassword)}
-                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1">
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1 flex items-center justify-center">
                   <Icon name={showPassword ? 'visibility_off' : 'visibility'} size="sm" weight={300} />
                 </button>
               }
@@ -243,7 +243,7 @@ export default function RegisterPage() {
               autoComplete="new-password"
               suffix={
                 <button type="button" onClick={() => setShowConfirm(!showConfirm)}
-                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1">
+                  className="text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors p-1 flex items-center justify-center">
                   <Icon name={showConfirm ? 'visibility_off' : 'visibility'} size="sm" weight={300} />
                 </button>
               }

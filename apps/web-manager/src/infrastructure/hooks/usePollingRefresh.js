@@ -3,7 +3,7 @@ import { useSelector, useDispatch } from 'react-redux';
 
 /**
  * A custom hook to manage background data polling, visibility-aware refresh,
- * and global F5 refresh synchronization for dashboard components.
+ * and global F5 / Ctrl+R refresh synchronization for dashboard components.
  * 
  * @param {Object} options
  * @param {string} options.hostUid - The current host UID.
@@ -59,7 +59,7 @@ export const usePollingRefresh = ({ hostUid, tabId, pollingIntervalSeconds, onFe
   }, [dispatch, hostUid, authorizedHosts, onFetch, tabId]);
 
   const lastProcessedCounterRef = useRef(refreshCounter);
-  // 2. Global Refresh (F5) Listener
+  // 2. Global Refresh (F5 / Ctrl+R) Listener
   useEffect(() => {
     if (refreshCounter > lastProcessedCounterRef.current) {
       lastProcessedCounterRef.current = refreshCounter;
