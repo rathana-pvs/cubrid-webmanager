@@ -53,13 +53,13 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
   const jobInfo = status.data?.jobinfo || [];
   const brokerFromList = brokers?.find((b) => b.name === brokerName) || {};
   const basicInfo = {
-    pid: status.data?.binfo?.[0]?.pid || brokerFromList.pid,
-    port: status.data?.binfo?.[0]?.port || brokerFromList.port,
+    pid: status.data?.binfo?.[0]?.pid ?? brokerFromList.pid,
+    port: status.data?.binfo?.[0]?.port ?? brokerFromList.port,
     job_queue: status.data?.binfo?.[0]?.job_queue ?? brokerFromList.jq,
-    auto_add_as: status.data?.binfo?.[0]?.auto_add_as || brokerFromList.auto,
-    sql_log_mode: status.data?.binfo?.[0]?.sql_log_mode || brokerFromList.sqll,
-    long_transaction_time: status.data?.binfo?.[0]?.long_transaction_time || brokerFromList.long_tran_time,
-    long_query_time: status.data?.binfo?.[0]?.long_query_time || brokerFromList.long_query_time,
+    auto_add_as: status.data?.binfo?.[0]?.auto_add_as ?? brokerFromList.auto,
+    sql_log_mode: status.data?.binfo?.[0]?.sql_log_mode ?? brokerFromList.sqll,
+    long_transaction_time: status.data?.binfo?.[0]?.long_transaction_time ?? brokerFromList.long_tran_time,
+    long_query_time: status.data?.binfo?.[0]?.long_query_time ?? brokerFromList.long_query_time,
   };
 
   /* Table Columns Definitions */
