@@ -31,11 +31,7 @@ export default function HostGroupTree({
     dispatch(setSelectedGroup({ groupId }));
     setExpandedGroups((prev) => {
       const next = new Set(prev);
-      if (next.has(groupId)) {
-        if (selectedGroupUid === groupId) {
-          next.delete(groupId);
-        }
-      } else {
+      if (!next.has(groupId)) {
         next.add(groupId);
       }
       return next;
