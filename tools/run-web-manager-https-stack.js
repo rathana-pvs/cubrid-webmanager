@@ -99,10 +99,14 @@ function startWebDev() {
 
 function startWebProxy() {
   const scriptPath = path.join(__dirname, 'serve-web-manager-https-proxy.js');
+  const env = { ...process.env };
+  if (!isProduction) {
+    env.USE_DEV_PROXY = '1';
+  }
   webChild = spawn(process.execPath, [scriptPath, WEB_HTTPS_PORT], {
     cwd: REPO_ROOT,
     stdio: 'inherit',
-    env: { ...process.env },
+    env,
   });
 }
 
