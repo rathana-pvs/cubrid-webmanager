@@ -5,6 +5,7 @@ import { updatePreferences } from '../userSlice';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Button } from '../../../components/ds/foundation/Button';
+import { Input } from '../../../components/ds/forms/Input';
 
 export default function MonitoringSettingsPopover() {
   const [isOpen, setIsOpen] = useState(false);
@@ -13,9 +14,30 @@ export default function MonitoringSettingsPopover() {
   const { preferences, actionLoading } = useSelector((state) => state.user, shallowEqual);
   
   const [localPrefs, setLocalPrefs] = useState(preferences);
+  const [customDashboardText, setCustomDashboardText] = useState('');
+  const [customBrokerText, setCustomBrokerText] = useState('');
+  const [dashboardPresetActive, setDashboardPresetActive] = useState(true);
+  const [brokerPresetActive, setBrokerPresetActive] = useState(true);
+
+  const intervals = [
+    { label: 'Off', value: 0 },
+    { label: '1s', value: 1 },
+    { label: '3s', value: 3 },
+    { label: '5s', value: 5 },
+    { label: '10s', value: 10 },
+    { label: '30s', value: 30 },
+  ];
 
   useEffect(() => {
     setLocalPrefs(preferences);
+
+    const dashVal = preferences.dashboardInterval;
+    setCustomDashboardText(dashVal === 0 ? '' : dashVal.toString());
+    setDashboardPresetActive(intervals.some(opt => opt.value === dashVal));
+
+    const brokerVal = preferences.brokerStatusInterval;
+    setCustomBrokerText(brokerVal === 0 ? '' : brokerVal.toString());
+    setBrokerPresetActive(intervals.some(opt => opt.value === brokerVal));
   }, [preferences]);
 
   useEffect(() => {
@@ -33,13 +55,45 @@ export default function MonitoringSettingsPopover() {
     setIsOpen(false);
   };
 
-  const intervals = [
-    { label: 'Off', value: 0 },
-    { label: '10s', value: 10 },
-    { label: '30s', value: 30 },
-    { label: '1m', value: 60 },
-    { label: '5m', value: 300 },
-  ];
+  const handleDashboardPresetClick = (val) => {
+    setLocalPrefs(prev => ({ ...prev, dashboardInterval: val }));
+    setCustomDashboardText(val === 0 ? '' : val.toString());
+    setDashboardPresetActive(true);
+  };
+
+  const handleDashboardCustomChange = (e) => {
+    let valStr = e.target.value;
+    valStr = valStr.replace(/\D/g, '');
+    setCustomDashboardText(valStr);
+    setDashboardPresetActive(false);
+
+    if (valStr !== '') {
+      const parsed = parseInt(valStr, 10);
+      setLocalPrefs(prev => ({ ...prev, dashboardInterval: parsed }));
+    } else {
+      setLocalPrefs(prev => ({ ...prev, dashboardInterval: 0 }));
+    }
+  };
+
+  const handleBrokerPresetClick = (val) => {
+    setLocalPrefs(prev => ({ ...prev, brokerStatusInterval: val }));
+    setCustomBrokerText(val === 0 ? '' : val.toString());
+    setBrokerPresetActive(true);
+  };
+
+  const handleBrokerCustomChange = (e) => {
+    let valStr = e.target.value;
+    valStr = valStr.replace(/\D/g, '');
+    setCustomBrokerText(valStr);
+    setBrokerPresetActive(false);
+
+    if (valStr !== '') {
+      const parsed = parseInt(valStr, 10);
+      setLocalPrefs(prev => ({ ...prev, brokerStatusInterval: parsed }));
+    } else {
+      setLocalPrefs(prev => ({ ...prev, brokerStatusInterval: 0 }));
+    }
+  };
 
   const hasActiveMonitoring = (preferences.dashboardInterval > 0 || preferences.brokerStatusInterval > 0);
 
@@ -76,7 +130,7 @@ export default function MonitoringSettingsPopover() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">Resource Dashboard</Typography>
-                <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center">
+                <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center font-mono">
                   {localPrefs.dashboardInterval > 0 ? `${localPrefs.dashboardInterval}s` : 'OFF'}
                 </span>
               </div>
@@ -84,9 +138,9 @@ export default function MonitoringSettingsPopover() {
                 {intervals.map((opt) => (
                   <button
                     key={opt.value}
-                    onClick={() => setLocalPrefs(prev => ({ ...prev, dashboardInterval: opt.value }))}
-                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all
-                      ${localPrefs.dashboardInterval === opt.value 
+                    onClick={() => handleDashboardPresetClick(opt.value)}
+                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all active:scale-95
+                      ${dashboardPresetActive && localPrefs.dashboardInterval === opt.value 
                         ? 'bg-amber-500 text-slate-900 shadow-md transform scale-[1.02]' 
                         : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   >
@@ -94,6 +148,20 @@ export default function MonitoringSettingsPopover() {
                   </button>
                 ))}
               </div>
+
+              <div className="pt-1">
+                <Input
+                  type="number"
+                  size="sm"
+                  placeholder="Custom interval"
+                  value={customDashboardText}
+                  onChange={handleDashboardCustomChange}
+                  suffix="seconds"
+                  min="0"
+                  disabled={actionLoading}
+                />
+              </div>
+
               <p className="text-[9px] text-slate-400 italic px-1">Synchronizes database throughput and disk IO latency.</p>
             </div>
 
@@ -101,7 +169,7 @@ export default function MonitoringSettingsPopover() {
             <div className="space-y-3">
               <div className="flex justify-between items-center">
                 <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">Broker Infrastructure</Typography>
-                <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center">
+                <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center font-mono">
                   {localPrefs.brokerStatusInterval > 0 ? `${localPrefs.brokerStatusInterval}s` : 'OFF'}
                 </span>
               </div>
@@ -109,9 +177,9 @@ export default function MonitoringSettingsPopover() {
                 {intervals.map((opt) => (
                   <button
                     key={opt.value}
-                    onClick={() => setLocalPrefs(prev => ({ ...prev, brokerStatusInterval: opt.value }))}
-                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all
-                      ${localPrefs.brokerStatusInterval === opt.value 
+                    onClick={() => handleBrokerPresetClick(opt.value)}
+                    className={`flex-1 py-1.5 text-[10px] font-black rounded-lg transition-all active:scale-95
+                      ${brokerPresetActive && localPrefs.brokerStatusInterval === opt.value 
                         ? 'bg-amber-500 text-slate-900 shadow-md transform scale-[1.02]' 
                         : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-300'}`}
                   >
@@ -119,6 +187,20 @@ export default function MonitoringSettingsPopover() {
                   </button>
                 ))}
               </div>
+
+              <div className="pt-1">
+                <Input
+                  type="number"
+                  size="sm"
+                  placeholder="Custom interval"
+                  value={customBrokerText}
+                  onChange={handleBrokerCustomChange}
+                  suffix="seconds"
+                  min="0"
+                  disabled={actionLoading}
+                />
+              </div>
+
               <p className="text-[9px] text-slate-400 italic px-1">Propagates connection pool health and query load balancing.</p>
             </div>
           </div>
