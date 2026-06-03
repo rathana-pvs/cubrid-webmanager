@@ -58,6 +58,57 @@ export default function DatabaseTree({
   const CM = useCM();
   const dispatch = useDispatch();
   const selectedHostUid = useSelector((state) => state.host.selectedHostUid);
+  const { haInfo } = useSelector((state) => state.host, shallowEqual);
+  const hostHaInfo = haInfo[selectedHostUid] || {};
+  const isHostHA = hostHaInfo.isHA;
+
+  const hostData = useSelector((state) => state.monitoring.hostsData[selectedHostUid] || {});
+  const haHeartbeat = hostData?.haHeartbeat;
+  const haDbs = useMemo(() => {
+    const names = new Set();
+    const raw = haHeartbeat?.hadbinfolist;
+    if (!raw || !Array.isArray(raw)) {
+      return names;
+    }
+    for (const entry of raw) {
+      const servers = entry?.server;
+      if (!Array.isArray(servers)) {
+        continue;
+      }
+      for (const server of servers) {
+        if (!server) continue;
+        if (Array.isArray(server.dbmode)) {
+          for (const row of server.dbmode) {
+            if (row?.dbname) names.add(row.dbname);
+          }
+        }
+        if (Array.isArray(server.dbprocinfo)) {
+          for (const row of server.dbprocinfo) {
+            if (row?.dbname) names.add(row.dbname);
+          }
+        }
+        if (Array.isArray(server.applylogdb)) {
+          for (const block of server.applylogdb) {
+            if (Array.isArray(block?.element)) {
+              for (const el of block.element) {
+                if (el?.dbname) names.add(el.dbname);
+              }
+            }
+          }
+        }
+        if (Array.isArray(server.copylogdb)) {
+          for (const block of server.copylogdb) {
+            if (Array.isArray(block?.element)) {
+              for (const el of block.element) {
+                if (el?.dbname) names.add(el.dbname);
+              }
+            }
+          }
+        }
+      }
+    }
+    return names;
+  }, [haHeartbeat]);
   
   const databases = useSelector(selectDatabases, shallowEqual);
   const activeDatabases = useSelector(selectActiveDatabases, shallowEqual);
@@ -156,11 +207,23 @@ export default function DatabaseTree({
         const isLoggedIn = loggedInDatabases.includes(db.dbname);
         const isDbSelected = db.dbname === selectedDatabase && !selectedDatabaseSubItem;
 
+        const isDbInHa = isHostHA && haDbs.has(db.dbname);
+        const label = (
+          <span className="flex items-center gap-1.5 min-w-0">
+            <span className="truncate">{db.dbname}</span>
+            {isDbInHa && (
+              <span className="px-0.5 py-[0.5px] text-[7px] font-black leading-none bg-amber-500/10 border border-amber-500/20 text-amber-600 dark:text-amber-400 rounded-sm scale-90 shrink-0 uppercase">
+                HA
+              </span>
+            )}
+          </span>
+        );
+
         return (
           <TreeNode
             key={db.dbname}
             id={db.dbname}
-            label={db.dbname}
+            label={label}
             icon="database"
             level={1}
             isActive={isDbSelected}
@@ -172,7 +235,7 @@ export default function DatabaseTree({
               dispatch(setSelectedDatabase(db.dbname));
               dispatch(setSelectedDatabaseSubItem(null));
             }}
-            onDoubleClick={() => handleTabOpen('db:' + db.dbname)}
+            onDoubleClick={() => handleTabOpen(`db:${selectedHostUid}:${db.dbname}`)}
             onContextMenu={(e) => onContextMenu(e, db.dbname, isActive)}
           >
             {/* Level 2 items */}

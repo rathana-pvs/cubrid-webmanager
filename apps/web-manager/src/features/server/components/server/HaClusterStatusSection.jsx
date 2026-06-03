@@ -3,6 +3,36 @@ import { useSelector, shallowEqual } from 'react-redux';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { useCM } from '../../../../constants/useCM';
 
+const getNodeStateColor = (state) => {
+  const normalized = (state || '').toLowerCase();
+  switch (normalized) {
+    case 'master':
+      return {
+        dot: 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]',
+        text: 'text-amber-500'
+      };
+    case 'replica':
+    case 'slave':
+      return {
+        dot: 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]',
+        text: 'text-blue-500 dark:text-blue-400'
+      };
+    case 'unknown':
+    case 'dead':
+    case 'stopped':
+    case 'error':
+      return {
+        dot: 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.5)]',
+        text: 'text-rose-500 dark:text-rose-400'
+      };
+    default:
+      return {
+        dot: 'bg-slate-400 dark:bg-slate-600 shadow-none',
+        text: 'text-slate-400 dark:text-slate-500'
+      };
+  }
+};
+
 export default function HaClusterStatusSection({ hostUid }) {
   const CM = useCM();
   const hostData = useSelector((state) => state.monitoring.hostsData[hostUid] || {});
@@ -13,6 +43,9 @@ export default function HaClusterStatusSection({ hostUid }) {
   if (!isHA || !hostData.haHeartbeat) {
     return null;
   }
+
+  const rawNodes = hostData.haHeartbeat.hanodelist?.[0]?.node;
+  const nodes = Array.isArray(rawNodes) ? rawNodes : (rawNodes ? [rawNodes] : []);
 
   return (
     <div className="p-3 bg-slate-50 dark:bg-white/5 rounded-xl border border-slate-200 dark:border-white/10 flex flex-col md:flex-row md:items-center justify-between gap-3">
@@ -25,28 +58,25 @@ export default function HaClusterStatusSection({ hostUid }) {
             {CM.haClusterStatus}
           </p>
           <p className="text-[10px] text-slate-500 dark:text-slate-400 mt-1.5 leading-none">
-            {CM.nodesActiveInCluster(hostData.haHeartbeat.hanodelist?.[0]?.node?.length || 0)}
+            {CM.nodesActiveInCluster(nodes.length)}
           </p>
         </div>
       </div>
       <div className="flex flex-wrap items-center gap-2">
-        {(hostData.haHeartbeat.hanodelist?.[0]?.node || []).map((node, i) => (
-          <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white dark:bg-bk-main rounded-lg border border-slate-200/60 dark:border-white/5 shadow-xs">
-            <div className={`w-1.5 h-1.5 rounded-full ${
-              node.state === 'master' ? 'bg-amber-500 shadow-[0_0_8px_rgba(245,158,11,0.5)]' : 
-              node.state === 'replica' ? 'bg-blue-500 shadow-[0_0_8px_rgba(59,130,246,0.5)]' : 
-              'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.5)]'
-            }`} />
-            <div className="flex flex-col">
-              <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-tight">{node.hostname}</span>
-              <span className={`text-[7px] font-black uppercase tracking-tighter mt-0.5 leading-none ${
-                node.state === 'master' ? 'text-amber-500' : 'text-slate-400'
-              }`}>
-                {node.state}
-              </span>
+        {nodes.map((node, i) => {
+          const colors = getNodeStateColor(node.state);
+          return (
+            <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white dark:bg-bk-main rounded-lg border border-slate-200/60 dark:border-white/5 shadow-xs">
+              <div className={`w-1.5 h-1.5 rounded-full ${colors.dot}`} />
+              <div className="flex flex-col">
+                <span className="text-[10px] font-bold text-slate-700 dark:text-slate-200 leading-tight">{node.hostname}</span>
+                <span className={`text-[7px] font-black uppercase tracking-tighter mt-0.5 leading-none ${colors.text}`}>
+                  {node.state}
+                </span>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );

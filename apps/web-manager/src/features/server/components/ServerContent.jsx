@@ -10,6 +10,7 @@ import DatabaseVolumes from './DatabaseVolumes';
 import Brokers from './Brokers';
 import SystemInfo from './SystemInfo';
 import { fetchDatabaseVolumes } from '../../database/databaseMonitoringSlice';
+import { fetchMonitoringData } from '../monitoringSlice';
 
 import SystemStatusSection from './server/SystemStatusSection';
 import DatabaseListSection from './server/DatabaseListSection';
@@ -32,6 +33,8 @@ const Component = function ServerContent({ hostUid }) {
   const hostHaInfo = haInfo[hostUid] || {};
   const isHA = hostHaInfo.isHA;
   const hostLabel = currentHost ? (currentHost.alias || currentHost.id) : CM.unknownHost;
+  const hostData = useSelector((state) => state.monitoring.hostsData[hostUid] || {});
+
   const { isManualRefreshing: isRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
     hostUid,
     tabId: `host:${hostUid}`,
@@ -47,7 +50,8 @@ const Component = function ServerContent({ hostUid }) {
         dispatch(fetchBrokerList(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchHostEnv(hostUid)),
         dispatch(fetchDatabaseVolumes({ hostUid, activeDatabases })),
-        fetchAutoStartInfo()
+        fetchAutoStartInfo(),
+        isHA ? dispatch(fetchMonitoringData(hostUid)) : Promise.resolve()
       ]);
     }
   });
@@ -89,10 +93,58 @@ const Component = function ServerContent({ hostUid }) {
     }
   };
 
+  const haHeartbeat = hostData?.haHeartbeat;
+  const haDbs = React.useMemo(() => {
+    const names = new Set();
+    const raw = haHeartbeat?.hadbinfolist;
+    if (!raw || !Array.isArray(raw)) {
+      return names;
+    }
+    for (const entry of raw) {
+      const servers = entry?.server;
+      if (!Array.isArray(servers)) {
+        continue;
+      }
+      for (const server of servers) {
+        if (!server) continue;
+        if (Array.isArray(server.dbmode)) {
+          for (const row of server.dbmode) {
+            if (row?.dbname) names.add(row.dbname);
+          }
+        }
+        if (Array.isArray(server.dbprocinfo)) {
+          for (const row of server.dbprocinfo) {
+            if (row?.dbname) names.add(row.dbname);
+          }
+        }
+        if (Array.isArray(server.applylogdb)) {
+          for (const block of server.applylogdb) {
+            if (Array.isArray(block?.element)) {
+              for (const el of block.element) {
+                if (el?.dbname) names.add(el.dbname);
+              }
+            }
+          }
+        }
+        if (Array.isArray(server.copylogdb)) {
+          for (const block of server.copylogdb) {
+            if (Array.isArray(block?.element)) {
+              for (const el of block.element) {
+                if (el?.dbname) names.add(el.dbname);
+              }
+            }
+          }
+        }
+      }
+    }
+    return names;
+  }, [haHeartbeat]);
+
   const dbListDisplay = databases.map(db => ({
     db: db.dbname,
     autoStart: autoStartDBs.includes(db.dbname),
-    status: activeDatabases.includes(db.dbname) ? CM.statusOn : CM.statusOff
+    status: activeDatabases.includes(db.dbname) ? CM.statusOn : CM.statusOff,
+    isHA: isHA && haDbs.has(db.dbname)
   }));
 
   return (

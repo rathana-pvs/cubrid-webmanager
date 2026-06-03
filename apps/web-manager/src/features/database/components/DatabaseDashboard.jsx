@@ -18,19 +18,68 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 import { useCM } from '../../../constants/useCM';
 
-const Component = function DatabaseDashboard({ dbname }) {
+const Component = function DatabaseDashboard({ hostUid: propHostUid, dbname }) {
   const CM = useCM();
   const dispatch = useDispatch();
   const { selectedHostUid, hosts, haInfo } = useSelector((state) => state.host, shallowEqual);
-  const hostHaInfo = haInfo[selectedHostUid] || {};
+  
+  const hostUid = propHostUid || selectedHostUid;
+  const hostHaInfo = haInfo[hostUid] || {};
   const isHA = hostHaInfo.isHA;
+
+  const hostData = useSelector((state) => state.monitoring.hostsData[hostUid] || {});
+  const haHeartbeat = hostData?.haHeartbeat;
+  const isDbInHa = React.useMemo(() => {
+    if (!haHeartbeat?.hadbinfolist || !Array.isArray(haHeartbeat.hadbinfolist)) {
+      return false;
+    }
+    for (const entry of haHeartbeat.hadbinfolist) {
+      const servers = entry?.server;
+      if (!Array.isArray(servers)) {
+        continue;
+      }
+      for (const server of servers) {
+        if (!server) continue;
+        if (Array.isArray(server.dbmode)) {
+          for (const row of server.dbmode) {
+            if (row?.dbname === dbname) return true;
+          }
+        }
+        if (Array.isArray(server.dbprocinfo)) {
+          for (const row of server.dbprocinfo) {
+            if (row?.dbname === dbname) return true;
+          }
+        }
+        if (Array.isArray(server.applylogdb)) {
+          for (const block of server.applylogdb) {
+            if (Array.isArray(block?.element)) {
+              for (const el of block.element) {
+                if (el?.dbname === dbname) return true;
+              }
+            }
+          }
+        }
+        if (Array.isArray(server.copylogdb)) {
+          for (const block of server.copylogdb) {
+            if (Array.isArray(block?.element)) {
+              for (const el of block.element) {
+                if (el?.dbname === dbname) return true;
+              }
+            }
+          }
+        }
+      }
+    }
+    return false;
+  }, [haHeartbeat, dbname]);
+  
   const { dashboardData, dashboardLoading } = useSelector((state) => state.databaseMonitoring, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { refreshCounter, activeMainTab } = useSelector((state) => state.layout, shallowEqual);
 
   const [logModal, setLogModal] = useState({ isOpen: false, brokerName: '', casId: '', type: 'sql' });
   
-  const hostUid = selectedHostUid;
+
 
   const { 
     startAction, 
@@ -43,7 +92,7 @@ const Component = function DatabaseDashboard({ dbname }) {
 
   const { isManualRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
     hostUid,
-    tabId: `db:${dbname}`,
+    tabId: propHostUid ? `db:${hostUid}:${dbname}` : `db:${dbname}`,
     pollingIntervalSeconds: preferences.dashboardInterval,
     onFetch: (silent) => (dispatch) => dispatch(fetchDashboardData({ hostUid, dbname, isBackground: silent }))
   });
@@ -172,7 +221,7 @@ const Component = function DatabaseDashboard({ dbname }) {
             <div className="flex items-center gap-1.5 mt-0.5">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
               <Typography variant="label" className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">@{dbname}</Typography>
-              {isHA && (
+              {isHA && isDbInHa && (
                 <span className="px-1 py-0.5 rounded-sm bg-amber-500/10 border border-amber-500/20 text-[8px] font-bold text-amber-600 dark:text-amber-400 tracking-wide uppercase leading-none">
                   HA
                 </span>

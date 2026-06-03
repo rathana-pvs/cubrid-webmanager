@@ -113,7 +113,8 @@ function DashboardLayout() {
       const host = hosts.find(h => h.uid === uid);
       acc[tabId] = host ? (host.alias || host.id) : uid;
     } else if (tabId.startsWith('db:')) {
-      acc[tabId] = tabId.split(':')[1];
+      const parts = tabId.split(':');
+      acc[tabId] = parts.length > 2 ? parts[2] : parts[1];
     } else if (tabId.startsWith('edit_config:')) {
       acc[tabId] = CM.editConfigTab(tabId.split(':')[2]);
     } else if (tabId.startsWith('broker_config:')) {
@@ -155,7 +156,13 @@ function DashboardLayout() {
       if (activeMainTab.startsWith('host:')) {
         dispatch(setSelectedHost(activeMainTab.split(':')[1]));
       } else if (activeMainTab.startsWith('db:')) {
-        dispatch(setSelectedDatabase(activeMainTab.split(':')[1]));
+        const parts = activeMainTab.split(':');
+        if (parts.length > 2) {
+          dispatch(setSelectedHost(parts[1]));
+          dispatch(setSelectedDatabase(parts[2]));
+        } else {
+          dispatch(setSelectedDatabase(parts[1]));
+        }
       }
     }
   }, [activeMainTab, dispatch]);
@@ -316,7 +323,12 @@ function DashboardLayout() {
               return (
                 <div key={tabId} className={`flex-1 flex flex-col overflow-hidden ${isActive ? '' : 'hidden'}`}>
                   {isHost && <ServerContent hostUid={resourceId} />}
-                  {isDb && <DatabaseDashboard dbname={resourceId} />}
+                  {isDb && (
+                    <DatabaseDashboard 
+                      hostUid={tabId.split(':').length > 2 ? tabId.split(':')[1] : undefined}
+                      dbname={tabId.split(':').length > 2 ? tabId.split(':')[2] : tabId.split(':')[1]} 
+                    />
+                  )}
                   {isDbSpace && (
                     <DatabaseSpaceMonitor 
                       hostUid={tabId.split(':')[1]} 
