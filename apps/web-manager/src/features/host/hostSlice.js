@@ -666,24 +666,6 @@ const hostSlice = createSlice({
           state.error = action.payload;
         }
       })
-      .addMatcher(
-        (action) => action.type === 'host/loginHostsBatch/pending',
-        (state) => {
-          state.isBatchHostLogin = true;
-          state.isLoggingIntoHost = true;
-          state.loading = true;
-        }
-      )
-      .addMatcher(
-        (action) =>
-          action.type === 'host/loginHostsBatch/fulfilled'
-          || action.type === 'host/loginHostsBatch/rejected',
-        (state) => {
-          state.isBatchHostLogin = false;
-          state.isLoggingIntoHost = false;
-          state.loading = false;
-        }
-      )
       .addCase(deleteHost.pending, (state) => {
         state.loading = true;
         state.error = null;
@@ -850,6 +832,24 @@ const hostSlice = createSlice({
         state.cmsUsersLoading[action.meta.arg] = false;
         state.error = action.payload;
       })
+      .addMatcher(
+        (action) => action.type === 'host/loginHostsBatch/pending',
+        (state) => {
+          state.isBatchHostLogin = true;
+          state.isLoggingIntoHost = true;
+          state.loading = true;
+        }
+      )
+      .addMatcher(
+        (action) =>
+          action.type === 'host/loginHostsBatch/fulfilled'
+          || action.type === 'host/loginHostsBatch/rejected',
+        (state) => {
+          state.isBatchHostLogin = false;
+          state.isLoggingIntoHost = false;
+          state.loading = false;
+        }
+      )
       // CMS Users CRUD operations (all return the updated userlist)
       .addMatcher(
         (action) =>

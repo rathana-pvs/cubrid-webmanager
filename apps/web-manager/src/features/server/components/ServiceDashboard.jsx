@@ -21,6 +21,7 @@ import {
   orderedGroupEntries,
   resolveDefaultHostUid,
   sortHostUidsByHaRole,
+  inferHaNodeType,
 } from '../../host/hostGroupUtils';
 
 const MetricBar = ({ pct }) => (
@@ -40,6 +41,7 @@ const Component = function ServiceDashboard() {
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { refreshCounter, activeMainTab } = useSelector((state) => state.layout, shallowEqual);
   const [collapsedGroups, setCollapsedGroups] = useState(() => new Set());
+  const [roleFilter, setRoleFilter] = useState('all');
   const { isManualRefreshing, lastRefreshed, handleRefresh: refreshAll } = usePollingRefresh({
     hostUid: 'global',
     tabId: 'service_dashboard',
@@ -106,20 +108,40 @@ const Component = function ServiceDashboard() {
       const groupName = group?.name || 'Group';
       const isCollapsed = collapsedGroups.has(groupId);
 
+      // Filter host UIDs based on the selected HA role filter
+      let filteredUids = groupHostUids;
+      if (roleFilter !== 'all') {
+        filteredUids = groupHostUids.filter(uid => {
+          const host = groupHostsMap[uid];
+          return inferHaNodeType(host, haInfo[uid]) === roleFilter;
+        });
+      }
+
+      // If filtering is active and no hosts in this group match the filter, hide the group entirely
+      if (roleFilter !== 'all' && filteredUids.length === 0) {
+        continue;
+      }
+
+      const isHaGroup = groupHostUids.some(uid => {
+        const host = groupHostsMap[uid];
+        return haInfo[uid]?.isHA || !!inferHaNodeType(host, haInfo[uid]);
+      });
+
       rows.push({
         _type: 'group',
         rowKey: `group:${groupId}`,
         groupId,
         groupName,
-        hostCount: groupHostUids.length,
+        hostCount: roleFilter === 'all' ? groupHostUids.length : filteredUids.length,
         defaultHostUid: defaultUid,
         isCollapsed,
+        isHa: isHaGroup,
       });
 
       if (isCollapsed) continue;
-      if (groupHostUids.length === 0) continue;
+      if (filteredUids.length === 0) continue;
 
-      const groupOrderedUids = sortHostUidsByHaRole(groupHostUids, groupHostsMap, haInfo);
+      const groupOrderedUids = sortHostUidsByHaRole(filteredUids, groupHostsMap, haInfo);
 
       groupOrderedUids.forEach((uid, idx) => {
         const host = groupHostsMap[uid];
@@ -135,7 +157,7 @@ const Component = function ServiceDashboard() {
     }
 
     return { tableRows: rows, hostMetaByUid: metaByUid };
-  }, [hostGroups, collapsedGroups, haInfo]);
+  }, [hostGroups, collapsedGroups, haInfo, roleFilter]);
 
   const handleStartService = (e, row) => {
     e.stopPropagation();
@@ -231,18 +253,18 @@ const Component = function ServiceDashboard() {
               <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/4 border border-slate-200 dark:border-white/8 flex items-center justify-center">
                 <Icon name="folder" size="16px" className="text-slate-400 dark:text-slate-500" />
               </div>
-              <div className="flex flex-col min-w-0">
-                <div className="flex items-center gap-2">
-                  <span className="text-[13px] font-black text-slate-800 dark:text-slate-100 truncate">
-                    {row.groupName}
-                  </span>
-                  <span className="inline-flex items-center px-1.5 h-[14px] rounded-[3px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[9px] font-black tracking-wide leading-none shrink-0 text-slate-500 dark:text-slate-400 uppercase">
-                    {row.hostCount} nodes
-                  </span>
-                </div>
-                <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                  {row.defaultHostUid ? `default: ${row.defaultHostUid}` : 'no default node'}
+              <div className="flex items-center gap-2 min-w-0">
+                <span className="text-[13px] font-black text-slate-800 dark:text-slate-100 truncate">
+                  {row.groupName}
                 </span>
+                <span className="inline-flex items-center px-1.5 h-[14px] rounded-[3px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[9px] font-black tracking-wide leading-none shrink-0 text-slate-500 dark:text-slate-400 uppercase">
+                  {row.hostCount} nodes
+                </span>
+                {row.isHa && (
+                  <span className="inline-flex items-center px-1.5 h-[14px] rounded-[3px] border border-amber-500/20 bg-amber-500/10 text-[9px] font-black tracking-wide leading-none shrink-0 text-amber-600 dark:text-amber-400 uppercase">
+                    HA
+                  </span>
+                )}
               </div>
             </div>
           );
@@ -272,57 +294,47 @@ const Component = function ServiceDashboard() {
 
         return (
           <div className="flex items-center gap-3 py-0.5">
-            {/* Indent under group chevron button */}
-            <div className="w-6 h-6 shrink-0" />
+            {/* Tree connector lines */}
+            <div className="w-12 shrink-0 relative flex self-stretch">
+              {/* Vertical branch trunk line */}
+              <div className="absolute left-[45px] top-0 w-[1.5px] h-[16px] bg-slate-200 dark:bg-white/10" />
+              {/* Horizontal branch connection line */}
+              <div className="absolute left-[45px] top-[15px] w-[15px] h-[1.5px] bg-slate-200 dark:bg-white/10" />
+            </div>
             {/* Server icon box with connection status */}
             <div className="relative shrink-0">
-              <div className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all duration-200 ${
+              <div className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all duration-200 ${
                 isConnected
                   ? 'bg-amber-500/10 border-amber-500/20 shadow-[0_0_8px_rgba(245,158,11,0.1)]'
                   : 'bg-slate-100 dark:bg-white/4 border-slate-200 dark:border-white/8'
               }`}>
                 <Icon
                   name="dns"
-                  size="16px"
+                  size="13px"
                   className={isConnected ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}
                   weight={isConnected ? 400 : 300}
                 />
               </div>
               {/* Connection status dot */}
-              <span className={`absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full border-2 border-white dark:border-background-dark flex items-center justify-center ${
+              <span className={`absolute -bottom-0.5 -right-0.5 w-2 h-2 rounded-full border border-white dark:border-background-dark flex items-center justify-center ${
                 isConnected ? 'bg-emerald-500' : 'bg-slate-300 dark:bg-white/20'
               }`}>
                 {isConnected && <span className="absolute inset-0 rounded-full bg-emerald-500 animate-ping opacity-60" />}
               </span>
             </div>
 
-            {/* Name + role + address */}
+            {/* Name + role */}
             <div className="flex flex-col min-w-0">
               <div className="flex items-center gap-2 flex-wrap">
-                {!meta?.isFirstInGroup ? (
-                  <span className="text-[11px] font-black text-amber-500/70 leading-none">
-                    ↳
-                  </span>
-                ) : (
-                  <span className="hidden" />
-                )}
-                <span className={`text-[13px] font-bold leading-tight truncate ${
+                <span className={`text-[13px] font-medium leading-tight truncate ${
                   isConnected ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'
                 }`}>{displayName}</span>
-                {meta?.isFirstInGroup && meta?.groupName ? (
-                  <span className="inline-flex items-center px-1.5 h-[14px] rounded-[3px] border border-amber-500/20 bg-amber-500/6 text-[9px] font-black tracking-wide leading-none shrink-0 text-amber-600 dark:text-amber-400 uppercase">
-                    {meta.groupName}
-                  </span>
-                ) : null}
                 {roleConfig && (
                   <span className={`inline-flex items-center px-1.5 h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 ${roleConfig.className}`}>
                     {roleConfig.label}
                   </span>
                 )}
               </div>
-              <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 truncate mt-0.5">
-                {row.address || row.ip || 'localhost'}:{row.port}
-              </span>
             </div>
           </div>
         );
@@ -410,14 +422,15 @@ const Component = function ServiceDashboard() {
     { 
       header: CM.memory, 
       accessor: 'memory',
+      width: '160px',
       render: (_, row) => {
         if (row._type === 'group') return <span className="text-slate-300">—</span>;
         const isConnected = authorizedHosts.includes(row.uid);
         const s = isConnected ? summaries[row.uid] : undefined;
         if (!s) return <span className="text-slate-300">—</span>;
         return (
-          <div className="min-w-[120px]">
-            <span className="text-[11px] text-slate-700 dark:text-slate-200 font-mono font-semibold">{formatSize(s.memUsed)} / {formatSize(s.memTotal)}</span>
+          <div className="min-w-[150px] whitespace-nowrap">
+            <span className="text-[11px] text-slate-700 dark:text-slate-200 font-mono font-semibold whitespace-nowrap">{formatSize(s.memUsed)} / {formatSize(s.memTotal)}</span>
             <MetricBar pct={s.memory} />
           </div>
         );
@@ -509,7 +522,33 @@ const Component = function ServiceDashboard() {
         </div>
 
         <div className="flex items-center gap-1.5 text-[12px]">
-          <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block mr-2">
+          {/* HA Role Filter Segmented Control */}
+          <div className="flex items-center bg-slate-100/80 dark:bg-white/5 p-0.5 rounded-lg border border-slate-200/50 dark:border-white/5 mr-2 shrink-0">
+            {[
+              { id: 'all', label: CM.all || 'All' },
+              { id: 'master', label: CM.haMaster || 'Master' },
+              { id: 'slave', label: CM.haSlave || 'Slave' },
+              { id: 'replica', label: CM.haReplica || 'Replica' },
+            ].map((tab) => {
+              const isActive = roleFilter === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  type="button"
+                  onClick={() => setRoleFilter(tab.id)}
+                  className={`px-2.5 py-1 text-[10.5px] font-bold rounded-md transition-all duration-150 active:scale-[0.98] ${
+                    isActive
+                      ? 'bg-white dark:bg-slate-800 text-amber-600 dark:text-amber-400 shadow-xs border border-slate-200/10 dark:border-white/5'
+                      : 'text-slate-500 dark:text-slate-400 hover:text-slate-800 dark:hover:text-slate-200 border border-transparent'
+                  }`}
+                >
+                  {tab.label}
+                </button>
+              );
+            })}
+          </div>
+
+          <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block mr-2 shrink-0">
             {CM.syncedAt(lastRefreshed.toLocaleTimeString())}
           </Typography>
 

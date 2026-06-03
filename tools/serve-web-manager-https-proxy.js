@@ -38,6 +38,8 @@ const PORT = parseInt(process.argv[2] || process.env.WEB_HTTPS_PORT || '443', 10
 const API_TARGET = (process.env.API_TARGET || 'https://127.0.0.1:8080').replace(/\/$/, '');
 const BUILD_DIR = process.env.BUILD_DIR ? path.resolve(process.env.BUILD_DIR) : DEFAULT_BUILD_DIR;
 const proxyInsecureTls = (process.env.PROXY_INSECURE_TLS || '0').trim() === '1';
+const isProduction = (process.env.ENVIRONMENT || '').toLowerCase() === 'production';
+const WEB_DEV_TARGET = process.env.WEB_DEV_TARGET || 'http://127.0.0.1:5173';
 
 function resolvePathFromEnvOrDefault(envValue, fallbackPath) {
   if (!envValue) return fallbackPath;
@@ -64,7 +66,7 @@ function loadHttpsCerts() {
   };
 }
 
-if (!fs.existsSync(BUILD_DIR)) {
+if (isProduction && !fs.existsSync(BUILD_DIR)) {
   console.error(`❌ build directory not found: ${BUILD_DIR}`);
   console.error('Run `npm run build:web-manager` first.');
   process.exit(1);
@@ -82,10 +84,21 @@ app.use(
   })
 );
 
-app.use(express.static(BUILD_DIR, { index: false }));
-app.get(/.*/, (req, res) => {
-  res.sendFile(path.join(BUILD_DIR, 'index.html'));
-});
+let devProxy;
+if (isProduction) {
+  app.use(express.static(BUILD_DIR, { index: false }));
+  app.get(/.*/, (req, res) => {
+    res.sendFile(path.join(BUILD_DIR, 'index.html'));
+  });
+} else {
+  console.log(`➡️  /* (dev assets) -> proxying to Vite Dev Server at ${WEB_DEV_TARGET}`);
+  devProxy = createProxyMiddleware({
+    target: WEB_DEV_TARGET,
+    changeOrigin: true,
+    ws: true,
+  });
+  app.use(devProxy);
+}
 
 let certs;
 try {
@@ -96,6 +109,12 @@ try {
 }
 
 const server = https.createServer({ key: certs.key, cert: certs.cert }, app);
+
+if (!isProduction && devProxy) {
+  server.on('upgrade', (req, socket, head) => {
+    devProxy.upgrade(req, socket, head);
+  });
+}
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
