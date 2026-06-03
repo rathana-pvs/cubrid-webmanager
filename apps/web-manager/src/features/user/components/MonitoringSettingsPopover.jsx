@@ -29,13 +29,21 @@ export default function MonitoringSettingsPopover() {
   ];
 
   useEffect(() => {
-    setLocalPrefs(preferences);
+    const rawDashVal = preferences.dashboardInterval;
+    const dashVal = typeof rawDashVal === 'number' ? rawDashVal : (parseInt(rawDashVal, 10) || 0);
 
-    const dashVal = preferences.dashboardInterval;
+    const rawBrokerVal = preferences.brokerStatusInterval;
+    const brokerVal = typeof rawBrokerVal === 'number' ? rawBrokerVal : (parseInt(rawBrokerVal, 10) || 0);
+
+    setLocalPrefs({
+      ...preferences,
+      dashboardInterval: dashVal,
+      brokerStatusInterval: brokerVal,
+    });
+
     setCustomDashboardText(dashVal === 0 ? '' : dashVal.toString());
     setDashboardPresetActive(intervals.some(opt => opt.value === dashVal));
 
-    const brokerVal = preferences.brokerStatusInterval;
     setCustomBrokerText(brokerVal === 0 ? '' : brokerVal.toString());
     setBrokerPresetActive(intervals.some(opt => opt.value === brokerVal));
   }, [preferences]);
@@ -107,7 +115,7 @@ export default function MonitoringSettingsPopover() {
     }
   };
 
-  const hasActiveMonitoring = (preferences.dashboardInterval > 0 || preferences.brokerStatusInterval > 0);
+  const hasActiveMonitoring = (Number(preferences.dashboardInterval) > 0 || Number(preferences.brokerStatusInterval) > 0);
 
   return (
     <div className="relative" ref={popoverRef}>
