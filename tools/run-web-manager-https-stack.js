@@ -102,6 +102,7 @@ function startWebProxy() {
   const env = { ...process.env };
   if (!isProduction) {
     env.USE_DEV_PROXY = '1';
+    env.WEB_DEV_TARGET = process.env.WEB_DEV_TARGET || `http://${WEB_DEV_HOST}:${WEB_DEV_PORT}`;
   }
   webChild = spawn(process.execPath, [scriptPath, WEB_HTTPS_PORT], {
     cwd: REPO_ROOT,
