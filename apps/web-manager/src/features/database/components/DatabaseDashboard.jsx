@@ -30,47 +30,49 @@ const Component = function DatabaseDashboard({ hostUid: propHostUid, dbname }) {
   const hostData = useSelector((state) => state.monitoring.hostsData[hostUid] || {});
   const haHeartbeat = hostData?.haHeartbeat;
   const isDbInHa = React.useMemo(() => {
-    if (!haHeartbeat?.hadbinfolist || !Array.isArray(haHeartbeat.hadbinfolist)) {
-      return false;
-    }
-    for (const entry of haHeartbeat.hadbinfolist) {
+    const raw = haHeartbeat?.hadbinfolist;
+    if (!raw) return false;
+
+    const ensureArray = (val) => {
+      if (!val) return [];
+      return Array.isArray(val) ? val : [val];
+    };
+
+    let found = false;
+    ensureArray(raw).forEach((entry) => {
       const servers = entry?.server;
-      if (!Array.isArray(servers)) {
-        continue;
-      }
-      for (const server of servers) {
-        if (!server) continue;
-        if (Array.isArray(server.dbmode)) {
-          for (const row of server.dbmode) {
-            if (row?.dbname === dbname) return true;
+      if (!servers) return;
+
+      ensureArray(servers).forEach((server) => {
+        if (!server) return;
+
+        ensureArray(server.dbmode).forEach((row) => {
+          if (row?.dbname === dbname) found = true;
+        });
+
+        ensureArray(server.dbprocinfo).forEach((row) => {
+          if (row?.dbname === dbname) found = true;
+        });
+
+        ensureArray(server.applylogdb).forEach((block) => {
+          if (block?.element) {
+            ensureArray(block.element).forEach((el) => {
+              if (el?.dbname === dbname) found = true;
+            });
           }
-        }
-        if (Array.isArray(server.dbprocinfo)) {
-          for (const row of server.dbprocinfo) {
-            if (row?.dbname === dbname) return true;
+        });
+
+        ensureArray(server.copylogdb).forEach((block) => {
+          if (block?.element) {
+            ensureArray(block.element).forEach((el) => {
+              if (el?.dbname === dbname) found = true;
+            });
           }
-        }
-        if (Array.isArray(server.applylogdb)) {
-          for (const block of server.applylogdb) {
-            if (Array.isArray(block?.element)) {
-              for (const el of block.element) {
-                if (el?.dbname === dbname) return true;
-              }
-            }
-          }
-        }
-        if (Array.isArray(server.copylogdb)) {
-          for (const block of server.copylogdb) {
-            if (Array.isArray(block?.element)) {
-              for (const el of block.element) {
-                if (el?.dbname === dbname) return true;
-              }
-            }
-          }
-        }
-      }
-    }
-    return false;
+        });
+      });
+    });
+
+    return found;
   }, [haHeartbeat, dbname]);
   
   const { dashboardData, dashboardLoading } = useSelector((state) => state.databaseMonitoring, shallowEqual);

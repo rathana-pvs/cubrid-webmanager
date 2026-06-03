@@ -97,46 +97,46 @@ const Component = function ServerContent({ hostUid }) {
   const haDbs = React.useMemo(() => {
     const names = new Set();
     const raw = haHeartbeat?.hadbinfolist;
-    if (!raw || !Array.isArray(raw)) {
-      return names;
-    }
-    for (const entry of raw) {
+    if (!raw) return names;
+
+    const ensureArray = (val) => {
+      if (!val) return [];
+      return Array.isArray(val) ? val : [val];
+    };
+
+    ensureArray(raw).forEach((entry) => {
       const servers = entry?.server;
-      if (!Array.isArray(servers)) {
-        continue;
-      }
-      for (const server of servers) {
-        if (!server) continue;
-        if (Array.isArray(server.dbmode)) {
-          for (const row of server.dbmode) {
-            if (row?.dbname) names.add(row.dbname);
+      if (!servers) return;
+
+      ensureArray(servers).forEach((server) => {
+        if (!server) return;
+
+        ensureArray(server.dbmode).forEach((row) => {
+          if (row?.dbname) names.add(row.dbname);
+        });
+
+        ensureArray(server.dbprocinfo).forEach((row) => {
+          if (row?.dbname) names.add(row.dbname);
+        });
+
+        ensureArray(server.applylogdb).forEach((block) => {
+          if (block?.element) {
+            ensureArray(block.element).forEach((el) => {
+              if (el?.dbname) names.add(el.dbname);
+            });
           }
-        }
-        if (Array.isArray(server.dbprocinfo)) {
-          for (const row of server.dbprocinfo) {
-            if (row?.dbname) names.add(row.dbname);
+        });
+
+        ensureArray(server.copylogdb).forEach((block) => {
+          if (block?.element) {
+            ensureArray(block.element).forEach((el) => {
+              if (el?.dbname) names.add(el.dbname);
+            });
           }
-        }
-        if (Array.isArray(server.applylogdb)) {
-          for (const block of server.applylogdb) {
-            if (Array.isArray(block?.element)) {
-              for (const el of block.element) {
-                if (el?.dbname) names.add(el.dbname);
-              }
-            }
-          }
-        }
-        if (Array.isArray(server.copylogdb)) {
-          for (const block of server.copylogdb) {
-            if (Array.isArray(block?.element)) {
-              for (const el of block.element) {
-                if (el?.dbname) names.add(el.dbname);
-              }
-            }
-          }
-        }
-      }
-    }
+        });
+      });
+    });
+
     return names;
   }, [haHeartbeat]);
 
