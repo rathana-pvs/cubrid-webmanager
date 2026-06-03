@@ -21,7 +21,9 @@ import { useCM } from '../../../constants/useCM';
 const Component = function DatabaseDashboard({ dbname }) {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { selectedHostUid, hosts } = useSelector((state) => state.host, shallowEqual);
+  const { selectedHostUid, hosts, haInfo } = useSelector((state) => state.host, shallowEqual);
+  const hostHaInfo = haInfo[selectedHostUid] || {};
+  const isHA = hostHaInfo.isHA;
   const { dashboardData, dashboardLoading } = useSelector((state) => state.databaseMonitoring, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { refreshCounter, activeMainTab } = useSelector((state) => state.layout, shallowEqual);
@@ -170,6 +172,11 @@ const Component = function DatabaseDashboard({ dbname }) {
             <div className="flex items-center gap-1.5 mt-0.5">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500/60" />
               <Typography variant="label" className="text-[10px] text-slate-400 font-bold uppercase tracking-widest leading-none">@{dbname}</Typography>
+              {isHA && (
+                <span className="px-1 py-0.5 rounded-sm bg-amber-500/10 border border-amber-500/20 text-[8px] font-bold text-amber-600 dark:text-amber-400 tracking-wide uppercase leading-none">
+                  HA
+                </span>
+              )}
             </div>
           </div>
         </div>

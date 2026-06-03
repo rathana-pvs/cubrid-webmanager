@@ -13,6 +13,7 @@ import { fetchDatabaseVolumes } from '../../database/databaseMonitoringSlice';
 
 import SystemStatusSection from './server/SystemStatusSection';
 import DatabaseListSection from './server/DatabaseListSection';
+import HaClusterStatusSection from './server/HaClusterStatusSection';
 import MonitoringSettingsPopover from '../../user/components/MonitoringSettingsPopover';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -22,12 +23,14 @@ const Component = function ServerContent({ hostUid }) {
   const CM = useCM();
   const dispatch = useDispatch();
   const { databases, activeDatabases } = useSelector((state) => state.database, shallowEqual);
-  const { hosts, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
+  const { hosts, authorizedHosts, haInfo } = useSelector((state) => state.host, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { refreshCounter } = useSelector((state) => state.layout, shallowEqual);
   const [autoStartDBs, setAutoStartDBs] = useState([]);
   
   const currentHost = hosts.find(h => h.uid === hostUid);
+  const hostHaInfo = haInfo[hostUid] || {};
+  const isHA = hostHaInfo.isHA;
   const hostLabel = currentHost ? (currentHost.alias || currentHost.id) : CM.unknownHost;
   const { isManualRefreshing: isRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
     hostUid,
@@ -146,10 +149,11 @@ const Component = function ServerContent({ hostUid }) {
 
       {/* ── Scrollable Body ── */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
+        <HaClusterStatusSection hostUid={hostUid} />
         <DatabaseVolumes hostUid={hostUid} />
         <Brokers hostUid={hostUid} isSection={true} />
         <SystemStatusSection hostUid={hostUid} isTabActive={isTabActive} />
-        <DatabaseListSection dbListDisplay={dbListDisplay} handleAutoStartToggle={handleAutoStartToggle} />
+        <DatabaseListSection dbListDisplay={dbListDisplay} handleAutoStartToggle={handleAutoStartToggle} isHA={isHA} />
         <SystemInfo hostUid={hostUid} />
       </div>
     </div>
