@@ -55,6 +55,8 @@ export default function MonitoringSettingsPopover() {
     setIsOpen(false);
   };
 
+  const MAX_INTERVAL = 86400; // 24 hours in seconds (well below browser timer limit of 2147483s)
+
   const handleDashboardPresetClick = (val) => {
     setLocalPrefs(prev => ({ ...prev, dashboardInterval: val }));
     setCustomDashboardText(val === 0 ? '' : val.toString());
@@ -64,13 +66,18 @@ export default function MonitoringSettingsPopover() {
   const handleDashboardCustomChange = (e) => {
     let valStr = e.target.value;
     valStr = valStr.replace(/\D/g, '');
-    setCustomDashboardText(valStr);
     setDashboardPresetActive(false);
 
     if (valStr !== '') {
-      const parsed = parseInt(valStr, 10);
+      let parsed = parseInt(valStr, 10);
+      if (parsed > MAX_INTERVAL) {
+        parsed = MAX_INTERVAL;
+        valStr = MAX_INTERVAL.toString();
+      }
+      setCustomDashboardText(valStr);
       setLocalPrefs(prev => ({ ...prev, dashboardInterval: parsed }));
     } else {
+      setCustomDashboardText(valStr);
       setLocalPrefs(prev => ({ ...prev, dashboardInterval: 0 }));
     }
   };
@@ -84,13 +91,18 @@ export default function MonitoringSettingsPopover() {
   const handleBrokerCustomChange = (e) => {
     let valStr = e.target.value;
     valStr = valStr.replace(/\D/g, '');
-    setCustomBrokerText(valStr);
     setBrokerPresetActive(false);
 
     if (valStr !== '') {
-      const parsed = parseInt(valStr, 10);
+      let parsed = parseInt(valStr, 10);
+      if (parsed > MAX_INTERVAL) {
+        parsed = MAX_INTERVAL;
+        valStr = MAX_INTERVAL.toString();
+      }
+      setCustomBrokerText(valStr);
       setLocalPrefs(prev => ({ ...prev, brokerStatusInterval: parsed }));
     } else {
+      setCustomBrokerText(valStr);
       setLocalPrefs(prev => ({ ...prev, brokerStatusInterval: 0 }));
     }
   };
@@ -158,6 +170,7 @@ export default function MonitoringSettingsPopover() {
                   onChange={handleDashboardCustomChange}
                   suffix="seconds"
                   min="0"
+                  max="86400"
                   disabled={actionLoading}
                 />
               </div>
@@ -197,6 +210,7 @@ export default function MonitoringSettingsPopover() {
                   onChange={handleBrokerCustomChange}
                   suffix="seconds"
                   min="0"
+                  max="86400"
                   disabled={actionLoading}
                 />
               </div>
