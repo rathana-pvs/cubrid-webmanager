@@ -44,7 +44,9 @@ export default function HaClusterStatusSection({ hostUid }) {
     return null;
   }
 
-  const rawNodes = hostData.haHeartbeat.hanodelist?.[0]?.node;
+  const rawNodeGroups = hostData.haHeartbeat.hanodelist;
+  const nodeGroups = Array.isArray(rawNodeGroups) ? rawNodeGroups : (rawNodeGroups ? [rawNodeGroups] : []);
+  const rawNodes = nodeGroups[0]?.node;
   const nodes = Array.isArray(rawNodes) ? rawNodes : (rawNodes ? [rawNodes] : []);
 
   return (
