@@ -29,11 +29,13 @@ export default function MonitoringSettingsPopover() {
   ];
 
   useEffect(() => {
+    const clampInterval = (value) => Math.min(Math.max(value, 0), MAX_INTERVAL);
+
     const rawDashVal = preferences.dashboardInterval;
-    const dashVal = typeof rawDashVal === 'number' ? rawDashVal : (parseInt(rawDashVal, 10) || 0);
+    const dashVal = clampInterval(typeof rawDashVal === 'number' ? rawDashVal : (parseInt(rawDashVal, 10) || 0));
 
     const rawBrokerVal = preferences.brokerStatusInterval;
-    const brokerVal = typeof rawBrokerVal === 'number' ? rawBrokerVal : (parseInt(rawBrokerVal, 10) || 0);
+    const brokerVal = clampInterval(typeof rawBrokerVal === 'number' ? rawBrokerVal : (parseInt(rawBrokerVal, 10) || 0));
 
     setLocalPrefs({
       ...preferences,
