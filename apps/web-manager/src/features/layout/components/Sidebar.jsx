@@ -72,6 +72,7 @@ import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 import { Modal } from '../../../components/ds/layout/Modal';
+import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
 import { Button } from '../../../components/ds/foundation/Button';
 import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { useCM } from '../../../constants/useCM';
@@ -139,6 +140,11 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   } = useActionState();
 
   const [loadingText, setLoadingText] = useState(CM.processing);
+  const [stopServiceConfirm, setStopServiceConfirm] = useState({
+    isOpen: false,
+    hostUid: null,
+    serverName: '',
+  });
 
   const { hosts, hostGroups, selectedHostUid, selectedGroupUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors, haInfo, skipAutoHostLogin } = useSelector((state) => state.host, shallowEqual);
   const { databases, activeDatabases, loggedInDatabases } = useSelector((state) => state.database, shallowEqual);
@@ -233,6 +239,19 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     } catch (err) {
       endError(err);
     }
+  };
+
+  const closeStopServiceConfirm = () => {
+    setStopServiceConfirm(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const requestStopService = (hostUid, serverName) => {
+    if (!hostUid) return;
+    setStopServiceConfirm({
+      isOpen: true,
+      hostUid,
+      serverName: serverName || hostUid,
+    });
   };
 
   useEffect(() => {
@@ -723,8 +742,9 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             disabled={!authorizedHosts.includes(contextMenu.hostUid) || sidebarActionLoading}
             onClick={() => {
               const hostUid = contextMenu.hostUid;
+              const serverName = contextMenu.alias || contextMenu.server || hostUid;
               setContextMenu(null);
-              handleServiceAction(hostUid, 'stop');
+              requestStopService(hostUid, serverName);
             }}
           />
           <MenuDivider />
@@ -1489,6 +1509,19 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       <AutoVolumeLogModal />
       <CMSUserManagementModal />
       <EditCMSUserModal />
+      <ConfirmDialog
+        isOpen={stopServiceConfirm.isOpen}
+        title={CM.stopServicesConfirmTitle}
+        description={CM.stopServicesConfirmDesc(stopServiceConfirm.serverName)}
+        confirmLabel={CM.stopAllServices}
+        variant="danger"
+        onConfirm={() => {
+          const { hostUid } = stopServiceConfirm;
+          closeStopServiceConfirm();
+          handleServiceAction(hostUid, 'stop');
+        }}
+        onCancel={closeStopServiceConfirm}
+      />
       {isSidebarActionError && (
         <Modal isOpen title={CM.actionFailed} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="400px">
           <ModalStatusError 
