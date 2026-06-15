@@ -12,7 +12,9 @@ import {
   revokeHostLogin,
   openServerVersionModal,
   fetchHostEnv,
-  openCmsUserManagementModal
+  openCmsUserManagementModal,
+  startService,
+  stopService
 } from '../../host/hostSlice';
 import {
   fetchDatabaseStartInfo, startDatabase, stopDatabase, loginDatabase, registerDatabase,
@@ -216,6 +218,22 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         }));
       });
   }, [dispatch, hostGroups, authorizedHosts, CM.loginAll]);
+
+  const handleServiceAction = async (hostUid, action) => {
+    if (!hostUid) return;
+    setLoadingText(action === 'start' ? CM.startingService : CM.stoppingService);
+    startAction();
+    try {
+      if (action === 'start') {
+        await dispatch(startService(hostUid)).unwrap();
+      } else {
+        await dispatch(stopService(hostUid)).unwrap();
+      }
+      resetAction();
+    } catch (err) {
+      endError(err);
+    }
+  };
 
   useEffect(() => {
     if (selectedHostUid && selectedHostUid !== lastProcessedHostUid.current) {
@@ -688,6 +706,27 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               }}
             />
           )}
+          <MenuDivider />
+          <MenuItem
+            icon="play_arrow"
+            label={CM.startService}
+            disabled={!authorizedHosts.includes(contextMenu.hostUid) || sidebarActionLoading}
+            onClick={() => {
+              const hostUid = contextMenu.hostUid;
+              setContextMenu(null);
+              handleServiceAction(hostUid, 'start');
+            }}
+          />
+          <MenuItem
+            icon="stop"
+            label={CM.stopService}
+            disabled={!authorizedHosts.includes(contextMenu.hostUid) || sidebarActionLoading}
+            onClick={() => {
+              const hostUid = contextMenu.hostUid;
+              setContextMenu(null);
+              handleServiceAction(hostUid, 'stop');
+            }}
+          />
           <MenuDivider />
           <MenuItem icon="add_box" label={CM.addHost} onClick={() => { onAddHost(); setContextMenu(null); }} />
           <MenuItem icon="edit" label={CM.editHost} onClick={() => { dispatch(openEditHostModal(contextMenu.hostUid)); setContextMenu(null); }} />
