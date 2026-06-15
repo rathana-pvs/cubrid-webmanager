@@ -391,6 +391,9 @@ export const CM_KO = {
   fullControl: '전체 제어',
   permissions: '권한',
   brokerAuthority: '브로커 권한',
+  monitoringPermission: '모니터링',
+  dbCreatePermission: 'DB 생성',
+  brokerPermission: '브로커',
 
   serverDashboard: '서버 대시보드',
   refreshDashboard: '대시보드 새로 고침',
