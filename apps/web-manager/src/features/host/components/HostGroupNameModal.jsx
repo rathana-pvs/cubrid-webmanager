@@ -12,8 +12,10 @@ import { Input } from '../../../components/ds/forms/Input';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 export default function HostGroupNameModal() {
+  const CM = useCM();
   const dispatch = useDispatch();
   const {
     isCreateGroupModalOpen,
@@ -66,17 +68,17 @@ export default function HostGroupNameModal() {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={isRename ? 'Rename Group' : 'Create Group'}
+      title={isRename ? CM.renameGroup : CM.createGroup}
       icon={isRename ? 'edit' : 'create_new_folder'}
       loading={loading}
       maxWidth="max-w-[480px]"
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="secondary" onClick={handleClose} disabled={loading}>
-            Cancel
+            {CM.cancel}
           </Button>
           <Button variant="primary" onClick={handleSubmit} loading={loading} icon={isRename ? 'check' : 'add'}>
-            {isRename ? 'Save' : 'Create'}
+            {isRename ? CM.save : CM.createGroup}
           </Button>
         </div>
       }
@@ -92,7 +94,7 @@ export default function HostGroupNameModal() {
         )}
 
         <Input
-          label="Group name"
+          label={CM.groupNameLabel}
           name="groupName"
           value={name}
           onChange={(e) => {

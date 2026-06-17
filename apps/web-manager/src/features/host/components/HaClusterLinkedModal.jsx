@@ -26,13 +26,13 @@ export default function HaClusterLinkedModal() {
     <Modal
       isOpen={isHaClusterLinkModalOpen}
       onClose={() => dispatch(clearHaClusterLinkNotice())}
-      title="HA cluster linked"
+      title={CM.haClusterLinked}
       icon="hub"
       zIndexClass="z-[2200]"
       maxWidth="max-w-[480px]"
       footer={
         <Button variant="primary" onClick={() => dispatch(clearHaClusterLinkNotice())} className="min-w-[120px]">
-          {CM.dismiss || 'OK'}
+          {CM.dismiss}
         </Button>
       }
     >

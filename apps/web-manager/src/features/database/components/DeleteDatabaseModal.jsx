@@ -130,9 +130,9 @@ export default function DeleteDatabaseModal() {
   if (isLoading) {
     return (
       <Modal isOpen title={CM.dbaConfirm} icon="delete_forever" onClose={handleClose} maxWidth="440px" showCloseButton={false}>
-        <ModalStatusLoading 
-          title="Erasing Data Assets" 
-          subtitle={`Authorizing destruction and removing all physical volumes for ${selectedDatabase}.`}
+        <ModalStatusLoading
+          title={CM.deletingDatabase}
+          subtitle={selectedDatabase}
           variant="danger"
         />
       </Modal>
@@ -142,10 +142,10 @@ export default function DeleteDatabaseModal() {
   /* ─── SUCCESS view ─── */
   if (isSuccess) {
     return (
-      <Modal isOpen title="Operation Complete" icon="delete_forever" iconVariant="success" onClose={handleClose} maxWidth="440px">
-        <ModalStatusSuccess 
+      <Modal isOpen title={CM.deleteSuccessful} icon="delete_forever" iconVariant="success" onClose={handleClose} maxWidth="440px">
+        <ModalStatusSuccess
           title={CM.success}
-          message={`All volumes and associated metadata for ${selectedDatabase} have been permanently removed.`}
+          message={selectedDatabase}
           onConfirm={handleClose}
           confirmText={CM.ok}
         />
@@ -156,7 +156,7 @@ export default function DeleteDatabaseModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title={step === 2 ? 'Authorization Error' : 'Capture Failed'} icon="delete_forever" iconVariant="danger" onClose={resetAction} maxWidth="440px">
+      <Modal isOpen title={CM.executionError} icon="delete_forever" iconVariant="danger" onClose={resetAction} maxWidth="440px">
         <ModalStatusError 
           title={CM.failure}
           error={error}
@@ -184,7 +184,7 @@ export default function DeleteDatabaseModal() {
           <div className="flex-1">
             {step === 2 && (
               <Button variant="ghost" onClick={() => setStep(1)}>
-                Back
+                {CM.backBtn}
               </Button>
             )}
           </div>
@@ -196,7 +196,7 @@ export default function DeleteDatabaseModal() {
               icon={step === 1 ? 'arrow_forward' : 'delete_forever'}
               className="whitespace-nowrap"
             >
-              {step === 1 ? 'Proceed' : 'Delete'}
+              {step === 1 ? CM.proceedBtn : CM.executeDiscard}
             </Button>
           </div>
         </div>
@@ -205,7 +205,7 @@ export default function DeleteDatabaseModal() {
       {step === 1 ? (
         <div className="space-y-4 animate-in fade-in duration-200">
           <div>
-            <SectionHeader title="Target Selection" icon="database" badge="Permanent" />
+            <SectionHeader title={CM.targetSelection} icon="database" badge="Permanent" />
             <div className="flex items-center gap-3 px-4 py-3 rounded-xl bg-rose-500/5 border border-rose-500/20">
               <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
                 <Icon name="database" size="sm" weight={300} className="text-rose-500" />
@@ -213,7 +213,7 @@ export default function DeleteDatabaseModal() {
               <div className="flex-1 min-w-0">
                 <Typography variant="p" className="text-slate-800 dark:text-slate-100 font-bold text-[14px] leading-none truncate">{selectedDatabase}</Typography>
               </div>
-              <StatusBadge label="Destructive" variant="rose" pulse={true} className="rounded-full" />
+              <StatusBadge label={CM.destructiveAction} variant="rose" pulse={true} className="rounded-full" />
             </div>
           </div>
 
@@ -232,12 +232,12 @@ export default function DeleteDatabaseModal() {
             {fetchingVolumes ? (
               <div className="flex items-center justify-center gap-2.5 py-10 text-slate-400 dark:text-slate-500">
                 <Spinner size="xs" />
-                <Typography variant="caption" className="font-bold tracking-widest uppercase">Fetching Assets…</Typography>
+                <Typography variant="caption" className="font-bold tracking-widest uppercase">{CM.fetchingAssets}</Typography>
               </div>
             ) : volumeInfo.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-10 text-slate-400 dark:text-slate-500 gap-2">
                 <Icon name="hard_drive" size="lg" weight={100} className="opacity-20" />
-                <Typography variant="caption" className="font-bold uppercase tracking-widest">No volumes detected</Typography>
+                <Typography variant="caption" className="font-bold uppercase tracking-widest">{CM.noVolumesDetected}</Typography>
               </div>
             ) : (
               <div className="divide-y divide-slate-100 dark:divide-white/5 max-h-[220px] overflow-y-auto custom-scrollbar">
@@ -263,7 +263,7 @@ export default function DeleteDatabaseModal() {
         </div>
 
           <div>
-            <SectionHeader title="Recovery Cleanup" icon="folder_delete" />
+            <SectionHeader title={CM.recoveryCleanup} icon="folder_delete" />
             <div 
               className={`flex items-center gap-4 p-4 border rounded-2xl transition-all duration-200 cursor-pointer select-none
                 ${deleteBackup
@@ -277,10 +277,10 @@ export default function DeleteDatabaseModal() {
               </div>
               <div className="flex-1 min-w-0">
                 <Typography variant="p" className={`font-bold text-[11.5px] tracking-tight transition-colors ${deleteBackup ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>
-                  Purge Linked Backups
+                  {CM.purgeLinkedBackups}
                 </Typography>
                 <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-0.5 leading-snug">
-                  Remove all secondary volumes and snapshots linked to this instance.
+                  {CM.purgeLinkedBackupsDesc}
                 </Typography>
               </div>
               <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
@@ -295,7 +295,7 @@ export default function DeleteDatabaseModal() {
         </div>
       ) : (
         <div className="space-y-5 py-2 animate-in fade-in duration-200 max-w-[400px] mx-auto">
-          <InfoBanner title="Authorization Point">
+          <InfoBanner title={CM.authorizationPointTitle}>
             Confirm your database credentials to permanently delete <span className="text-rose-500 font-bold non-italic">{selectedDatabase}</span>.
           </InfoBanner>
 

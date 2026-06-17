@@ -33,6 +33,9 @@ const MetricBar = ({ pct }) => (
 import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
 import { useCM } from '../../../constants/useCM';
 
+const ignoreRefreshError = () => undefined;
+const defaultConfirmAction = () => undefined;
+
 const Component = function ServiceDashboard() {
   const CM = useCM();
   const dispatch = useDispatch();
@@ -59,7 +62,7 @@ const Component = function ServiceDashboard() {
     onFetch: (silent) => async (dispatch) => {
       if (authorizedHosts.length === 0) return;
       await Promise.all(authorizedHosts.map(hostUid => 
-        dispatch(fetchHostSummary(silent ? { hostUid, isBackground: true } : hostUid)).unwrap().catch(() => {})
+        dispatch(fetchHostSummary(silent ? { hostUid, isBackground: true } : hostUid)).unwrap().catch(ignoreRefreshError)
       ));
     }
   });
@@ -100,7 +103,7 @@ const Component = function ServiceDashboard() {
     description: '', 
     confirmLabel: '',
     variant: 'primary',
-    onConfirm: () => {} 
+    onConfirm: defaultConfirmAction
   });
 
   const closeConfirm = () => setConfirmConfig(prev => ({ ...prev, isOpen: false }));
@@ -295,9 +298,9 @@ const Component = function ServiceDashboard() {
                 title={row.isCollapsed ? 'Expand group' : 'Collapse group'}
               >
                 <Icon
-                  name="chevron_right"
+                  name={row.isCollapsed ? 'chevron_right' : 'keyboard_arrow_up'}
                   size="16px"
-                  className={`transition-transform duration-200 ${row.isCollapsed ? '' : 'rotate-90'}`}
+                  className="transition-transform duration-200"
                 />
               </button>
               <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/4 border border-slate-200 dark:border-white/8 flex items-center justify-center">
@@ -344,13 +347,7 @@ const Component = function ServiceDashboard() {
 
         return (
           <div className="flex items-center gap-3 py-0.5">
-            {/* Tree connector lines */}
-            <div className="w-12 shrink-0 relative flex self-stretch">
-              {/* Vertical branch trunk line */}
-              <div className="absolute left-[45px] top-0 w-[1.5px] h-[16px] bg-slate-200 dark:bg-white/10" />
-              {/* Horizontal branch connection line */}
-              <div className="absolute left-[45px] top-[15px] w-[15px] h-[1.5px] bg-slate-200 dark:bg-white/10" />
-            </div>
+            <div className="w-[34px] shrink-0" aria-hidden="true" />
             {/* Server icon box with connection status */}
             <div className="relative shrink-0">
               <div className={`w-6 h-6 rounded-md flex items-center justify-center border transition-all duration-200 ${

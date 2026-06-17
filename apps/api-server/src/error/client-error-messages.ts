@@ -30,6 +30,10 @@ function isMeaningfulCmsNote(note: unknown): boolean {
   return true;
 }
 
+function stripCmsArtifacts(s: string): string {
+  return s.replace(/<end>\s*$/i, '').trim();
+}
+
 /**
  * Collect candidate user-facing strings for CMS failures in priority order.
  * - `checkCmsStatusError` path: full `response` object + `response.note`
@@ -52,13 +56,13 @@ function cmsNoteFromPayload(additionalData?: Record<string, any>): string | unde
 
   for (const c of candidates) {
     if (isMeaningfulCmsNote(c)) {
-      return String(c).trim();
+      return stripCmsArtifacts(String(c));
     }
   }
 
   const rawMsg = additionalData.message;
   if (typeof rawMsg === 'string' && rawMsg.trim() !== '') {
-    return rawMsg.trim();
+    return stripCmsArtifacts(rawMsg);
   }
 
   return undefined;

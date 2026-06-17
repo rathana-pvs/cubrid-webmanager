@@ -180,6 +180,19 @@ apiClient.interceptors.response.use(
     const statusCode = error.response?.status;
     const requestUrl = originalRequest?.url ?? '';
 
+    // Normalize the error message before any early returns so every rejection
+    // path exposes a meaningful message via err.response.data.message.
+    // Priority: our StandardResponse.note → nested data.message → data.detail
+    // → data.title → existing message (e.g. NestJS default "Internal Server Error")
+    if (apiData && typeof apiData === 'object' && !Array.isArray(apiData)) {
+      apiData.message = apiData.note
+        || apiData.data?.message
+        || apiData.data?.detail
+        || apiData.data?.title
+        || apiData.message
+        || 'An unexpected error occurred';
+    }
+
     if (statusCode === 401 && !originalRequest._retry) {
       const hostUid = getHostUidFromUrl(requestUrl);
       const isHostLoginRequest = requestUrl.includes('/cms-auth/login');
@@ -248,12 +261,14 @@ apiClient.interceptors.response.use(
         }
       }
 
+      // auth/login and auth/logout 401 = credential failure, not session expiry.
+      // Don't trigger session expiry for these — just surface the error.
+      if (isAuthLoginRequest || isAuthLogoutRequest) {
+        return Promise.reject(error);
+      }
+
       await handleSystemSessionExpired();
       return Promise.reject(error);
-    }
-
-    if (apiData) {
-      apiData.message = apiData.note || apiData.data?.title || apiData.message || 'An unexpected error occurred';
     }
 
     return Promise.reject(error);

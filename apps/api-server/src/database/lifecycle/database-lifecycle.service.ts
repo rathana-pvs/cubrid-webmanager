@@ -434,8 +434,9 @@ export class DatabaseLifecycleService extends BaseService {
       data: createDatabaseResult,
     };
 
-    // 1-1. Start database after successful creation only when requested.
-    if (setAutoStart) {
+    // 1-1. Start database when requested OR when updateUser needs DB access.
+    // userinfo/updateuser CMS tasks require the database to be running.
+    if (setAutoStart || updateUser) {
       try {
         const startInfo = await this.startDatabase(userId, hostUid, createDbRequest.dbname);
         response.startDatabase = {
@@ -462,17 +463,64 @@ export class DatabaseLifecycleService extends BaseService {
     // 2. Update user if requested
     if (updateUser) {
       try {
-        // Use top-level dbname and username (default to "dba" if not provided)
         const usernameToUse = username || 'dba';
-        // For createDatabase, we only update password, so use empty groups and authorization
+
+        // Login to DB so subsequent userinfo/updateuser CMS tasks have DB auth context.
+        // Newly-created databases have no password, so use empty string.
+        await this.databaseUserService.loginDatabase(
+          userId,
+          hostUid,
+          createDbRequest.dbname,
+          usernameToUse,
+          ''
+        );
+
+        let groups: { group: string[] } = { group: [] };
+        let authorization: string[] = [];
+
+        // Fetch current user info to preserve existing groups and authorization.
+        try {
+          const userInfoResponse = await this.databaseUserService.getUserInfo(
+            userId,
+            hostUid,
+            createDbRequest.dbname
+          );
+
+          const existingUser = (userInfoResponse.user ?? []).find(
+            (u) => String(u['@name'] ?? '').toLowerCase() === usernameToUse.toLowerCase()
+          );
+
+          if (existingUser?.groups) {
+            const raw = existingUser.groups as any;
+            if (Array.isArray(raw?.group)) {
+              groups.group = raw.group.filter((g: unknown) => typeof g === 'string');
+            }
+          }
+
+          if (existingUser?.authorization) {
+            for (const entry of existingUser.authorization as Array<Record<string, string>>) {
+              const name = entry?.['@name'];
+              if (typeof name === 'string' && name) {
+                authorization.push(name);
+              }
+            }
+          }
+        } catch (userInfoError: unknown) {
+          this.logger.warn(
+            `userinfo failed for "${usernameToUse}" on "${createDbRequest.dbname}", ` +
+            `proceeding with empty groups/authorization: ` +
+            `${userInfoError instanceof Error ? userInfoError.message : String(userInfoError)}`
+          );
+        }
+
         const updateUserResult = await this.databaseUserService.updateUser(
           userId,
           hostUid,
           createDbRequest.dbname,
           usernameToUse,
           updateUser.userpass,
-          { group: [] },
-          []
+          groups,
+          authorization
         );
         response.updateUser = {
           success: true,

@@ -9,6 +9,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Table } from '../../../components/ds/layout/Table';
 import { Card } from '../../../components/ds/layout/Card';
+import { useCM } from '../../../constants/useCM';
 
 // ── Helpers ──
 const CATEGORY_META = {
@@ -24,7 +25,9 @@ const formatMB = (pages, pageSize) => ((parseInt(pages) * pageSize) / (1024 * 10
 
 // ── Sub-components (Memoized) ──
 
-const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh, dashboardInterval, isLoading, lastRefreshed, dbname }) => (
+const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh, dashboardInterval, isLoading, lastRefreshed, dbname }) => {
+  const CM = useCM();
+  return (
   <header className="px-6 py-2.5 border-b border-slate-100 dark:border-white/4 flex items-center justify-between shrink-0 bg-white dark:bg-background-dark sticky top-0 z-10">
     <div className="flex items-center gap-3">
       <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 shadow-sm">
@@ -76,7 +79,7 @@ const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh
           ${isLoading
             ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
             : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5'}`}
-        title="Refresh category metrics"
+        title={CM.refreshCategoryMetrics}
       >
         <Icon name="refresh" size="18px" className={isLoading ? 'animate-spin' : ''} />
       </button>
@@ -85,7 +88,8 @@ const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh
       <MonitoringSettingsPopover />
     </div>
   </header>
-));
+  );
+});
 
 const CategoryStats = memo(({ volumes, summary, pageSize }) => (
   <div className="grid grid-cols-3 gap-3">

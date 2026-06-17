@@ -69,12 +69,9 @@ const INITIAL_FORM_DATA = {
   autoStart: true,
   volumes: [],
   autoAddVol: {
-    data: 'ON',
-    dataWarn: '0.15',
-    dataExtPage: '32768',
-    index: 'OFF',
-    indexWarn: '0.15',
-    indexExtPage: '32768',
+    permanent: 'ON',
+    warn: '0.15',
+    extPage: '32768',
   },
   baseDir: '',
   dbaPassword: '',
@@ -265,12 +262,12 @@ export default function CreateDatabaseModal() {
         exvol: exvol,
         charset: formData.locale === 'user_defined' ? formData.userDefinedLocale : formData.locale,
         setAutoAddVol: {
-          data: formData.autoAddVol.data,
-          data_warn_outofspace: formData.autoAddVol.dataWarn,
-          data_ext_page: formData.autoAddVol.dataExtPage,
-          index: formData.autoAddVol.index,
-          index_warn_outofspace: formData.autoAddVol.indexWarn,
-          index_ext_page: formData.autoAddVol.indexExtPage,
+          data: formData.autoAddVol.permanent,
+          data_warn_outofspace: formData.autoAddVol.warn,
+          data_ext_page: formData.autoAddVol.extPage,
+          index: formData.autoAddVol.permanent,
+          index_warn_outofspace: formData.autoAddVol.warn,
+          index_ext_page: formData.autoAddVol.extPage,
         },
         username: "dba",
         updateUser: {
@@ -610,7 +607,7 @@ export default function CreateDatabaseModal() {
                         type="button"
                         onClick={() => removeVolume(idx)}
                         className="w-7 h-7 flex items-center justify-center rounded-lg text-rose-500 bg-rose-500/5 hover:bg-rose-500/15 transition-all cursor-pointer border border-transparent hover:border-rose-500/10"
-                        title="Remove volume"
+                        title={CM.removeVolume}
                       >
                         <Icon name="delete_outline" size="sm" weight={300} />
                       </button>
@@ -667,21 +664,20 @@ export default function CreateDatabaseModal() {
               </div>
             </div>
 
-            {/* Policy card */}
+            {/* PERMANENT volume policy */}
             <div className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
-              formData.autoAddVol.data === 'ON'
+              formData.autoAddVol.permanent === 'ON'
                 ? 'bg-white dark:bg-white/2 border-amber-500/20'
                 : 'bg-slate-50/50 dark:bg-white/1 border-slate-100 dark:border-white/5'
             }`}>
-              {/* Card header */}
               <div className={`flex items-center justify-between px-4 py-3 border-b transition-all duration-300 ${
-                formData.autoAddVol.data === 'ON'
+                formData.autoAddVol.permanent === 'ON'
                   ? 'border-amber-500/10 bg-amber-500/[0.03]'
                   : 'border-transparent'
               }`}>
                 <div className="flex items-center gap-2.5">
                   <div className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all duration-300 ${
-                    formData.autoAddVol.data === 'ON'
+                    formData.autoAddVol.permanent === 'ON'
                       ? 'bg-amber-500/10 border-amber-500/25 text-amber-500'
                       : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/8 text-slate-400'
                   }`}>
@@ -689,29 +685,28 @@ export default function CreateDatabaseModal() {
                   </div>
                   <div>
                     <p className={`text-[12px] font-bold leading-tight transition-colors ${
-                      formData.autoAddVol.data === 'ON' ? 'text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-600'
-                    }`}>Data volume</p>
-                    <p className="text-[9px] text-slate-400 font-mono">auto-expansion policy</p>
+                      formData.autoAddVol.permanent === 'ON' ? 'text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-600'
+                    }`}>PERMANENT</p>
+                    <p className="text-[9px] text-slate-400 font-mono">data &amp; index auto-expansion policy</p>
                   </div>
                 </div>
                 <Toggle
-                  checked={formData.autoAddVol.data === 'ON'}
-                  onChange={(v) => handleAutoAddVolChange('data', v ? 'ON' : 'OFF')}
+                  checked={formData.autoAddVol.permanent === 'ON'}
+                  onChange={(v) => handleAutoAddVolChange('permanent', v ? 'ON' : 'OFF')}
                   size="sm"
                   color="amber"
                 />
               </div>
 
-              {/* Card body */}
-              <div className={`px-4 py-4 transition-all duration-300 ${formData.autoAddVol.data !== 'ON' ? 'opacity-30 pointer-events-none' : ''}`}>
+              <div className={`px-4 py-4 transition-all duration-300 ${formData.autoAddVol.permanent !== 'ON' ? 'opacity-30 pointer-events-none' : ''}`}>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1.5">
                     <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       Warning threshold
                     </label>
                     <Input
-                      value={formData.autoAddVol.dataWarn}
-                      onChange={(e) => handleAutoAddVolChange('dataWarn', e.target.value)}
+                      value={formData.autoAddVol.warn}
+                      onChange={(e) => handleAutoAddVolChange('warn', e.target.value)}
                       size="sm"
                       placeholder="e.g. 0.15"
                     />
@@ -722,72 +717,8 @@ export default function CreateDatabaseModal() {
                       Extension size
                     </label>
                     <Input
-                      value={formData.autoAddVol.dataExtPage}
-                      onChange={(e) => handleAutoAddVolChange('dataExtPage', e.target.value)}
-                      size="sm"
-                      placeholder="e.g. 32768"
-                    />
-                    <p className="text-[9px] text-slate-400">Number of pages to add per extension</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            {/* Index volume policy (CMS setautoaddvol requires index + data) */}
-            <div className={`rounded-2xl border transition-all duration-300 overflow-hidden ${
-              formData.autoAddVol.index === 'ON'
-                ? 'bg-white dark:bg-white/2 border-amber-500/20'
-                : 'bg-slate-50/50 dark:bg-white/1 border-slate-100 dark:border-white/5'
-            }`}>
-              <div className={`flex items-center justify-between px-4 py-3 border-b transition-all duration-300 ${
-                formData.autoAddVol.index === 'ON'
-                  ? 'border-amber-500/10 bg-amber-500/[0.03]'
-                  : 'border-transparent'
-              }`}>
-                <div className="flex items-center gap-2.5">
-                  <div className={`w-7 h-7 rounded-lg flex items-center justify-center border transition-all duration-300 ${
-                    formData.autoAddVol.index === 'ON'
-                      ? 'bg-amber-500/10 border-amber-500/25 text-amber-500'
-                      : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/8 text-slate-400'
-                  }`}>
-                    <Icon name="sort" size="sm" weight={300} />
-                  </div>
-                  <div>
-                    <p className={`text-[12px] font-bold leading-tight transition-colors ${
-                      formData.autoAddVol.index === 'ON' ? 'text-slate-800 dark:text-slate-100' : 'text-slate-400 dark:text-slate-600'
-                    }`}>{CM.volumeTypeIndex} volume</p>
-                    <p className="text-[9px] text-slate-400 font-mono">auto-expansion policy</p>
-                  </div>
-                </div>
-                <Toggle
-                  checked={formData.autoAddVol.index === 'ON'}
-                  onChange={(v) => handleAutoAddVolChange('index', v ? 'ON' : 'OFF')}
-                  size="sm"
-                  color="amber"
-                />
-              </div>
-
-              <div className={`px-4 py-4 transition-all duration-300 ${formData.autoAddVol.index !== 'ON' ? 'opacity-30 pointer-events-none' : ''}`}>
-                <div className="grid grid-cols-2 gap-4">
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      Warning threshold
-                    </label>
-                    <Input
-                      value={formData.autoAddVol.indexWarn}
-                      onChange={(e) => handleAutoAddVolChange('indexWarn', e.target.value)}
-                      size="sm"
-                      placeholder="e.g. 0.15"
-                    />
-                    <p className="text-[9px] text-slate-400">Ratio 0–1 (e.g. 0.15 = 15% free)</p>
-                  </div>
-                  <div className="space-y-1.5">
-                    <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
-                      Extension size
-                    </label>
-                    <Input
-                      value={formData.autoAddVol.indexExtPage}
-                      onChange={(e) => handleAutoAddVolChange('indexExtPage', e.target.value)}
+                      value={formData.autoAddVol.extPage}
+                      onChange={(e) => handleAutoAddVolChange('extPage', e.target.value)}
                       size="sm"
                       placeholder="e.g. 32768"
                     />
@@ -854,7 +785,7 @@ export default function CreateDatabaseModal() {
               </div>
 
               <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
-                <SectionHeader title="Storage" icon="hard_drive" className="mb-4" />
+                <SectionHeader title={CM.storage} icon="hard_drive" className="mb-4" />
                 <div className="space-y-0.5 mt-1">
                   <SummaryRow label={CM.totalVolumes} value={`${formData.volumes.length + 2}`} />
                   <SummaryRow label={CM.genericVolume} value={`${formData.genericVolSize} MB`} />
@@ -870,58 +801,31 @@ export default function CreateDatabaseModal() {
             <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
               <SectionHeader title={CM.wizardAutoVol} icon="auto_mode" className="mb-3" />
               <div className={`rounded-xl border transition-all ${
-                formData.autoAddVol.data === 'ON'
+                formData.autoAddVol.permanent === 'ON'
                   ? 'bg-amber-500/[0.03] border-amber-500/15'
                   : 'bg-slate-50 dark:bg-white/2 border-slate-100 dark:border-white/5'
               }`}>
                 <div className="flex items-center justify-between px-4 py-2.5 border-b border-inherit">
                   <div className="flex items-center gap-2">
-                    <Icon name="database" size="sm" weight={300} className={formData.autoAddVol.data === 'ON' ? 'text-amber-500' : 'text-slate-400'} />
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">Data volume</span>
+                    <Icon name="database" size="sm" weight={300} className={formData.autoAddVol.permanent === 'ON' ? 'text-amber-500' : 'text-slate-400'} />
+                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">PERMANENT</span>
                   </div>
                   <span className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${
-                    formData.autoAddVol.data === 'ON'
+                    formData.autoAddVol.permanent === 'ON'
                       ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
                       : 'bg-slate-500/10 text-slate-500 border-slate-500/15'
-                  }`}>{formData.autoAddVol.data}</span>
+                  }`}>{formData.autoAddVol.permanent}</span>
                 </div>
                 <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-white/5">
                   <div className="px-4 py-3">
                     <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Warning threshold</p>
-                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.dataWarn}</p>
+                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.warn}</p>
                     <p className="text-[9px] text-slate-400 mt-0.5">ratio (0–1)</p>
                   </div>
                   <div className="px-4 py-3">
                     <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Extension size</p>
-                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.dataExtPage}</p>
+                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.extPage}</p>
                     <p className="text-[9px] text-slate-400 mt-0.5">pages per extension</p>
-                  </div>
-                </div>
-              </div>
-              <div className={`mt-3 rounded-xl border transition-all ${
-                formData.autoAddVol.index === 'ON'
-                  ? 'bg-amber-500/[0.03] border-amber-500/15'
-                  : 'bg-slate-50 dark:bg-white/2 border-slate-100 dark:border-white/5'
-              }`}>
-                <div className="flex items-center justify-between px-4 py-2.5 border-b border-inherit">
-                  <div className="flex items-center gap-2">
-                    <Icon name="sort" size="sm" weight={300} className={formData.autoAddVol.index === 'ON' ? 'text-amber-500' : 'text-slate-400'} />
-                    <span className="text-[11px] font-bold text-slate-700 dark:text-slate-300">{CM.volumeTypeIndex} volume</span>
-                  </div>
-                  <span className={`text-[9px] font-black px-2 py-0.5 rounded-md border ${
-                    formData.autoAddVol.index === 'ON'
-                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20'
-                      : 'bg-slate-500/10 text-slate-500 border-slate-500/15'
-                  }`}>{formData.autoAddVol.index}</span>
-                </div>
-                <div className="grid grid-cols-2 divide-x divide-slate-100 dark:divide-white/5">
-                  <div className="px-4 py-3">
-                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Warning threshold</p>
-                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.indexWarn}</p>
-                  </div>
-                  <div className="px-4 py-3">
-                    <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-1">Extension size</p>
-                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.indexExtPage}</p>
                   </div>
                 </div>
               </div>

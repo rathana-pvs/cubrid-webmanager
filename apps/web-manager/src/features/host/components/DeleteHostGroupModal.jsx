@@ -4,8 +4,10 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Icon } from '../../../components/ds/foundation/Icon';
+import { useCM } from '../../../constants/useCM';
 
 export default function DeleteHostGroupModal() {
+  const CM = useCM();
   const dispatch = useDispatch();
   const {
     isDeleteGroupModalOpen,
@@ -31,7 +33,7 @@ export default function DeleteHostGroupModal() {
     <Modal
       isOpen={isDeleteGroupModalOpen}
       onClose={handleClose}
-      title="Delete Group"
+      title={CM.deleteGroup}
       icon="delete_forever"
       iconVariant="danger"
       loading={loading}
@@ -39,10 +41,10 @@ export default function DeleteHostGroupModal() {
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="secondary" onClick={handleClose} disabled={loading}>
-            Cancel
+            {CM.cancel}
           </Button>
           <Button variant="danger" onClick={handleDelete} loading={loading} icon="delete_forever">
-            Delete
+            {CM.executeDiscard}
           </Button>
         </div>
       }

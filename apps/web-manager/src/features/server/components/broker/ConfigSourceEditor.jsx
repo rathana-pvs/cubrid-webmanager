@@ -1,8 +1,10 @@
 import React, { useRef } from 'react';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
+import { useCM } from '../../../../constants/useCM';
 
 export default function ConfigSourceEditor({ rawContent, handleSourceChange }) {
+  const CM = useCM();
   const textareaRef = useRef(null);
   const preRef      = useRef(null);
 
@@ -82,14 +84,14 @@ export default function ConfigSourceEditor({ rawContent, handleSourceChange }) {
           onScroll={syncScroll}
           spellCheck="false"
           className="absolute inset-0 left-12 w-[calc(100%-3rem)] h-full bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-transparent caret-slate-800 dark:caret-bk-yellow outline-none resize-none whitespace-pre-wrap break-all overflow-auto"
-          placeholder="# Enter broker configuration here..."
+          placeholder={CM.brokerConfigPlaceholder}
         />
       </div>
 
       {/* Footer hint */}
       <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
         <span>Comments preserved in source view</span>
-        <StatusBadge label="Source" variant="emerald" className="border-none bg-transparent" />
+        <StatusBadge label={CM.source} variant="emerald" className="border-none bg-transparent" />
       </div>
     </div>
   );

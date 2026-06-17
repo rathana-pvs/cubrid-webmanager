@@ -132,9 +132,9 @@ export default function CopyDatabaseModal() {
         { onProgress: (j) => setJobStatus(j.jobStatus ?? j.status) }
       );
       dispatch(fetchDatabaseStartInfo(selectedHostUid));
-      endSuccess(`Clone "${formData.destName}" has been established and registered successfully.`);
+      endSuccess(`${CM.copyCompleted}: ${formData.destName}`);
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'The cloning sequence was interrupted. Please verify disk space and connectivity.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.operationFailed));
     }
   };
 
@@ -159,9 +159,9 @@ export default function CopyDatabaseModal() {
   if (isSuccess) {
     return (
       <Modal isOpen title={CM.cloningComplete} icon="content_copy" iconVariant="success" onClose={handleClose} maxWidth="580px">
-        <ModalStatusSuccess 
+        <ModalStatusSuccess
           title={CM.copyCompleted}
-          message={`Clone ${formData.destName} has been established and registered successfully.`}
+          message={`${CM.copyCompleted}: ${formData.destName}`}
           onConfirm={handleClose}
           confirmText={CM.ok}
         />
@@ -248,9 +248,9 @@ export default function CopyDatabaseModal() {
           <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
           <div className="grid grid-cols-1 gap-3">
             {[
-              { label: 'Primary Volume Root', field: 'destPath', icon: 'folder' },
-              { label: 'Extended Shard Root', field: 'extPath', icon: 'folder_copy' },
-              { label: 'Transaction Log Path', field: 'logPath', icon: 'description' },
+              { label: CM.primaryVolumePath, field: 'destPath', icon: 'folder' },
+              { label: CM.extVolumePath, field: 'extPath', icon: 'folder_copy' },
+              { label: CM.logVolumePath, field: 'logPath', icon: 'description' },
             ].map(({ label, field, icon }) => (
               <Input
                 key={field}
@@ -273,14 +273,14 @@ export default function CopyDatabaseModal() {
           <FlagCard
             icon="sync"
             label={CM.overwriteExistingEnvironment}
-            description="Replace destination files if a database with this name already exists."
+            description={CM.replaceExistingDesc}
             checked={formData.replaceExisting}
             onChange={v => handleInputChange('replaceExisting', v)}
           />
           <FlagCard
             icon="move_up"
             label={CM.transformToMove}
-            description="Remove source files after the clone is successfully finalized."
+            description={CM.moveSourceDesc}
             checked={formData.deleteSource}
             onChange={v => handleInputChange('deleteSource', v)}
             variant="danger"

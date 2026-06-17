@@ -196,6 +196,7 @@ const initialState = {
   actionLoading: false,
   lastActionTarget: null, // Track broker name
   lastActionType: null,   // Track 'start' or 'stop'
+  logsLoadingCount: 0,
   logsLoading: false,
   adminLogsLoading: false,
   cmsLogsByHost: {}, // { hostUid: { accesslog: [], errorlog: [] } }
@@ -315,14 +316,17 @@ const brokerSlice = createSlice({
         state.lastActionType = null;
       })
       .addCase(fetchBrokerLogs.pending, (state) => {
+        state.logsLoadingCount += 1;
         state.logsLoading = true;
       })
       .addCase(fetchBrokerLogs.fulfilled, (state, action) => {
-        state.logsLoading = false;
+        state.logsLoadingCount = Math.max(0, state.logsLoadingCount - 1);
+        state.logsLoading = state.logsLoadingCount > 0;
         state.logsByBroker[action.payload.brokerName] = action.payload.logs;
       })
       .addCase(fetchBrokerLogs.rejected, (state) => {
-        state.logsLoading = false;
+        state.logsLoadingCount = Math.max(0, state.logsLoadingCount - 1);
+        state.logsLoading = state.logsLoadingCount > 0;
       })
       .addCase(fetchLogContent.pending, (state, action) => {
         const path = action.meta.arg.path;

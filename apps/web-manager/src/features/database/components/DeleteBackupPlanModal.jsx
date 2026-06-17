@@ -77,10 +77,10 @@ export default function DeleteBackupPlanModal() {
   /* ─── LOADING view ─── */
   if (isLoading) {
     return (
-      <Modal isOpen title="Deleting Plan" icon="delete_forever" onClose={handleClose} maxWidth="440px" iconVariant="danger" showCloseButton={false}>
-        <ModalStatusLoading 
-          title="Removing Registry" 
-          subtitle={`Discarding automation handle "${selectedBackupId}".`}
+      <Modal isOpen title={CM.deletingBackupPlan} icon="delete_forever" onClose={handleClose} maxWidth="440px" iconVariant="danger" showCloseButton={false}>
+        <ModalStatusLoading
+          title={CM.removingRegistry}
+          subtitle={`"${selectedBackupId}"`}
           variant="danger"
         />
       </Modal>
@@ -90,12 +90,12 @@ export default function DeleteBackupPlanModal() {
   /* ─── SUCCESS view ─── */
   if (isSuccess) {
     return (
-      <Modal isOpen title="Deletion Success" icon="verified" iconVariant="success" onClose={handleClose} maxWidth="440px">
-        <ModalStatusSuccess 
-          title="Registry Purged"
-          message="The plan has been removed from the system scheduler."
+      <Modal isOpen title={CM.deletionSuccess} icon="verified" iconVariant="success" onClose={handleClose} maxWidth="440px">
+        <ModalStatusSuccess
+          title={CM.backupPlanDeleted}
+          message={CM.backupPlanRemovedMsg}
           onConfirm={handleClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -104,14 +104,14 @@ export default function DeleteBackupPlanModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title="Deletion Failed" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="440px">
-        <ModalStatusError 
-          title="Signal Rejected"
+      <Modal isOpen title={CM.deleteBackupPlanFailed} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="440px">
+        <ModalStatusError
+          title={CM.operationInterrupted}
           error={actionError}
           onRetry={handleDelete}
           onCancel={resetAction}
-          retryText="Retry Deletion"
-          cancelText="Dismiss"
+          retryText={CM.retryDeletion}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -122,31 +122,31 @@ export default function DeleteBackupPlanModal() {
     <Modal
       isOpen={isDeleteBackupPlanModalOpen}
       onClose={handleClose}
-      title="Dangerous: Discard Schedule"
-      subtitle="Permanent removal of automation registry"
+      title={CM.dangerousDiscardBackupPlan}
+      subtitle={CM.permanentRemovalBackup}
       icon="delete_forever"
       maxWidth="440px"
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
-          <Button variant="danger" onClick={handleDelete} icon="delete" className="min-w-[140px]">Execute Discard</Button>
+          <Button variant="danger" onClick={handleDelete} icon="delete" className="min-w-[140px]">{CM.executeDiscard}</Button>
         </div>
       }
     >
       <div className="flex flex-col items-center justify-center py-6 gap-6 text-center animate-in fade-in slide-in-from-bottom-2 duration-300">
         <div className="w-16 h-16 bg-rose-500/5 rounded-full flex items-center justify-center border border-rose-500/10 shadow-inner">
-           <Icon name="warning" size="md" weight={300} className="text-3xl text-rose-500 animate-pulse" />
+          <Icon name="warning" size="md" weight={300} className="text-3xl text-rose-500 animate-pulse" />
         </div>
-        
+
         <div className="space-y-2">
-          <Typography variant="h4" className="text-[16px] font-black text-slate-900 dark:text-white tracking-tight">Discard Backup Strategy?</Typography>
+          <Typography variant="h4" className="text-[16px] font-black text-slate-900 dark:text-white tracking-tight">{CM.discardBackupStrategy}</Typography>
           <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[320px] mx-auto">
-            You are about to permanently remove the backup plan <span className="text-rose-500 font-black uppercase tracking-tight">"{selectedBackupId}"</span>. Automated capture for <span className="font-bold text-slate-900 dark:text-white">"{selectedDatabase}"</span> will cease immediately.
+            <span className="text-rose-500 font-black">"{selectedBackupId}"</span> — <span className="font-bold text-slate-900 dark:text-white">{selectedDatabase}</span>
           </Typography>
         </div>
 
-        <InfoBanner title="Registry Handlers">
-          This only removes the registry handle. Existing physical backup volumes on disk remain untouched.
+        <InfoBanner>
+          {CM.backupScheduleNote}
         </InfoBanner>
       </div>
     </Modal>

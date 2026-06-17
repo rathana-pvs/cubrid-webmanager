@@ -109,7 +109,7 @@ describe('DatabaseConfigService', () => {
         expect.objectContaining({
           task: 'setautoexecquery',
           dbname: mockDbname,
-          planlist: mockRequest.planlist,
+          planlist: mockRequest.planlist.map((item) => ({ ...item, dbname: mockDbname })),
         })
       );
       expect(result).toEqual({ success: true });

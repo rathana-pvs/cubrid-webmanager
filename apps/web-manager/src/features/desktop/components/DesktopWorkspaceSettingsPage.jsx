@@ -5,6 +5,7 @@ import { logout } from '../../auth/authSlice';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { Input } from '../../../components/ds/forms/Input';
+import { useCM } from '../../../constants/useCM';
 
 function SettingsShell({ children }) {
   return (
@@ -26,6 +27,7 @@ function isDesktopApp() {
 }
 
 export default function DesktopWorkspaceSettingsPage() {
+  const CM = useCM();
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const bridge = window.desktopBridge;
@@ -128,7 +130,7 @@ export default function DesktopWorkspaceSettingsPage() {
   if (!inDesktopApp) {
     return (
       <SettingsShell>
-        <InfoBanner variant="warning" title="Desktop only">
+        <InfoBanner variant="warning" title={CM.desktopOnly}>
           Workspace settings are available in the CUBRID Web Manager desktop app.
         </InfoBanner>
         <Link to="/login" className="text-amber-500 text-sm font-semibold hover:underline mt-4 inline-block">
@@ -141,7 +143,7 @@ export default function DesktopWorkspaceSettingsPage() {
   if (!bridge) {
     return (
       <SettingsShell>
-        <InfoBanner variant="danger" title="Desktop bridge unavailable">
+        <InfoBanner variant="danger" title={CM.desktopBridgeUnavailable}>
           Could not connect to the desktop app. Quit and run again with{' '}
           <code className="text-xs">npm run dev:desktop</code>.
         </InfoBanner>

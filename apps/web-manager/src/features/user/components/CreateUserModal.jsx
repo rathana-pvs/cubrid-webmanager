@@ -11,11 +11,12 @@ import { SearchInput } from '../../../components/ds/forms/SearchInput';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { TabGroup } from '../../../components/ds/layout/TabGroup';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
-import { 
-  ModalStatusLoading, 
-  ModalStatusSuccess, 
-  ModalStatusError 
+import {
+  ModalStatusLoading,
+  ModalStatusSuccess,
+  ModalStatusError
 } from '../../../components/ds/feedback/ActionStatus';
+import { useCM } from '../../../constants/useCM';
 
 const PERM_MAPPING = {
   'Select': 1,
@@ -57,6 +58,7 @@ const TABS = [
 ];
 
 export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }) {
+  const CM = useCM();
   const dispatch = useDispatch();
   const isEditMode = !!editingUser;
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
@@ -251,20 +253,20 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
   // ─── Lifecycle states ───────────────────────────────────────────────────────
   if (isLoading) {
     return (
-      <Modal isOpen title={isEditMode ? 'Updating User' : 'Creating User'} icon="person_add" onClose={onClose} maxWidth="max-w-[860px]" showCloseButton={false}>
-        <ModalStatusLoading title={isEditMode ? 'Updating Registry' : 'Committing Identity'} subtitle={`Propagating changes for @${formData.name || editingUser} to ${dbname}.`} />
+      <Modal isOpen title={isEditMode ? CM.savingChanges : CM.creatingUser} icon="person_add" onClose={onClose} maxWidth="max-w-[860px]" showCloseButton={false}>
+        <ModalStatusLoading title={isEditMode ? CM.savingChanges : CM.creatingUser} subtitle={`@${formData.name || editingUser} → ${dbname}`} />
       </Modal>
     );
   }
 
   if (isSuccess) {
     return (
-      <Modal isOpen title="Success" icon="check_circle" iconVariant="success" onClose={onClose} maxWidth="max-w-[860px]">
+      <Modal isOpen title={CM.success} icon="check_circle" iconVariant="success" onClose={onClose} maxWidth="max-w-[860px]">
         <ModalStatusSuccess
-          title={isEditMode ? 'User Updated' : 'User Created'}
-          message={isEditMode ? `Credentials and permissions for @${editingUser} are now synchronized.` : `@${formData.name} is now active and ready for use.`}
+          title={isEditMode ? CM.userUpdated : CM.userCreated}
+          message={`@${isEditMode ? editingUser : formData.name}`}
           onConfirm={onClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -272,8 +274,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
 
   if (isError) {
     return (
-      <Modal isOpen title="Error" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="max-w-[860px]">
-        <ModalStatusError title="Operation Failed" error={actionError} onRetry={handleSave} onCancel={resetAction} retryText="Retry" cancelText="Dismiss" />
+      <Modal isOpen title={CM.error} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="max-w-[860px]">
+        <ModalStatusError title={CM.operationFailed} error={actionError} onRetry={handleSave} onCancel={resetAction} retryText={CM.retry} cancelText={CM.dismiss} />
       </Modal>
     );
   }
@@ -285,7 +287,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={isEditMode ? 'Edit User' : 'Create User'}
+      title={isEditMode ? CM.editUser : CM.createUser}
       subtitle={dbname}
       icon={isEditMode ? 'manage_accounts' : 'person_add'}
       maxWidth="max-w-[860px]"
@@ -296,9 +298,9 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
             <span className="opacity-60 font-mono">{dbname}</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>Discard</Button>
+            <Button variant="ghost" onClick={onClose}>{CM.discard}</Button>
             <Button onClick={handleSave} icon={isEditMode ? 'save' : 'person_add'} disabled={!formData.name} className="min-w-[140px]">
-              {isEditMode ? 'Save Changes' : 'Create User'}
+              {isEditMode ? CM.saveChanges : CM.createUser}
             </Button>
           </div>
         </div>
@@ -345,7 +347,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Input
-                    label="Username"
+                    label={CM.username}
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
@@ -354,7 +356,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     required
                   />
                   <Input
-                    label="Description"
+                    label={CM.description}
                     name="memo"
                     value={formData.memo}
                     onChange={handleInputChange}
@@ -377,8 +379,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label="New Password" type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" />
-                  <Input label="Confirm Password" type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" />
+                  <Input label={CM.newPassword} type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" />
+                  <Input label={CM.passwordConfirm} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" />
                 </div>
                 {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
                   <div className="flex items-center gap-2 text-[11px] text-rose-500 font-bold px-1">
@@ -462,7 +464,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     <button
                       onClick={() => handleMove(selectedAvailable, 'available', 'groups')}
                       disabled={!selectedAvailable}
-                      title="Move to Groups"
+                      title={CM.moveToGroups}
                       className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
                         selectedAvailable
                           ? 'text-amber-500 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:text-slate-900 shadow-sm'
@@ -474,7 +476,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     <button
                       onClick={() => handleMove(selectedInTarget?.item, selectedInTarget?.target, 'available')}
                       disabled={!selectedInTarget}
-                      title="Remove from assigned"
+                      title={CM.removeFromAssigned}
                       className={`w-7 h-7 rounded-xl flex items-center justify-center transition-all active:scale-90 ${
                         selectedInTarget
                           ? 'text-amber-500 bg-amber-500/10 border border-amber-500/30 hover:bg-amber-500 hover:text-slate-900 shadow-sm'
