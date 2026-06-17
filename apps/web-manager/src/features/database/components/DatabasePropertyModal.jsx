@@ -466,7 +466,7 @@ export default function DatabasePropertyModal() {
         title={CM.configurationReIndexed}
         message={`Changes to the ${selectedDatabase || 'kernel'} configuration have been committed and synchronized.`}
         onConfirm={handleClose}
-        confirmText="Confirm & Return"
+        confirmText={CM.confirmReturn}
       />
     </Modal>
   );
@@ -479,8 +479,8 @@ export default function DatabasePropertyModal() {
         error={actionError}
         onRetry={handleApply}
         onCancel={resetAction}
-        retryText="Retry Patch"
-        cancelText="Discard Changes"
+        retryText={CM.retryPatch}
+        cancelText={CM.discardChanges}
       />
     </Modal>
   );

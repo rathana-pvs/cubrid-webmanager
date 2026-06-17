@@ -150,7 +150,7 @@ export default function ForgotPasswordPage() {
               {/* Form */}
               <form onSubmit={handleSubmit} className="space-y-4">
                 <Input
-                  label="Email Address"
+                  label={CM.emailAddressLabel}
                   type="email"
                   required
                   icon="alternate_email"
@@ -204,7 +204,7 @@ export default function ForgotPasswordPage() {
 
               {/* Expiry warning */}
               <div className="my-6 text-left">
-                <InfoBanner variant="warning" title="Link Expiry" icon="timer">
+                <InfoBanner variant="warning" title={CM.linkExpiry} icon="timer">
                   The link expires in <span className="font-bold">15 minutes</span>. Check your spam folder if it doesn't arrive.
                 </InfoBanner>
               </div>

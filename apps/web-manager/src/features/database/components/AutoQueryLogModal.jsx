@@ -119,9 +119,9 @@ export default function AutoQueryLogModal() {
         <div className="flex items-center gap-2.5">
           <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">Status:</Typography>
           {logsLoading ? (
-            <StatusBadge label="Buffering" variant="sky" pulse={true} className="rounded-full" />
+            <StatusBadge label={CM.buffering} variant="sky" pulse={true} className="rounded-full" />
           ) : (
-            <StatusBadge label="Synchronized" variant="emerald" pulse={false} className="rounded-full" />
+            <StatusBadge label={CM.synchronizedStatus} variant="emerald" pulse={false} className="rounded-full" />
           )}
         </div>
         
@@ -172,7 +172,7 @@ export default function AutoQueryLogModal() {
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <SearchInput
-              placeholder="Filter logs by ID or description..."
+              placeholder={CM.filterLogsById}
               value={searchTerm}
               onChange={setSearchTerm}
               onClear={() => setSearchTerm('')}

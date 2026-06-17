@@ -8,8 +8,10 @@ import { formatSize } from '../../../infrastructure/utils/format';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { Card } from '../../../components/ds/layout/Card';
 import { Table } from '../../../components/ds/layout/Table';
+import { useCM } from '../../../constants/useCM';
 
 // ── Helpers ──
 const TYPE_BADGE = (val = '') => {
@@ -41,7 +43,9 @@ const barColor = (pct) => pct > 85 ? 'bg-rose-500' : 'bg-amber-500';
 
 // ── Sub-components (Memoized) ──
 
-const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboardInterval }) => (
+const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboardInterval }) => {
+  const CM = useCM();
+  return (
   <header className="px-6 py-2.5 border-b border-slate-100 dark:border-white/4 flex items-center justify-between shrink-0 sticky top-0 z-10 bg-white dark:bg-background-dark">
     <div className="flex items-center gap-2.5">
       <div className="w-8 h-8 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shadow-sm">
@@ -74,7 +78,7 @@ const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboar
           ${loading
             ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
             : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5'}`}
-        title="Refresh space metrics"
+        title={CM.refreshSpaceMetrics}
       >
         <Icon name="refresh" size="18px" weight={300} className={loading ? 'animate-spin' : ''} />
       </button>
@@ -83,7 +87,8 @@ const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboar
       <MonitoringSettingsPopover />
     </div>
   </header>
-));
+  );
+});
 
 const SummaryCards = memo(({ dbname, data, totals }) => (
   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
@@ -348,6 +353,7 @@ const DistributionChart = memo(({ totals }) => (
 // ── Main Component ──
 
 const Component = function DatabaseSpaceMonitor({ hostUid, dbname }) {
+  const CM = useCM();
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const [data, setData] = useState(null);
   const [error, setError] = useState(null);
@@ -395,7 +401,7 @@ const Component = function DatabaseSpaceMonitor({ hostUid, dbname }) {
 
       <div className="flex-1 overflow-y-auto p-5 space-y-4">
         {error && (
-          <InfoBanner variant="danger" title="Storage Analysis Error" icon="error">
+          <InfoBanner variant="danger" title={CM.storageAnalysisError} icon="error">
             {error}
           </InfoBanner>
         )}

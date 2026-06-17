@@ -12,7 +12,9 @@ import {
   revokeHostLogin,
   openServerVersionModal,
   fetchHostEnv,
-  openCmsUserManagementModal
+  openCmsUserManagementModal,
+  startService,
+  stopService
 } from '../../host/hostSlice';
 import {
   fetchDatabaseStartInfo, startDatabase, stopDatabase, loginDatabase, registerDatabase,
@@ -70,6 +72,7 @@ import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 import { Modal } from '../../../components/ds/layout/Modal';
+import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
 import { Button } from '../../../components/ds/foundation/Button';
 import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { useCM } from '../../../constants/useCM';
@@ -137,6 +140,11 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   } = useActionState();
 
   const [loadingText, setLoadingText] = useState(CM.processing);
+  const [stopServiceConfirm, setStopServiceConfirm] = useState({
+    isOpen: false,
+    hostUid: null,
+    serverName: '',
+  });
 
   const { hosts, hostGroups, selectedHostUid, selectedGroupUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors, haInfo, skipAutoHostLogin } = useSelector((state) => state.host, shallowEqual);
   const { databases, activeDatabases, loggedInDatabases } = useSelector((state) => state.database, shallowEqual);
@@ -170,6 +178,15 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     // Use a ref so concurrent clicks in the same render frame are also blocked.
     // isLoggingIntoHost is a stale-closure value and misses same-frame double-clicks.
     if (loginInProgressRef.current) return;
+
+    if (authorizedHosts.includes(uid)) {
+      dispatch(setActiveMainTab('host:' + uid));
+      dispatch(fetchDatabaseStartInfo(uid));
+      dispatch(fetchBrokerList(uid));
+      dispatch(fetchHostEnv(uid));
+      return;
+    }
+
     loginInProgressRef.current = true;
 
     dispatch(loginToHostWithSideEffects(uid))
@@ -186,7 +203,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       .finally(() => {
         loginInProgressRef.current = false;
       });
-  }, [dispatch]);
+  }, [dispatch, authorizedHosts]);
 
   const pendingLoginAllUids = getUnauthorizedHostUids(hostGroups, authorizedHosts, null);
   const pendingLoginCount = pendingLoginAllUids.length;
@@ -216,6 +233,35 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         }));
       });
   }, [dispatch, hostGroups, authorizedHosts, CM.loginAll]);
+
+  const handleServiceAction = async (hostUid, action) => {
+    if (!hostUid) return;
+    setLoadingText(action === 'start' ? CM.startingService : CM.stoppingService);
+    startAction();
+    try {
+      if (action === 'start') {
+        await dispatch(startService(hostUid)).unwrap();
+      } else {
+        await dispatch(stopService(hostUid)).unwrap();
+      }
+      resetAction();
+    } catch (err) {
+      endError(err);
+    }
+  };
+
+  const closeStopServiceConfirm = () => {
+    setStopServiceConfirm(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const requestStopService = (hostUid, serverName) => {
+    if (!hostUid) return;
+    setStopServiceConfirm({
+      isOpen: true,
+      hostUid,
+      serverName: serverName || hostUid,
+    });
+  };
 
   useEffect(() => {
     if (selectedHostUid && selectedHostUid !== lastProcessedHostUid.current) {
@@ -440,10 +486,10 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                   <button
                     onClick={(e) => { e.stopPropagation(); dispatch(openCreateGroupModal()); }}
                     className="flex items-center gap-1 h-6 px-2 rounded-sm border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-400 hover:text-amber-500 hover:border-amber-400/50 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 transition-all active:scale-95 shadow-xs"
-                    title="New Group"
+                    title={CM.newGroup}
                   >
                     <Icon name="create_new_folder" size="12px" weight={400} />
-                    <span className="text-[10px] font-semibold tracking-wide">New Group</span>
+                    <span className="text-[10px] font-semibold tracking-wide">{CM.newGroup}</span>
                   </button>
                 )}
                 {!isServerListCollapsed && hosts.length > 0 && (
@@ -680,6 +726,28 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             />
           )}
           <MenuDivider />
+          <MenuItem
+            icon="play_arrow"
+            label={CM.startService}
+            disabled={!authorizedHosts.includes(contextMenu.hostUid) || sidebarActionLoading}
+            onClick={() => {
+              const hostUid = contextMenu.hostUid;
+              setContextMenu(null);
+              handleServiceAction(hostUid, 'start');
+            }}
+          />
+          <MenuItem
+            icon="stop"
+            label={CM.stopService}
+            disabled={!authorizedHosts.includes(contextMenu.hostUid) || sidebarActionLoading}
+            onClick={() => {
+              const hostUid = contextMenu.hostUid;
+              const serverName = contextMenu.alias || contextMenu.server || hostUid;
+              setContextMenu(null);
+              requestStopService(hostUid, serverName);
+            }}
+          />
+          <MenuDivider />
           <MenuItem icon="add_box" label={CM.addHost} onClick={() => { onAddHost(); setContextMenu(null); }} />
           <MenuItem icon="edit" label={CM.editHost} onClick={() => { dispatch(openEditHostModal(contextMenu.hostUid)); setContextMenu(null); }} />
           <MenuItem icon="delete" label={CM.deleteHost} onClick={() => { dispatch(openDeleteHostModal({ hostUid: contextMenu.hostUid, alias: contextMenu.alias })); setContextMenu(null); }} />
@@ -710,7 +778,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="create_new_folder"
-            label="New Group"
+            label={CM.newGroup}
             onClick={() => {
               dispatch(openCreateGroupModal());
               setGroupContextMenu(null);
@@ -744,7 +812,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             <MenuDivider />
             <MenuItem
             icon="add_link"
-            label="Add Node"
+            label={CM.addNode}
             onClick={() => {
               dispatch(openAddHostModal({ groupId: groupContextMenu.groupId, alias: '', address: '', port: '8001', id: 'admin', password: '' }));
               setGroupContextMenu(null);
@@ -752,7 +820,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="edit"
-            label="Rename Group"
+            label={CM.renameGroup}
             onClick={() => {
               dispatch(openRenameGroupModal({ groupId: groupContextMenu.groupId, name: groupContextMenu.groupName }));
               setGroupContextMenu(null);
@@ -761,7 +829,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <MenuItem
             icon="delete"
-            label="Delete Group"
+            label={CM.deleteGroup}
             onClick={() => {
               dispatch(openDeleteGroupModal({ groupId: groupContextMenu.groupId, name: groupContextMenu.groupName }));
               setGroupContextMenu(null);
@@ -1123,7 +1191,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem 
             icon="tune" 
-            label="Properties" 
+            label={CM.properties}
             onClick={() => { 
                 dispatch(openBrokerPropertyModal({ hostUid: selectedHostUid, brokerName: brokerContextMenu.broker }));
                 setBrokerContextMenu(null); 
@@ -1140,7 +1208,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="visibility"
-            label="View All Logs"
+            label={CM.viewAllLogs}
             onClick={() => {
               if (selectedHostUid) {
                 dispatch(openTab(`all_logs:${selectedHostUid}:${sqlLogContextMenu.broker}`));
@@ -1159,7 +1227,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="visibility"
-            label="View All Logs"
+            label={CM.viewAllLogs}
             onClick={() => {
               if (selectedHostUid) {
                 dispatch(openTab(`all_db_logs:${selectedHostUid}:${dbLogContextMenu.db}`));
@@ -1273,7 +1341,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="add_to_drive"
-            label="Add Volume"
+            label={CM.addVolume}
             onClick={() => {
               dispatch(setSelectedDatabase(spaceContextMenu.db));
               dispatch(openAddVolumeModal());
@@ -1282,7 +1350,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="settings_suggest"
-            label="Set Automation Volume"
+            label={CM.setAutomationVolume}
             onClick={() => {
               dispatch(setSelectedDatabase(spaceContextMenu.db));
               dispatch(openSetAutomationVolumeModal());
@@ -1301,7 +1369,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <MenuItem
             icon="visibility"
-            label="View Database"
+            label={CM.viewDatabase}
             onClick={() => {
               dispatch(setActiveMainTab(`db_space:${selectedHostUid}:${spaceContextMenu.db}`));
               setSpaceContextMenu(null);
@@ -1441,6 +1509,19 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       <AutoVolumeLogModal />
       <CMSUserManagementModal />
       <EditCMSUserModal />
+      <ConfirmDialog
+        isOpen={stopServiceConfirm.isOpen}
+        title={CM.stopServicesConfirmTitle}
+        description={CM.stopServicesConfirmDesc(stopServiceConfirm.serverName)}
+        confirmLabel={CM.stopAllServices}
+        variant="danger"
+        onConfirm={() => {
+          const { hostUid } = stopServiceConfirm;
+          closeStopServiceConfirm();
+          handleServiceAction(hostUid, 'stop');
+        }}
+        onCancel={closeStopServiceConfirm}
+      />
       {isSidebarActionError && (
         <Modal isOpen title={CM.actionFailed} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="400px">
           <ModalStatusError 

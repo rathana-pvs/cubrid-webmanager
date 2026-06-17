@@ -25,10 +25,10 @@ const VIEW_LOADING = 'loading';
 const VIEW_SUCCESS = 'success';
 const VIEW_ERROR   = 'error';
 
-const LEVEL_PRESETS = [
-  { value: '0', title: 'Full (L0)', desc: 'Static Clone', icon: 'auto_awesome_motion' },
-  { value: '1', title: 'Inc. (L1)', desc: 'Delta L0', icon: 'trending_up' },
-  { value: '2', title: 'Inc. (L2)', desc: 'Delta L1', icon: 'call_split' }
+const LEVEL_PRESETS_DEF = [
+  { value: '0', title: 'Full (L0)', descKey: 'levelFullShortDesc', icon: 'auto_awesome_motion' },
+  { value: '1', title: 'Inc. (L1)', descKey: 'levelIncrL0ShortDesc', icon: 'trending_up' },
+  { value: '2', title: 'Inc. (L2)', descKey: 'levelIncrL1ShortDesc', icon: 'call_split' }
 ];
 
 export default function AddBackupPlanModal() {
@@ -161,9 +161,9 @@ export default function AddBackupPlanModal() {
 
     try {
       await dispatch(addBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
-      endSuccess(`Backup plan ${formData.backupId} successfully registered.`);
+      endSuccess(`${formData.backupId}`);
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'Failed to add backup plan.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.operationFailed));
     }
   };
 
@@ -173,9 +173,9 @@ export default function AddBackupPlanModal() {
   if (isLoading) {
     return (
       <Modal isOpen title={CM.initializingSchedule} icon="backup_table" onClose={handleClose} maxWidth="700px" showCloseButton={false}>
-        <ModalStatusLoading 
-          title={CM.committingAutomation} 
-          subtitle={`Synchronizing ${formData.backupId} with the system scheduler.`}
+        <ModalStatusLoading
+          title={CM.savingSchedule}
+          subtitle={formData.backupId}
         />
       </Modal>
     );
@@ -185,11 +185,11 @@ export default function AddBackupPlanModal() {
   if (isSuccess) {
     return (
       <Modal isOpen title={CM.scheduleCommitted} icon="backup_table" iconVariant="success" onClose={handleClose} maxWidth="700px">
-        <ModalStatusSuccess 
-          title={CM.automationActive}
-          message={`The backup plan for ${selectedDatabase} is now registered and will execute as scheduled.`}
+        <ModalStatusSuccess
+          title={CM.scheduleCommitted}
+          message={`${selectedDatabase}: ${formData.backupId}`}
           onConfirm={handleClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -199,13 +199,13 @@ export default function AddBackupPlanModal() {
   if (isError) {
     return (
       <Modal isOpen title={CM.executionError} icon="backup_table" iconVariant="danger" onClose={resetAction} maxWidth="700px">
-        <ModalStatusError 
-          title="Transaction Dropped"
+        <ModalStatusError
+          title={CM.operationInterrupted}
           error={actionError}
           onRetry={handleSave}
           onCancel={resetAction}
-          retryText="Retry Submission"
-          cancelText="Dismiss"
+          retryText={CM.retry}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -233,7 +233,7 @@ export default function AddBackupPlanModal() {
         <div className="space-y-4">
            <SectionHeader title={CM.abstractionLevel} icon="architecture" />
           <div className="grid grid-cols-3 gap-3">
-            {LEVEL_PRESETS.map(item => (
+            {LEVEL_PRESETS_DEF.map(item => (
               <button
                 key={item.value}
                 onClick={() => handleInputChange('backupLevel', item.value)}
@@ -254,7 +254,7 @@ export default function AddBackupPlanModal() {
                       {item.title}
                     </Typography>
                     <Typography variant="caption" className="text-[9px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter leading-none">
-                      {item.desc}
+                      {CM[item.descKey]}
                     </Typography>
                   </div>
                 </div>
@@ -275,15 +275,15 @@ export default function AddBackupPlanModal() {
           <div className="p-5 bg-slate-50/50 dark:bg-white/1 border border-slate-100 dark:border-white/4 rounded-2xl space-y-6 shadow-xs">
             <div className="flex gap-4">
               <div className="flex-1">
-                <Select 
+                <Select
                   label={CM.rotationLogic}
                   value={formData.periodType}
                   onChange={(e) => handleInputChange('periodType', e.target.value)}
                   options={[
-                    { value: 'Monthly', label: 'Monthly Rotation' },
-                    { value: 'Weekly', label: 'Weekly Precision' },
-                    { value: 'Daily', label: 'Daily Stream' },
-                    { value: 'Specific days', label: 'Specialized Single' }
+                    { value: 'Monthly', label: CM.monthly },
+                    { value: 'Weekly', label: CM.weekly },
+                    { value: 'Daily', label: CM.daily },
+                    { value: 'Specific days', label: CM.specificDays }
                   ]}
                   size="sm"
                 />
@@ -373,10 +373,10 @@ export default function AddBackupPlanModal() {
            <SectionHeader title={CM.optimizationMatrix} icon="settings_input_component" />
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Delete archive volumes', field: 'deleteArchive', icon: 'auto_delete', desc: 'Automatic log purging' },
-              { label: 'Update statistics information', field: 'updateStatistics', icon: 'query_stats', desc: 'Optimize query performance' },
-              { label: 'Check database consistency', field: 'checkConsistency', icon: 'verified', desc: 'Validate data block checksums' },
-              { label: 'Use compression', field: 'useCompression', icon: 'compress', desc: 'Reduce storage footprint' },
+              { label: CM.deleteArchiveLogsLabel, field: 'deleteArchive', icon: 'auto_delete', desc: CM.deleteArchiveLogsDesc },
+              { label: CM.updateStatisticsLabel, field: 'updateStatistics', icon: 'query_stats', desc: CM.updateStatisticsDesc },
+              { label: CM.checkConsistencyLabel, field: 'checkConsistency', icon: 'verified', desc: CM.checkConsistencyDesc },
+              { label: CM.compressBackupLabel, field: 'useCompression', icon: 'compress', desc: CM.compressBackupDesc },
             ].map(opt => (
               <div 
                 key={opt.field} 
@@ -416,8 +416,8 @@ export default function AddBackupPlanModal() {
         {/* Mode Selector */}
         <div className="space-y-3 px-1">
           {[
-            { value: 'online', label: 'Concurrent Session (Online)', desc: 'Zero downtime operation with read-write access preserved.', icon: 'bolt' },
-            { value: 'offline', label: 'Isolated Snapshot (Offline)', desc: 'Strict consistency with brief service interruption.', icon: 'power_settings_new' }
+            { value: 'online', label: CM.onlineMode, desc: CM.onlineModeDesc, icon: 'bolt' },
+            { value: 'offline', label: CM.offlineMode, desc: CM.offlineModeDesc, icon: 'power_settings_new' }
           ].map(mode => (
             <button
               key={mode.value}

@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../../components/ds/foundation/Spinner';
+import { useCM } from '../../../../constants/useCM';
 
 export default function ConfigEditorToolbar({
   hostDisplayName,
@@ -11,6 +12,7 @@ export default function ConfigEditorToolbar({
   fetchConfig,
   handleSave,
 }) {
+  const CM = useCM();
   return (
     <div className="shrink-0 px-4 py-2.5 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 z-10">
 
@@ -32,7 +34,7 @@ export default function ConfigEditorToolbar({
         <button
           onClick={handleUndo}
           disabled={!hasChanges || loading || saving}
-          title="Undo changes"
+          title={CM.undoAllChanges}
           className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 disabled:opacity-30 transition-all shrink-0"
         >
           <Icon name="undo" size="sm" weight={300} />
@@ -42,7 +44,7 @@ export default function ConfigEditorToolbar({
         <button
           onClick={fetchConfig}
           disabled={loading || saving}
-          title="Refresh config"
+          title={CM.reloadConfig}
           className="w-8 h-8 flex items-center justify-center rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-white/5 active:scale-95 hover:text-amber-600 dark:hover:text-bk-yellow disabled:opacity-30 transition-all shrink-0"
         >
           <Icon name="refresh" size="sm" weight={300} className={loading ? 'animate-spin' : ''} />
@@ -62,11 +64,11 @@ export default function ConfigEditorToolbar({
         <button
           onClick={handleSave}
           disabled={!hasChanges || saving || loading}
-          title="Save changes"
+          title={CM.saveChanges}
           className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold text-white dark:text-slate-900 bg-slate-800 dark:bg-bk-yellow hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
         >
           {saving ? <Spinner size="xs" className="text-white dark:text-slate-900" /> : <Icon name="check_circle" size="sm" />}
-          Save Changes
+          {CM.saveChanges}
         </button>
       </div>
     </div>

@@ -108,9 +108,9 @@ export default function AutoVolumeLogModal() {
         <div className="flex items-center gap-2.5">
           <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">Status:</Typography>
           {logsLoading ? (
-            <StatusBadge label="Buffering" variant="amber" pulse={true} className="rounded-full" />
+            <StatusBadge label={CM.buffering} variant="amber" pulse={true} className="rounded-full" />
           ) : (
-            <StatusBadge label="Synchronized" variant="emerald" pulse={false} className="rounded-full" />
+            <StatusBadge label={CM.synchronizedStatus} variant="emerald" pulse={false} className="rounded-full" />
           )}
         </div>
 
@@ -164,7 +164,7 @@ export default function AutoVolumeLogModal() {
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <SearchInput
-              placeholder="Filter logs..."
+              placeholder={CM.filterLogs}
               value={searchTerm}
               onChange={setSearchTerm}
               onClear={() => setSearchTerm('')}

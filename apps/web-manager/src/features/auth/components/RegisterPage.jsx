@@ -163,9 +163,9 @@ export default function RegisterPage() {
 
           {/* Username */}
           <Input
-            label="Username"
+            label={CM.username}
             icon="person_pin"
-            placeholder="Pick a unique username"
+            placeholder={CM.pickUniqueUsername}
             value={username}
             onChange={(e) => { setUsername(e.target.value); clearFieldError('username'); }}
             error={errors.username}
@@ -174,10 +174,10 @@ export default function RegisterPage() {
 
           {/* Password */}
           <Input
-            label="Password"
+            label={CM.password}
             icon={strength.level >= 3 ? 'verified_user' : 'fingerprint'}
             type={showPassword ? 'text' : 'password'}
-            placeholder="Create a strong password"
+            placeholder={CM.createStrongPassword}
             value={password}
             onChange={(e) => { setPassword(e.target.value); clearFieldError('password'); }}
             error={errors.password}
@@ -204,10 +204,10 @@ export default function RegisterPage() {
 
           {/* Confirm Password */}
           <Input
-            label="Confirm Password"
+            label={CM.passwordConfirm}
             icon="verified"
             type={showConfirm ? 'text' : 'password'}
-            placeholder="Repeat your password"
+            placeholder={CM.repeatPassword}
             value={confirmPassword}
             onChange={(e) => { setConfirmPassword(e.target.value); clearFieldError('confirmPassword'); }}
             error={errors.confirmPassword}
@@ -228,7 +228,7 @@ export default function RegisterPage() {
 
           {/* API error */}
           {apiError && (
-            <InfoBanner variant="danger" title="Registration Failed">
+            <InfoBanner variant="danger" title={CM.registrationFailedTitle}>
               {apiError}
             </InfoBanner>
           )}

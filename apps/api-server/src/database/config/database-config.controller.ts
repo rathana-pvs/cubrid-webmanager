@@ -16,6 +16,8 @@ import {
   GetAutoExecQueryErrLogRequest,
   GetAutoExecQueryErrLogResponse,
   GetAutoAddVolLogResponse,
+  AppendAutoExecQueryPlanRequest,
+  RemoveAutoExecQueryPlanRequest,
 } from '@api-interfaces';
 import { validateRequiredFields } from '@util';
 import { DatabaseConfigService } from './database-config.service';
@@ -257,6 +259,44 @@ export class DatabaseConfigController {
       `Getting class info for database: ${dbname} on host: ${hostUid}`
     );
     return await this.configService.getClassInfo(userId, hostUid, dbname, body);
+  }
+
+  /**
+   * Append a single query plan to a database's auto-exec plan list.
+   *
+   * @route POST /:hostUid/database/auto-exec-query/:dbname/append
+   */
+  @Post('auto-exec-query/:dbname/append')
+  async appendAutoExecQueryPlan(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string,
+    @Body() body: Omit<AppendAutoExecQueryPlanRequest, 'dbname'>
+  ): Promise<SetAutoExecQueryClientResponse> {
+    const userId = req.user.sub;
+    validateRequiredFields(body, ['plan'], 'database/auto-exec-query/append', this.logger);
+    this.logger.log(`Appending query plan to database: ${dbname} on host: ${hostUid}`);
+    return await this.configService.appendAutoExecQueryPlan(userId, hostUid, { dbname, ...body });
+  }
+
+  /**
+   * Remove a single query plan from a database's auto-exec plan list by query_id.
+   *
+   * @route POST /:hostUid/database/auto-exec-query/:dbname/remove
+   */
+  @Post('auto-exec-query/:dbname/remove')
+  async removeAutoExecQueryPlan(
+    @Request() req,
+    @Param('hostUid') hostUid: string,
+    @Param('dbname') dbname: string,
+    @Body() body: Omit<RemoveAutoExecQueryPlanRequest, 'dbname'>
+  ): Promise<SetAutoExecQueryClientResponse> {
+    const userId = req.user.sub;
+    validateRequiredFields(body, ['query_id'], 'database/auto-exec-query/remove', this.logger);
+    this.logger.log(
+      `Removing query plan ${body.query_id} from database: ${dbname} on host: ${hostUid}`
+    );
+    return await this.configService.removeAutoExecQueryPlan(userId, hostUid, { dbname, ...body });
   }
 
   /**

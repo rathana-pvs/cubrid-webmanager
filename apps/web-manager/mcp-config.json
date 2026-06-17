@@ -8,6 +8,15 @@
                 "/home/rathana/"
             ],
             "env": {}
+        },
+        "CA_Desktop": {
+            "command": "npx",
+            "args": [
+                "-y",
+                "@modelcontextprotocol/server-filesystem",
+                "/home/rathana/Desktop/cubrid-manager"
+            ],
+            "env": {}
         }
     }
 }
