@@ -162,8 +162,10 @@ export default function SetAutomationVolumeModal() {
     if (!selectedDatabase || !autoVolumeConfigs) return;
     const config = autoVolumeConfigs[selectedDatabase];
     if (config) {
-      const warnOutOfSpace = config.data_warn_outofspace || config.index_warn_outofspace;
-      const extensionPages = config.data_ext_page || config.index_ext_page;
+      const primaryVolume = config.data === 'ON' ? 'data' : (config.index === 'ON' ? 'index' : 'data');
+      const fallbackVolume = primaryVolume === 'data' ? 'index' : 'data';
+      const warnOutOfSpace = config[`${primaryVolume}_warn_outofspace`] || config[`${fallbackVolume}_warn_outofspace`];
+      const extensionPages = config[`${primaryVolume}_ext_page`] || config[`${fallbackVolume}_ext_page`];
 
       setCombinedEnabled(config.data === 'ON' || config.index === 'ON');
       setCombinedThreshold(warnOutOfSpace ? Math.max(5, Math.round(parseFloat(warnOutOfSpace) * 100)) : 15);
