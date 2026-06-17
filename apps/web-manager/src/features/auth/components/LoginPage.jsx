@@ -125,7 +125,7 @@ export default function LoginPage() {
           <Input
             label={CM.username}
             icon="account_circle"
-            placeholder="Username"
+            placeholder={CM.username}
             value={username}
             onChange={(e) => { setUsername(e.target.value); if (errors.username) setErrors({ ...errors, username: '' }); }}
             error={errors.username}
@@ -134,7 +134,7 @@ export default function LoginPage() {
 
           <Input
             label={CM.password}
-            labelExtra={<Link to="/forgot-password" title="Recover your password" className="text-amber-500 hover:text-amber-400 transition-colors">Forgot?</Link>}
+            labelExtra={<Link to="/forgot-password" title={CM.recoverPassword} className="text-amber-500 hover:text-amber-400 transition-colors">Forgot?</Link>}
             icon="lock"
             type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
@@ -163,7 +163,7 @@ export default function LoginPage() {
 
           {/* API error */}
           {apiError && (
-            <InfoBanner variant="danger" title="Authentication Failed">
+            <InfoBanner variant="danger" title={CM.authenticationFailed}>
               {apiError}
             </InfoBanner>
           )}
@@ -178,7 +178,7 @@ export default function LoginPage() {
               <div className="w-5 h-5 border-2 border-white/20 dark:border-black/20 border-t-white dark:border-t-black rounded-full animate-spin" />
             ) : (
               <>
-                <span className="tracking-wide">Authorize Access</span>
+                <span className="tracking-wide">{CM.authorizeAccess}</span>
                 <Icon name="arrow_forward" size="sm" weight={300} className="group-hover:translate-x-0.5 transition-transform" />
               </>
             )}

@@ -154,7 +154,7 @@ export default function EditCMSUserModal() {
 
   if (isSuccess) return (
     <Modal isOpen title={CM.success} icon="check_circle" iconVariant="success" onClose={handleClose} maxWidth="500px">
-      <ModalStatusSuccess title="Synchronized" onConfirm={handleClose} />
+      <ModalStatusSuccess title={CM.synchronizedStatus} onConfirm={handleClose} />
     </Modal>
   );
 
@@ -174,9 +174,9 @@ export default function EditCMSUserModal() {
       maxWidth="540px"
       footer={
         <div className="flex justify-end gap-2 w-full">
-          <Button variant="ghost" onClick={handleClose}>Cancel</Button>
+          <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
           <Button onClick={handleSave} disabled={!canSave}>
-            {isEditMode ? 'Save Changes' : 'Add User'}
+            {isEditMode ? CM.saveChanges : CM.addUser}
           </Button>
         </div>
       }
@@ -184,7 +184,7 @@ export default function EditCMSUserModal() {
       <div className="space-y-6">
         {isAdmin && (
           <div className="px-1">
-            <InfoBanner title="Administrator Account">
+            <InfoBanner title={CM.administratorAccount}>
               This is the primary system administrator account. System level permissions are fixed and cannot be modified.
             </InfoBanner>
           </div>
@@ -192,10 +192,10 @@ export default function EditCMSUserModal() {
 
         {/* Account Info */}
         <section>
-          <SectionHeader title="Account Information" icon="person" />
+          <SectionHeader title={CM.accountInformation} icon="person" />
           <div className="space-y-4 px-1">
             <Input
-              label="Login ID"
+              label={CM.loginIdLabel}
               value={formData.targetid}
               onChange={(e) => setFormData(p => ({ ...p, targetid: e.target.value }))}
               disabled={isEditMode}
@@ -204,24 +204,24 @@ export default function EditCMSUserModal() {
             />
             <div className="grid grid-cols-2 gap-4">
               <Input
-                label="Password"
+                label={CM.password}
                 type="password"
                 value={formData.password}
                 onChange={(e) => setFormData(p => ({ ...p, password: e.target.value }))}
-                placeholder={isEditMode ? 'Leave blank to keep' : 'Enter password'}
+                placeholder={isEditMode ? CM.passwordConfirm : CM.password}
                 icon="lock"
                 required={!isEditMode}
-                error={passwordMismatch && formData.confirmPassword ? "Passwords do not match" : null}
+                error={passwordMismatch && formData.confirmPassword ? CM.passwordsDoNotMatch : null}
               />
               <Input
-                label="Confirm Password"
+                label={CM.passwordConfirm}
                 type="password"
                 value={formData.confirmPassword}
                 onChange={(e) => setFormData(p => ({ ...p, confirmPassword: e.target.value }))}
-                placeholder="Confirm password"
+                placeholder={CM.repeatPassword}
                 icon="lock_clock"
                 required={!!formData.password}
-                error={passwordMismatch && formData.confirmPassword ? "Passwords do not match" : null}
+                error={passwordMismatch && formData.confirmPassword ? CM.passwordsDoNotMatch : null}
               />
             </div>
           </div>

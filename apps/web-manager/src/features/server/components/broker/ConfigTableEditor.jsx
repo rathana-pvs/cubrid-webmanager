@@ -3,6 +3,7 @@ import { Icon } from '../../../../components/ds/foundation/Icon';
 import { Input } from '../../../../components/ds/forms/Input';
 import { Toggle } from '../../../../components/ds/forms/Toggle';
 import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
+import { useCM } from '../../../../constants/useCM';
 
 function isBool(val = '') {
   const u = val.toUpperCase();
@@ -17,6 +18,7 @@ export default function ConfigTableEditor({
   handleKeyChange,
   handleValueChange,
 }) {
+  const CM = useCM();
   return (
     <div className="flex-1 flex flex-col overflow-hidden">
 
@@ -123,7 +125,7 @@ export default function ConfigTableEditor({
       {/* Footer */}
       <div className="shrink-0 px-4 py-1.5 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
         <span>{allPropertyKeys.length} properties · {sections.length} brokers</span>
-        <StatusBadge label="Table Editor" variant="emerald" className="border-none bg-transparent" />
+        <StatusBadge label={CM.tableEditor} variant="emerald" className="border-none bg-transparent" />
       </div>
     </div>
   );

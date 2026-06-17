@@ -610,7 +610,7 @@ export default function CreateDatabaseModal() {
                         type="button"
                         onClick={() => removeVolume(idx)}
                         className="w-7 h-7 flex items-center justify-center rounded-lg text-rose-500 bg-rose-500/5 hover:bg-rose-500/15 transition-all cursor-pointer border border-transparent hover:border-rose-500/10"
-                        title="Remove volume"
+                        title={CM.removeVolume}
                       >
                         <Icon name="delete_outline" size="sm" weight={300} />
                       </button>
@@ -854,7 +854,7 @@ export default function CreateDatabaseModal() {
               </div>
 
               <div className="p-4 bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-2xl">
-                <SectionHeader title="Storage" icon="hard_drive" className="mb-4" />
+                <SectionHeader title={CM.storage} icon="hard_drive" className="mb-4" />
                 <div className="space-y-0.5 mt-1">
                   <SummaryRow label={CM.totalVolumes} value={`${formData.volumes.length + 2}`} />
                   <SummaryRow label={CM.genericVolume} value={`${formData.genericVolSize} MB`} />

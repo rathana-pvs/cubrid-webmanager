@@ -37,7 +37,7 @@ export default function HaPeerMergeModal() {
     <Modal
       isOpen={isHaMergeModalOpen}
       onClose={() => dispatch(clearPendingHaMerge())}
-      title="Merge HA cluster peers"
+      title={CM.mergeHAPeers}
       icon="hub"
       zIndexClass="z-[2200]"
       maxWidth="max-w-[480px]"
@@ -54,7 +54,7 @@ export default function HaPeerMergeModal() {
             className="min-w-[140px]"
             loading={isMerging}
           >
-            Merge into group
+            {CM.mergeIntoGroup}
           </Button>
         </>
       }

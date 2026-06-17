@@ -206,7 +206,7 @@ export default function CMSUserManagementModal() {
             {/* Admin accounts */}
             {adminUsers.length > 0 && (
               <div>
-                <SectionHeader title="System administrator" icon="verified_user" badge={adminUsers.length} />
+                <SectionHeader title={CM.systemAdministrator} icon="verified_user" badge={adminUsers.length} />
                 <div className="space-y-2">
                   {adminUsers.map(renderUser)}
                 </div>
@@ -216,7 +216,7 @@ export default function CMSUserManagementModal() {
             {/* Regular user accounts */}
             {regularUsers.length > 0 && (
               <div>
-                <SectionHeader title="Management users" icon="group" badge={regularUsers.length} />
+                <SectionHeader title={CM.managementUsers} icon="group" badge={regularUsers.length} />
                 <div className="space-y-2">
                   {regularUsers.map(renderUser)}
                 </div>
@@ -225,7 +225,7 @@ export default function CMSUserManagementModal() {
 
             {regularUsers.length === 0 && adminUsers.length > 0 && (
               <div>
-                <SectionHeader title="Management users" icon="group" />
+                <SectionHeader title={CM.managementUsers} icon="group" />
                 <button
                   onClick={handleAddUser}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-dashed border-slate-200 dark:border-white/8 bg-slate-50/50 dark:bg-white/1 text-slate-400 hover:border-amber-500/50 hover:text-amber-500 hover:bg-amber-500/4 transition-all group/add"

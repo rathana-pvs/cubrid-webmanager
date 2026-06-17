@@ -180,8 +180,8 @@ export default function AddVolumeModal() {
           error={error}
           onRetry={handleAdd}
           onCancel={resetAction}
-          retryText="Retry Registry Expansion"
-          cancelText="Dismiss"
+          retryText={CM.retryAddVolume}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -200,7 +200,7 @@ export default function AddVolumeModal() {
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest italic">
             <Icon name="info" size="14px" weight={300} />
-            <span>Active Instance Required</span>
+            <span>{CM.activeInstanceRequired}</span>
           </div>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
@@ -211,7 +211,7 @@ export default function AddVolumeModal() {
               disabled={!path || !sizeMB || fetchingStatus}
               className="min-w-[140px]"
             >
-              Provision Volume
+              {CM.addVolume}
             </Button>
           </div>
         </div>
@@ -236,7 +236,7 @@ export default function AddVolumeModal() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-0.5">
-              <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 text-[9px]">Available Payload</Typography>
+              <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 text-[9px]">{CM.availableSpace}</Typography>
               {fetchingStatus ? (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-100 dark:border-white/8">
                   <div className="w-2 h-2 border-[1.5px] border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
@@ -315,7 +315,7 @@ export default function AddVolumeModal() {
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
-              label="Custom Capacity"
+              label={CM.customCapacity}
               value={sizeMB}
               onChange={(e) => setSizeMB(parseFloat(e.target.value) || 0)}
               icon="memory"
@@ -324,7 +324,7 @@ export default function AddVolumeModal() {
               size="sm"
             />
             <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 block">Blocks Allocated</span>
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 block">{CM.blocksAllocated}</span>
               <div className="h-10 px-4 flex items-center justify-between bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-xl">
                 <span className="text-[13px] font-black font-mono text-amber-500 tabular-nums">{numberOfPages.toLocaleString()}</span>
                 <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black">pages</span>
@@ -362,8 +362,8 @@ export default function AddVolumeModal() {
         <div className="space-y-4">
            <SectionHeader title={CM.instanceRegistry} icon="label" />
           <div className="grid grid-cols-1 gap-4">
-            <Input label="Volume Identifier" value={volName} onChange={(e) => setVolName(e.target.value)} placeholder="e.g. DATA_VOL_PROD_1 (optional)" icon="badge" size="sm" />
-            <Input label="Environment Path" value={path} onChange={(e) => setPath(e.target.value)} placeholder="/var/lib/cubrid/volumes" icon="folder_zip" size="sm" className="font-mono!" />
+            <Input label={CM.volumeIdentifier} value={volName} onChange={(e) => setVolName(e.target.value)} placeholder="e.g. DATA_VOL_PROD_1 (optional)" icon="badge" size="sm" />
+            <Input label={CM.volumeDir} value={path} onChange={(e) => setPath(e.target.value)} placeholder="/var/lib/cubrid/volumes" icon="folder_zip" size="sm" className="font-mono!" />
           </div>
         </div>
 

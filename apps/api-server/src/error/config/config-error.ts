@@ -134,6 +134,40 @@ export class ConfigError extends AppError {
   }
 
   /**
+   * Creates an error indicating that a query plan with the given query_id was not found.
+   */
+  static QueryPlanNotFound(
+    dbname: string,
+    queryId: string,
+    additionalData?: Record<string, any>,
+    originalError?: Error
+  ) {
+    return new ConfigError(
+      'CONFIG',
+      ConfigErrorCode.QUERY_PLAN_NOT_FOUND,
+      { dbname, queryId, ...additionalData },
+      originalError
+    );
+  }
+
+  /**
+   * Creates an error indicating that a query plan with the given query_id already exists.
+   */
+  static DuplicateQueryId(
+    dbname: string,
+    queryId: string,
+    additionalData?: Record<string, any>,
+    originalError?: Error
+  ) {
+    return new ConfigError(
+      'CONFIG',
+      ConfigErrorCode.DUPLICATE_QUERY_ID,
+      { dbname, queryId, ...additionalData },
+      originalError
+    );
+  }
+
+  /**
    * Creates an error for an unknown configuration-related issue.
    */
   static Unknown(additionalData?: Record<string, any>, originalError?: Error) {

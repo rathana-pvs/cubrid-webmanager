@@ -16,6 +16,8 @@ import {
   GetAutoExecQueryErrLogResponse,
   GetAutoAddVolLogRequest,
   GetAutoAddVolLogResponse,
+  AppendAutoExecQueryPlanRequest,
+  RemoveAutoExecQueryPlanRequest,
 } from '@api-interfaces';
 import { CmsConfigService } from '@cms-config/cms-config.service';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
@@ -543,6 +545,96 @@ export class DatabaseConfigService extends BaseService {
 
     const domain = this.extractDomainData(response);
     return domain.log ?? [];
+  }
+
+  /**
+   * Append a single query plan to a database's auto-exec plan list.
+   * Serializes concurrent callers per (hostUid, dbname) to prevent read-modify-write races.
+   *
+   * @throws ConfigError.DuplicateQueryId if a plan with the same query_id already exists
+   */
+  @HandleCmsErrors()
+  async appendAutoExecQueryPlan(
+    userId: string,
+    hostUid: string,
+    request: AppendAutoExecQueryPlanRequest
+  ): Promise<SetAutoExecQueryClientResponse> {
+    const { dbname, plan: newPlan } = request;
+    return this.withQueryPlanMutex(`${hostUid}:${dbname}`, async () => {
+      const existing = await this.getAutoExecQuery(userId, hostUid, dbname);
+      const existingPlans = existing.planlist.find((p) => p.dbname === dbname)?.queryplan ?? [];
+
+      if (existingPlans.some((p) => p.query_id === newPlan.query_id)) {
+        throw ConfigError.DuplicateQueryId(dbname, newPlan.query_id);
+      }
+
+      const cmsRequest: SetAutoExecQueryCmsRequest = {
+        task: 'setautoexecquery',
+        dbname,
+        planlist: [{ queryplan: [...existingPlans, newPlan] }],
+      };
+      await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
+        userId,
+        hostUid,
+        cmsRequest
+      );
+      return { success: true };
+    });
+  }
+
+  /**
+   * Remove a single query plan from a database's auto-exec plan list by query_id.
+   * Serializes concurrent callers per (hostUid, dbname) to prevent read-modify-write races.
+   *
+   * @throws ConfigError.QueryPlanNotFound if no plan with the given query_id exists
+   */
+  @HandleCmsErrors()
+  async removeAutoExecQueryPlan(
+    userId: string,
+    hostUid: string,
+    request: RemoveAutoExecQueryPlanRequest
+  ): Promise<SetAutoExecQueryClientResponse> {
+    const { dbname, query_id: queryId } = request;
+    return this.withQueryPlanMutex(`${hostUid}:${dbname}`, async () => {
+      const existing = await this.getAutoExecQuery(userId, hostUid, dbname);
+      const existingPlans = existing.planlist.find((p) => p.dbname === dbname)?.queryplan ?? [];
+      const remaining = existingPlans.filter((p) => p.query_id !== queryId);
+
+      if (remaining.length === existingPlans.length) {
+        throw ConfigError.QueryPlanNotFound(dbname, queryId);
+      }
+
+      const cmsRequest: SetAutoExecQueryCmsRequest = {
+        task: 'setautoexecquery',
+        dbname,
+        planlist: [{ queryplan: remaining }],
+      };
+      await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
+        userId,
+        hostUid,
+        cmsRequest
+      );
+      return { success: true };
+    });
+  }
+
+  // Serializes concurrent read-modify-write operations per (hostUid, dbname) key.
+  private readonly queryPlanMutex = new Map<string, Promise<void>>();
+
+  private async withQueryPlanMutex<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const pending = this.queryPlanMutex.get(key) ?? Promise.resolve();
+    let resolve!: () => void;
+    const next = new Promise<void>((r) => (resolve = r));
+    this.queryPlanMutex.set(key, next);
+    try {
+      await pending;
+      return await fn();
+    } finally {
+      resolve();
+      if (this.queryPlanMutex.get(key) === next) {
+        this.queryPlanMutex.delete(key);
+      }
+    }
   }
 
   private resolveAutoAddVolLogRange(request: GetAutoAddVolLogRequest): {

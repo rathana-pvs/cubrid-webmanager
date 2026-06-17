@@ -105,7 +105,7 @@ const PolicyCard = memo(({ title, icon, description, enabled, onToggle, threshol
         <div className="grid grid-cols-2 gap-3 items-end">
           <div className="space-y-1">
             <Typography variant="caption" className="text-[10px] font-semibold text-slate-400 block">
-              Expansion size
+              {CM.expansionSize}
             </Typography>
             <Input
               type="number"
@@ -117,7 +117,7 @@ const PolicyCard = memo(({ title, icon, description, enabled, onToggle, threshol
             />
           </div>
             <Input
-              label="Extension pages"
+              label={CM.extensionPages}
               size="sm"
               readOnly
               value={extensionUnits.toLocaleString()}
@@ -207,9 +207,9 @@ export default function SetAutomationVolumeModal() {
   if (isLoading) {
     return (
       <Modal isOpen title={CM.setAutomationVolume} icon="settings_suggest" onClose={handleClose} maxWidth="max-w-md" showCloseButton={false}>
-        <ModalStatusLoading 
-          title="Saving Policies" 
-          subtitle={`Updating configuration for ${selectedDatabase}.`}
+        <ModalStatusLoading
+          title={CM.savingPolicies}
+          subtitle={selectedDatabase}
         />
       </Modal>
     );
@@ -218,12 +218,12 @@ export default function SetAutomationVolumeModal() {
   /* ── SUCCESS ── */
   if (isSuccess) {
     return (
-      <Modal isOpen title="Configuration Saved" icon="settings_suggest" iconVariant="success" onClose={handleClose} maxWidth="max-w-md">
-        <ModalStatusSuccess 
-          title="Saved Successfully"
-          message={`Auto-volume policies for ${selectedDatabase} were saved successfully.`}
+      <Modal isOpen title={CM.policiesSaved} icon="settings_suggest" iconVariant="success" onClose={handleClose} maxWidth="max-w-md">
+        <ModalStatusSuccess
+          title={CM.savedSuccessfully}
+          message={selectedDatabase}
           onConfirm={handleClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -232,14 +232,14 @@ export default function SetAutomationVolumeModal() {
   /* ── ERROR ── */
   if (isError) {
     return (
-      <Modal isOpen title="Update Failed" icon="settings_suggest" iconVariant="danger" onClose={resetAction} maxWidth="max-w-md">
-        <ModalStatusError 
-          title="Save Interrupted"
+      <Modal isOpen title={CM.executionError} icon="settings_suggest" iconVariant="danger" onClose={resetAction} maxWidth="max-w-md">
+        <ModalStatusError
+          title={CM.saveInterrupted}
           error={actionError}
           onRetry={handleSave}
           onCancel={resetAction}
-          retryText="Retry Update"
-          cancelText="Dismiss"
+          retryText={CM.retry}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -268,7 +268,7 @@ export default function SetAutomationVolumeModal() {
               icon="save"
               className="min-w-[140px] shadow-sm shadow-amber-500/20"
             >
-              Save Policies
+              {CM.savePolicies}
             </Button>
           </div>
         </div>
@@ -287,7 +287,7 @@ export default function SetAutomationVolumeModal() {
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">Auto-Volume On</span>
+            <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">{CM.autoVolumeActive}</span>
           </div>
         </div>
 
@@ -297,7 +297,7 @@ export default function SetAutomationVolumeModal() {
             <div className="absolute inset-0 z-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xs flex items-center justify-center rounded-sm border border-slate-100 dark:border-white/5">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full border-2 border-slate-100 dark:border-white/5 border-t-amber-500 animate-spin" />
-                <Typography variant="caption" className="text-[10px] text-slate-500">Loading config…</Typography>
+                <Typography variant="caption" className="text-[10px] text-slate-500">{CM.loadingConfig}</Typography>
               </div>
             </div>
           )}
@@ -315,7 +315,7 @@ export default function SetAutomationVolumeModal() {
               onSizeChange={setDataAddSize}
             />
             <PolicyCard
-              title="Index Volume"
+              title={CM.indexVolume}
               icon="list_alt"
               description="Index & search volumes"
               enabled={indexEnabled}

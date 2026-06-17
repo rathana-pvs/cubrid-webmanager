@@ -699,6 +699,18 @@ const hostSlice = createSlice({
         }
         state.haInfo[hostUid] = haInfo;
         localStorage.setItem('cubrid_ha_info', JSON.stringify(state.haInfo));
+
+        // If this is the host's first-ever login, queue HA discovery side effects.
+        // initialLogin is true in the Redux hosts state (set when host was added) until
+        // this point — the server already cleared it during CMS auth, but the Redux
+        // state hasn't been re-fetched yet, so we can still read the original value.
+        const host = state.hosts.find((h) => h.uid === hostUid);
+        if (host?.initialLogin === true) {
+          if (!state.hostsAwaitingHaLogin.includes(hostUid)) {
+            state.hostsAwaitingHaLogin.push(hostUid);
+          }
+          host.initialLogin = false;
+        }
       })
       .addCase(loginToHost.rejected, (state, action) => {
         if (!state.isBatchHostLogin) {
@@ -998,7 +1010,7 @@ export const processHaLoginSideEffects = createAsyncThunk(
         if (staleDiscoveryOpen) {
           dispatch(hostSlice.actions.clearSuggestedHaNodes());
         }
-        if (!getState().host.isDiscoveryModalOpen) {
+        if (awaitingFirstHaLogin && !getState().host.isDiscoveryModalOpen) {
           dispatch(hostSlice.actions.setSuggestedHaNodes({
             nodes: undiscovered,
             groupId: findGroupIdForHost(hostGroups, hostUid),

@@ -25,7 +25,7 @@ export {
   addVolume, backupDatabase, restoreDatabase, fetchBackupSchedule, addBackupSchedule,
   editBackupSchedule, deleteBackupSchedule, fetchBackupList, fetchBackupDbInfo,
   fetchAutoBackupLog, checkDatabase, compactDatabase, optimizeDatabase, loadDatabase,
-  unloadDatabase, fetchQueryPlan, setAutoExecQuery, fetchQueryPlanLog, fetchLockInfo,
+  unloadDatabase, fetchQueryPlan, setAutoExecQuery, appendAutoExecQueryPlan, removeAutoExecQueryPlan, fetchQueryPlanLog, fetchLockInfo,
   fetchTransactionInfo, killTransaction, clearError
 } from './databaseOperationSlice';
 

@@ -528,7 +528,7 @@ export default function ImportExportHostModal() {
                 <Input
                   type="password"
                   size="sm"
-                  placeholder="Host password"
+                  placeholder={CM.hostPasswordPlaceholder}
                   value={passwordDrafts[host.uid] || ''}
                   onChange={(e) => handlePasswordDraftChange(host.uid, e.target.value)}
                 />

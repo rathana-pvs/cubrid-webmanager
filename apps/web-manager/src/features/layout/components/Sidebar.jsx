@@ -178,6 +178,15 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     // Use a ref so concurrent clicks in the same render frame are also blocked.
     // isLoggingIntoHost is a stale-closure value and misses same-frame double-clicks.
     if (loginInProgressRef.current) return;
+
+    if (authorizedHosts.includes(uid)) {
+      dispatch(setActiveMainTab('host:' + uid));
+      dispatch(fetchDatabaseStartInfo(uid));
+      dispatch(fetchBrokerList(uid));
+      dispatch(fetchHostEnv(uid));
+      return;
+    }
+
     loginInProgressRef.current = true;
 
     dispatch(loginToHostWithSideEffects(uid))
@@ -194,7 +203,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       .finally(() => {
         loginInProgressRef.current = false;
       });
-  }, [dispatch]);
+  }, [dispatch, authorizedHosts]);
 
   const pendingLoginAllUids = getUnauthorizedHostUids(hostGroups, authorizedHosts, null);
   const pendingLoginCount = pendingLoginAllUids.length;
@@ -486,10 +495,10 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                   <button
                     onClick={(e) => { e.stopPropagation(); dispatch(openCreateGroupModal()); }}
                     className="flex items-center gap-1 h-6 px-2 rounded-sm border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-400 hover:text-amber-500 hover:border-amber-400/50 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 transition-all active:scale-95 shadow-xs"
-                    title="New Group"
+                    title={CM.newGroup}
                   >
                     <Icon name="create_new_folder" size="12px" weight={400} />
-                    <span className="text-[10px] font-semibold tracking-wide">New Group</span>
+                    <span className="text-[10px] font-semibold tracking-wide">{CM.newGroup}</span>
                   </button>
                 )}
                 {!isServerListCollapsed && hosts.length > 0 && (
@@ -778,7 +787,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="create_new_folder"
-            label="New Group"
+            label={CM.newGroup}
             onClick={() => {
               dispatch(openCreateGroupModal());
               setGroupContextMenu(null);
@@ -812,7 +821,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             <MenuDivider />
             <MenuItem
             icon="add_link"
-            label="Add Node"
+            label={CM.addNode}
             onClick={() => {
               dispatch(openAddHostModal({ groupId: groupContextMenu.groupId, alias: '', address: '', port: '8001', id: 'admin', password: '' }));
               setGroupContextMenu(null);
@@ -820,7 +829,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="edit"
-            label="Rename Group"
+            label={CM.renameGroup}
             onClick={() => {
               dispatch(openRenameGroupModal({ groupId: groupContextMenu.groupId, name: groupContextMenu.groupName }));
               setGroupContextMenu(null);
@@ -829,7 +838,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <MenuItem
             icon="delete"
-            label="Delete Group"
+            label={CM.deleteGroup}
             onClick={() => {
               dispatch(openDeleteGroupModal({ groupId: groupContextMenu.groupId, name: groupContextMenu.groupName }));
               setGroupContextMenu(null);
@@ -1191,7 +1200,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem 
             icon="tune" 
-            label="Properties" 
+            label={CM.properties}
             onClick={() => { 
                 dispatch(openBrokerPropertyModal({ hostUid: selectedHostUid, brokerName: brokerContextMenu.broker }));
                 setBrokerContextMenu(null); 
@@ -1208,7 +1217,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="visibility"
-            label="View All Logs"
+            label={CM.viewAllLogs}
             onClick={() => {
               if (selectedHostUid) {
                 dispatch(openTab(`all_logs:${selectedHostUid}:${sqlLogContextMenu.broker}`));
@@ -1227,7 +1236,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="visibility"
-            label="View All Logs"
+            label={CM.viewAllLogs}
             onClick={() => {
               if (selectedHostUid) {
                 dispatch(openTab(`all_db_logs:${selectedHostUid}:${dbLogContextMenu.db}`));
@@ -1341,7 +1350,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           </div>
           <MenuItem
             icon="add_to_drive"
-            label="Add Volume"
+            label={CM.addVolume}
             onClick={() => {
               dispatch(setSelectedDatabase(spaceContextMenu.db));
               dispatch(openAddVolumeModal());
@@ -1350,7 +1359,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
           <MenuItem
             icon="settings_suggest"
-            label="Set Automation Volume"
+            label={CM.setAutomationVolume}
             onClick={() => {
               dispatch(setSelectedDatabase(spaceContextMenu.db));
               dispatch(openSetAutomationVolumeModal());
@@ -1369,7 +1378,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <MenuItem
             icon="visibility"
-            label="View Database"
+            label={CM.viewDatabase}
             onClick={() => {
               dispatch(setActiveMainTab(`db_space:${selectedHostUid}:${spaceContextMenu.db}`));
               setSpaceContextMenu(null);

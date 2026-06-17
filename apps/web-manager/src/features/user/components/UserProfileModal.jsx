@@ -8,8 +8,10 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
+import { useCM } from '../../../constants/useCM';
 
 export default function UserProfileModal({ isOpen, onClose }) {
+  const CM = useCM();
   const { user } = useSelector((state) => state.auth, shallowEqual);
   const [editMode, setEditMode] = useState(null); // 'profile' | 'password' | null
 
@@ -88,7 +90,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
   const footer = editMode ? (
     <>
       <Button variant="ghost" onClick={handleCancel} disabled={loading || globalLoading}>
-        Discard
+        {CM.discard}
       </Button>
       <Button
         onClick={handleSave}
@@ -96,16 +98,16 @@ export default function UserProfileModal({ isOpen, onClose }) {
         icon="check_circle"
         className="min-w-[120px]"
       >
-        {editMode === 'password' ? 'Update Password' : 'Save Changes'}
+        {editMode === 'password' ? CM.updatePasswordBtn : CM.saveChanges}
       </Button>
     </>
   ) : (
     <div className="flex gap-2 w-full">
       <Button variant="ghost" className="flex-1" onClick={() => setEditMode('profile')}>
-        Edit Profile
+        {CM.editProfile}
       </Button>
       <Button variant="ghost" className="flex-1" onClick={() => setEditMode('password')}>
-        Change Password
+        {CM.changePassword}
       </Button>
     </div>
   );
@@ -114,7 +116,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
     <Modal
       isOpen={isOpen}
       onClose={onClose}
-      title={editMode === 'password' ? 'Change Password' : 'Account Profile'}
+      title={editMode === 'password' ? CM.changePassword : CM.accountProfile}
       icon={editMode === 'password' ? 'lock_reset' : 'account_circle'}
       maxWidth="max-w-[420px]"
       footer={footer}
@@ -149,7 +151,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
 
             {/* Info Card */}
             <div>
-              <SectionHeader title="Account Details" icon="info" />
+              <SectionHeader title={CM.accountDetails} icon="info" />
               <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
               <div className="divide-y divide-slate-100 dark:divide-white/5">
                 <div className="flex items-center px-4 py-3 gap-3">
@@ -171,7 +173,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
         {/* Edit Profile Mode */}
         {editMode === 'profile' && (
           <div>
-            <SectionHeader title="Update Profile" icon="edit_square" />
+            <SectionHeader title={CM.updateProfileSection} icon="edit_square" />
             <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
             <div className="p-4 space-y-3">
               {/* Read-only User ID */}
@@ -184,7 +186,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 </div>
               </div>
               <Input
-                label="Department"
+                label={CM.departmentLabel}
                 value={editProfile.department}
                 onChange={(e) => setEditProfile((prev) => ({ ...prev, department: e.target.value }))}
                 placeholder="e.g. Engineering"
@@ -199,12 +201,12 @@ export default function UserProfileModal({ isOpen, onClose }) {
         {/* Change Password Mode */}
         {editMode === 'password' && (
           <div>
-            <SectionHeader title="Security Settings" icon="lock" />
+            <SectionHeader title={CM.securitySettings} icon="lock" />
             <div className="rounded-xl border border-slate-200 dark:border-white/8 overflow-hidden">
             <div className="p-4 space-y-3">
               <Input
                 type="password"
-                label="Current Password"
+                label={CM.currentPasswordLabel}
                 icon="lock"
                 value={passwords.oldPassword}
                 onChange={(e) => setPasswords((prev) => ({ ...prev, oldPassword: e.target.value }))}
@@ -213,7 +215,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
               />
               <Input
                 type="password"
-                label="New Password"
+                label={CM.newPassword}
                 icon="key"
                 value={passwords.newPassword}
                 onChange={(e) => setPasswords((prev) => ({ ...prev, newPassword: e.target.value }))}
@@ -222,7 +224,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
               />
               <Input
                 type="password"
-                label="Confirm New Password"
+                label={CM.confirmNewPassword}
                 icon="key_vertical"
                 value={passwords.confirmPassword}
                 onChange={(e) => setPasswords((prev) => ({ ...prev, confirmPassword: e.target.value }))}

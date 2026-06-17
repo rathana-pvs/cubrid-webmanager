@@ -273,6 +273,30 @@ export const setAutoExecQuery = createAsyncThunk(
   }
 );
 
+export const appendAutoExecQueryPlan = createAsyncThunk(
+  'database/appendAutoExecQueryPlan',
+  async ({ hostUid, dbname, plan }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.appendAutoExecQueryPlan(hostUid, dbname, plan);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to add query plan for ${dbname}`);
+    }
+  }
+);
+
+export const removeAutoExecQueryPlan = createAsyncThunk(
+  'database/removeAutoExecQueryPlan',
+  async ({ hostUid, dbname, queryId }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.removeAutoExecQueryPlan(hostUid, dbname, queryId);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to remove query plan for ${dbname}`);
+    }
+  }
+);
+
 export const fetchQueryPlanLog = createAsyncThunk(
   'database/fetchQueryPlanLog',
   async ({ hostUid }, { rejectWithValue }) => {

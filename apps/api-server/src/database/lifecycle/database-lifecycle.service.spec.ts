@@ -79,6 +79,8 @@ describe('DatabaseLifecycleService', () => {
 
     const mockDatabaseUserService = {
       updateUser: jest.fn(),
+      loginDatabase: jest.fn().mockResolvedValue({}),
+      getUserInfo: jest.fn().mockResolvedValue({ user: [] }),
     };
 
     const mockDatabaseConfigService = {

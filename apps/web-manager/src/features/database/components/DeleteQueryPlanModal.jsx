@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { closeDeleteQueryPlanModal, setAutoExecQuery, fetchQueryPlan } from '../databaseSlice';
+import { closeDeleteQueryPlanModal, removeAutoExecQueryPlan, fetchQueryPlan } from '../databaseSlice';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { EmptyState } from '../../../components/ds/feedback/EmptyState';
@@ -22,7 +22,6 @@ export default function DeleteQueryPlanModal() {
   const { isDeleteQueryPlanModalOpen, selectedQueryPlanId } = useSelector((state) => state.databaseUI, shallowEqual);
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
-  const { queryPlans } = useSelector((state) => state.databaseOperation, shallowEqual);
   
   const [view, setView] = useState(VIEW_FORM);
   const [errorMsg, setErrorMsg] = useState('');
@@ -43,28 +42,10 @@ export default function DeleteQueryPlanModal() {
     setErrorMsg('');
 
     try {
-      // Get current plans and filter out the one to delete
-      const currentPlans = queryPlans[selectedDatabase] || [];
-      const updatedPlans = currentPlans.filter(p => p.query_id !== selectedQueryPlanId);
-
-      const payload = {
+      await dispatch(removeAutoExecQueryPlan({
+        hostUid: selectedHostUid,
         dbname: selectedDatabase,
-        planlist: [{
-          queryplan: updatedPlans.map(p => ({
-            query_id: p.query_id,
-            username: p.username,
-            userpass: p.userpass || '', // userpass might be missing in fetch response
-            period: p.period,
-            detail: p.detail,
-            query_string: p.query_string
-          }))
-        }]
-      };
-
-      await dispatch(setAutoExecQuery({ 
-        hostUid: selectedHostUid, 
-        dbname: selectedDatabase, 
-        payload 
+        queryId: selectedQueryPlanId
       })).unwrap();
       
       setView(VIEW_SUCCESS);
