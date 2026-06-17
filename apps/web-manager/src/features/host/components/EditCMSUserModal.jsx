@@ -118,7 +118,7 @@ export default function EditCMSUserModal() {
               casauth: formData.casauth,
               dbcreate: formData.dbcreate,
               statusmonitorauth: formData.statusmonitorauth,
-              dbauth: editUser.dbauth || [],
+              dbauth: editUser.dbauth ?? editUser['@dbauth'] ?? [],
             }
           })).unwrap();
         }
