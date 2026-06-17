@@ -250,7 +250,7 @@ export default function EditCMSUserModal() {
                   />
                   <Select
                     label={CM.monitoringPermission}
-                    options={AUTH_OPTIONS}
+                    options={DB_CREATE_OPTIONS}
                     value={formData.statusmonitorauth}
                     onChange={(e) => setFormData(p => ({ ...p, statusmonitorauth: e.target.value }))}
                     icon="monitor_heart"
