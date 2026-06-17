@@ -296,6 +296,7 @@ export const CM = {
   importHosts: 'Import Hosts',
   importHostsXml: 'Import Hosts XML',
   tools: 'Tools',
+  hostServiceManagement: 'Host Service Management',
   help: 'Help',
   aboutCubridAdmin: 'About CUBRID Admin',
   aboutCubrid: 'About CUBRID',
@@ -324,6 +325,7 @@ export const CM = {
   deleteHost: 'Delete Host',
   changePassword: 'Change Password',
   userManagement: 'User Management',
+  cmsAccountManagement: 'CMS Account Management',
   serverVersion: 'Server Version',
   serverColon: (s) => `Server: ${s}`,
   databaseColon: (db) => `Database: ${db}`,
@@ -404,6 +406,9 @@ export const CM = {
   fullControl: 'Full Control',
   permissions: 'Permissions',
   brokerAuthority: 'Broker Authority',
+  monitoringPermission: 'monitoring',
+  dbCreatePermission: 'db-creation',
+  brokerPermission: 'broker',
 
   // Server dashboard
   serverDashboard: 'Server Dashboard',
@@ -741,7 +746,7 @@ export const CM = {
   description: 'Description',
 
   // Header menu (extra)
-  actionMenu: 'Action',
+  actionMenu: 'Top Tasks',
   configParam: 'Config Param',
   editCmConfig: 'Edit CM Config',
   reportBug: 'Report Bug',

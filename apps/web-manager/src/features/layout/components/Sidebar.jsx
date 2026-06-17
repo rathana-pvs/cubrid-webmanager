@@ -12,7 +12,9 @@ import {
   revokeHostLogin,
   openServerVersionModal,
   fetchHostEnv,
-  openCmsUserManagementModal
+  openCmsUserManagementModal,
+  startService,
+  stopService
 } from '../../host/hostSlice';
 import {
   fetchDatabaseStartInfo, startDatabase, stopDatabase, loginDatabase, registerDatabase,
@@ -70,6 +72,7 @@ import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 import { Modal } from '../../../components/ds/layout/Modal';
+import { ConfirmDialog } from '../../../components/ds/layout/ConfirmDialog';
 import { Button } from '../../../components/ds/foundation/Button';
 import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { useCM } from '../../../constants/useCM';
@@ -137,6 +140,11 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   } = useActionState();
 
   const [loadingText, setLoadingText] = useState(CM.processing);
+  const [stopServiceConfirm, setStopServiceConfirm] = useState({
+    isOpen: false,
+    hostUid: null,
+    serverName: '',
+  });
 
   const { hosts, hostGroups, selectedHostUid, selectedGroupUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors, haInfo, skipAutoHostLogin } = useSelector((state) => state.host, shallowEqual);
   const { databases, activeDatabases, loggedInDatabases } = useSelector((state) => state.database, shallowEqual);
@@ -216,6 +224,35 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         }));
       });
   }, [dispatch, hostGroups, authorizedHosts, CM.loginAll]);
+
+  const handleServiceAction = async (hostUid, action) => {
+    if (!hostUid) return;
+    setLoadingText(action === 'start' ? CM.startingService : CM.stoppingService);
+    startAction();
+    try {
+      if (action === 'start') {
+        await dispatch(startService(hostUid)).unwrap();
+      } else {
+        await dispatch(stopService(hostUid)).unwrap();
+      }
+      resetAction();
+    } catch (err) {
+      endError(err);
+    }
+  };
+
+  const closeStopServiceConfirm = () => {
+    setStopServiceConfirm(prev => ({ ...prev, isOpen: false }));
+  };
+
+  const requestStopService = (hostUid, serverName) => {
+    if (!hostUid) return;
+    setStopServiceConfirm({
+      isOpen: true,
+      hostUid,
+      serverName: serverName || hostUid,
+    });
+  };
 
   useEffect(() => {
     if (selectedHostUid && selectedHostUid !== lastProcessedHostUid.current) {
@@ -688,6 +725,28 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               }}
             />
           )}
+          <MenuDivider />
+          <MenuItem
+            icon="play_arrow"
+            label={CM.startService}
+            disabled={!authorizedHosts.includes(contextMenu.hostUid) || sidebarActionLoading}
+            onClick={() => {
+              const hostUid = contextMenu.hostUid;
+              setContextMenu(null);
+              handleServiceAction(hostUid, 'start');
+            }}
+          />
+          <MenuItem
+            icon="stop"
+            label={CM.stopService}
+            disabled={!authorizedHosts.includes(contextMenu.hostUid) || sidebarActionLoading}
+            onClick={() => {
+              const hostUid = contextMenu.hostUid;
+              const serverName = contextMenu.alias || contextMenu.server || hostUid;
+              setContextMenu(null);
+              requestStopService(hostUid, serverName);
+            }}
+          />
           <MenuDivider />
           <MenuItem icon="add_box" label={CM.addHost} onClick={() => { onAddHost(); setContextMenu(null); }} />
           <MenuItem icon="edit" label={CM.editHost} onClick={() => { dispatch(openEditHostModal(contextMenu.hostUid)); setContextMenu(null); }} />
@@ -1450,6 +1509,19 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       <AutoVolumeLogModal />
       <CMSUserManagementModal />
       <EditCMSUserModal />
+      <ConfirmDialog
+        isOpen={stopServiceConfirm.isOpen}
+        title={CM.stopServicesConfirmTitle}
+        description={CM.stopServicesConfirmDesc(stopServiceConfirm.serverName)}
+        confirmLabel={CM.stopAllServices}
+        variant="danger"
+        onConfirm={() => {
+          const { hostUid } = stopServiceConfirm;
+          closeStopServiceConfirm();
+          handleServiceAction(hostUid, 'stop');
+        }}
+        onCancel={closeStopServiceConfirm}
+      />
       {isSidebarActionError && (
         <Modal isOpen title={CM.actionFailed} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="400px">
           <ModalStatusError 

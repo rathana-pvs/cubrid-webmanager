@@ -73,6 +73,7 @@ export default function CMSUserManagementModal() {
     const isAdmin = username === 'admin';
     const casauth = user?.casauth || user?.['@casauth'] || 'none';
     const dbcreate = user?.dbcreate || user?.['@dbcreate'] || 'none';
+    const statusmonitorauth = user?.statusmonitorauth || user?.['@statusmonitorauth'] || 'none';
 
     return (
       <div
@@ -109,17 +110,22 @@ export default function CMSUserManagementModal() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {!isAdmin && (
               <>
                 <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                  <Icon name="hub" size="10px" weight={300} />
-                  <span>Broker: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{casauth}</span></span>
+                  <Icon name="storage" size="10px" weight={300} />
+                  <span>{CM.dbCreatePermission}: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{dbcreate}</span></span>
                 </span>
                 <span className="w-px h-3 bg-slate-200 dark:bg-white/8" />
                 <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                  <Icon name="storage" size="10px" weight={300} />
-                  <span>Create: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{dbcreate}</span></span>
+                  <Icon name="hub" size="10px" weight={300} />
+                  <span>{CM.brokerPermission}: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{casauth}</span></span>
+                </span>
+                <span className="w-px h-3 bg-slate-200 dark:bg-white/8" />
+                <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                  <Icon name="monitor_heart" size="10px" weight={300} />
+                  <span>{CM.monitoringPermission}: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{statusmonitorauth}</span></span>
                 </span>
               </>
             )}

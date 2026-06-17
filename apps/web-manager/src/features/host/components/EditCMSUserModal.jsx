@@ -12,8 +12,6 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
-import { Toggle } from '../../../components/ds/forms/Toggle';
-import { Typography } from '../../../components/ds/foundation/Typography';
 import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
@@ -29,6 +27,10 @@ export default function EditCMSUserModal() {
   const AUTH_OPTIONS = [
     { value: 'none', label: CM.noAccess },
     { value: 'monitor', label: CM.monitorOnly },
+    { value: 'admin', label: CM.fullControl },
+  ];
+  const DB_CREATE_OPTIONS = [
+    { value: 'none', label: CM.noAccess },
     { value: 'admin', label: CM.fullControl },
   ];
   const dispatch = useDispatch();
@@ -60,7 +62,7 @@ export default function EditCMSUserModal() {
     password: '',
     confirmPassword: '',
     casauth: 'none',
-    dbcreate: false,
+    dbcreate: 'none',
     statusmonitorauth: 'none',
   });
 
@@ -78,7 +80,7 @@ export default function EditCMSUserModal() {
           password: '',
           confirmPassword: '',
           casauth: cas,
-          dbcreate: (dbc === 'admin'),
+          dbcreate: dbc,
           statusmonitorauth: sm,
         });
       } else {
@@ -87,7 +89,7 @@ export default function EditCMSUserModal() {
           password: '',
           confirmPassword: '',
           casauth: 'none',
-          dbcreate: false,
+          dbcreate: 'none',
           statusmonitorauth: 'none',
         });
       }
@@ -114,9 +116,9 @@ export default function EditCMSUserModal() {
             payload: {
               targetid: formData.targetid,
               casauth: formData.casauth,
-              dbcreate: formData.dbcreate ? 'admin' : 'none',
+              dbcreate: formData.dbcreate,
               statusmonitorauth: formData.statusmonitorauth,
-              dbauth: editUser.dbauth || [],
+              dbauth: editUser.dbauth ?? editUser['@dbauth'] ?? [],
             }
           })).unwrap();
         }
@@ -128,7 +130,7 @@ export default function EditCMSUserModal() {
             targetid: formData.targetid,
             password: formData.password,
             casauth: formData.casauth,
-            dbcreate: formData.dbcreate ? 'admin' : 'none',
+            dbcreate: formData.dbcreate,
             statusmonitorauth: formData.statusmonitorauth,
           }
         })).unwrap();
@@ -145,7 +147,7 @@ export default function EditCMSUserModal() {
   if (!isOpen) return null;
 
   if (isLoading) return (
-    <Modal isOpen title={isEditMode ? 'Saving Changes' : 'Creating User'} icon="person" onClose={() => { }} maxWidth="500px" showCloseButton={false}>
+    <Modal isOpen title={isEditMode ? 'Saving Changes' : 'Creating User'} icon="person" onClose={resetAction} maxWidth="500px" showCloseButton={false}>
       <ModalStatusLoading title={isEditMode ? 'Updating...' : 'Creating...'} />
     </Modal>
   );
@@ -229,32 +231,31 @@ export default function EditCMSUserModal() {
         {!isAdmin && (
           <section>
             <SectionHeader title={CM.permissions} icon="shield" />
-            <div className="space-y-4 px-1">
-              <div className="grid grid-cols-2 gap-4">
-                <Select
-                  label={CM.brokerAuthority}
-                  options={AUTH_OPTIONS}
-                  value={formData.casauth}
-                  onChange={(e) => setFormData(p => ({ ...p, casauth: e.target.value }))}
-                  icon="hub"
-                />
-                <Select
-                  label="Status Authority"
-                  options={AUTH_OPTIONS}
-                  value={formData.statusmonitorauth}
-                  onChange={(e) => setFormData(p => ({ ...p, statusmonitorauth: e.target.value }))}
-                  icon="monitor_heart"
-                />
-              </div>
-              <div className="flex items-center justify-between p-4 rounded-xl bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/5">
-                <div>
-                  <Typography variant="p" className="font-bold text-[13px]">Allow Database Creation</Typography>
-                  <Typography variant="caption" className="text-slate-400">User can create and drop databases on this host</Typography>
+            <div className="px-1">
+              <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/2 p-4">
+                <div className="grid grid-cols-1 gap-4">
+                  <Select
+                    label={CM.dbCreatePermission}
+                    options={DB_CREATE_OPTIONS}
+                    value={formData.dbcreate}
+                    onChange={(e) => setFormData(p => ({ ...p, dbcreate: e.target.value }))}
+                    icon="storage"
+                  />
+                  <Select
+                    label={CM.brokerPermission}
+                    options={AUTH_OPTIONS}
+                    value={formData.casauth}
+                    onChange={(e) => setFormData(p => ({ ...p, casauth: e.target.value }))}
+                    icon="hub"
+                  />
+                  <Select
+                    label={CM.monitoringPermission}
+                    options={DB_CREATE_OPTIONS}
+                    value={formData.statusmonitorauth}
+                    onChange={(e) => setFormData(p => ({ ...p, statusmonitorauth: e.target.value }))}
+                    icon="monitor_heart"
+                  />
                 </div>
-                <Toggle
-                  checked={formData.dbcreate}
-                  onChange={(val) => setFormData(p => ({ ...p, dbcreate: val }))}
-                />
               </div>
             </div>
           </section>
