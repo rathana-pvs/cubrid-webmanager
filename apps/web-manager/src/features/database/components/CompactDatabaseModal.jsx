@@ -12,7 +12,7 @@ import {
   CaDialogGroup,
 } from '../../../components/ds/layout/CaDialogLayout';
 import { Button } from '../../../components/ds/foundation/Button';
-import { Toggle } from '../../../components/ds/forms/Toggle';
+import { Checkbox } from '../../../components/ds/forms/Checkbox';
 import { Input } from '../../../components/ds/forms/Input';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
@@ -127,10 +127,10 @@ export default function CompactDatabaseModal() {
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="secondary" onClick={handleClose}>
-            {CM.discard}
+            {CM.cancel}
           </Button>
           <Button variant="primary" onClick={handleCompact} icon="play_circle" className="min-w-[140px]">
-            {CM.executeCompaction}
+            {CM.ok}
           </Button>
         </div>
       }
@@ -143,12 +143,13 @@ export default function CompactDatabaseModal() {
                 value={selectedDatabase || ''}
                 disabled
                 icon="database"
+                size="sm"
               />
             </CaDialogField>
             <CaDialogField fullWidth>
-              <Toggle
+              <Checkbox
                 checked={verbose}
-                onChange={setVerbose}
+                onChange={(e) => setVerbose(e.target.checked)}
                 label={CM.verboseMonitoring}
               />
             </CaDialogField>
@@ -156,7 +157,7 @@ export default function CompactDatabaseModal() {
         </CaDialogGroup>
 
         <CaDialogGroup title={CM.compactDescriptionInformation}>
-          <Typography variant="p" className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-400">
+          <Typography variant="p" className="text-[12px] leading-relaxed whitespace-pre-line text-slate-600 dark:text-slate-400">
             {CM.compactDatabaseDescription}
           </Typography>
         </CaDialogGroup>

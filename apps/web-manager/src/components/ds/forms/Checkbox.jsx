@@ -63,7 +63,7 @@ export const Checkbox = forwardRef(({
         
         {label && (
           <div className="flex flex-col">
-            <Typography variant="span" className="select-none text-[11px] font-medium text-slate-700 dark:text-slate-200 tracking-wide uppercase">
+            <Typography variant="span" className="select-none text-[12px] font-medium text-slate-700 dark:text-slate-200 tracking-normal">
               {label}
             </Typography>
             {description && (

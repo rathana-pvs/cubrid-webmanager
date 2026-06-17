@@ -12,7 +12,7 @@ import {
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
-import { Toggle } from '../../../components/ds/forms/Toggle';
+import { Checkbox } from '../../../components/ds/forms/Checkbox';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
@@ -37,7 +37,7 @@ const formatBackupDate = (value) => {
 const formatBackupSize = (value) => {
   const size = Number(value);
   if (!Number.isFinite(size)) return '-';
-  return `${(size / 1024 / 1024).toLocaleString(undefined, { maximumFractionDigits: 2 })} MB`;
+  return (size / 1024 / 1024).toLocaleString(undefined, { maximumFractionDigits: 2 });
 };
 
 export default function BackupDatabaseModal() {
@@ -102,7 +102,7 @@ export default function BackupDatabaseModal() {
   const backupHistoryColumns = useMemo(() => [
     { header: CM.backupLevel, accessor: 'level', width: '100px' },
     { header: CM.backupDate, accessor: 'date', width: '150px' },
-    { header: CM.size, accessor: 'size', width: '110px' },
+    { header: CM.backupSizeColumn, accessor: 'size', width: '110px' },
     { header: CM.backupPath, accessor: 'path', cellClassName: 'font-mono break-all' },
   ], [CM]);
 
@@ -189,7 +189,7 @@ export default function BackupDatabaseModal() {
 
   const backupInfoContent = (
     <CaDialogFieldGrid>
-      <CaDialogField label={CM.databaseName}>
+      <CaDialogField label={CM.backupDatabaseNameLabel}>
         <Input
           value={selectedDatabase || ''}
           disabled
@@ -230,18 +230,13 @@ export default function BackupDatabaseModal() {
       <CaDialogField fullWidth>
         <div className="space-y-2 pt-1">
           {flags.map((opt) => (
-            <Toggle
+            <Checkbox
               key={opt.field}
               checked={formData[opt.field]}
-              onChange={(val) => handleInputChange(opt.field, val)}
+              onChange={(e) => handleInputChange(opt.field, e.target.checked)}
               label={opt.label}
             />
           ))}
-          <Toggle
-            checked={false}
-            disabled
-            label={CM.safeBackup}
-          />
         </div>
       </CaDialogField>
     </CaDialogFieldGrid>
@@ -309,14 +304,13 @@ export default function BackupDatabaseModal() {
       isOpen={isBackupDatabaseModalOpen}
       onClose={handleClose}
       title={CM.backupDatabase}
-      subtitle={CM.backupSubtitle}
       icon="backup"
       maxWidth="720px"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose}>{CM.discard}</Button>
+          <Button variant="secondary" onClick={handleClose}>{CM.cancel}</Button>
           <Button variant="primary" onClick={handleBackup} icon="play_circle" className="min-w-[140px]">
-            {CM.runBackup}
+            {CM.ok}
           </Button>
         </div>
       }
