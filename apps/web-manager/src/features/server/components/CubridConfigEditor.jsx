@@ -5,6 +5,7 @@ import { showStatusModal, setTabDirty } from '../../layout/layoutSlice';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
+import { useCM } from '../../../constants/useCM';
 
 // ── Highlighted Source View ────────────────────────────────────────────────
 function renderHighlighted(content) {
@@ -32,6 +33,7 @@ function renderHighlighted(content) {
 
 // ── Main Component ─────────────────────────────────────────────────────────
 export default function CubridConfigEditor({ hostUid, confname }) {
+  const CM = useCM();
   const tabId = `edit_config:${hostUid}:${confname}`;
   const dispatch = useDispatch();
   const { hosts } = useSelector((state) => state.host, shallowEqual);
@@ -129,7 +131,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
           <button
             onClick={handleUndo}
             disabled={!hasChanges || loading || saving}
-            title="Undo all changes"
+            title={CM.undoAllChanges}
             className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 disabled:opacity-30 transition-colors"
           >
             <Icon name="undo" size="sm" weight={300} />
@@ -139,7 +141,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
           <button
             onClick={fetchConfig}
             disabled={loading || saving}
-            title="Reload config"
+            title={CM.reloadConfig}
             className="w-8 h-8 flex items-center justify-center rounded-md text-slate-500 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-bk-yellow disabled:opacity-30 transition-colors"
           >
             <Icon name="refresh" size="sm" weight={300} className={loading ? 'animate-spin' : ''} />
@@ -149,18 +151,18 @@ export default function CubridConfigEditor({ hostUid, confname }) {
 
           {/* Modified badge */}
           {hasChanges && (
-            <StatusBadge label="Modified" variant="amber" pulse={true} className="rounded-md mr-1" />
+            <StatusBadge label={CM.modified} variant="amber" pulse={true} className="rounded-md mr-1" />
           )}
 
           {/* Save */}
           <button
             onClick={handleSave}
             disabled={!hasChanges || saving || loading}
-            title="Save changes"
+            title={CM.saveChanges}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold text-white dark:text-slate-900 bg-slate-800 dark:bg-bk-yellow hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
             {saving ? <Spinner size="xs" className="text-white dark:text-slate-900" /> : <Icon name="save" size="sm" />}
-            Save Changes
+            {CM.saveChanges}
           </button>
         </div>
       </div>
@@ -217,14 +219,14 @@ export default function CubridConfigEditor({ hostUid, confname }) {
                 onScroll={syncScroll}
                 spellCheck="false"
                 className="absolute inset-0 left-12 w-[calc(100%-3rem)] h-full bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-transparent caret-slate-800 dark:caret-bk-yellow outline-none resize-none whitespace-pre-wrap break-all overflow-auto"
-                placeholder="# Configuration content..."
+                placeholder={CM.configPlaceholder}
               />
             </div>
 
             {/* Source Footer */}
             <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
               <span>UTF-8 | LF</span>
-              <StatusBadge label="Source Editor" variant="sky" className="border-none bg-transparent" />
+              <StatusBadge label={CM.sourceEditor} variant="sky" className="border-none bg-transparent" />
             </div>
           </div>
         )}

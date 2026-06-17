@@ -25,10 +25,10 @@ const VIEW_LOADING = 'loading';
 const VIEW_SUCCESS = 'success';
 const VIEW_ERROR   = 'error';
 
-const LEVEL_PRESETS = [
-  { value: '0', title: 'Full (L0)', desc: 'Static Clone', icon: 'auto_awesome_motion' },
-  { value: '1', title: 'Inc. (L1)', desc: 'Delta L0', icon: 'trending_up' },
-  { value: '2', title: 'Inc. (L2)', desc: 'Delta L1', icon: 'call_split' }
+const LEVEL_PRESETS_DEF = [
+  { value: '0', title: 'Full (L0)', descKey: 'levelFullShortDesc', icon: 'auto_awesome_motion' },
+  { value: '1', title: 'Inc. (L1)', descKey: 'levelIncrL0ShortDesc', icon: 'trending_up' },
+  { value: '2', title: 'Inc. (L2)', descKey: 'levelIncrL1ShortDesc', icon: 'call_split' }
 ];
 
 export default function EditBackupPlanModal() {
@@ -192,10 +192,10 @@ export default function EditBackupPlanModal() {
   /* ─── LOADING view ─── */
   if (isLoading) {
     return (
-      <Modal isOpen title="Committing Updates" icon="edit" onClose={handleClose} maxWidth="700px" showCloseButton={false}>
-        <ModalStatusLoading 
-          title="Syncing Registry" 
-          subtitle={`Patching automation configuration for ${formData.backupId}.`}
+      <Modal isOpen title={CM.editBackupPlanTitle} icon="edit" onClose={handleClose} maxWidth="700px" showCloseButton={false}>
+        <ModalStatusLoading
+          title={CM.updatingSchedule}
+          subtitle={formData.backupId}
         />
       </Modal>
     );
@@ -205,11 +205,11 @@ export default function EditBackupPlanModal() {
   if (isSuccess) {
     return (
       <Modal isOpen title={CM.updateSuccessful} icon="verified" iconVariant="success" onClose={handleClose} maxWidth="700px">
-        <ModalStatusSuccess 
-          title="Schedule Patched"
-          message={`Changes to the backup plan for ${selectedDatabase} have been committed and re-indexed.`}
+        <ModalStatusSuccess
+          title={CM.updateSuccessful}
+          message={`${selectedDatabase}: ${formData.backupId}`}
           onConfirm={handleClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -218,14 +218,14 @@ export default function EditBackupPlanModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title="Patch Rejected" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="700px">
-        <ModalStatusError 
-          title="Execution Halted"
+      <Modal isOpen title={CM.executionError} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="700px">
+        <ModalStatusError
+          title={CM.operationInterrupted}
           error={actionError}
           onRetry={handleSave}
           onCancel={resetAction}
-          retryText="Retry Update"
-          cancelText="Dismiss"
+          retryText={CM.retry}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -253,7 +253,7 @@ export default function EditBackupPlanModal() {
         <div className="space-y-4">
            <SectionHeader title={CM.abstractionLevel} icon="architecture" />
           <div className="grid grid-cols-3 gap-3">
-            {LEVEL_PRESETS.map(item => (
+            {LEVEL_PRESETS_DEF.map(item => (
               <button
                 key={item.value}
                 onClick={() => handleInputChange('backupLevel', item.value)}
@@ -274,7 +274,7 @@ export default function EditBackupPlanModal() {
                       {item.title}
                     </Typography>
                     <Typography variant="caption" className="text-[9px] text-slate-400 dark:text-slate-500 font-bold leading-none">
-                      {item.desc}
+                      {CM[item.descKey]}
                     </Typography>
                   </div>
                 </div>
@@ -285,7 +285,7 @@ export default function EditBackupPlanModal() {
 
         {/* Identity & Path */}
         <div className="grid grid-cols-2 gap-4">
-          <Input label="Registry Identifier" value={formData.backupId} disabled icon="badge" size="sm" className="opacity-60 bg-slate-50!" />
+          <Input label={CM.planRegistryId} value={formData.backupId} disabled icon="badge" size="sm" className="opacity-60 bg-slate-50!" />
           <Input label={CM.payloadPath} value={formData.backupPath} onChange={(e) => handleInputChange('backupPath', e.target.value)} placeholder="/var/backups" icon="folder_zip" size="sm" className="font-mono!" />
         </div>
 
@@ -300,10 +300,10 @@ export default function EditBackupPlanModal() {
                   value={formData.periodType}
                   onChange={(e) => handleInputChange('periodType', e.target.value)}
                   options={[
-                    { value: 'Monthly', label: 'Monthly Rotation' },
-                    { value: 'Weekly', label: 'Weekly Precision' },
-                    { value: 'Daily', label: 'Daily Stream' },
-                    { value: 'Specific days', label: 'Specialized Single' }
+                    { value: 'Monthly', label: CM.monthly },
+                    { value: 'Weekly', label: CM.weekly },
+                    { value: 'Daily', label: CM.daily },
+                    { value: 'Specific days', label: CM.specificDays }
                   ]}
                   size="sm"
                 />
@@ -388,10 +388,10 @@ export default function EditBackupPlanModal() {
            <SectionHeader title={CM.optimizationMatrix} icon="settings_input_component" />
           <div className="grid grid-cols-2 gap-3">
             {[
-              { label: 'Delete archive volumes', field: 'deleteArchive', icon: 'auto_delete', desc: 'Automatic log purging' },
-              { label: 'Update statistics information', field: 'updateStatistics', icon: 'query_stats', desc: 'Optimize query performance' },
-              { label: 'Check database consistency', field: 'checkConsistency', icon: 'verified', desc: 'Validate data block checksums' },
-              { label: 'Use compression', field: 'useCompression', icon: 'compress', desc: 'Reduce storage footprint' },
+              { label: CM.deleteArchiveLogsLabel, field: 'deleteArchive', icon: 'auto_delete', desc: CM.deleteArchiveLogsDesc },
+              { label: CM.updateStatisticsLabel, field: 'updateStatistics', icon: 'query_stats', desc: CM.updateStatisticsDesc },
+              { label: CM.checkConsistencyLabel, field: 'checkConsistency', icon: 'verified', desc: CM.checkConsistencyDesc },
+              { label: CM.compressBackupLabel, field: 'useCompression', icon: 'compress', desc: CM.compressBackupDesc },
             ].map(opt => (
               <div 
                 key={opt.field} 
@@ -431,8 +431,8 @@ export default function EditBackupPlanModal() {
         {/* Mode Selector */}
         <div className="space-y-3 px-1">
           {[
-            { value: 'online', label: 'Concurrent Session (Online)', desc: 'Zero downtime operation with read-write access preserved.', icon: 'bolt' },
-            { value: 'offline', label: 'Isolated Snapshot (Offline)', desc: 'Strict consistency with brief service interruption.', icon: 'power_settings_new' }
+            { value: 'online', label: CM.onlineMode, desc: CM.onlineModeDesc, icon: 'bolt' },
+            { value: 'offline', label: CM.offlineMode, desc: CM.offlineModeDesc, icon: 'power_settings_new' }
           ].map(mode => (
             <button
               key={mode.value}

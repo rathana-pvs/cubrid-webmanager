@@ -104,7 +104,7 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
             className={value ? 'text-amber-500' : 'text-slate-400'} 
           />
         <span className={`text-[12px] font-medium truncate ${value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
-          {value ? value : 'All Tables'}
+          {value ? value : CM.allTables}
         </span>
         </div>
         <div className="flex items-center gap-2 shrink-0">
@@ -123,7 +123,7 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
             <Input 
               size="sm"
               icon="search"
-              placeholder="Filter objects..."
+              placeholder={CM.filterObjects}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               autoFocus
@@ -140,7 +140,7 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
                 }`}
               >
                 <div className={`w-2 h-2 rounded-full transition-all ${value === '' ? 'bg-amber-500 scale-125 shadow-[0_0_8px_rgba(255,188,4,0.6)]' : 'bg-slate-300 dark:bg-slate-700 group-hover:bg-amber-500/40'}`}></div>
-                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${value === '' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}>All Tables</span>
+                <span className={`text-[10px] font-black uppercase tracking-[0.15em] ${value === '' ? 'text-amber-500' : 'text-slate-500 dark:text-slate-400'}`}>{CM.allTables}</span>
               </button>
             )}
 
@@ -157,7 +157,7 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
             {isLoading && (
               <div className="py-12 text-center space-y-4">
                 <Spinner size="md" className="mx-auto" />
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em]">Inspecting Schema</p>
+                <p className="text-[10px] text-slate-400 dark:text-slate-500 font-black uppercase tracking-[0.2em]">{CM.processing}</p>
               </div>
             )}
 
@@ -279,7 +279,7 @@ export default function OptimizeDatabaseModal() {
             </div>
           </div>
           <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">Regenerating Statistics</Typography>
+            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">{CM.regeneratingStatistics}</Typography>
             <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
               {getCmsJobLoadingSubtitle(selectedClassName || selectedDatabase, jobStatus, CM)}
             </Typography>
@@ -313,10 +313,10 @@ export default function OptimizeDatabaseModal() {
 
           <div className="space-y-2 px-8">
             <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Performance Restored
+              {CM.optimizationSuccess}
             </Typography>
             <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-              Query statistics for {selectedClassName ? 'table' : 'database'} <span className="font-bold text-slate-900 dark:text-white">{selectedClassName || selectedDatabase}</span> have been synchronized.
+              <span className="font-bold text-slate-900 dark:text-white">{selectedClassName || selectedDatabase}</span>
             </Typography>
           </div>
 
@@ -340,17 +340,17 @@ export default function OptimizeDatabaseModal() {
 
           <div className="space-y-2 px-6">
             <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              Optimization Failed
+              {CM.optimizationFailed}
             </Typography>
             <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">
-              System was unable to finalize statistics for <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>.
+              <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>
             </Typography>
           </div>
 
           <div className="w-full max-w-[340px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
             <div className="flex items-center gap-2 mb-1.5">
               <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">Error Manifest</span>
+              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">{CM.error}</span>
             </div>
             <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
               {errorMsg}
@@ -407,14 +407,14 @@ export default function OptimizeDatabaseModal() {
 
         <div className="space-y-5">
           <InfoBanner title={CM.optimizerIntel} icon="insights">
-            Regenerating statistics allows the query optimizer to choose the most efficient execution paths for complex JOIN and SELECT operations.
+            {CM.optimizerHint}
           </InfoBanner>
 
           <div className="space-y-2 px-1.5">
             <SectionHeader 
               title={CM.optimizationScope} 
               icon="tune" 
-              badge={isLoadingClasses ? 'Traversing' : `${totalTables.toLocaleString()} objects`}
+              badge={isLoadingClasses ? CM.processing : `${totalTables.toLocaleString()}`}
             />
             
             <ClassSelect 
@@ -427,7 +427,7 @@ export default function OptimizeDatabaseModal() {
             {!isLoadingClasses && totalTables > 0 && (
               <p className="text-[9.5px] text-slate-400 font-medium px-3 flex items-center gap-2">
                 <Icon name="lock_clock" size="10px" weight={400} />
-                Global scans may briefly lock schema metadata during analysis.
+                {CM.globalScanHint}
               </p>
             )}
           </div>

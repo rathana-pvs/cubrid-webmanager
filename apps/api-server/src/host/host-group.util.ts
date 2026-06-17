@@ -70,8 +70,7 @@ export function findDuplicateHost(
       host.address === candidate.address &&
       host.port === candidate.port &&
       host.id === candidate.id;
-    const sameAlias = hasSameDefinedAlias(host.alias, candidate.alias);
-    if (sameConnection || sameAlias) {
+    if (sameConnection) {
       found = host;
     }
   });

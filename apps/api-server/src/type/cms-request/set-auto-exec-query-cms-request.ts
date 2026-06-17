@@ -46,6 +46,11 @@ export type QueryPlan = {
  */
 export type PlanList = {
   /**
+   * Database name
+   */
+  dbname: string;
+
+  /**
    * Query plans array
    */
   queryplan: QueryPlan[];

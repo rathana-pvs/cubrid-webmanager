@@ -99,7 +99,7 @@ export default function HostGroupTree({
   };
 
   const handleGroupSelect = (groupId) => {
-    dispatch(setSelectedGroup({ groupId }));
+    dispatch(setSelectedGroup({ groupId, hostUid: selectedHostUid }));
     setExpandedGroups((prev) => {
       const next = new Set(prev);
       if (!next.has(groupId)) {

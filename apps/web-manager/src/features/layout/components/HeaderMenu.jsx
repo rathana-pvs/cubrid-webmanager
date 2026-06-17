@@ -1,85 +1,14 @@
-import { RefreshingOverlay } from '../../../components/ds/feedback/RefreshingOverlay';
-import { useState } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { DropdownMenu, SubMenu, MenuItem, MenuDivider } from '../../../components/common/DropdownMenu';
-import { openTab, showStatusModal, setActiveMainTab } from '../layoutSlice';
-import { openAddHostModal, openEditHostModal, startService, stopService, openServerVersionModal, openImportExportModal } from '../../host/hostSlice';
-import { startDatabase, stopDatabase, fetchDatabaseStartInfo } from '../../database/databaseSlice';
-import { startBroker, stopBroker, fetchBrokerList } from '../../broker/brokerSlice';
+import { openTab, showStatusModal } from '../layoutSlice';
+import { openAddHostModal, openEditHostModal, openServerVersionModal, openImportExportModal, openCmsUserManagementModal } from '../../host/hostSlice';
 import { setAboutCubrid } from '../appBarSlice';
-import { Typography } from '../../../components/ds/foundation/Typography';
-import { useActionState } from '../../../infrastructure/hooks/useActionState';
-import { Modal } from '../../../components/ds/layout/Modal';
-import { ModalStatusError } from '../../../components/ds/feedback/ActionStatus';
 import { useCM } from '../../../constants/useCM';
 
 export default function HeaderMenu() {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
-  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
-  const { brokers, selectedBroker } = useSelector((state) => state.broker, shallowEqual);
-
-  const { 
-    startAction, 
-    endError, 
-    resetAction,
-    isLoading: menuActionLoading,
-    isError: isMenuActionError,
-    error: menuActionError
-  } = useActionState();
-
-  const [loadingTitle, setLoadingTitle] = useState(CM.processing);
-
-  const handleServiceAction = async (action) => {
-    if (!selectedHostUid) return;
-    setLoadingTitle(action === 'start' ? CM.startingService : CM.stoppingService);
-    startAction();
-    try {
-      if (action === 'start') {
-        await dispatch(startService(selectedHostUid)).unwrap();
-      } else {
-        await dispatch(stopService(selectedHostUid)).unwrap();
-      }
-      resetAction();
-    } catch (err) {
-      endError(err);
-    }
-  };
-
-  const handleDatabaseAction = async (action) => {
-    if (!selectedDatabase) return;
-    setLoadingTitle(action === 'start' ? CM.startingDbNamed(selectedDatabase) : CM.stoppingDbNamed(selectedDatabase));
-    startAction();
-    try {
-      if (action === 'start') {
-        await dispatch(startDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase })).unwrap();
-      } else {
-        await dispatch(stopDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase })).unwrap();
-      }
-      dispatch(fetchDatabaseStartInfo(selectedHostUid));
-      resetAction();
-    } catch (err) {
-      endError(err);
-    }
-  };
-
-  const handleBrokerAction = async (action) => {
-    if (!selectedBroker) return;
-    setLoadingTitle(action === 'start' ? CM.startingBrokerNamed(selectedBroker) : CM.stoppingBrokerNamed(selectedBroker));
-    startAction();
-    try {
-      if (action === 'start') {
-        await dispatch(startBroker({ hostUid: selectedHostUid, brokerName: selectedBroker })).unwrap();
-      } else {
-        await dispatch(stopBroker({ hostUid: selectedHostUid, brokerName: selectedBroker })).unwrap();
-      }
-      dispatch(fetchBrokerList(selectedHostUid));
-      resetAction();
-    } catch (err) {
-      endError(err);
-    }
-  };
+  const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
 
   const handleExport = () => {
     dispatch(openImportExportModal('export'));
@@ -97,15 +26,6 @@ export default function HeaderMenu() {
 
   return (
     <nav className="flex items-center gap-6 font-sans">
-      {/* Loading Overlay - Using direct fixed component call */}
-      {menuActionLoading && (
-        <RefreshingOverlay 
-          show={true} 
-          title={loadingTitle} 
-          className="fixed z-[10002]"
-        />
-      )}
-
       <DropdownMenu label={<MenuLabel>{CM.file}</MenuLabel>}>
         <MenuItem
           icon="add_box"
@@ -130,7 +50,7 @@ export default function HeaderMenu() {
         />
       </DropdownMenu>
 
-      <DropdownMenu label={<MenuLabel>{CM.tools}</MenuLabel>} width="w-56">
+      <DropdownMenu label={<MenuLabel>{CM.hostServiceManagement}</MenuLabel>} width="w-60">
         <MenuItem
           icon="space_dashboard"
           label={CM.serviceDashboard}
@@ -138,47 +58,11 @@ export default function HeaderMenu() {
         />
         <MenuDivider />
         <MenuItem
-          icon="play_arrow"
-          label={CM.startService}
-          disabled={!selectedHostUid || menuActionLoading}
-          onClick={() => handleServiceAction('start')}
+          icon="supervisor_account"
+          label={CM.cmsAccountManagement}
+          disabled={!selectedHostUid || !authorizedHosts.includes(selectedHostUid)}
+          onClick={() => dispatch(openCmsUserManagementModal())}
         />
-        <MenuItem
-          icon="stop"
-          label={CM.stopService}
-          disabled={!selectedHostUid || menuActionLoading}
-          onClick={() => handleServiceAction('stop')}
-        />
-        <MenuDivider />
-        <MenuItem
-          icon="database"
-          label={CM.startDatabase}
-          disabled={!selectedDatabase || activeDatabases.includes(selectedDatabase) || menuActionLoading}
-          onClick={() => handleDatabaseAction('start')}
-        />
-        <MenuItem
-          icon="database_off"
-          label={CM.stopDatabase}
-          disabled={!selectedDatabase || !activeDatabases.includes(selectedDatabase) || menuActionLoading}
-          onClick={() => handleDatabaseAction('stop')}
-        />
-        <MenuDivider />
-        <MenuItem
-          icon="hub"
-          label={CM.startBroker}
-          disabled={!selectedBroker || brokers.find(b => b.name === selectedBroker)?.state === 'ON' || menuActionLoading}
-          onClick={() => handleBrokerAction('start')}
-        />
-        <MenuItem
-          icon="hub"
-          label={CM.stopBroker}
-          disabled={!selectedBroker || brokers.find(b => b.name === selectedBroker)?.state !== 'ON' || menuActionLoading}
-          onClick={() => handleBrokerAction('stop')}
-        />
-      </DropdownMenu>
-
-      <DropdownMenu label={<MenuLabel>{CM.actionMenu}</MenuLabel>} width="w-48">
-        <MenuItem icon="tune" label={CM.properties} href="#" />
         <SubMenu icon="settings" label={CM.configParam} width="w-56" gap="ml-3">
           <MenuItem
             icon="edit_document"
@@ -256,17 +140,6 @@ export default function HeaderMenu() {
           onClick={() => dispatch(setAboutCubrid(true))}
         />
       </DropdownMenu>
-      {isMenuActionError && (
-        <Modal isOpen title={CM.actionFailed} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="400px">
-          <ModalStatusError 
-            title={CM.updateInterrupted}
-            error={menuActionError}
-            onRetry={resetAction}
-            onCancel={resetAction}
-            retryText={CM.dismiss}
-          />
-        </Modal>
-      )}
     </nav>
   );
 }

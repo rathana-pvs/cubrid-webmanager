@@ -105,7 +105,7 @@ const PolicyCard = memo(({ title, icon, description, enabled, onToggle, threshol
         <div className="grid grid-cols-2 gap-3 items-end">
           <div className="space-y-1">
             <Typography variant="caption" className="text-[10px] font-semibold text-slate-400 block">
-              Expansion size
+              {CM.expansionSize}
             </Typography>
             <Input
               type="number"
@@ -117,7 +117,7 @@ const PolicyCard = memo(({ title, icon, description, enabled, onToggle, threshol
             />
           </div>
             <Input
-              label="Extension pages"
+              label={CM.extensionPages}
               size="sm"
               readOnly
               value={extensionUnits.toLocaleString()}
@@ -151,19 +151,14 @@ export default function SetAutomationVolumeModal() {
     isError
   } = useActionState();
 
-  const [dataEnabled, setDataEnabled]       = useState(false);
-  const [dataThreshold, setDataThreshold]   = useState(15);
-  const [dataAddSize, setDataAddSize]       = useState(2048);
-  const [indexEnabled, setIndexEnabled]     = useState(false);
-  const [indexThreshold, setIndexThreshold] = useState(15);
-  const [indexAddSize, setIndexAddSize]     = useState(2048);
+  const [permanentEnabled, setPermanentEnabled] = useState(false);
+  const [permanentThreshold, setPermanentThreshold] = useState(15);
+  const [permanentAddSize, setPermanentAddSize] = useState(2048);
 
   useEffect(() => {
     if (isSetAutomationVolumeModalOpen && selectedHostUid && selectedDatabase) {
       resetAction();
-      // Reset local state before fetching new config to avoid stale view
-      setDataEnabled(false);
-      setIndexEnabled(false);
+      setPermanentEnabled(false);
       dispatch(fetchAutoVolumeConfig({ hostUid: selectedHostUid, dbname: selectedDatabase }));
     }
   }, [isSetAutomationVolumeModalOpen, selectedHostUid, selectedDatabase, dispatch, resetAction]);
@@ -172,24 +167,24 @@ export default function SetAutomationVolumeModal() {
     if (!selectedDatabase || !autoVolumeConfigs) return;
     const config = autoVolumeConfigs[selectedDatabase];
     if (config) {
-      setDataEnabled(config.data === 'ON');
-      setDataThreshold(config.data_warn_outofspace ? Math.max(5, Math.round(parseFloat(config.data_warn_outofspace) * 100)) : 15);
-      setDataAddSize(config.data_ext_page ? Math.round(parseInt(config.data_ext_page) * PAGE_SIZE_BYTES / BYTES_TO_MB) : 2048);
-      setIndexEnabled(config.index === 'ON');
-      setIndexThreshold(config.index_warn_outofspace ? Math.max(5, Math.round(parseFloat(config.index_warn_outofspace) * 100)) : 15);
-      setIndexAddSize(config.index_ext_page ? Math.round(parseInt(config.index_ext_page) * PAGE_SIZE_BYTES / BYTES_TO_MB) : 2048);
+      setPermanentEnabled(config.data === 'ON' || config.index === 'ON');
+      setPermanentThreshold(config.data_warn_outofspace ? Math.max(5, Math.round(parseFloat(config.data_warn_outofspace) * 100)) : 15);
+      setPermanentAddSize(config.data_ext_page ? Math.round(parseInt(config.data_ext_page) * PAGE_SIZE_BYTES / BYTES_TO_MB) : 2048);
     }
   }, [autoVolumeConfigs, selectedDatabase]);
 
   const handleSave = useCallback(async () => {
     startAction();
+    const state = permanentEnabled ? 'ON' : 'OFF';
+    const warnRatio = (permanentThreshold / 100).toFixed(2);
+    const extPage = Math.floor(permanentAddSize * BYTES_TO_MB / PAGE_SIZE_BYTES).toString();
     const payload = {
-      data: dataEnabled ? 'ON' : 'OFF',
-      data_warn_outofspace: (dataThreshold / 100).toFixed(2),
-      data_ext_page: Math.floor(dataAddSize * BYTES_TO_MB / PAGE_SIZE_BYTES).toString(),
-      index: indexEnabled ? 'ON' : 'OFF',
-      index_warn_outofspace: (indexThreshold / 100).toFixed(2),
-      index_ext_page: Math.floor(indexAddSize * BYTES_TO_MB / PAGE_SIZE_BYTES).toString(),
+      data: state,
+      data_warn_outofspace: warnRatio,
+      data_ext_page: extPage,
+      index: state,
+      index_warn_outofspace: warnRatio,
+      index_ext_page: extPage,
     };
     try {
       await dispatch(updateAutoVolumeConfig({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
@@ -197,7 +192,7 @@ export default function SetAutomationVolumeModal() {
     } catch (err) {
       endError(typeof err === 'string' ? err : (err?.message || 'Failed to save configuration. Please try again.'));
     }
-  }, [dataEnabled, dataThreshold, dataAddSize, indexEnabled, indexThreshold, indexAddSize, selectedHostUid, selectedDatabase, dispatch, startAction, endSuccess, endError]);
+  }, [permanentEnabled, permanentThreshold, permanentAddSize, selectedHostUid, selectedDatabase, dispatch, startAction, endSuccess, endError]);
 
   const handleClose = () => dispatch(closeSetAutomationVolumeModal());
 
@@ -207,9 +202,9 @@ export default function SetAutomationVolumeModal() {
   if (isLoading) {
     return (
       <Modal isOpen title={CM.setAutomationVolume} icon="settings_suggest" onClose={handleClose} maxWidth="max-w-md" showCloseButton={false}>
-        <ModalStatusLoading 
-          title="Saving Policies" 
-          subtitle={`Updating configuration for ${selectedDatabase}.`}
+        <ModalStatusLoading
+          title={CM.savingPolicies}
+          subtitle={selectedDatabase}
         />
       </Modal>
     );
@@ -218,12 +213,12 @@ export default function SetAutomationVolumeModal() {
   /* ── SUCCESS ── */
   if (isSuccess) {
     return (
-      <Modal isOpen title="Configuration Saved" icon="settings_suggest" iconVariant="success" onClose={handleClose} maxWidth="max-w-md">
-        <ModalStatusSuccess 
-          title="Saved Successfully"
-          message={`Auto-volume policies for ${selectedDatabase} were saved successfully.`}
+      <Modal isOpen title={CM.policiesSaved} icon="settings_suggest" iconVariant="success" onClose={handleClose} maxWidth="max-w-md">
+        <ModalStatusSuccess
+          title={CM.savedSuccessfully}
+          message={selectedDatabase}
           onConfirm={handleClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -232,14 +227,14 @@ export default function SetAutomationVolumeModal() {
   /* ── ERROR ── */
   if (isError) {
     return (
-      <Modal isOpen title="Update Failed" icon="settings_suggest" iconVariant="danger" onClose={resetAction} maxWidth="max-w-md">
-        <ModalStatusError 
-          title="Save Interrupted"
+      <Modal isOpen title={CM.executionError} icon="settings_suggest" iconVariant="danger" onClose={resetAction} maxWidth="max-w-md">
+        <ModalStatusError
+          title={CM.saveInterrupted}
           error={actionError}
           onRetry={handleSave}
           onCancel={resetAction}
-          retryText="Retry Update"
-          cancelText="Dismiss"
+          retryText={CM.retry}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -268,7 +263,7 @@ export default function SetAutomationVolumeModal() {
               icon="save"
               className="min-w-[140px] shadow-sm shadow-amber-500/20"
             >
-              Save Policies
+              {CM.savePolicies}
             </Button>
           </div>
         </div>
@@ -287,7 +282,7 @@ export default function SetAutomationVolumeModal() {
           </div>
           <div className="flex items-center gap-1.5 shrink-0">
             <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">Auto-Volume On</span>
+            <span className="text-[9px] font-semibold text-amber-600 dark:text-amber-400">{CM.autoVolumeActive}</span>
           </div>
         </div>
 
@@ -297,33 +292,22 @@ export default function SetAutomationVolumeModal() {
             <div className="absolute inset-0 z-20 bg-white/70 dark:bg-slate-900/70 backdrop-blur-xs flex items-center justify-center rounded-sm border border-slate-100 dark:border-white/5">
               <div className="flex items-center gap-2">
                 <div className="w-4 h-4 rounded-full border-2 border-slate-100 dark:border-white/5 border-t-amber-500 animate-spin" />
-                <Typography variant="caption" className="text-[10px] text-slate-500">Loading config…</Typography>
+                <Typography variant="caption" className="text-[10px] text-slate-500">{CM.loadingConfig}</Typography>
               </div>
             </div>
           )}
 
           <div className="space-y-3">
             <PolicyCard
-              title={CM.dataVolume}
+              title="PERMANENT"
               icon="database"
-              description="Permanent data volumes"
-              enabled={dataEnabled}
-              onToggle={setDataEnabled}
-              threshold={dataThreshold}
-              onThresholdChange={setDataThreshold}
-              addSize={dataAddSize}
-              onSizeChange={setDataAddSize}
-            />
-            <PolicyCard
-              title="Index Volume"
-              icon="list_alt"
-              description="Index & search volumes"
-              enabled={indexEnabled}
-              onToggle={setIndexEnabled}
-              threshold={indexThreshold}
-              onThresholdChange={setIndexThreshold}
-              addSize={indexAddSize}
-              onSizeChange={setIndexAddSize}
+              description="Data &amp; index volumes (both)"
+              enabled={permanentEnabled}
+              onToggle={setPermanentEnabled}
+              threshold={permanentThreshold}
+              onThresholdChange={setPermanentThreshold}
+              addSize={permanentAddSize}
+              onSizeChange={setPermanentAddSize}
             />
           </div>
         </div>

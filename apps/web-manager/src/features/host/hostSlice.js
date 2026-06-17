@@ -202,17 +202,44 @@ export const setHostPassword = createAsyncThunk(
   }
 );
 
+const getServiceOperationError = (err) => (
+  err?.response?.data?.message
+  || err?.response?.data?.error
+  || err?.message
+  || String(err || 'Unknown error')
+);
+
+const collectServiceFailures = async (items, operation) => {
+  const results = await Promise.allSettled(items.map(operation));
+  return results
+    .map((result, index) => (
+      result.status === 'rejected'
+        ? { name: items[index].name, error: getServiceOperationError(result.reason) }
+        : null
+    ))
+    .filter(Boolean);
+};
+
+const formatServiceFailures = (actionLabel, failures) => (
+  `Failed to ${actionLabel} for: ${failures.map(({ name, error }) => `${name} (${error})`).join(', ')}`
+);
+
 // Async thunk to start CUBRID service (Brokers + Auto-start Databases)
 export const startService = createAsyncThunk(
   'host/startService',
   async (hostUid, { dispatch, rejectWithValue }) => {
     try {
+      const failures = [];
+
       // 1. Start all Brokers
       dispatch(hostSlice.actions.setServiceProgressMessage('Starting brokers...'));
       const brokerResponse = await brokerApi.getBrokerList(hostUid);
       const brokerList = brokerResponse.result || (Array.isArray(brokerResponse) ? brokerResponse[0]?.broker : []);
       if (brokerList) {
-        await Promise.all(brokerList.map(b => brokerApi.startBroker(hostUid, b.name).catch(() => {})));
+        failures.push(...await collectServiceFailures(
+          brokerList.map(b => ({ name: b.name })),
+          broker => brokerApi.startBroker(hostUid, broker.name)
+        ));
       }
 
       // 2. Fetch cubrid.conf to find auto-start databases
@@ -239,13 +266,19 @@ export const startService = createAsyncThunk(
       // 3. Start auto-start databases if service is enabled
       if (serviceEnabled && autoStartServers.length > 0) {
         dispatch(hostSlice.actions.setServiceProgressMessage(`Starting databases (${autoStartServers.join(', ')})...`));
-        await Promise.all(autoStartServers.map(dbname => databaseApi.startDatabase(hostUid, dbname).catch(() => {})));
+        failures.push(...await collectServiceFailures(
+          autoStartServers.map(dbname => ({ name: dbname })),
+          db => databaseApi.startDatabase(hostUid, db.name)
+        ));
       }
 
       // Refresh everything
       dispatch(hostSlice.actions.setServiceProgressMessage('Refreshing status...'));
       dispatch(fetchDatabaseStartInfo(hostUid));
       dispatch(fetchBrokerList(hostUid));
+      if (failures.length > 0) {
+        return rejectWithValue(formatServiceFailures('start service', failures));
+      }
       return true;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to start service');
@@ -256,28 +289,39 @@ export const startService = createAsyncThunk(
 // Async thunk to stop CUBRID service (All Brokers + All Databases)
 export const stopService = createAsyncThunk(
   'host/stopService',
-  async (hostUid, { dispatch, getState, rejectWithValue }) => {
+  async (hostUid, { dispatch, rejectWithValue }) => {
     try {
+      const failures = [];
+
       // 1. Stop all Brokers
       dispatch(hostSlice.actions.setServiceProgressMessage('Stopping brokers...'));
       const brokerResponse = await brokerApi.getBrokerList(hostUid);
       const brokerList = brokerResponse.result || (Array.isArray(brokerResponse) ? brokerResponse[0]?.broker : []);
       if (brokerList) {
-        await Promise.all(brokerList.map(b => brokerApi.stopBroker(hostUid, b.name).catch(() => {})));
+        failures.push(...await collectServiceFailures(
+          brokerList.map(b => ({ name: b.name })),
+          broker => brokerApi.stopBroker(hostUid, broker.name)
+        ));
       }
 
       // 2. Stop all Databases
       dispatch(hostSlice.actions.setServiceProgressMessage('Stopping databases...'));
-      const { database } = getState();
-      const dbList = database.databases || [];
+      const databaseResponse = await databaseApi.getStartInfo(hostUid);
+      const dbList = databaseResponse?.dblist?.dbs || [];
       if (dbList.length > 0) {
-        await Promise.all(dbList.map(db => databaseApi.stopDatabase(hostUid, db.dbname).catch(() => {})));
+        failures.push(...await collectServiceFailures(
+          dbList.map(db => ({ name: db.dbname })),
+          db => databaseApi.stopDatabase(hostUid, db.name)
+        ));
       }
 
       // Refresh everything
       dispatch(hostSlice.actions.setServiceProgressMessage('Refreshing status...'));
       dispatch(fetchDatabaseStartInfo(hostUid));
       dispatch(fetchBrokerList(hostUid));
+      if (failures.length > 0) {
+        return rejectWithValue(formatServiceFailures('stop service', failures));
+      }
       return true;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || 'Failed to stop service');
@@ -655,6 +699,18 @@ const hostSlice = createSlice({
         }
         state.haInfo[hostUid] = haInfo;
         localStorage.setItem('cubrid_ha_info', JSON.stringify(state.haInfo));
+
+        // If this is the host's first-ever login, queue HA discovery side effects.
+        // initialLogin is true in the Redux hosts state (set when host was added) until
+        // this point — the server already cleared it during CMS auth, but the Redux
+        // state hasn't been re-fetched yet, so we can still read the original value.
+        const host = state.hosts.find((h) => h.uid === hostUid);
+        if (host?.initialLogin === true) {
+          if (!state.hostsAwaitingHaLogin.includes(hostUid)) {
+            state.hostsAwaitingHaLogin.push(hostUid);
+          }
+          host.initialLogin = false;
+        }
       })
       .addCase(loginToHost.rejected, (state, action) => {
         if (!state.isBatchHostLogin) {
@@ -954,7 +1010,7 @@ export const processHaLoginSideEffects = createAsyncThunk(
         if (staleDiscoveryOpen) {
           dispatch(hostSlice.actions.clearSuggestedHaNodes());
         }
-        if (!getState().host.isDiscoveryModalOpen) {
+        if (awaitingFirstHaLogin && !getState().host.isDiscoveryModalOpen) {
           dispatch(hostSlice.actions.setSuggestedHaNodes({
             nodes: undiscovered,
             groupId: findGroupIdForHost(hostGroups, hostUid),
