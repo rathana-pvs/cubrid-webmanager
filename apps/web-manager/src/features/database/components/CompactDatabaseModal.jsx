@@ -1,16 +1,20 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeCompactDatabaseModal } from '../databaseSlice';
 import { databaseJobApi } from '../databaseJobApi';
 import { useCmsJob } from '../../../infrastructure/hooks/useCmsJob';
 import { getCmsJobLoadingSubtitle } from '../../../infrastructure/cmsJob/cmsJobUi';
 
-import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
+import {
+  CaDialogField,
+  CaDialogFieldGrid,
+  CaDialogGroup,
+} from '../../../components/ds/layout/CaDialogLayout';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Toggle } from '../../../components/ds/forms/Toggle';
+import { Input } from '../../../components/ds/forms/Input';
 import { Typography } from '../../../components/ds/foundation/Typography';
-import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -39,12 +43,6 @@ export default function CompactDatabaseModal() {
   const [jobStatus, setJobStatus] = useState(null);
 
   const [verbose, setVerbose] = useState(false);
-
-  const pipelineSteps = useMemo(() => [
-    { label: 'OID Truncation', desc: 'Remove unused object references', icon: 'auto_fix_normal' },
-    { label: 'Metadata Pruning', desc: 'Clean stale internal metadata', icon: 'dataset' },
-    { label: 'Block Consolidation', desc: 'Merge fragmented disk pages', icon: 'grid_view' },
-  ], []);
 
   useEffect(() => {
     if (isCompactDatabaseModalOpen) {
@@ -123,6 +121,7 @@ export default function CompactDatabaseModal() {
       isOpen={isCompactDatabaseModalOpen}
       onClose={handleClose}
       title={CM.dynamicCompaction}
+      subtitle={CM.compactDatabaseMessage}
       icon="compress"
       maxWidth="480px"
       footer={
@@ -130,83 +129,37 @@ export default function CompactDatabaseModal() {
           <Button variant="secondary" onClick={handleClose}>
             {CM.discard}
           </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleCompact} 
-            icon="play_circle"
-            className="min-w-[140px]"
-          >
+          <Button variant="primary" onClick={handleCompact} icon="play_circle" className="min-w-[140px]">
             {CM.executeCompaction}
           </Button>
         </div>
       }
     >
-      <div className="space-y-6">
-        <div>
-          <SectionHeader title={CM.maintenanceTarget} icon="database" />
-          <div className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <Icon name="database" size="sm" weight={300} className="text-amber-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium uppercase tracking-widest">{CM.database}</Typography>
-              <Typography variant="h4" className="text-slate-900 dark:text-white font-bold text-[14px] tracking-tight leading-none mt-0.5">{selectedDatabase}</Typography>
-            </div>
-          </div>
-        </div>
-
-        <div>
-          <SectionHeader title={CM.optimizationPipeline} icon="terminal" />
-
-          <div className="bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4 space-y-0">
-            {pipelineSteps.map((step, i) => (
-              <div key={i} className="flex items-start gap-4 group">
-                <div className="flex flex-col items-center shrink-0">
-                  <div className="w-8 h-8 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shadow-xs group-hover:shadow-[0_0_12px_rgba(245,158,11,0.15)] transition-shadow">
-                    <Icon name={step.icon} size="xs" weight={300} />
-                  </div>
-                  {i < pipelineSteps.length - 1 && (
-                    <div className="w-px h-6 bg-linear-to-b from-amber-500/30 to-transparent my-1"></div>
-                  )}
-                </div>
-                <div className={`flex-1 ${i < pipelineSteps.length - 1 ? 'pb-4' : 'pb-0'}`}>
-                  <div className="flex items-center gap-2.5">
-                    <Typography variant="caption" className="font-black text-amber-500/40 tabular-nums">0{i + 1}</Typography>
-                    <Typography variant="p" className="font-bold text-slate-900 dark:text-white text-[11.5px] tracking-tight">{step.label}</Typography>
-                  </div>
-                  <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-0.5">{step.desc}</Typography>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        <div>
-          <SectionHeader title={CM.executionOptions} icon="tune" />
-
-          <div 
-            className={`flex items-center gap-4 p-4 border rounded-2xl transition-all cursor-pointer select-none ${verbose ? 'bg-amber-500/4 border-amber-500/20 shadow-[0_2px_16px_rgba(245,158,11,0.06)]' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}
-            onClick={() => setVerbose(!verbose)}
-          >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all shrink-0 ${verbose ? 'bg-amber-500/10 border-amber-500/20 text-amber-500' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400'}`}>
-              <Icon name="terminal" size="xs" weight={300} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="p" className={`font-bold text-[11.5px] tracking-tight transition-colors ${verbose ? 'text-amber-600 dark:text-amber-400' : 'text-slate-900 dark:text-white'}`}>
-                {CM.verboseMonitoring}
-              </Typography>
-              <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-0.5 leading-snug">
-                {CM.verboseMonitoringDesc}
-              </Typography>
-            </div>
-            <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-              <Toggle 
+      <div className="space-y-4">
+        <CaDialogGroup title={CM.database}>
+          <CaDialogFieldGrid labelWidth="130px">
+            <CaDialogField label={CM.compactDatabaseName}>
+              <Input
+                value={selectedDatabase || ''}
+                disabled
+                icon="database"
+              />
+            </CaDialogField>
+            <CaDialogField fullWidth>
+              <Toggle
                 checked={verbose}
                 onChange={setVerbose}
+                label={CM.verboseMonitoring}
               />
-            </div>
-          </div>
-        </div>
+            </CaDialogField>
+          </CaDialogFieldGrid>
+        </CaDialogGroup>
+
+        <CaDialogGroup title={CM.compactDescriptionInformation}>
+          <Typography variant="p" className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-400">
+            {CM.compactDatabaseDescription}
+          </Typography>
+        </CaDialogGroup>
       </div>
     </Modal>
   );
