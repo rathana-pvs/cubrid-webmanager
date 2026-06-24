@@ -50,17 +50,8 @@ function resolvePathFromEnvOrDefault(envValue, fallbackPath) {
 }
 
 function loadHttpsCerts() {
-  let certPath = resolvePathFromEnvOrDefault(process.env.SSL_CERT_PATH, DEFAULT_SSL_CERT);
-  let keyPath = resolvePathFromEnvOrDefault(process.env.SSL_KEY_PATH, DEFAULT_SSL_KEY);
-
-  if (!process.env.SSL_CERT_PATH && (!fs.existsSync(certPath) || !fs.existsSync(keyPath))) {
-    const distCert = path.join(REPO_ROOT, 'dist', 'ssl', 'cert.pem');
-    const distKey = path.join(REPO_ROOT, 'dist', 'ssl', 'key.pem');
-    if (fs.existsSync(distCert) && fs.existsSync(distKey)) {
-      certPath = distCert;
-      keyPath = distKey;
-    }
-  }
+  const certPath = resolvePathFromEnvOrDefault(process.env.SSL_CERT_PATH, DEFAULT_SSL_CERT);
+  const keyPath = resolvePathFromEnvOrDefault(process.env.SSL_KEY_PATH, DEFAULT_SSL_KEY);
 
   if (!fs.existsSync(certPath) || !fs.existsSync(keyPath)) {
     throw new Error(
