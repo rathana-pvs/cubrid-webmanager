@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeEditQueryPlanModal, setAutoExecQuery, fetchQueryPlan } from '../databaseSlice';
 import Editor from '@monaco-editor/react';
@@ -71,26 +71,36 @@ export default function EditQueryPlanModal() {
       const plans = queryPlans[selectedDatabase] || [];
       let plan = plans.find(p => p.query_id === selectedQueryPlanId);
       
-      if (!plan && plans.length === 0) {
+      if (!plan) {
         dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: selectedDatabase }));
       }
       
       if (plan) {
+        const ABBR_TO_NUM = { MON: 1, TUE: 2, WED: 3, THU: 4, FRI: 5, SAT: 6, SUN: 7 };
         let periodType = plan.period || 'DAY';
         let detailStr = plan.detail || '';
         let time = '12:00';
         let periodDetail = [];
-        
+
         if (periodType === 'DAY') {
-          time = detailStr;
+          // "EVERYDAY 12:00"
+          time = detailStr.split(' ')[1] || '12:00';
         } else if (periodType === 'DATE') {
           const parts = detailStr.split(' ');
-          periodDetail = parts[0];
+          // "2026/06/11 12:00" → convert slashes to dashes for date input
+          periodDetail = (parts[0] || '').replace(/\//g, '-');
+          time = parts[1] || '12:00';
+        } else if (periodType === 'WEEK') {
+          const parts = detailStr.split(' ');
+          // "MON,WED 12:00" → [1, 3]
+          periodDetail = (parts[0] || '').split(',')
+            .map(s => ABBR_TO_NUM[s.toUpperCase()] ?? parseInt(s))
+            .filter(n => !isNaN(n));
           time = parts[1] || '12:00';
         } else {
-          // MONTH, WEEK
+          // MONTH: "1,15 12:00" → [1, 15]
           const parts = detailStr.split(' ');
-          periodDetail = parts[0].split(',').map(s => isNaN(parseInt(s)) ? s : parseInt(s));
+          periodDetail = (parts[0] || '').split(',').map(s => parseInt(s)).filter(n => !isNaN(n));
           time = parts[1] || '12:00';
         }
         
@@ -140,13 +150,29 @@ export default function EditQueryPlanModal() {
       endError('No SQL statement provided.');
       return;
     }
+    const queryString = formData.queryString.trim();
     
     startAction();
 
+    const WEEK_ABBRS = { 1: 'MON', 2: 'TUE', 3: 'WED', 4: 'THU', 5: 'FRI', 6: 'SAT', 7: 'SUN' };
     let detail = '';
-    if (formData.periodType === 'DAY') detail = formData.backupTime;
-    else if (formData.periodType === 'DATE') detail = `${formData.periodDetail} ${formData.backupTime}`;
-    else detail = `${formData.periodDetail.join(',')} ${formData.backupTime}`;
+    if (formData.periodType === 'DAY') {
+      detail = `EVERYDAY ${formData.backupTime}`;
+    } else if (formData.periodType === 'DATE') {
+      const dateStr = String(formData.periodDetail).replace(/-/g, '/');
+      detail = `${dateStr} ${formData.backupTime}`;
+    } else if (formData.periodType === 'WEEK') {
+      const days = Array.isArray(formData.periodDetail) && formData.periodDetail.length > 0
+        ? formData.periodDetail.map(d => WEEK_ABBRS[d] || d).join(',')
+        : 'MON';
+      detail = `${days} ${formData.backupTime}`;
+    } else {
+      // MONTH
+      const dayNums = Array.isArray(formData.periodDetail) && formData.periodDetail.length > 0
+        ? formData.periodDetail.join(',')
+        : '1';
+      detail = `${dayNums} ${formData.backupTime}`;
+    }
 
     // IMPORTANT: CUBRID API usually requires sending the full list for a database.
     const currentPlans = queryPlans[selectedDatabase] || [];
@@ -158,7 +184,7 @@ export default function EditQueryPlanModal() {
       userpass: formData.password,
       period: formData.periodType,
       detail: detail,
-      query_string: formData.queryString.trim()
+      query_string: queryString
     };
 
     const payload = {
@@ -193,9 +219,9 @@ export default function EditQueryPlanModal() {
   if (isLoading) {
     return (
       <Modal isOpen title={CM.editQueryPlan} icon="edit" onClose={handleClose} maxWidth="720px" showCloseButton={false}>
-        <ModalStatusLoading 
-          title="Syncing Changes" 
-          subtitle="Committing the new automation sequence to the task controller."
+        <ModalStatusLoading
+          title={CM.updatingSchedule}
+          subtitle={formData.queryId}
         />
       </Modal>
     );
@@ -205,11 +231,11 @@ export default function EditQueryPlanModal() {
   if (isSuccess) {
     return (
       <Modal isOpen title={CM.updateSuccessful} icon="verified" iconVariant="success" onClose={handleClose} maxWidth="700px">
-        <ModalStatusSuccess 
-          title="Schedule Registry Updated"
-          message={`Changes to the query plan for ${selectedDatabase} have been committed and re-indexed.`}
+        <ModalStatusSuccess
+          title={CM.updateSuccessful}
+          message={`${selectedDatabase}: ${formData.queryId}`}
           onConfirm={handleClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -218,14 +244,14 @@ export default function EditQueryPlanModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title="Update Failed" icon="error" iconVariant="danger" onClose={resetAction} maxWidth="700px">
-        <ModalStatusError 
-          title="Execution Halted"
+      <Modal isOpen title={CM.editQueryPlanFailed} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="700px">
+        <ModalStatusError
+          title={CM.operationInterrupted}
           error={actionError}
           onRetry={handleSave}
           onCancel={resetAction}
-          retryText="Retry Update"
-          cancelText="Dismiss"
+          retryText={CM.retry}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -237,7 +263,7 @@ export default function EditQueryPlanModal() {
       isOpen={isEditQueryPlanModalOpen}
       onClose={handleClose}
       title={CM.editQueryPlan}
-      subtitle={`Modify automated SQL execution for ${selectedDatabase}`}
+      subtitle={CM.editQueryPlanSubtitle(selectedDatabase)}
       icon="edit"
       maxWidth="max-w-[720px]"
       footer={
@@ -250,9 +276,9 @@ export default function EditQueryPlanModal() {
       <div className="space-y-8 animate-in fade-in slide-in-from-bottom-3 duration-300">
         {/* Identifier */}
         <div className="space-y-4">
-          <SectionHeader title="Object Identification" icon="fingerprint" />
-          <Input 
-            label="Query Identifier"
+          <SectionHeader title={CM.objectIdentification} icon="fingerprint" />
+          <Input
+            label={CM.queryIdentifierLabel}
             value={formData.queryId}
             disabled
             icon="tag"
@@ -262,17 +288,17 @@ export default function EditQueryPlanModal() {
 
         {/* Security */}
         <div className="space-y-4">
-           <SectionHeader title="Secure Context" icon="lock" />
+          <SectionHeader title={CM.secureContextSection} icon="lock" />
           <div className="grid grid-cols-2 gap-4">
-            <Input 
-              label="Database Username"
+            <Input
+              label={CM.databaseUsernameLabel}
               value={formData.username}
               onChange={e => handleInputChange('username', e.target.value)}
               icon="person"
             />
-            <Input 
+            <Input
               type="password"
-              label="Database Password"
+              label={CM.databasePasswordLabel}
               value={formData.password}
               onChange={e => handleInputChange('password', e.target.value)}
               icon="key"
@@ -283,22 +309,22 @@ export default function EditQueryPlanModal() {
 
         {/* Schedule */}
         <div className="space-y-4">
-           <SectionHeader title={CM.executionSchedule} icon="schedule" />
+          <SectionHeader title={CM.executionSchedule} icon="schedule" />
           <div className="grid grid-cols-2 gap-4">
-            <Select 
-              label="Recurrence Frequency"
+            <Select
+              label={CM.recurrenceFrequency}
               icon="event_repeat"
               value={formData.periodType}
               onChange={e => handleInputChange('periodType', e.target.value)}
               options={[
-                { value: 'DAY', label: 'Daily (Every 24h)' },
-                { value: 'WEEK', label: 'Weekly Precision' },
-                { value: 'MONTH', label: 'Monthly Rotation' },
-                { value: 'DATE', label: 'Specific Single Date' }
+                { value: 'DAY', label: CM.dailyLabel },
+                { value: 'WEEK', label: CM.weeklyLabel },
+                { value: 'MONTH', label: CM.monthlyLabel },
+                { value: 'DATE', label: CM.specificDateLabel }
               ]}
             />
-            <TimePicker 
-              label="Start Time"
+            <TimePicker
+              label={CM.startTimeLabel}
               value={formData.backupTime}
               onChange={e => handleInputChange('backupTime', e.target.value)}
               icon="history_toggle_off"
@@ -356,10 +382,9 @@ export default function EditQueryPlanModal() {
 
         {/* SQL Payload */}
         <div className="space-y-4 pt-2">
-          <SectionHeader 
-            title="SQL Execution Payload" 
-            icon="code" 
-            badge="Atomic execution"
+          <SectionHeader
+            title={CM.sqlStatementSection}
+            icon="code"
           />
           <div className="relative group rounded-3xl overflow-hidden border border-slate-200 dark:border-white/8 bg-white dark:bg-[#1e1e1e] shadow-inner transition-all focus-within:ring-4 focus-within:ring-amber-500/5 focus-within:border-amber-500/40">
             <div className="absolute top-4 left-4 z-10 opacity-40 group-focus-within:opacity-100 transition-opacity pointer-events-none">
@@ -395,8 +420,8 @@ export default function EditQueryPlanModal() {
               />
             </div>
           </div>
-          <InfoBanner title="System Compliance">
-            Queries are executed on the server side via the task controller. Ensure the DB user has sufficient privileges for the intended operations.
+          <InfoBanner>
+            {CM.systemComplianceNote}
           </InfoBanner>
         </div>
       </div>

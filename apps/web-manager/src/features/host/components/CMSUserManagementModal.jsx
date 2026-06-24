@@ -73,6 +73,7 @@ export default function CMSUserManagementModal() {
     const isAdmin = username === 'admin';
     const casauth = user?.casauth || user?.['@casauth'] || 'none';
     const dbcreate = user?.dbcreate || user?.['@dbcreate'] || 'none';
+    const statusmonitorauth = user?.statusmonitorauth || user?.['@statusmonitorauth'] || 'none';
 
     return (
       <div
@@ -109,17 +110,22 @@ export default function CMSUserManagementModal() {
               </span>
             )}
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {!isAdmin && (
               <>
                 <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                  <Icon name="hub" size="10px" weight={300} />
-                  <span>Broker: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{casauth}</span></span>
+                  <Icon name="storage" size="10px" weight={300} />
+                  <span>{CM.dbCreatePermission}: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{dbcreate}</span></span>
                 </span>
                 <span className="w-px h-3 bg-slate-200 dark:bg-white/8" />
                 <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
-                  <Icon name="storage" size="10px" weight={300} />
-                  <span>Create: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{dbcreate}</span></span>
+                  <Icon name="hub" size="10px" weight={300} />
+                  <span>{CM.brokerPermission}: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{casauth}</span></span>
+                </span>
+                <span className="w-px h-3 bg-slate-200 dark:bg-white/8" />
+                <span className="flex items-center gap-1 text-[10px] text-slate-400 font-medium">
+                  <Icon name="monitor_heart" size="10px" weight={300} />
+                  <span>{CM.monitoringPermission}: <span className="font-bold text-slate-600 dark:text-slate-300 capitalize">{statusmonitorauth}</span></span>
                 </span>
               </>
             )}
@@ -200,7 +206,7 @@ export default function CMSUserManagementModal() {
             {/* Admin accounts */}
             {adminUsers.length > 0 && (
               <div>
-                <SectionHeader title="System administrator" icon="verified_user" badge={adminUsers.length} />
+                <SectionHeader title={CM.systemAdministrator} icon="verified_user" badge={adminUsers.length} />
                 <div className="space-y-2">
                   {adminUsers.map(renderUser)}
                 </div>
@@ -210,7 +216,7 @@ export default function CMSUserManagementModal() {
             {/* Regular user accounts */}
             {regularUsers.length > 0 && (
               <div>
-                <SectionHeader title="Management users" icon="group" badge={regularUsers.length} />
+                <SectionHeader title={CM.managementUsers} icon="group" badge={regularUsers.length} />
                 <div className="space-y-2">
                   {regularUsers.map(renderUser)}
                 </div>
@@ -219,7 +225,7 @@ export default function CMSUserManagementModal() {
 
             {regularUsers.length === 0 && adminUsers.length > 0 && (
               <div>
-                <SectionHeader title="Management users" icon="group" />
+                <SectionHeader title={CM.managementUsers} icon="group" />
                 <button
                   onClick={handleAddUser}
                   className="w-full flex items-center gap-3 px-4 py-3.5 rounded-2xl border border-dashed border-slate-200 dark:border-white/8 bg-slate-50/50 dark:bg-white/1 text-slate-400 hover:border-amber-500/50 hover:text-amber-500 hover:bg-amber-500/4 transition-all group/add"

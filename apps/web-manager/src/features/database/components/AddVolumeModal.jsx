@@ -7,6 +7,8 @@ import { getCmsJobLoadingSubtitle } from '../../../infrastructure/cmsJob/cmsJobU
 import { databaseApi } from '../databaseApi';
 import { useCM } from '../../../constants/useCM';
 
+import { Icon } from '../../../components/ds/foundation/Icon';
+import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Typography } from '../../../components/ds/foundation/Typography';
@@ -30,9 +32,9 @@ const VIEW_ERROR   = 'error';
 const PURPOSE_OPTIONS = [
   {
     value: 'data',
-    label: 'Data',
+    labelKey: 'volumeTypeData',
+    descKey: 'volumeTypeDataDesc',
     icon: 'database',
-    desc: 'Table & Row',
     color: 'text-sky-500',
     bg: 'bg-sky-500/10',
     border: 'border-sky-500/25',
@@ -41,9 +43,9 @@ const PURPOSE_OPTIONS = [
   },
   {
     value: 'temp',
-    label: 'Temporary',
+    labelKey: 'volumeTypeTemp',
+    descKey: 'volumeTypeTempDesc',
     icon: 'timer',
-    desc: 'Query Workspace',
     color: 'text-emerald-500',
     bg: 'bg-emerald-500/10',
     border: 'border-emerald-500/25',
@@ -161,11 +163,11 @@ export default function AddVolumeModal() {
   if (isSuccess) {
     return (
       <Modal isOpen title={CM.allocationSuccessful} icon="add_box" iconVariant="success" onClose={handleClose} maxWidth="720px">
-        <ModalStatusSuccess 
+        <ModalStatusSuccess
           title={CM.storageExpanded}
-          message={`A new volume "${volName}" has been successfully added to the system registry for ${selectedDatabase}.`}
+          message={CM.addVolumeSuccessMessage(volName, selectedDatabase)}
           onConfirm={handleClose}
-          confirmText="OK"
+          confirmText={CM.ok}
         />
       </Modal>
     );
@@ -180,8 +182,8 @@ export default function AddVolumeModal() {
           error={error}
           onRetry={handleAdd}
           onCancel={resetAction}
-          retryText="Retry Registry Expansion"
-          cancelText="Dismiss"
+          retryText={CM.retryAddVolume}
+          cancelText={CM.dismiss}
         />
       </Modal>
     );
@@ -193,14 +195,14 @@ export default function AddVolumeModal() {
       isOpen={isAddVolumeModalOpen}
       onClose={handleClose}
       title={CM.provisionVolume}
-      subtitle={`Extend disk capacity for ${selectedDatabase}`}
+      subtitle={CM.extendDiskCapacity(selectedDatabase)}
       icon="add_to_drive"
       maxWidth="560px"
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 text-slate-400 dark:text-slate-500 text-[10px] font-bold uppercase tracking-widest italic">
             <Icon name="info" size="14px" weight={300} />
-            <span>Active Instance Required</span>
+            <span>{CM.activeInstanceRequired}</span>
           </div>
           <div className="flex gap-3">
             <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
@@ -211,7 +213,7 @@ export default function AddVolumeModal() {
               disabled={!path || !sizeMB || fetchingStatus}
               className="min-w-[140px]"
             >
-              Provision Volume
+              {CM.addVolume}
             </Button>
           </div>
         </div>
@@ -228,7 +230,7 @@ export default function AddVolumeModal() {
               </div>
               <div className="min-w-0">
                 <Typography variant="caption" className="font-black uppercase tracking-widest text-amber-600/70 dark:text-amber-400/60 mb-0.5">
-                  Extending Environment
+                  {CM.addVolumeTargetDb}
                 </Typography>
                 <Typography variant="h4" className="text-[14px] font-black text-amber-700 dark:text-amber-400 font-mono truncate">
                   {selectedDatabase}
@@ -236,11 +238,11 @@ export default function AddVolumeModal() {
               </div>
             </div>
             <div className="flex flex-col items-end gap-0.5">
-              <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 text-[9px]">Available Payload</Typography>
+              <Typography variant="caption" className="font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 text-[9px]">{CM.availableSpace}</Typography>
               {fetchingStatus ? (
                 <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-slate-100 dark:bg-white/5 border border-slate-100 dark:border-white/8">
                   <div className="w-2 h-2 border-[1.5px] border-emerald-500/30 border-t-emerald-500 rounded-full animate-spin" />
-                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">Calculating…</span>
+                  <span className="text-[10px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">{CM.calculating}</span>
                 </div>
               ) : (
                 <StatusBadge 
@@ -256,7 +258,7 @@ export default function AddVolumeModal() {
 
         {/* Purpose Selector */}
         <div className="space-y-4">
-           <SectionHeader title={CM.storageOptimization} icon="architecture" />
+           <SectionHeader title={CM.volumeType} icon="category" />
           <div className="grid grid-cols-2 gap-2.5">
             {PURPOSE_OPTIONS.map((opt) => {
               const isActive = purpose === opt.value;
@@ -277,9 +279,9 @@ export default function AddVolumeModal() {
                     <Icon name={opt.icon} size="xs" weight={300} className={isActive ? opt.color : 'text-slate-400'} />
                   </div>
                   <Typography variant="p" className={`font-black text-[11px] mb-0.5 transition-colors leading-none tracking-tight ${isActive ? opt.color : 'text-slate-600 dark:text-slate-400'}`}>
-                    {opt.label}
+                    {CM[opt.labelKey]}
                   </Typography>
-                  <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">{opt.desc}</span>
+                  <span className="text-[8px] text-slate-400 dark:text-slate-500 font-bold uppercase tracking-tighter">{CM[opt.descKey]}</span>
                   {isActive && (
                     <div className={`absolute top-2 right-2 w-4 h-4 rounded-full ${opt.bg} border ${opt.border} flex items-center justify-center shadow-xs`}>
                       <Icon name="check" size="10px" weight={800} className={opt.color} />
@@ -293,7 +295,7 @@ export default function AddVolumeModal() {
 
         {/* Allocation Size */}
         <div className="space-y-5">
-           <SectionHeader title={CM.allocationStrategy} icon="straighten" />
+           <SectionHeader title={CM.volumeSize} icon="straighten" />
 
           <div className="flex flex-wrap gap-1.5 px-0.5">
             {SIZE_PRESETS.map((preset) => (
@@ -315,7 +317,7 @@ export default function AddVolumeModal() {
           <div className="grid grid-cols-2 gap-4">
             <Input
               type="number"
-              label="Custom Capacity"
+              label={CM.customCapacity}
               value={sizeMB}
               onChange={(e) => setSizeMB(parseFloat(e.target.value) || 0)}
               icon="memory"
@@ -324,7 +326,7 @@ export default function AddVolumeModal() {
               size="sm"
             />
             <div className="space-y-1">
-              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 block">Blocks Allocated</span>
+              <span className="text-[10px] font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest ml-1 block">{CM.blocksAllocated}</span>
               <div className="h-10 px-4 flex items-center justify-between bg-slate-50/50 dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-xl">
                 <span className="text-[13px] font-black font-mono text-amber-500 tabular-nums">{numberOfPages.toLocaleString()}</span>
                 <span className="text-[9px] text-slate-400 dark:text-slate-500 uppercase tracking-widest font-black">pages</span>
@@ -335,7 +337,7 @@ export default function AddVolumeModal() {
           {/* Progress bar visual */}
           <div className="p-4 bg-slate-50/50 dark:bg-white/1 border border-slate-100 dark:border-white/5 rounded-2xl space-y-3 shadow-xs">
             <div className="flex items-center justify-between">
-              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">Provision Visualizer</span>
+              <span className="text-[9px] font-black uppercase tracking-[0.2em] text-slate-400">{CM.volumeSizeVisualizer}</span>
               <div className="flex items-center gap-2">
                 <span className={`text-[13px] font-black font-mono ${selectedPurpose?.color || 'text-amber-500'}`}>
                   {formatSize(sizeMB)}
@@ -360,16 +362,16 @@ export default function AddVolumeModal() {
 
         {/* Volume Identification */}
         <div className="space-y-4">
-           <SectionHeader title={CM.instanceRegistry} icon="label" />
+           <SectionHeader title={CM.volumeName} icon="label" />
           <div className="grid grid-cols-1 gap-4">
-            <Input label="Volume Identifier" value={volName} onChange={(e) => setVolName(e.target.value)} placeholder="e.g. DATA_VOL_PROD_1 (optional)" icon="badge" size="sm" />
-            <Input label="Environment Path" value={path} onChange={(e) => setPath(e.target.value)} placeholder="/var/lib/cubrid/volumes" icon="folder_zip" size="sm" className="font-mono!" />
+            <Input label={CM.volumeIdentifier} value={volName} onChange={(e) => setVolName(e.target.value)} icon="badge" size="sm" />
+            <Input label={CM.volumeDir} value={path} onChange={(e) => setPath(e.target.value)} placeholder="/var/lib/cubrid/volumes" icon="folder_zip" size="sm" className="font-mono!" />
           </div>
         </div>
 
         {/* Guidance Disclaimer */}
         <InfoBanner title={CM.privilegedOperation} icon="shield_lock">
-          Ensure target mount points have <span className="font-bold non-italic text-amber-500">write permissions</span> for the engine service account. Configuration updates persist instantly.
+          {CM.addVolumeNote}
         </InfoBanner>
 
       </div>

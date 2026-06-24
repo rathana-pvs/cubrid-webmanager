@@ -76,17 +76,6 @@ export const addVolume = createAsyncThunk(
 );
 
 // Backup & Restore
-export const backupDatabase = createAsyncThunk(
-  'database/backupDatabase',
-  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
-    try {
-      const response = await databaseApi.backupDatabase(hostUid, dbname, payload);
-      return response;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || `Failed to backup ${dbname}`);
-    }
-  }
-);
 
 export const restoreDatabase = createAsyncThunk(
   'database/restoreDatabase',
@@ -269,6 +258,30 @@ export const setAutoExecQuery = createAsyncThunk(
       return response;
     } catch (err) {
       return rejectWithValue(err.response?.data?.message || `Failed to set auto exec query for ${dbname}`);
+    }
+  }
+);
+
+export const appendAutoExecQueryPlan = createAsyncThunk(
+  'database/appendAutoExecQueryPlan',
+  async ({ hostUid, dbname, plan }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.appendAutoExecQueryPlan(hostUid, dbname, plan);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to add query plan for ${dbname}`);
+    }
+  }
+);
+
+export const removeAutoExecQueryPlan = createAsyncThunk(
+  'database/removeAutoExecQueryPlan',
+  async ({ hostUid, dbname, queryId }, { rejectWithValue }) => {
+    try {
+      const response = await databaseApi.removeAutoExecQueryPlan(hostUid, dbname, queryId);
+      return response;
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || `Failed to remove query plan for ${dbname}`);
     }
   }
 );
@@ -464,15 +477,6 @@ const databaseOperationSlice = createSlice({
         state.error = action.payload; 
       })
 
-      .addCase(backupDatabase.pending, (state) => { 
-        state.operationLoading = true; 
-        state.error = null; 
-      })
-      .addCase(backupDatabase.fulfilled, (state) => { state.operationLoading = false; })
-      .addCase(backupDatabase.rejected, (state, action) => { 
-        state.operationLoading = false; 
-        state.error = action.payload; 
-      })
       
       .addCase(fetchQueryPlan.rejected, (state, action) => {
         const { dbname } = action.meta.arg;

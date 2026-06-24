@@ -165,6 +165,8 @@ function LogViewer({ hostUid, path }) {
   const logState   = useSelector(s => s.broker.viewingLogs[path]);
   const loading    = logState?.loading;
   const fileName   = path.split('/').pop();
+  const lowerFileName = fileName.toLowerCase();
+  const isErrorLogFile = lowerFileName.endsWith('.err') || lowerFileName.endsWith('.error');
   const totalLines = parseInt(logState?.data?.total || '0');
   
   const startLine  = isAll ? 1 : (currentPage - 1) * pageSize + 1;
@@ -177,13 +179,20 @@ function LogViewer({ hostUid, path }) {
     dispatch(fetchLogContent({ hostUid, path, start: String(startLine), end: String(endLine) }));
   }, [dispatch, hostUid, path, currentPage, isAll, startLine, endLine]);
 
-  const sqls = viewMode === 'sql' ? extractSQL(lines) : [];
-  const top  = viewMode === 'top' ? extractTopSQL(lines) : [];
+  useEffect(() => {
+    if (isErrorLogFile && viewMode !== 'raw') {
+      setViewMode('raw');
+    }
+  }, [isErrorLogFile, viewMode]);
+
+  const activeViewMode = isErrorLogFile ? 'raw' : viewMode;
+  const sqls = activeViewMode === 'sql' ? extractSQL(lines) : [];
+  const top  = activeViewMode === 'top' ? extractTopSQL(lines) : [];
 
   const handleCopy = () => {
     const txt =
-      viewMode === 'sql' ? extractSQL(lines).join('\n\n') :
-      viewMode === 'top' ? JSON.stringify(extractTopSQL(lines), null, 2) :
+      activeViewMode === 'sql' ? extractSQL(lines).join('\n\n') :
+      activeViewMode === 'top' ? JSON.stringify(extractTopSQL(lines), null, 2) :
       lines.join('\n');
     navigator.clipboard.writeText(txt).then(() => {
       setCopying(true);
@@ -224,42 +233,48 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
         </div>
 
         {/* Center: mode switcher */}
-        <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 shrink-0">
-          {MODES.map(m => (
-            <button
-              key={m.key}
-              onClick={() => setViewMode(m.key)}
-              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors whitespace-nowrap ${
-                viewMode === m.key
-                  ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-bk-yellow'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-            >
-              <Icon name={m.icon} size="sm" />
-              {m.label}
-            </button>
-          ))}
-        </div>
+        {!isErrorLogFile && (
+          <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 shrink-0">
+            {MODES.map(m => (
+              <button
+                key={m.key}
+                onClick={() => setViewMode(m.key)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors whitespace-nowrap ${
+                  activeViewMode === m.key
+                    ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-bk-yellow'
+                    : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
+                }`}
+              >
+                <Icon name={m.icon} size="sm" />
+                {m.label}
+              </button>
+            ))}
+          </div>
+        )}
 
         {/* Right: actions */}
         <div className="flex items-center gap-1 shrink-0">
 
           {/* Export Excel */}
-          <button
-            onClick={() => handleExcel(top)}
-            disabled={top.length === 0}
-            title={CM.downloadExcel}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all active:scale-[0.98]
-              ${top.length === 0
-                ? 'bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
-                : 'bg-amber-500/10 text-amber-600 dark:text-bk-yellow border-amber-500/50 dark:border-bk-yellow/50 hover:bg-amber-500/20 shadow-xs'
-              } ${viewMode === 'top' ? 'visible' : 'invisible pointer-events-none'}`}
-          >
-            <Icon name="download" size="18px" />
-            Export
-          </button>
+          {!isErrorLogFile && (
+            <>
+              <button
+                onClick={() => handleExcel(top)}
+                disabled={top.length === 0}
+                title={CM.downloadExcel}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-[11px] font-bold transition-all active:scale-[0.98]
+                  ${top.length === 0
+                    ? 'bg-slate-50 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
+                    : 'bg-amber-500/10 text-amber-600 dark:text-bk-yellow border-amber-500/50 dark:border-bk-yellow/50 hover:bg-amber-500/20 shadow-xs'
+                  } ${activeViewMode === 'top' ? 'visible' : 'invisible pointer-events-none'}`}
+              >
+                <Icon name="download" size="18px" />
+                Export
+              </button>
 
-          <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-0.5" />
+              <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-0.5" />
+            </>
+          )}
 
           {/* Copy */}
           <button
@@ -329,7 +344,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
       <div className="flex-1 overflow-auto bg-white dark:bg-bk-side">
 
         {/* Raw Log */}
-        {viewMode === 'raw' && (
+        {activeViewMode === 'raw' && (
           lines.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center text-center p-8">
               <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
@@ -357,7 +372,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
         )}
 
         {/* Parsed SQL */}
-        {viewMode === 'sql' && (
+        {activeViewMode === 'sql' && (
           sqls.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center">
               <p className="text-sm text-slate-400 italic">No SQL statements found in this page.</p>
@@ -386,7 +401,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
         )}
 
         {/* Top SQL */}
-        {viewMode === 'top' && (
+        {activeViewMode === 'top' && (
           <div className="min-w-full inline-block">
             {/* Column headers */}
             <div className="flex items-center gap-4 px-4 py-2 bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 sticky top-0">
@@ -420,8 +435,8 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
       <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
         <div className="flex items-center gap-4">
           <span>Lines: {startLine}–{Math.min(endLine, totalLines)} of {totalLines.toLocaleString()}</span>
-          {viewMode === 'sql' && <span>{sqls.length} statements</span>}
-          {viewMode === 'top' && <span>{top.length} patterns</span>}
+          {activeViewMode === 'sql' && <span>{sqls.length} statements</span>}
+          {activeViewMode === 'top' && <span>{top.length} patterns</span>}
         </div>
         <div className="flex items-center gap-1.5">
           <div className={`h-1.5 w-1.5 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : logState?.error ? 'bg-rose-500' : 'bg-emerald-500'}`} />

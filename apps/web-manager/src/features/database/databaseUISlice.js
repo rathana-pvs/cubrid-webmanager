@@ -7,6 +7,7 @@ const initialState = {
   isCompactDatabaseModalOpen: false,
   isCopyDatabaseModalOpen: false,
   isBackupDatabaseModalOpen: false,
+  pendingBackupJob: null, // { jobId, dbname } — survives modal close for reconnect
   isRestoreDatabaseModalOpen: false,
   isOptimizeDatabaseModalOpen: false,
   isAddBackupPlanModalOpen: false,
@@ -77,6 +78,8 @@ const databaseUISlice = createSlice({
     
     openBackupDatabaseModal: (state) => { state.isBackupDatabaseModalOpen = true; },
     closeBackupDatabaseModal: (state) => { state.isBackupDatabaseModalOpen = false; },
+    setPendingBackupJob: (state, action) => { state.pendingBackupJob = action.payload; },
+    clearPendingBackupJob: (state) => { state.pendingBackupJob = null; },
     
     openRestoreDatabaseModal: (state, action) => { 
       state.isRestoreDatabaseModalOpen = true; 
@@ -198,7 +201,7 @@ export const {
   openCheckDatabaseModal, closeCheckDatabaseModal,
   openCompactDatabaseModal, closeCompactDatabaseModal,
   openCopyDatabaseModal, closeCopyDatabaseModal,
-  openBackupDatabaseModal, closeBackupDatabaseModal,
+  openBackupDatabaseModal, closeBackupDatabaseModal, setPendingBackupJob, clearPendingBackupJob,
   openRestoreDatabaseModal, closeRestoreDatabaseModal,
   openOptimizeDatabaseModal, closeOptimizeDatabaseModal,
   openAddBackupPlanModal, closeAddBackupPlanModal,

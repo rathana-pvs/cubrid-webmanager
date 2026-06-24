@@ -118,7 +118,7 @@ export const fetchHostSummary = createAsyncThunk(
         }
       };
     } catch (err) {
-      return rejectWithValue(err.message);
+      return rejectWithValue(err.response?.data?.message || err.message || 'Failed to fetch monitoring data');
     }
   }
 );

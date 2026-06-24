@@ -79,6 +79,9 @@ export const databaseJobApi = {
 
   submitRename: (hostUid, dbname, payload) =>
     submitJob(`/${hostUid}/database/rename/${encodeURIComponent(dbname)}`, payload),
+
+  submitBackup: (hostUid, dbname, payload) =>
+    submitJob(`/${hostUid}/database/backup-db/${encodeURIComponent(dbname)}`, payload),
 };
 
 const POLL_MAX_RETRIES = 3;
@@ -143,7 +146,9 @@ export function pollCmsJob(jobId, { onUpdate } = {}) {
           return;
         }
         if (status === 'failed') {
-          finish(reject, new Error(formatCmsJobError(job)));
+          const terminalErr = new Error(formatCmsJobError(job));
+          terminalErr.jobTerminalFailure = true;
+          finish(reject, terminalErr);
           return;
         }
 

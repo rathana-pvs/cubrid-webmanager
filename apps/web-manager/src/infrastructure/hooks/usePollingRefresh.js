@@ -72,10 +72,12 @@ export const usePollingRefresh = ({ hostUid, tabId, pollingIntervalSeconds, onFe
   // 3. Initial Load
   useEffect(() => {
     const isAuthorized = hostUid === 'global' || (hostUid && authorizedHosts.includes(hostUid));
-    if (isAuthorized && !initialLoadDone.current) {
-      initialLoadDone.current = true;
-      handleRefresh();
-    }
+    if (!isAuthorized || initialLoadDone.current) return;
+    // For the global dashboard, wait until at least one host is authorized before marking done.
+    // Otherwise the fetch is skipped (no hosts yet) and never retried after hosts become available.
+    if (hostUid === 'global' && authorizedHosts.length === 0) return;
+    initialLoadDone.current = true;
+    handleRefresh();
   }, [hostUid, authorizedHosts, handleRefresh]);
 
   // 4. On Tab Resume
@@ -91,16 +93,28 @@ export const usePollingRefresh = ({ hostUid, tabId, pollingIntervalSeconds, onFe
   // 5. Polling Timer
   useEffect(() => {
     if (!isTabActive || pollingIntervalSeconds <= 0) return;
-    
+
     const timer = setInterval(() => {
       // Extra safety check to avoid overlapping fetches if the user spams tabs
       if (isActiveRef.current) {
         handleRefresh(true);
       }
     }, pollingIntervalSeconds * 1000);
-    
+
     return () => clearInterval(timer);
   }, [isTabActive, pollingIntervalSeconds, handleRefresh]);
+
+  // 6. Network Recovery — re-fetch immediately when the browser comes back online,
+  // but only if this view is the active foreground tab (same guard as the polling timer).
+  useEffect(() => {
+    const handleOnline = () => {
+      if (initialLoadDone.current && isActiveRef.current) {
+        handleRefresh(true);
+      }
+    };
+    window.addEventListener('online', handleOnline);
+    return () => window.removeEventListener('online', handleOnline);
+  }, [handleRefresh]);
 
   return { isManualRefreshing, lastRefreshed, handleRefresh };
 };

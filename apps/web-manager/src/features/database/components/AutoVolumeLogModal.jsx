@@ -64,17 +64,17 @@ export default function AutoVolumeLogModal() {
 
   const columns = [
     {
-      header: 'Database',
+      header: CM.database,
       accessor: 'dbname',
       className: 'w-[120px]'
     },
     {
-      header: 'Volume Name',
+      header: CM.volumeName,
       accessor: 'volname',
       render: (val) => <span className="text-amber-600 dark:text-amber-500 font-mono italic">{val}</span>
     },
     {
-      header: 'Purpose',
+      header: CM.purpose,
       accessor: 'purpose',
       render: (val) => (
         <span className="px-1.5 py-0.5 rounded-sm bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/5 text-[9px] font-bold text-slate-500">
@@ -83,10 +83,10 @@ export default function AutoVolumeLogModal() {
       ),
       className: 'w-[100px]'
     },
-    { header: 'Pages', accessor: 'page', className: 'w-[80px]' },
-    { header: 'Time', accessor: 'time', className: 'w-[160px]' },
+    { header: CM.pagesLabel, accessor: 'page', className: 'w-[80px]' },
+    { header: CM.timeLabel, accessor: 'time', className: 'w-[160px]' },
     {
-      header: 'Outcome',
+      header: CM.outcomeLabel,
       accessor: 'outcome',
       render: (val) => {
         const isSuccess = val?.toLowerCase().includes('success');
@@ -108,9 +108,9 @@ export default function AutoVolumeLogModal() {
         <div className="flex items-center gap-2.5">
           <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">Status:</Typography>
           {logsLoading ? (
-            <StatusBadge label="Buffering" variant="amber" pulse={true} className="rounded-full" />
+            <StatusBadge label={CM.buffering} variant="amber" pulse={true} className="rounded-full" />
           ) : (
-            <StatusBadge label="Synchronized" variant="emerald" pulse={false} className="rounded-full" />
+            <StatusBadge label={CM.synchronizedStatus} variant="emerald" pulse={false} className="rounded-full" />
           )}
         </div>
 
@@ -132,7 +132,7 @@ export default function AutoVolumeLogModal() {
           onClick={() => dispatch(closeAutoVolumeLogModal())}
           className="min-w-[100px]"
         >
-          Close
+          {CM.close}
         </Button>
         <Button
           variant="primary"
@@ -142,7 +142,7 @@ export default function AutoVolumeLogModal() {
           icon="refresh"
           className="min-w-[120px] shadow-lg shadow-amber-500/10"
         >
-          Refresh Now
+          {CM.refresh}
         </Button>
       </div>
     </div>
@@ -153,7 +153,7 @@ export default function AutoVolumeLogModal() {
       isOpen={isAutoVolumeLogModalOpen}
       onClose={() => dispatch(closeAutoVolumeLogModal())}
       title={CM.autoVolumeLog}
-      subtitle={selectedDatabase ? `Audit history for: ${selectedDatabase}` : 'Global automation history'}
+      subtitle={selectedDatabase ? CM.auditHistoryFor(selectedDatabase) : CM.globalAutomationHistory}
       icon="history_edu"
       iconVariant="warning"
       maxWidth="max-w-[900px]"
@@ -164,7 +164,7 @@ export default function AutoVolumeLogModal() {
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <SearchInput
-              placeholder="Filter logs..."
+              placeholder={CM.filterLogs}
               value={searchTerm}
               onChange={setSearchTerm}
               onClear={() => setSearchTerm('')}

@@ -50,8 +50,14 @@ export function isCmsLongJobFailure(response: any): boolean {
   return isCmsStatusFailure(response) || hasCmsLineFailure(response);
 }
 
+function stripCmsArtifacts(s: string): string {
+  return s.replace(/<end>\s*$/i, '').trim();
+}
+
 export function extractCmsFailureMessage(response: any, errorMessage?: string): string {
-  const noteMessage = isMeaningfulCmsNote(response?.note) ? String(response.note).trim() : undefined;
+  const noteMessage = isMeaningfulCmsNote(response?.note)
+    ? stripCmsArtifacts(String(response.note))
+    : undefined;
   const errorLines = getCmsErrorLines(response);
   const lineMessage =
     errorLines.length > 0

@@ -8,6 +8,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { PageLoader } from '../../../components/ds/feedback/PageLoader';
 import { EmptyState } from '../../../components/ds/feedback/EmptyState';
+import { useCM } from '../../../constants/useCM';
 
 const parseNumber = (value) => {
   if (typeof value === 'number') return value;
@@ -22,6 +23,7 @@ const formatMegabytes = (value) => `${value.toFixed(2)} MB`;
 const clampPercent = (value) => Math.min(100, Math.max(0, value));
 
 export default function VolumeInfoMonitor({ tabId }) {
+  const CM = useCM();
   const dispatch = useDispatch();
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const [, hostUid, dbname, volname] = tabId.split(':');
@@ -48,8 +50,8 @@ export default function VolumeInfoMonitor({ tabId }) {
     return (
       <div className="flex-1 flex h-full bg-white dark:bg-background-dark">
         <PageLoader
-          title="Hydrating Volume Matrix"
-          subtitle="Streaming real-time allocation maps and page distribution from the IO layer..."
+          title={CM.loadingVolumeInfo}
+          subtitle={CM.loadingVolumeInfoSub}
           icon="storage"
         />
       </div>
@@ -61,7 +63,7 @@ export default function VolumeInfoMonitor({ tabId }) {
       <div className="flex-1 flex h-full bg-white dark:bg-background-dark">
         <EmptyState
           icon="inventory_2"
-          title="Volume Not Found"
+          title={CM.volumeNotFound}
           subtitle={`"${volname}" could not be resolved in the ${dbname} space catalog.`}
         />
       </div>
@@ -132,7 +134,7 @@ export default function VolumeInfoMonitor({ tabId }) {
               ${(isLoading || isRefreshing)
                 ? 'bg-slate-100 dark:bg-white/5 text-slate-300 dark:text-slate-600 border-slate-200 dark:border-white/5 cursor-not-allowed opacity-50'
                 : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-amber-500 hover:border-amber-500/50 hover:bg-white dark:hover:bg-white/5'}`}
-            title="Refresh volume data"
+            title={CM.refreshVolumeData}
           >
             <Icon name="refresh" size="18px" className={(isLoading || isRefreshing) ? 'animate-spin' : ''} />
           </button>

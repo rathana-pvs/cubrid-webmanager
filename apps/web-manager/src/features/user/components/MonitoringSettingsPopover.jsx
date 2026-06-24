@@ -6,8 +6,10 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
+import { useCM } from '../../../constants/useCM';
 
 export default function MonitoringSettingsPopover() {
+  const CM = useCM();
   const [isOpen, setIsOpen] = useState(false);
   const popoverRef = useRef(null);
   const dispatch = useDispatch();
@@ -128,7 +130,7 @@ export default function MonitoringSettingsPopover() {
             ? 'bg-amber-500/10 text-amber-500 border-amber-500/50 shadow-[0_0_15px_rgba(245,158,11,0.1)]' 
             : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-500 hover:border-amber-500/30 hover:bg-white dark:hover:bg-white/5 shadow-xs'
           }`}
-        title="Monitoring Synchronization"
+        title={CM.monitoringSync}
       >
         <Icon name="timer" size="18px" weight={300} />
 
@@ -175,7 +177,7 @@ export default function MonitoringSettingsPopover() {
                 <Input
                   type="number"
                   size="sm"
-                  placeholder="Custom interval"
+                  placeholder={CM.customIntervalPlaceholder}
                   value={customDashboardText}
                   onChange={handleDashboardCustomChange}
                   suffix="seconds"
@@ -215,7 +217,7 @@ export default function MonitoringSettingsPopover() {
                 <Input
                   type="number"
                   size="sm"
-                  placeholder="Custom interval"
+                  placeholder={CM.customIntervalPlaceholder}
                   value={customBrokerText}
                   onChange={handleBrokerCustomChange}
                   suffix="seconds"
@@ -232,14 +234,14 @@ export default function MonitoringSettingsPopover() {
           <div className="px-5 py-4 bg-slate-50 dark:bg-white/2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
             <Typography variant="caption" className="text-slate-400 font-medium">Session Preferences</Typography>
             <div className="flex gap-2">
-              <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>Dismiss</Button>
+              <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>{CM.dismiss}</Button>
               <Button 
                 size="sm" 
                 onClick={handleSave}
                 loading={actionLoading}
                 className="shadow-lg shadow-amber-500/20 px-5"
               >
-                Apply Heartbeat
+                {CM.apply}
               </Button>
             </div>
           </div>

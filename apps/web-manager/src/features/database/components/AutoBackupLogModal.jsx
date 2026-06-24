@@ -121,9 +121,9 @@ export default function AutoBackupLogModal() {
         <div className="flex items-center gap-2.5">
           <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">Status:</Typography>
           {logsLoading ? (
-            <StatusBadge label="Buffering" variant="amber" pulse={true} className="rounded-full" />
+            <StatusBadge label={CM.buffering} variant="amber" pulse={true} className="rounded-full" />
           ) : (
-            <StatusBadge label="Synchronized" variant="emerald" pulse={false} className="rounded-full" />
+            <StatusBadge label={CM.synchronizedStatus} variant="emerald" pulse={false} className="rounded-full" />
           )}
         </div>
         
@@ -138,22 +138,22 @@ export default function AutoBackupLogModal() {
       </div>
       
       <div className="flex items-center gap-2.5">
-        <Button 
-          variant="secondary" 
+        <Button
+          variant="secondary"
           icon="close"
           onClick={() => dispatch(closeAutoBackupLogModal())}
           className="min-w-[100px]"
         >
-          Close
+          {CM.close}
         </Button>
-        <Button 
+        <Button
           variant="primary"
           onClick={() => dispatch(fetchAutoBackupLog({ hostUid: selectedHostUid }))}
           loading={logsLoading}
           icon="refresh"
           className="min-w-[120px] shadow-lg shadow-amber-500/10"
         >
-          Refresh Now
+          {CM.refresh}
         </Button>
       </div>
     </div>
@@ -175,7 +175,7 @@ export default function AutoBackupLogModal() {
         <div className="mb-4 flex items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <SearchInput 
-              placeholder="Filter logs by ID or description..."
+              placeholder={CM.filterLogsById}
               value={searchTerm}
               onChange={setSearchTerm}
               onClear={() => setSearchTerm('')}

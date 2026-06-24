@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { brokerApi } from '../../broker/brokerApi';
 import LogViewer from '../../broker/components/LogViewer';
+import { useCM } from '../../../constants/useCM';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
@@ -8,6 +9,7 @@ import { Typography } from '../../../components/ds/foundation/Typography';
 import { Button } from '../../../components/ds/foundation/Button';
 
 export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casId, type = 'sql' }) {
+  const CM = useCM();
   const [logPath, setLogPath] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -40,7 +42,7 @@ export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casI
     }
   };
 
-  const title = type === 'sql' ? 'CAS SQL Transaction Log' : 'CAS Slow Query Registry';
+  const title = type === 'sql' ? CM.casSqlLog : CM.casSlowQueryLog;
 
   return (
     <Modal

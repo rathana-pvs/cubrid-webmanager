@@ -22,17 +22,17 @@ export {
 
 export {
   createDatabase, copyDatabase, deleteDatabase, renameDatabase, fetchCreateDatabaseInfo,
-  addVolume, backupDatabase, restoreDatabase, fetchBackupSchedule, addBackupSchedule,
+  addVolume, restoreDatabase, fetchBackupSchedule, addBackupSchedule,
   editBackupSchedule, deleteBackupSchedule, fetchBackupList, fetchBackupDbInfo,
   fetchAutoBackupLog, checkDatabase, compactDatabase, optimizeDatabase, loadDatabase,
-  unloadDatabase, fetchQueryPlan, setAutoExecQuery, fetchQueryPlanLog, fetchLockInfo,
+  unloadDatabase, fetchQueryPlan, setAutoExecQuery, appendAutoExecQueryPlan, removeAutoExecQueryPlan, fetchQueryPlanLog, fetchLockInfo,
   fetchTransactionInfo, killTransaction, clearError
 } from './databaseOperationSlice';
 
 export {
   openUnloadDatabaseModal, closeUnloadDatabaseModal, openLoadDatabaseModal, closeLoadDatabaseModal,
   openCheckDatabaseModal, closeCheckDatabaseModal, openCompactDatabaseModal, closeCompactDatabaseModal,
-  openCopyDatabaseModal, closeCopyDatabaseModal, openBackupDatabaseModal, closeBackupDatabaseModal,
+  openCopyDatabaseModal, closeCopyDatabaseModal, openBackupDatabaseModal, closeBackupDatabaseModal, setPendingBackupJob, clearPendingBackupJob,
   openRestoreDatabaseModal, closeRestoreDatabaseModal, openOptimizeDatabaseModal, closeOptimizeDatabaseModal,
   openAddBackupPlanModal, closeAddBackupPlanModal, openEditBackupPlanModal, closeEditBackupPlanModal,
   openDeleteBackupPlanModal, closeDeleteBackupPlanModal, openAutoBackupLogModal, closeAutoBackupLogModal,
