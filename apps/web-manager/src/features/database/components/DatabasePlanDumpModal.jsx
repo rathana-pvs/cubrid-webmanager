@@ -138,11 +138,11 @@ export default function DatabasePlanDumpModal() {
                   <Icon name="database" size="sm" weight={300} />
                 </div>
                 <div>
-                  <Typography variant="caption" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Selected Instance</Typography>
+                  <Typography variant="caption" className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{CM.selectedInstance}</Typography>
                   <Typography variant="p" className="text-[14px] font-black text-slate-900 dark:text-white font-mono leading-none">{selectedDatabase}</Typography>
                 </div>
               </div>
-              <StatusBadge label="XASL Cache" variant="amber" />
+              <StatusBadge label={CM.xaslCache} variant="amber" />
             </div>
 
             {/* Horizontal Pipeline */}
@@ -180,8 +180,8 @@ export default function DatabasePlanDumpModal() {
                     <Icon name="delete_sweep" size="xs" weight={300} />
                   </div>
                   <div className="flex-1">
-                    <Typography variant="p" className={`font-bold text-[12px] ${planDrop ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>Flush Cache after export</Typography>
-                    <Typography variant="caption" className="text-slate-400 text-[10px] block mt-0.5">Clears XASL entries from server memory</Typography>
+                    <Typography variant="p" className={`font-bold text-[12px] ${planDrop ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>{CM.flushCacheAfterExport}</Typography>
+                    <Typography variant="caption" className="text-slate-400 text-[10px] block mt-0.5">{CM.clearsXaslEntries}</Typography>
                   </div>
                   <div onClick={(e) => e.stopPropagation()}>
                     <Toggle checked={planDrop} onChange={setPlanDrop} />

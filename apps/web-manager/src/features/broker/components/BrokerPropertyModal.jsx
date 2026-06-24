@@ -237,10 +237,10 @@ export default function BrokerPropertyModal() {
         viewStatus === ViewStatus.FORM ? (
           <>
             <div className="mr-auto">
-              {modifiedCount > 0 && <Button variant="ghost" onClick={handleReset} className="text-amber-600">Reset</Button>}
+              {modifiedCount > 0 && <Button variant="ghost" onClick={handleReset} className="text-amber-600">{CM.resetLabel}</Button>}
             </div>
             <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
-            <Button variant="primary" onClick={handleSave} loading={viewStatus === ViewStatus.SAVING} icon="save" disabled={modifiedCount === 0}>Apply</Button>
+            <Button variant="primary" onClick={handleSave} loading={viewStatus === ViewStatus.SAVING} icon="save" disabled={modifiedCount === 0}>{CM.applyLabel}</Button>
           </>
         ) : (
           <Button variant="primary" onClick={handleClose} icon="check_circle" className="w-full">{CM.close}</Button>
@@ -254,7 +254,7 @@ export default function BrokerPropertyModal() {
           </div>
           <div className="flex-1 min-w-0">
             <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight truncate">{brokerName}</h2>
-            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">Runtime Configuration</p>
+            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">{CM.runtimeConfiguration}</p>
           </div>
           {modifiedCount > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
@@ -303,7 +303,7 @@ export default function BrokerPropertyModal() {
       {viewStatus === ViewStatus.SAVING && (
         <div className="p-20 flex flex-col items-center justify-center h-[520px] gap-6">
           <div className="w-16 h-16 border-4 border-amber-500/10 border-t-amber-500 rounded-full animate-spin" />
-          <Typography variant="h4">Deploying Changes</Typography>
+          <Typography variant="h4">{CM.deployingChanges}</Typography>
         </div>
       )}
 
@@ -312,7 +312,7 @@ export default function BrokerPropertyModal() {
           <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center text-white shadow-xl">
             <Icon name="check" size="lg" weight={700} />
           </div>
-          <Typography variant="h4">Update Synchronized</Typography>
+          <Typography variant="h4">{CM.updateSynchronized}</Typography>
           <Typography variant="p" className="text-slate-500">Broker settings for {brokerName} have been applied successfully.</Typography>
         </div>
       )}

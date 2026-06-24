@@ -260,7 +260,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
                       <span className="text-slate-700 dark:text-slate-200 font-bold">{formatPages(usedPages)}</span> / {formatPages(totalPages)}
                     </span>
                     <span className={`text-[10px] font-mono font-black ${getFreeSeverity(freePct)} ml-2`}>
-                      {isZero ? '0' : Math.round(freePct)}% <span className="opacity-50 text-[8px] font-sans uppercase">free</span>
+                      {isZero ? '0' : Math.round(freePct)}% <span className="opacity-50 text-[8px] font-sans uppercase">{CM.freeBadge}</span>
                     </span>
                   </div>
                   <div className="w-full h-0.5 bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
@@ -336,7 +336,7 @@ const DistributionChart = memo(({ totals }) => {
         </svg>
         <div className="absolute inset-0 flex flex-col items-center justify-center">
           <span className={`text-base font-black font-mono leading-none ${usageSeverity(totals?.pct || 0)}`}>{(totals?.pct || 0).toFixed(0)}%</span>
-          <span className="text-[7px] text-slate-400 uppercase tracking-widest mt-0.5 font-bold">Used</span>
+          <span className="text-[7px] text-slate-400 uppercase tracking-widest mt-0.5 font-bold">{CM.usedLabel}</span>
         </div>
       </div>
 

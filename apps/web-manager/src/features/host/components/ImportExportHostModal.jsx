@@ -463,7 +463,7 @@ export default function ImportExportHostModal() {
             )}
             {importExportMode === 'export' && !isPasswordStep && (
               <div className="flex items-center gap-2">
-                <Typography variant="caption" className="font-bold text-slate-400 uppercase tracking-tight">Filename:</Typography>
+                <Typography variant="caption" className="font-bold text-slate-400 uppercase tracking-tight">{CM.filenameLabel}</Typography>
                 <div className="w-48">
                   <Input
                     size="sm"
@@ -623,7 +623,7 @@ export default function ImportExportHostModal() {
                         size="sm"
                         value={importGroupName}
                         onChange={(e) => setImportGroupName(e.target.value)}
-                        placeholder="Imported"
+                        placeholder={CM.importedPlaceholder}
                       />
                     </div>
                     <Typography variant="caption" className="text-slate-400 text-[10px]">
@@ -642,7 +642,7 @@ export default function ImportExportHostModal() {
                       size="sm"
                       value={importGroupName}
                       onChange={(e) => setImportGroupName(e.target.value)}
-                      placeholder="Imported"
+                      placeholder={CM.importedPlaceholder}
                     />
                   </div>
                 </div>
@@ -704,10 +704,10 @@ export default function ImportExportHostModal() {
                               {alias || 'Unnamed'}
                             </Typography>
                             {host.isDuplicate && (
-                              <Badge variant="secondary" size="xs">DUPLICATE</Badge>
+                              <Badge variant="secondary" size="xs">{CM.duplicateLabel}</Badge>
                             )}
                             {host.validationError && !host.isDuplicate && (
-                              <Badge variant="secondary" size="xs">INVALID</Badge>
+                              <Badge variant="secondary" size="xs">{CM.invalidLabel}</Badge>
                             )}
                           </div>
                           {host.validationError && (

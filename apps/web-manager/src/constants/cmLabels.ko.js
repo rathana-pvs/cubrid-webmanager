@@ -1242,5 +1242,84 @@ export const CM_KO = {
   userIdLabel: '사용자 계정',
   departmentLabel: '부서',
   lockedLabel: '잠김',
+
+  // 브로커 속성 모달
+  resetLabel: '초기화',
+  applyLabel: '적용',
+  runtimeConfiguration: '런타임 구성',
+  deployingChanges: '변경 사항 배포 중',
+  updateSynchronized: '업데이트 완료',
+
+  // 브로커 상태
+  basicInformation: '기본 정보',
+  applicationServers: '응용 프로그램 서버 (AS)',
+  jobQueue: '작업 대기열',
+
+  // CMS 로그 뷰어
+  loadingManagerLogs: '관리자 로그 로딩 중...',
+  managerSystemActivity: '관리자 시스템 활동',
+  copiedLabel: '복사됨',
+  timeLabel: '시간',
+  userLabel: '사용자',
+  taskLabel: '작업',
+  noLogEntriesFound: '이 범주에 대한 로그 항목이 없습니다.',
+  errLabel: '오류',
+  successLabel: '성공',
+  showingAllRecords: '전체 레코드 표시',
+
+  // 로그 뷰어 (브로커)
+  brokerLogViewer: '브로커 로그 뷰어',
+  noContentAvailable: '이 범위에 사용 가능한 내용이 없습니다.',
+  noSqlStatementsFound: '이 페이지에서 SQL 구문을 찾을 수 없습니다.',
+  maxSeconds: '최대 (초)',
+  avgSeconds: '평균 (초)',
+  countLabel: '횟수',
+  errorsLabel: '오류',
+  sqlPattern: 'SQL 패턴',
+  noQueriesToAnalyze: '분석할 쿼리가 없습니다.',
+
+  // 전체 로그 뷰어
+  loadingLogLines: '로그 행 로딩 중...',
+  noContentAvailableShort: '사용 가능한 내용이 없습니다',
+  scanningForLogFiles: '로그 파일 검색 중...',
+  noLogFilesFound: '로그 파일 없음',
+  noLogFilesFoundMsg: '이 리소스에 대한 로그 파일을 찾을 수 없습니다.',
+
+  // 데이터베이스 계획 덤프 모달
+  flushCacheAfterExport2: '내보내기 후 캐시 지우기',
+  clearsXaslEntries2: '서버 메모리에서 XASL 항목 제거',
+
+  // 가져오기/내보내기 호스트 모달
+  importedPlaceholder: '가져옴',
+
+  // CMS 사용자 관리 모달
+  addManagementUserBtn: '관리자 계정 추가',
+
+  // 데이터베이스 공간 모니터
+  freeBadge: '여유',
+
+  // 비밀번호 찾기 페이지
+  forgotPasswordLabel: '비밀번호 찾기',
+  backToLogin: '로그인으로 돌아가기',
+  backToSignIn: '로그인으로 돌아가기',
+  enterpriseSuite: '엔터프라이즈 데이터베이스 제품군',
+  resetAccessCredentials: '접속 자격 증명 재설정',
+  securityProtocol: '보안 프로토콜',
+  recoveryLabel: '비밀번호 찾기',
+  emailPlaceholder: 'admin@organization.com',
+  sendRecoveryLink: '재설정 링크 전송',
+  linkSent: '링크 전송됨',
+  checkInbox: '수신함을 확인하세요',
+  rememberPasswordQuestion: '비밀번호가 생각나셨나요?',
+  enterEmailInstruction: '계정 복구 프로세스를 시작하려면 등록된 이메일 주소를 입력하십시오.',
+  recoverySecurityDesc: '계정 복구는 데이터베이스 클러스터링과 동일한 기업 수준의 보안으로 처리됩니다. 계정 복구를 도와드리겠습니다.',
+  recoveryProtocolDesc: '새 마스터 비밀번호 생성을 승인할 수 있는 일회성 암호화 링크를 받게 됩니다. 링크는 15분 후에 만료됩니다.',
+  submitEmailStep: '등록된 이메일 주소 입력',
+  checkInboxStep: '수신함에서 복구 링크 확인',
+  setNewPasswordStep: '새로운 보안 비밀번호 설정',
+  securityInfrastructure: 'CUBRID 매니저 보안 인프라',
+  recoveryInstructionsSent: '복구 지침이 다음 이메일로 전송되었습니다:',
+  checkSpamMsg: '링크는 15분 후에 만료됩니다. 메일이 오지 않으면 스팸 메일함을 확인해 주세요.',
+  resendRecoveryEmail: '복구 이메일 재전송',
 };
 

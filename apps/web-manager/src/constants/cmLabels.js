@@ -1264,4 +1264,84 @@ export const CM = {
   userIdLabel: 'User ID',
   departmentLabel: 'Department',
   lockedLabel: 'locked',
+
+  // BrokerPropertyModal
+  resetLabel: 'Reset',
+  applyLabel: 'Apply',
+  runtimeConfiguration: 'Runtime Configuration',
+  deployingChanges: 'Deploying Changes',
+  updateSynchronized: 'Update Synchronized',
+
+  // BrokerStatus
+  basicInformation: 'Basic Information',
+  applicationServers: 'Application Servers (AS)',
+  jobQueue: 'Job Queue',
+
+  // CMSLogViewer
+  loadingManagerLogs: 'Loading manager logs...',
+  managerSystemActivity: 'Manager System Activity',
+  copiedLabel: 'Copied',
+  timeLabel: 'Time',
+  userLabel: 'User',
+  taskLabel: 'Task',
+  noLogEntriesFound: 'No log entries found for this category.',
+  errLabel: 'ERR',
+  successLabel: 'SUCCESS',
+  showingAllRecords: 'Showing all records',
+
+  // LogViewer (Broker Log Viewer)
+  brokerLogViewer: 'Broker Log Viewer',
+  noContentAvailable: 'No content available for this range.',
+  noSqlStatementsFound: 'No SQL statements found in this page.',
+  maxSeconds: 'Max (s)',
+  avgSeconds: 'Avg (s)',
+  countLabel: 'Count',
+  errorsLabel: 'Errors',
+  sqlPattern: 'SQL Pattern',
+  noQueriesToAnalyze: 'No queries found to analyze.',
+
+  // AllLogsViewer
+  loadingLogLines: 'Loading log lines...',
+  noContentAvailableShort: 'No content available',
+  scanningForLogFiles: 'Scanning for log files...',
+  noLogFilesFound: 'No Log Files Found',
+  noLogFilesFoundMsg: "We couldn't find any log files for this resource.",
+
+  // DatabasePlanDumpModal
+  flushCacheAfterExport2: 'Flush Cache after export',
+  clearsXaslEntries2: 'Clears XASL entries from server memory',
+
+  // ImportExportHostModal
+  importedPlaceholder: 'Imported',
+
+  // CMSUserManagementModal add-user CTA
+  addManagementUserBtn: 'Add a management user',
+
+  // DatabaseSpaceMonitor inline labels
+  freeBadge: 'free',
+
+  // ForgotPasswordPage
+  forgotPasswordLabel: 'Forgot Password',
+  backToLogin: 'Back to Login',
+  backToSignIn: 'Back to Sign In',
+  enterpriseSuite: 'Enterprise Database Suite',
+  resetAccessCredentials: 'Reset your access credentials.',
+  securityProtocol: 'Security Protocol',
+  recoveryLabel: 'Recovery',
+  emailPlaceholder: 'admin@organization.com',
+  sendRecoveryLink: 'Send Recovery Link',
+  linkSent: 'Link Sent',
+  checkInbox: 'Check your inbox',
+  rememberPasswordQuestion: 'Remember your password?',
+  enterEmailInstruction: 'Enter your registered email address to begin the account recovery process.',
+  recoverySecurityDesc: 'Account recovery is handled with the same enterprise-grade security as our database clustering. We\'ll help you regain access.',
+  recoveryProtocolDesc: 'You will receive a one-time cryptographic link to authorize a new master password creation. The link expires in 15 minutes.',
+  submitEmailStep: 'Submit your registered email',
+  checkInboxStep: 'Check inbox for recovery link',
+  setNewPasswordStep: 'Set a new secure password',
+  securityInfrastructure: 'CUBRID Manager Security Infrastructure',
+  recoveryInstructionsSent: 'Recovery instructions have been sent to',
+  checkSpamMsg: 'The link expires in 15 minutes. Check your spam folder if it doesn\'t arrive.',
+  resendRecoveryEmail: 'Resend recovery email',
 };
+

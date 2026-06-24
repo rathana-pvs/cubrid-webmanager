@@ -198,7 +198,7 @@ export default function VolumeInfoMonitor({ tabId }) {
                 {usedPct.toFixed(0)}
               </span>
               <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">%</span>
-              <span className="text-[9px] text-slate-400 uppercase tracking-widest">Used</span>
+              <span className="text-[9px] text-slate-400 uppercase tracking-widest">{CM.usedLabel}</span>
             </div>
           </div>
 

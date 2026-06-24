@@ -52,7 +52,7 @@ export default function ForgotPasswordPage() {
               <div className="w-7 h-7 rounded-lg bg-white/4 border border-white/[0.07] flex items-center justify-center group-hover:bg-white/10 transition-colors">
                 <Icon name="arrow_back" size="14px" weight={300} className="text-slate-500 group-hover:text-white" />
               </div>
-              <span className="text-[11px] font-bold uppercase tracking-[0.2em]">Back to Login</span>
+              <span className="text-[11px] font-bold uppercase tracking-[0.2em]">{CM.backToLogin}</span>
             </Link>
 
             {/* Brand */}
@@ -62,7 +62,7 @@ export default function ForgotPasswordPage() {
               </div>
               <div>
                 <p className="text-white font-bold text-lg leading-none tracking-tight">CUBRID <span className="text-amber-400 font-light">Manager</span></p>
-                <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-semibold mt-0.5">Enterprise Database Suite</p>
+                <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-semibold mt-0.5">{CM.enterpriseSuite}</p>
               </div>
             </div>
 
@@ -73,11 +73,10 @@ export default function ForgotPasswordPage() {
                 <span className="text-[10px] font-bold uppercase tracking-[0.25em] text-rose-500/80 font-mono">{CM.accountRecovery}</span>
               </div>
               <h1 className="text-5xl font-black text-white leading-[1.08] tracking-tighter mb-5">
-                Reset your<br />
-                <span className="text-transparent bg-clip-text bg-linear-to-r from-rose-400 via-orange-300 to-amber-300">access credentials.</span>
+                {CM.resetAccessCredentials}
               </h1>
               <p className="text-[15px] text-slate-500 font-light leading-relaxed max-w-md">
-                Account recovery is handled with the same enterprise-grade security as our database clustering. We'll help you regain access.
+                {CM.recoverySecurityDesc}
               </p>
             </div>
 
@@ -87,18 +86,18 @@ export default function ForgotPasswordPage() {
                 <div className="w-7 h-7 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
                   <Icon name="shield_lock" size="sm" weight={300} className="text-amber-400" />
                 </div>
-                <p className="text-[11px] font-bold text-white uppercase tracking-widest">Security Protocol</p>
+                <p className="text-[11px] font-bold text-white uppercase tracking-widest">{CM.securityProtocol}</p>
               </div>
               <p className="text-[12px] text-slate-500 leading-relaxed">
-                You will receive a one-time cryptographic link to authorize a new master password creation. The link expires in <span className="text-amber-400 font-semibold">15 minutes</span>.
+                {CM.recoveryProtocolDesc}
               </p>
 
               {/* 3 step flow */}
               <div className="mt-4 space-y-2">
                 {[
-                  { step: '01', label: 'Submit your registered email' },
-                  { step: '02', label: 'Check inbox for recovery link' },
-                  { step: '03', label: 'Set a new secure password' },
+                  { step: '01', label: CM.submitEmailStep },
+                  { step: '02', label: CM.checkInboxStep },
+                  { step: '03', label: CM.setNewPasswordStep },
                 ].map((s) => (
                   <div key={s.step} className="flex items-center gap-3">
                     <span className="text-[10px] font-mono font-bold text-amber-500/60 w-5 shrink-0">{s.step}</span>
@@ -111,7 +110,7 @@ export default function ForgotPasswordPage() {
           </div>
 
           <p className="text-[10px] font-bold text-slate-700 uppercase tracking-[0.3em] mt-10">
-            CUBRID Manager Security Infrastructure
+            {CM.securityInfrastructure}
           </p>
         </div>
       </div>
@@ -139,11 +138,11 @@ export default function ForgotPasswordPage() {
               <div className="mb-8">
                 <div className="flex items-center gap-2 mb-3">
                   <div className="w-1.5 h-5 bg-rose-500 rounded-full" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 font-mono">Recovery</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 font-mono">{CM.recoveryLabel}</span>
                 </div>
-                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">Forgot Password</h2>
+                <h2 className="text-3xl font-black text-slate-900 dark:text-white tracking-tight leading-none mb-2">{CM.forgotPasswordLabel}</h2>
                 <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Enter your registered email address to begin the account recovery process.
+                  {CM.enterEmailInstruction}
                 </p>
               </div>
 
@@ -154,7 +153,7 @@ export default function ForgotPasswordPage() {
                   type="email"
                   required
                   icon="alternate_email"
-                  placeholder="admin@organization.com"
+                  placeholder={CM.emailPlaceholder}
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   autoComplete="email"
@@ -169,7 +168,7 @@ export default function ForgotPasswordPage() {
                     <div className="w-5 h-5 border-2 border-white/20 dark:border-black/20 border-t-white dark:border-t-black rounded-full animate-spin" />
                   ) : (
                     <>
-                      <span className="tracking-wide">Send Recovery Link</span>
+                      <span className="tracking-wide">{CM.sendRecoveryLink}</span>
                       <Icon name="send" size="sm" weight={300} className="group-hover:translate-x-0.5 transition-transform" />
                     </>
                   )}
@@ -178,7 +177,7 @@ export default function ForgotPasswordPage() {
 
               {/* Back to login */}
               <p className="mt-7 text-center text-[12px] text-slate-500 dark:text-slate-400">
-                Remember your password?{' '}
+                {CM.rememberPasswordQuestion}{' '}
                 <Link to="/login" className="font-bold text-slate-900 dark:text-amber-500 hover:underline underline-offset-4">{CM.signIn}</Link>
               </p>
             </>
@@ -193,11 +192,11 @@ export default function ForgotPasswordPage() {
               <div className="mb-3">
                 <div className="flex items-center justify-center gap-2 mb-3">
                   <div className="w-1.5 h-5 bg-emerald-500 rounded-full" />
-                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 font-mono">Link Sent</span>
+                  <span className="text-[10px] font-bold uppercase tracking-[0.2em] text-slate-400 font-mono">{CM.linkSent}</span>
                 </div>
-                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">Check your inbox</h2>
+                <h2 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight mb-2">{CM.checkInbox}</h2>
                 <p className="text-[13px] text-slate-500 dark:text-slate-400 leading-relaxed">
-                  Recovery instructions have been sent to{' '}
+                  {CM.recoveryInstructionsSent}{' '}
                   <span className="text-slate-900 dark:text-white font-bold">{email}</span>.
                 </p>
               </div>
@@ -205,7 +204,7 @@ export default function ForgotPasswordPage() {
               {/* Expiry warning */}
               <div className="my-6 text-left">
                 <InfoBanner variant="warning" title={CM.linkExpiry} icon="timer">
-                  The link expires in <span className="font-bold">15 minutes</span>. Check your spam folder if it doesn't arrive.
+                  {CM.checkSpamMsg}
                 </InfoBanner>
               </div>
 
@@ -213,7 +212,7 @@ export default function ForgotPasswordPage() {
                 onClick={() => { setSubmitted(false); setEmail(''); }}
                 className="w-full h-10 text-[12px] font-bold text-slate-500 dark:text-slate-400 bg-slate-100 dark:bg-white/4 border border-slate-200 dark:border-white/8 rounded-xl hover:border-slate-300 dark:hover:border-white/15 hover:text-slate-700 dark:hover:text-slate-200 transition-all"
               >
-                Resend recovery email
+                {CM.resendRecoveryEmail}
               </button>
 
               <Link
@@ -221,7 +220,7 @@ export default function ForgotPasswordPage() {
                 className="mt-5 inline-flex items-center gap-1.5 text-[12px] font-bold text-slate-900 dark:text-amber-500 hover:underline underline-offset-4"
               >
                 <Icon name="arrow_back" size="14px" weight={300} />
-                Back to Sign In
+                {CM.backToSignIn}
               </Link>
             </div>
           )}

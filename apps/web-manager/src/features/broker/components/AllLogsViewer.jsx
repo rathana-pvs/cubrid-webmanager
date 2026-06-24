@@ -116,12 +116,12 @@ const LogSection = ({ hostUid, path, isExpanded, onToggleExpanded, isDb }) => {
           {loading && !lines.length ? (
             <div className="flex items-center justify-center py-8 text-slate-400 gap-2">
               <Spinner size="sm" />
-              <span className="text-sm">Loading log lines...</span>
+              <span className="text-sm">{CM.loadingLogLines}</span>
             </div>
           ) : lines.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 opacity-40">
               <Icon name="block" size="md" weight={300} />
-              <span className="italic mt-1">No content available</span>
+              <span className="italic mt-1">{CM.noContentAvailableShort}</span>
             </div>
           ) : (
             <div className="py-1">
@@ -331,15 +331,15 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
         {logsLoading && !targetLogs.length ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 space-y-3">
             <Spinner size="lg" />
-            <p className="text-slate-500 dark:text-slate-400 text-sm">Scanning for log files...</p>
+            <p className="text-slate-500 dark:text-slate-400 text-sm">{CM.scanningForLogFiles}</p>
           </div>
         ) : targetLogs.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center py-12 bg-white dark:bg-bk-side border border-dashed border-slate-200 dark:border-slate-800 rounded-xl mx-auto max-w-md mt-10">
             <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
               <Icon name="block" size="md" weight={300} className="text-slate-400 dark:text-slate-500" />
             </div>
-            <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">No Log Files Found</h3>
-            <p className="text-xs text-slate-400 mt-1 px-6">We couldn't find any log files for this resource.</p>
+            <h3 className="text-base font-bold text-slate-700 dark:text-slate-300">{CM.noLogFilesFound}</h3>
+            <p className="text-xs text-slate-400 mt-1 px-6">{CM.noLogFilesFoundMsg}</p>
           </div>
         ) : (
           <div className="max-w-6xl mx-auto flex flex-col gap-4">

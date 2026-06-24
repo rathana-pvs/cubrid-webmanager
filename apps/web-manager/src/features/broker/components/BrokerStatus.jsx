@@ -161,7 +161,7 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
           title={
             <div className="flex items-center gap-2">
               <Icon name="info" size="sm" weight={300} className="text-amber-500" />
-              <span className="text-[12px] font-bold">Basic Information</span>
+              <span className="text-[12px] font-bold">{CM.basicInformation}</span>
             </div>
           }
           bodyClassName="p-0"
@@ -223,7 +223,7 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
           title={
             <div className="flex items-center gap-2">
               <Icon name="dns" size="sm" weight={300} className="text-amber-500" />
-              <span className="text-[12px] font-bold">Application Servers (AS)</span>
+              <span className="text-[12px] font-bold">{CM.applicationServers}</span>
             </div>
           }
           rightContent={(isCollapsed) => isCollapsed && asActiveBadge}
@@ -244,7 +244,7 @@ const Component = function BrokerStatus({ hostUid, brokerName }) {
           title={
             <div className="flex items-center gap-2">
               <Icon name="queue" size="sm" weight={300} className="text-amber-500" />
-              <span className="text-[12px] font-bold">Job Queue</span>
+              <span className="text-[12px] font-bold">{CM.jobQueue}</span>
             </div>
           }
           rightContent={(isCollapsed) => isCollapsed && jobInfo.length > 0 && jobQueuedBadge}

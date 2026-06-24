@@ -228,7 +228,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
           </div>
           <div className="min-w-0">
             <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight truncate">{fileName}</h2>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Broker Log Viewer</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{CM.brokerLogViewer}</p>
           </div>
         </div>
 
@@ -287,7 +287,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
                 : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
           >
             <Icon name={copying ? 'check' : 'content_copy'} size="18px" weight={300} />
-            {copying && <span className="tracking-tight">Copied</span>}
+            {copying && <span className="tracking-tight">{CM.copiedLabel}</span>}
           </button>
 
           {/* Refresh */}
@@ -350,7 +350,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
               <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
                 <Icon name="inbox" size="sm" weight={300} className="text-slate-400 dark:text-slate-500 text-3xl" />
               </div>
-              <p className="text-sm text-slate-500 dark:text-slate-400 italic">No content available for this range.</p>
+              <p className="text-sm text-slate-500 dark:text-slate-400 italic">{CM.noContentAvailable}</p>
             </div>
           ) : (
             <div>
@@ -375,7 +375,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
         {activeViewMode === 'sql' && (
           sqls.length === 0 ? (
             <div className="h-full flex flex-col items-center justify-center">
-              <p className="text-sm text-slate-400 italic">No SQL statements found in this page.</p>
+              <p className="text-sm text-slate-400 italic">{CM.noSqlStatementsFound}</p>
             </div>
           ) : (
             <div className="p-4 space-y-3">
@@ -406,14 +406,14 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
             {/* Column headers */}
             <div className="flex items-center gap-4 px-4 py-2 bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 sticky top-0">
               <div className="w-10 shrink-0">ID</div>
-              <div className="w-20 shrink-0 text-right">Max (s)</div>
-              <div className="w-20 shrink-0 text-right text-sky-500">Avg (s)</div>
-              <div className="w-20 shrink-0 text-right text-emerald-500">Count</div>
-              <div className="w-16 shrink-0 text-right text-rose-500">Errors</div>
-              <div className="flex-1">SQL Pattern</div>
+              <div className="w-20 shrink-0 text-right">{CM.maxSeconds}</div>
+              <div className="w-20 shrink-0 text-right text-sky-500">{CM.avgSeconds}</div>
+              <div className="w-20 shrink-0 text-right text-emerald-500">{CM.countLabel}</div>
+              <div className="w-16 shrink-0 text-right text-rose-500">{CM.errorsLabel}</div>
+              <div className="flex-1">{CM.sqlPattern}</div>
             </div>
             {top.length === 0 ? (
-              <div className="py-12 text-center text-slate-400 italic text-sm">No queries found to analyze.</div>
+              <div className="py-12 text-center text-slate-400 italic text-sm">{CM.noQueriesToAnalyze}</div>
             ) : top.map((d, i) => (
               <div
                 key={i}

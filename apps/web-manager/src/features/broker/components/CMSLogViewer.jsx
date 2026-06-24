@@ -43,7 +43,7 @@ function CMSLogViewer({ hostUid, type }) {
       <div className="flex-1 flex flex-col items-center justify-center bg-slate-50 dark:bg-bk-main">
         <div className="flex flex-col items-center gap-3">
           <div className="w-10 h-10 border-4 border-bk-yellow/20 border-t-bk-yellow rounded-full animate-spin"></div>
-          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">Loading manager logs...</p>
+          <p className="text-sm text-slate-500 dark:text-slate-400 font-medium">{CM.loadingManagerLogs}</p>
         </div>
       </div>
     );
@@ -59,7 +59,7 @@ function CMSLogViewer({ hostUid, type }) {
           </div>
           <div>
             <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight">{title}</h2>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">Manager System Activity</p>
+            <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium">{CM.managerSystemActivity}</p>
           </div>
         </div>
 
@@ -81,7 +81,7 @@ function CMSLogViewer({ hostUid, type }) {
                 : 'bg-slate-50 dark:bg-white/[0.03] border-slate-200 dark:border-white/10 text-slate-400 hover:text-amber-600 dark:hover:text-bk-yellow hover:border-amber-500/50 dark:hover:border-bk-yellow/50 hover:bg-white dark:hover:bg-white/5 shadow-xs'}`}
           >
             <Icon name={copying ? 'check' : 'content_copy'} size="18px" weight={300} />
-            {copying && <span className="tracking-tight">Copied</span>}
+            {copying && <span className="tracking-tight">{CM.copiedLabel}</span>}
           </button>
 
           {/* Refresh */}
@@ -136,9 +136,9 @@ function CMSLogViewer({ hostUid, type }) {
 
       {/* Table Header */}
       <div className="shrink-0 flex items-center gap-4 px-4 py-2 bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 tracking-wider">
-        <div className="w-36 shrink-0">Time</div>
-        <div className="w-24 shrink-0">User</div>
-        <div className="w-40 shrink-0">Task</div>
+        <div className="w-36 shrink-0">{CM.timeLabel}</div>
+        <div className="w-24 shrink-0">{CM.userLabel}</div>
+        <div className="w-40 shrink-0">{CM.taskLabel}</div>
         <div className="flex-1">Detail / Note</div>
       </div>
 
@@ -149,7 +149,7 @@ function CMSLogViewer({ hostUid, type }) {
             <div className="w-16 h-16 bg-slate-50 dark:bg-white/5 rounded-full flex items-center justify-center mb-4">
               <Icon name="inbox" size="sm" weight={300} className="text-slate-400 dark:text-slate-500 text-3xl" />
             </div>
-            <p className="text-sm text-slate-500 dark:text-slate-400 italic">No log entries found for this category.</p>
+            <p className="text-sm text-slate-500 dark:text-slate-400 italic">{CM.noLogEntriesFound}</p>
           </div>
         ) : (
           <div className="min-w-full inline-block">
@@ -173,14 +173,14 @@ function CMSLogViewer({ hostUid, type }) {
                 <div className="flex-1 min-w-0 truncate">
                   {type === 'error' ? (
                     <div className="flex gap-2 items-center">
-                      <span className="text-rose-500 dark:text-rose-400 font-bold text-[10px] bg-rose-400/10 px-1 rounded-sm shrink-0">ERR</span>
+                      <span className="text-rose-500 dark:text-rose-400 font-bold text-[10px] bg-rose-400/10 px-1 rounded-sm shrink-0">{CM.errLabel}</span>
                       <span className="text-slate-600 dark:text-slate-300 truncate" title={log.errornote?.replace('<end>', '')}>
                         {log.errornote?.replace('<end>', '')}
                       </span>
                     </div>
                   ) : (
                     <div className="flex gap-2 items-center">
-                      <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] bg-emerald-400/10 px-1 rounded-sm shrink-0">SUCCESS</span>
+                      <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] bg-emerald-400/10 px-1 rounded-sm shrink-0">{CM.successLabel}</span>
                       <span className="text-slate-500 dark:text-slate-400 italic">Operation: {log.taskname} completed</span>
                     </div>
                   )}
@@ -196,7 +196,7 @@ function CMSLogViewer({ hostUid, type }) {
         <div className="flex items-center gap-4">
           <span>Total entries: {totalEntries.toLocaleString()}</span>
           {showAll ? (
-             <span>Showing all records</span>
+             <span>{CM.showingAllRecords}</span>
           ) : (
              <span>Showing: {startIndex + 1} - {Math.min(startIndex + pageSize, totalEntries)}</span>
           )}
