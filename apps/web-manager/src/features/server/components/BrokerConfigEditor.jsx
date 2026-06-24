@@ -5,11 +5,13 @@ import { showStatusModal, setTabDirty } from '../../layout/layoutSlice';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
+import { useCM } from '../../../constants/useCM';
 
 import ConfigEditorToolbar from './broker/ConfigEditorToolbar';
 import ConfigSourceEditor from './broker/ConfigSourceEditor';
 
 export default function BrokerConfigEditor({ hostUid }) {
+  const CM = useCM();
   const tabId = `broker_config:${hostUid}`;
   const dispatch = useDispatch();
   const { hosts } = useSelector((state) => state.host, shallowEqual);
@@ -39,8 +41,8 @@ export default function BrokerConfigEditor({ hostUid }) {
       console.error('Failed to fetch broker config:', err);
       dispatch(showStatusModal({ 
         type: 'error', 
-        title: 'Fetch failed', 
-        message: 'Could not retrieve broker configuration.' 
+        title: CM.fetchFailed, 
+        message: CM.brokerConfigRetrieveError 
       }));
     } finally {
       setLoading(false);
@@ -79,14 +81,14 @@ export default function BrokerConfigEditor({ hostUid }) {
       dispatch(setTabDirty({ tabId, isDirty: false }));
       dispatch(showStatusModal({ 
         type: 'success', 
-        title: 'Config saved', 
-        message: 'Broker configuration updated successfully.' 
+        title: CM.configSaved, 
+        message: CM.brokerConfigSaveSuccess 
       }));
     } catch (err) {
       dispatch(showStatusModal({ 
         type: 'error', 
-        title: 'Save failed', 
-        message: 'An error occurred while saving broker configuration.' 
+        title: CM.saveFailed, 
+        message: CM.brokerConfigSaveError 
       }));
     } finally {
       setSaving(false);
@@ -110,7 +112,7 @@ export default function BrokerConfigEditor({ hostUid }) {
         {loading ? (
           <div className="absolute inset-0 flex flex-col items-center justify-center gap-4">
             <Spinner size="lg" />
-            <Typography variant="overline" className="text-slate-600 dark:text-bk-yellow tracking-widest animate-pulse">Initializing Editor...</Typography>
+            <Typography variant="overline" className="text-slate-600 dark:text-bk-yellow tracking-widest animate-pulse">{CM.initializingEditor}</Typography>
           </div>
         ) : (
           <ConfigSourceEditor 
@@ -125,7 +127,7 @@ export default function BrokerConfigEditor({ hostUid }) {
          <div className="flex items-center gap-6">
             <div className="flex items-center gap-2">
               <span className="size-2 rounded-full bg-sky-500 shadow-[0_0_8px_rgba(59,130,246,0.3)]"></span>
-              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 font-medium leading-none">Broker Config</Typography>
+              <Typography variant="caption" className="text-slate-500 dark:text-slate-400 font-medium leading-none">{CM.brokerConfig}</Typography>
             </div>
          </div>
          <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium tracking-tight">

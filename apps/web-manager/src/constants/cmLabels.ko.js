@@ -1086,4 +1086,53 @@ export const CM_KO = {
   registrationFailedTitle: '회원가입 실패',
   desktopOnly: '데스크톱 전용',
   desktopBridgeUnavailable: '데스크톱 브리지를 사용할 수 없음',
+
+  // CAS Log Viewer
+  casSqlTransactionLog: 'CAS SQL 로그 조회',
+  casSlowQueryRegistry: 'CAS SLOW Query 로그 조회',
+  broker: '브로커',
+  casUid: 'CAS UID',
+  noLogData: '로그 데이터 없음',
+  logStreamEmptyMsg: '요청한 로그 스트림이 현재 비어 있거나 브로커 프로세스에 의해 초기화되지 않았습니다.',
+  logResolveError: (suffix) => `현재 브로커 디렉토리에서 로그 파일 식별자 [${suffix}]를 확인할 수 없습니다.`,
+  logRetrievalRefused: '원격 호스트가 로그 조회 요청을 거부했습니다. 브로커 연결을 확인하십시오.',
+
+  // Broker Config
+  fetchFailed: '가져오기 실패',
+  brokerConfigRetrieveError: '브로커 구성을 가져올 수 없습니다.',
+  configSaved: '설정 저장됨',
+  brokerConfigSaveSuccess: '브로커 구성이 성공적으로 업데이트되었습니다.',
+  saveFailed: '저장 실패',
+  brokerConfigSaveError: '브로커 구성을 저장하는 동안 오류가 발생했습니다.',
+  initializingEditor: '에디터 초기화 중...',
+  brokerConfig: '브로커 구성',
+  brokerConfiguration: '브로커 설정',
+  modified: '수정됨',
+  commentsPreserved: '소스 보기에서 주석이 보존됩니다',
+  linesLabel: (count) => `${count} 줄`,
+
+  // Node Group Tree
+  addNodeToGroup: '그룹에 호스트 추가',
+
+  // Auth pages
+  forgotLink: '비밀번호를 잊으셨나요?',
+  newToCubrid: 'CUBRID가 처음이신가요?',
+  workspaceSettings: '워크스페이스 설정',
+  website: '웹사이트',
+  github: 'GitHub',
+  atLeast6Chars: '최소 6자 이상',
+  confirmPasswordRequired: '비밀번호를 확인하십시오',
+  weakPassword: '약함',
+  averagePassword: '보통',
+  goodPassword: '좋음',
+  strongPassword: '강함',
+  architecture: '아키텍처',
+  license: '라이선스',
+  engine: '엔진',
+  security: '보안',
+  passwordsMatch: '비밀번호 일치',
+  alreadyHaveAccount: '이미 계정이 있으신가요?',
+  agreeTermsPrefix: '계정을 생성하면 CUBRID 오픈 소스 ',
+  projectTerms: '프로젝트 약관',
+  agreeTermsSuffix: ' 및 데이터 정책에 동의하는 것으로 간주됩니다.',
 };

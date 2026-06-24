@@ -51,8 +51,8 @@ export default function RegisterPage() {
     if (!username.trim()) errs.username = CM.usernameRequired;
     else if (username.length < 3) errs.username = CM.minChars3;
     if (!password) errs.password = CM.passwordRequired;
-    else if (password.length < 6) errs.password = 'At least 6 characters';
-    if (!confirmPassword) errs.confirmPassword = 'Please confirm your password';
+    else if (password.length < 6) errs.password = CM.atLeast6Chars;
+    if (!confirmPassword) errs.confirmPassword = CM.confirmPasswordRequired;
     else if (password !== confirmPassword) errs.confirmPassword = CM.passwordsDoNotMatch;
     return errs;
   };
@@ -83,10 +83,10 @@ export default function RegisterPage() {
     if (/[A-Z]/.test(password)) score++;
     if (/[0-9]/.test(password)) score++;
     if (/[^A-Za-z0-9]/.test(password)) score++;
-    if (score <= 1) return { level: 1, label: 'Weak',        color: 'bg-rose-500',    text: 'text-rose-500' };
-    if (score <= 2) return { level: 2, label: 'Average',     color: 'bg-amber-500',   text: 'text-amber-500' };
-    if (score <= 3) return { level: 3, label: 'Good',        color: 'bg-blue-500',    text: 'text-blue-500' };
-    return             { level: 4, label: 'Strong',       color: 'bg-emerald-500', text: 'text-emerald-500' };
+    if (score <= 1) return { level: 1, label: CM.weakPassword,    color: 'bg-rose-500',    text: 'text-rose-500' };
+    if (score <= 2) return { level: 2, label: CM.averagePassword,  color: 'bg-amber-500',   text: 'text-amber-500' };
+    if (score <= 3) return { level: 3, label: CM.goodPassword,     color: 'bg-blue-500',    text: 'text-blue-500' };
+    return             { level: 4, label: CM.strongPassword,    color: 'bg-emerald-500', text: 'text-emerald-500' };
   };
   const strength = getPasswordStrength();
 
@@ -97,10 +97,10 @@ export default function RegisterPage() {
   const inputNorm  = 'hover:border-slate-300 dark:hover:border-white/20';
 
   const specs = [
-    { icon: 'hub',           label: 'Architecture', val: '3-Tier'      },
-    { icon: 'verified_user', label: 'License',      val: 'Open Source' },
-    { icon: 'speed',         label: 'Engine',       val: 'MVCC'        },
-    { icon: 'security',      label: 'Security',     val: 'Enterprise'  },
+    { icon: 'hub',           label: CM.architecture, val: '3-Tier'      },
+    { icon: 'verified_user', label: CM.license,      val: 'Open Source' },
+    { icon: 'speed',         label: CM.engine,       val: 'MVCC'        },
+    { icon: 'security',      label: CM.security,     val: 'Enterprise'  },
   ];
 
   return (
@@ -222,7 +222,7 @@ export default function RegisterPage() {
 
           {confirmPassword && password === confirmPassword && !errors.confirmPassword && (
             <p className="mt-[-8px] text-[10px] text-emerald-500 font-medium flex items-center gap-1 ml-0.5 animate-in fade-in">
-              <Icon name="check_circle" size="12px" weight={400} />Passwords match
+              <Icon name="check_circle" size="12px" weight={400} />{CM.passwordsMatch}
             </p>
           )}
 
@@ -252,14 +252,14 @@ export default function RegisterPage() {
 
         {/* Already have account */}
         <p className="mt-5 text-center text-[12px] text-slate-500 dark:text-slate-400">
-          Already have an account?{' '}
+          {CM.alreadyHaveAccount}{' '}
           <Link to="/login" className="font-bold text-slate-900 dark:text-amber-500 hover:underline underline-offset-4">{CM.signIn}</Link>
         </p>
 
         {/* Terms */}
         <p className="mt-4 text-center text-[9px] text-slate-400/60 leading-relaxed max-w-[280px] mx-auto">
-          By creating an account, you agree to the CUBRID Open Source{' '}
-          <a href="#" className="underline hover:text-amber-500 transition-colors">Project Terms</a> and data policies.
+          {CM.agreeTermsPrefix}
+          <a href="#" className="underline hover:text-amber-500 transition-colors">{CM.projectTerms}</a>{CM.agreeTermsSuffix}
         </p>
       </div>
     </div>

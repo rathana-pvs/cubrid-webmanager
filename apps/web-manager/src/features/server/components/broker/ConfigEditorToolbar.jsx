@@ -22,7 +22,7 @@ export default function ConfigEditorToolbar({
           <Icon name="hub" size="sm" weight={300} className="text-amber-600 dark:text-bk-yellow" />
         </div>
         <div className="min-w-0">
-          <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight">Broker Configuration</h2>
+          <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight">{CM.brokerConfiguration}</h2>
           <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{hostDisplayName} / cubrid_broker.conf</p>
         </div>
       </div>
@@ -56,7 +56,7 @@ export default function ConfigEditorToolbar({
         {hasChanges && (
           <div className="flex items-center gap-1.5 px-2 py-1 rounded-md bg-amber-500/10 border border-amber-500/20 mr-1">
             <span className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Modified</span>
+            <span className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">{CM.modified}</span>
           </div>
         )}
 

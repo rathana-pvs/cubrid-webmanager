@@ -50,7 +50,7 @@ export default function ConfigSourceEditor({ rawContent, handleSourceChange }) {
           <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-mono">cubrid_broker.conf</span>
         </div>
         <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 font-mono uppercase tracking-widest">
-          {lineCount} lines
+          {CM.linesLabel(lineCount)}
         </span>
       </div>
 
@@ -90,7 +90,7 @@ export default function ConfigSourceEditor({ rawContent, handleSourceChange }) {
 
       {/* Footer hint */}
       <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
-        <span>Comments preserved in source view</span>
+        <span>{CM.commentsPreserved}</span>
         <StatusBadge label={CM.source} variant="emerald" className="border-none bg-transparent" />
       </div>
     </div>

@@ -5,6 +5,7 @@ import { orderedGroupEntries, sortHostUidsByHaRole } from '../../../host/hostGro
 import ServerListItem from './ServerListItem';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { TreeNode } from '../../../../components/domain/tree/TreeNode';
+import { useCM } from '../../../../constants/useCM';
 
 const HOST_DRAG_MIME = 'application/x-cubrid-host';
 
@@ -17,6 +18,7 @@ export default function HostGroupTree({
   onContextMenu,
   onGroupContextMenu,
 }) {
+  const CM = useCM();
   const dispatch = useDispatch();
   const [expandedGroups, setExpandedGroups] = useState(() => new Set());
   const [draggedHost, setDraggedHost] = useState(null);
@@ -171,7 +173,7 @@ export default function HostGroupTree({
                 className="ml-8 mb-1 flex items-center gap-1 px-2 py-0.5 text-[10px] text-slate-400 hover:text-amber-500 transition-colors"
               >
                 <Icon name="add" size="12px" />
-                Add node to group
+                {CM.addNodeToGroup}
               </button>
             )}
           </div>

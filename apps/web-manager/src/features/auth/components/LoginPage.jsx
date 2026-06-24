@@ -134,7 +134,7 @@ export default function LoginPage() {
 
           <Input
             label={CM.password}
-            labelExtra={<Link to="/forgot-password" title={CM.recoverPassword} className="text-amber-500 hover:text-amber-400 transition-colors">Forgot?</Link>}
+            labelExtra={<Link to="/forgot-password" title={CM.recoverPassword} className="text-amber-500 hover:text-amber-400 transition-colors">{CM.forgotLink}</Link>}
             icon="lock"
             type={showPassword ? 'text' : 'password'}
             placeholder="••••••••"
@@ -187,8 +187,8 @@ export default function LoginPage() {
 
         {/* Create account link */}
         <p className="mt-5 text-center text-[12px] text-slate-500 dark:text-slate-400">
-          New to CUBRID?{' '}
-          <Link to="/register" className="font-bold text-slate-900 dark:text-amber-500 hover:underline underline-offset-4">Create Account</Link>
+          {CM.newToCubrid}{' '}
+          <Link to="/register" className="font-bold text-slate-900 dark:text-amber-500 hover:underline underline-offset-4">{CM.createAccount}</Link>
         </p>
 
         {typeof window !== 'undefined' &&
@@ -197,7 +197,7 @@ export default function LoginPage() {
             window.desktopBridge) && (
           <p className="mt-2.5 text-center text-[12px] text-slate-500 dark:text-slate-400">
             <Link to="/desktop/workspace" className="font-semibold text-slate-700 dark:text-slate-300 hover:text-amber-500">
-              Workspace settings
+              {CM.workspaceSettings}
             </Link>
           </p>
         )}
@@ -205,8 +205,8 @@ export default function LoginPage() {
         {/* Legal footer */}
         <div className="mt-6 pt-4 border-t border-slate-100 dark:border-white/5 flex items-center justify-between text-[9px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">
           <div className="flex gap-4">
-            <a href="https://www.cubrid.org" target="_blank" rel="noreferrer" className="hover:text-amber-500 transition-colors">Website</a>
-            <a href="https://github.com/CUBRID" target="_blank" rel="noreferrer" className="hover:text-amber-500 transition-colors">GitHub</a>
+            <a href="https://www.cubrid.org" target="_blank" rel="noreferrer" className="hover:text-amber-500 transition-colors">{CM.website}</a>
+            <a href="https://github.com/CUBRID" target="_blank" rel="noreferrer" className="hover:text-amber-500 transition-colors">{CM.github}</a>
           </div>
           <span className="font-mono text-slate-400 dark:text-slate-600">v12.4.0</span>
         </div>

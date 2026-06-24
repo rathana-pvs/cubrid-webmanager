@@ -4,14 +4,17 @@ import { closeDropUserModal, dropDatabaseUser, fetchDatabaseUsers } from '../use
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
+import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
   ModalStatusSuccess, 
   ModalStatusError 
 } from '../../../components/ds/feedback/ActionStatus';
+import { useCM } from '../../../constants/useCM';
 
 export default function DropUserModal() {
+  const CM = useCM();
   const dispatch = useDispatch();
   const { isDropUserModalOpen, dropUserData } = useSelector((state) => state.user, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);

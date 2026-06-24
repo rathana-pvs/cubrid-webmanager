@@ -1108,4 +1108,53 @@ export const CM = {
   registrationFailedTitle: 'Registration Failed',
   desktopOnly: 'Desktop only',
   desktopBridgeUnavailable: 'Desktop bridge unavailable',
+
+  // CAS Log Viewer
+  casSqlTransactionLog: 'CAS SQL Log',
+  casSlowQueryRegistry: 'CAS Slow Query Log',
+  broker: 'Broker',
+  casUid: 'CAS UID',
+  noLogData: 'No Log Data',
+  logStreamEmptyMsg: "The requested log stream is currently empty or hasn't been initialized by the broker process.",
+  logResolveError: (suffix) => `Log file identifier [${suffix}] could not be resolved in the current broker directory.`,
+  logRetrievalRefused: 'The remote host refused the log retrieval request. Please verify broker connectivity.',
+
+  // Broker Config
+  fetchFailed: 'Fetch failed',
+  brokerConfigRetrieveError: 'Could not retrieve broker configuration.',
+  configSaved: 'Config saved',
+  brokerConfigSaveSuccess: 'Broker configuration updated successfully.',
+  saveFailed: 'Save failed',
+  brokerConfigSaveError: 'An error occurred while saving broker configuration.',
+  initializingEditor: 'Initializing Editor...',
+  brokerConfig: 'Broker Config',
+  brokerConfiguration: 'Broker Configuration',
+  modified: 'Modified',
+  commentsPreserved: 'Comments preserved in source view',
+  linesLabel: (count) => `${count} lines`,
+
+  // Node Group Tree
+  addNodeToGroup: 'Add host to group',
+
+  // Auth pages
+  forgotLink: 'Forgot?',
+  newToCubrid: 'New to CUBRID?',
+  workspaceSettings: 'Workspace settings',
+  website: 'Website',
+  github: 'GitHub',
+  atLeast6Chars: 'At least 6 characters',
+  confirmPasswordRequired: 'Please confirm your password',
+  weakPassword: 'Weak',
+  averagePassword: 'Average',
+  goodPassword: 'Good',
+  strongPassword: 'Strong',
+  architecture: 'Architecture',
+  license: 'License',
+  engine: 'Engine',
+  security: 'Security',
+  passwordsMatch: 'Passwords match',
+  alreadyHaveAccount: 'Already have an account?',
+  agreeTermsPrefix: 'By creating an account, you agree to the CUBRID Open Source ',
+  projectTerms: 'Project Terms',
+  agreeTermsSuffix: ' and data policies.',
 };
