@@ -1,7 +1,6 @@
 import { Module } from '@nestjs/common';
 import { DatabaseManagementService } from '@database/management/database-management.service';
 import { DatabaseLifecycleService } from '@database/lifecycle/database-lifecycle.service';
-import { DatabaseBackupService } from '@database/backup/database-backup.service';
 import { DatabaseUserService } from '@database/user/database-user.service';
 import { DatabaseConfigService } from '@database/config/database-config.service';
 import { DatabaseInfoModule } from '@database/info/database-info.module';
@@ -35,7 +34,6 @@ import { CmsJobStore } from './cms-job.store';
     CmsJobService,
     DatabaseManagementService,
     DatabaseLifecycleService,
-    DatabaseBackupService,
     DatabaseUserService,
     DatabaseConfigService,
   ],

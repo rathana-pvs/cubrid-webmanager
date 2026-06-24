@@ -1,4 +1,4 @@
-import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Post, Put, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Request } from '@nestjs/common';
 import {
   AddBackupInfoClientRequest,
   AddBackupInfoClientResponse,
@@ -13,12 +13,11 @@ import {
   BackupDbListClientRequest,
   BackupDbListClientResponse,
   BackupDbClientRequest,
-  CreateCmsJobResponse,
+  BackupDbClientResponse,
   RestoreDbClientRequest,
   RestoreDbClientResponse,
 } from '@api-interfaces';
 import { validateRequiredFields } from '@util';
-import { CmsJobService } from '@cms-job/cms-job.service';
 import { DatabaseBackupService } from './database-backup.service';
 
 /**
@@ -35,10 +34,7 @@ import { DatabaseBackupService } from './database-backup.service';
 export class DatabaseBackupController {
   private readonly logger = new Logger(DatabaseBackupController.name);
 
-  constructor(
-    private readonly backupService: DatabaseBackupService,
-    private readonly cmsJobService: CmsJobService
-  ) {}
+  constructor(private readonly backupService: DatabaseBackupService) {}
 
   /**
    * Add automated backup schedule information for a database.
@@ -223,13 +219,12 @@ export class DatabaseBackupController {
    * // Body: { "level": "0", "volname": "demodb_backup_lv0", "backupdir": "/path/to/backup", "removelog": "y", "check": "y", "mt": "2", "zip": "y", "safereplication": "n" }
    */
   @Post('backup-db/:dbname')
-  @HttpCode(HttpStatus.ACCEPTED)
   async backupDb(
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
     @Body() body: BackupDbClientRequest
-  ): Promise<CreateCmsJobResponse> {
+  ): Promise<BackupDbClientResponse> {
     const userId = req.user.sub;
     validateRequiredFields(
       body,
@@ -237,8 +232,8 @@ export class DatabaseBackupController {
       'database/backup-db',
       this.logger
     );
-    this.logger.log(`Enqueue backup job: ${dbname} level: ${body.level} on host: ${hostUid}`);
-    return await this.cmsJobService.createJob(userId, hostUid, 'backupdb', dbname, body);
+    this.logger.log(`Executing backup for database: ${dbname} level: ${body.level} on host: ${hostUid}`);
+    return await this.backupService.backupDb(userId, hostUid, dbname, body);
   }
 
   /**

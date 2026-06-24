@@ -2,7 +2,6 @@ import { Injectable, Logger, NotFoundException, OnModuleDestroy, OnModuleInit } 
 import { v4 as uuidv4 } from 'uuid';
 import {
   AddVolDbRequest,
-  BackupDbClientRequest,
   CheckDatabaseRequest,
   CompactDatabaseRequest,
   CopyDbRequest,
@@ -20,7 +19,6 @@ import { extractCmsLongJobFailureMessage, isCmsLongJobFailure } from '@common';
 import { DatabaseError } from '@error/database/database-error';
 import { DatabaseManagementService } from '@database/management/database-management.service';
 import { DatabaseLifecycleService } from '@database/lifecycle/database-lifecycle.service';
-import { DatabaseBackupService } from '@database/backup/database-backup.service';
 import { EncryptionService } from '@security';
 import { LockService } from '@lock/lock.service';
 import {
@@ -42,8 +40,7 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
     private readonly lockService: LockService,
     private readonly encryptionService: EncryptionService,
     private readonly managementService: DatabaseManagementService,
-    private readonly lifecycleService: DatabaseLifecycleService,
-    private readonly backupService: DatabaseBackupService
+    private readonly lifecycleService: DatabaseLifecycleService
   ) {}
 
   private userKey(userId: string): string {
@@ -321,13 +318,6 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
           hostUid,
           job.dbname,
           payload as RenameDatabaseRequest
-        );
-      case 'backupdb':
-        return this.backupService.backupDb(
-          userId,
-          hostUid,
-          job.dbname,
-          payload as BackupDbClientRequest
         );
       default:
         throw new Error(`Unsupported job type: ${type}`);
