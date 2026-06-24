@@ -7,7 +7,6 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Button } from '../../../components/ds/foundation/Button';
-import { useCM } from '../../../constants/useCM';
 
 export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casId, type = 'sql' }) {
   const CM = useCM();
