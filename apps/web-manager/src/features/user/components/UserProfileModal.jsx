@@ -156,12 +156,12 @@ export default function UserProfileModal({ isOpen, onClose }) {
               <div className="divide-y divide-slate-100 dark:divide-white/5">
                 <div className="flex items-center px-4 py-3 gap-3">
                   <Icon name="badge" size="16px" weight={300} className="text-slate-400 shrink-0" />
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500 w-24 shrink-0">User ID</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 w-24 shrink-0">{CM.userIdLabel}</span>
                   <span className="text-[11.5px] font-bold text-slate-700 dark:text-slate-200 truncate">{profile.id || '—'}</span>
                 </div>
                 <div className="flex items-center px-4 py-3 gap-3">
                   <Icon name="corporate_fare" size="16px" weight={300} className="text-slate-400 shrink-0" />
-                  <span className="text-[11px] text-slate-400 dark:text-slate-500 w-24 shrink-0">Department</span>
+                  <span className="text-[11px] text-slate-400 dark:text-slate-500 w-24 shrink-0">{CM.departmentLabel}</span>
                   <span className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 truncate">{profile.department || 'Not assigned'}</span>
                 </div>
               </div>
@@ -178,11 +178,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
             <div className="p-4 space-y-3">
               {/* Read-only User ID */}
               <div>
-                <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">User ID</label>
+                <label className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 mb-1.5 block">{CM.userIdLabel}</label>
                 <div className="h-10 px-3.5 flex items-center gap-2 bg-slate-100 dark:bg-white/[0.04] border border-slate-200 dark:border-white/8 rounded-xl">
                   <Icon name="badge" size="14px" weight={300} className="text-slate-400" />
                   <span className="text-[12px] font-bold text-slate-400 dark:text-slate-600">{profile.id}</span>
-                  <span className="ml-auto text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">locked</span>
+                  <span className="ml-auto text-[9px] font-bold text-slate-400 dark:text-slate-600 uppercase tracking-widest">{CM.lockedLabel}</span>
                 </div>
               </div>
               <Input

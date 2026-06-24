@@ -2,6 +2,9 @@
   "installation": {
     "version": "22.3.3"
   },
+  "tui": {
+    "enabled": false
+  },
   "plugins": [
     {
       "plugin": "@nx/webpack/plugin",

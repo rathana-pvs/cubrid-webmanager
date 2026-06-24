@@ -413,7 +413,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     onDrop={(e) => handleDrop(e, 'available')}
                   >
                     <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 bg-white/60 dark:bg-white/3 shrink-0">
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Available</p>
+                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{CM.availableLabel}</p>
                     </div>
                     <div className="p-2 border-b border-slate-100 dark:border-white/5 shrink-0">
                       <SearchInput placeholder="Search..." value={searchTerm} onChange={setSearchTerm} onClear={() => setSearchTerm('')} size="sm" />
@@ -453,7 +453,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       )) : (
                         <div className="h-full flex flex-col items-center justify-center opacity-20 py-4">
                           <Icon name="person_off" size="md" className="mb-1" />
-                          <p className="text-[10px] font-bold">No identities</p>
+                          <p className="text-[10px] font-bold">{CM.noIdentities}</p>
                         </div>
                       )}
                     </div>
@@ -497,7 +497,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       onDrop={(e) => handleDrop(e, 'groups')}
                     >
                       <div className="px-3 py-2 border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-white/2 shrink-0 flex items-center justify-between">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Groups</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{CM.groupsLabel}</p>
                         <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600">{formData.groups.length}</span>
                       </div>
                       <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
@@ -530,7 +530,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                         ) : (
                           <div className="h-full flex flex-col items-center justify-center opacity-10 pointer-events-none">
                             <Icon name="drag_indicator" size="sm" className="mb-1" />
-                            <p className="text-[9px] font-black uppercase tracking-widest">Drop groups here</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest">{CM.dropGroupsHere}</p>
                           </div>
                         )}
                       </div>
@@ -543,7 +543,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       onDrop={(e) => handleDrop(e, 'members')}
                     >
                       <div className="px-3 py-2 border-b border-slate-50 dark:border-white/5 bg-slate-50/50 dark:bg-white/2 shrink-0 flex items-center justify-between">
-                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">Members</p>
+                        <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{CM.membersLabel}</p>
                         <span className="text-[10px] font-bold text-slate-300 dark:text-slate-600">{formData.members.length}</span>
                       </div>
                       <div className="flex-1 overflow-y-auto p-2 custom-scrollbar">
@@ -576,7 +576,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                         ) : (
                           <div className="h-full flex flex-col items-center justify-center opacity-10 pointer-events-none">
                             <Icon name="drag_indicator" size="sm" className="mb-1" />
-                            <p className="text-[9px] font-black uppercase tracking-widest">Drop members here</p>
+                            <p className="text-[9px] font-black uppercase tracking-widest">{CM.dropMembersHere}</p>
                           </div>
                         )}
                       </div>
@@ -601,7 +601,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     {isClassesLoading ? (
                       <div className="py-10 text-center opacity-20">
                         <Icon name="refresh" size="sm" className="animate-spin mx-auto mb-2" />
-                        <p className="text-[10px] font-bold uppercase">Loading...</p>
+                        <p className="text-[10px] font-bold uppercase">{CM.loadingLabel}</p>
                       </div>
                     ) : (() => {
                       const systemClasses = currentDbClasses?.systemclass?.[0]?.class?.map(c => ({ name: c.classname, type: 'system' })) || [];
@@ -610,7 +610,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       if (allObjects.length === 0) return (
                         <div className="text-center py-10 opacity-20">
                           <Icon name="table_chart_off" size="md" className="mx-auto mb-2" />
-                          <p className="text-[10px] font-bold uppercase">No objects</p>
+                          <p className="text-[10px] font-bold uppercase">{CM.noObjects}</p>
                         </div>
                       );
                       return allObjects.map(obj => (
@@ -650,7 +650,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                           </div>
                           <div>
                             <p className="text-[13px] font-black text-slate-800 dark:text-white uppercase tracking-tight">{selectedObjectId}</p>
-                            <p className="text-[10px] text-slate-400 font-medium">Access mask configuration</p>
+                            <p className="text-[10px] text-slate-400 font-medium">{CM.accessMaskConfig}</p>
                           </div>
                         </div>
                         <div className="flex gap-1.5">
@@ -666,7 +666,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       {/* DML */}
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-sky-500">DML</span>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-sky-500">{CM.dmlLabel}</span>
                           <div className="flex-1 h-px bg-sky-500/15" />
                         </div>
                         <div className="grid grid-cols-4 gap-2">
@@ -698,7 +698,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       {/* DDL */}
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">DDL</span>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-amber-500">{CM.ddlLabel}</span>
                           <div className="flex-1 h-px bg-amber-500/15" />
                         </div>
                         <div className="grid grid-cols-3 gap-2">
@@ -732,7 +732,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       {/* Grant delegation */}
                       <div className="space-y-2.5">
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-black uppercase tracking-widest text-indigo-500">Grant Delegation</span>
+                          <span className="text-[9px] font-black uppercase tracking-widest text-indigo-500">{CM.grantDelegation}</span>
                           <div className="flex-1 h-px bg-indigo-500/15" />
                         </div>
                         <div className="grid grid-cols-4 gap-2">
@@ -762,7 +762,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                   ) : (
                     <div className="flex-1 flex flex-col items-center justify-center opacity-20 p-8">
                       <Icon name="shield_lock" size="lg" className="mb-3" />
-                      <p className="text-[11px] font-black uppercase tracking-widest">Select an object</p>
+                      <p className="text-[11px] font-black uppercase tracking-widest">{CM.selectAnObject}</p>
                     </div>
                   )}
                 </div>

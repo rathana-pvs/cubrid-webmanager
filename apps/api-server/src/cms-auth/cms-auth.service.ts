@@ -86,22 +86,30 @@ export class CmsAuthService {
   }
 
   private async buildHaLoginPayload(userId: string, uid: string): Promise<CmsHostLoginClientResponse> {
-    const conf = await this.cmsConfigService.getAllSystemParam(userId, uid, CMS_CONFNAME_CUBRID);
-    if (!isHostHaModeOnFromCubridConf(conf)) {
-      return { success: true, isHA: false };
+    try {
+      const conf = await this.cmsConfigService.getAllSystemParam(userId, uid, CMS_CONFNAME_CUBRID);
+      if (!isHostHaModeOnFromCubridConf(conf)) {
+        return { success: true, isHA: false };
+      }
+
+      const hb = await this.haService.heartbeatlistInternal(userId, uid);
+      const haNodes = flattenHanodelist(hb.hanodelist);
+      const currentNodeType =
+        resolveCurrentNodeRole(hb.currentnode, hb.currentnodestate, haNodes) || 'unknown';
+
+      return {
+        success: true,
+        isHA: true,
+        currentNodeType,
+        haNodes,
+      };
+    } catch (error) {
+      Logger.error(`Failed to retrieve HA configuration for host ${uid} during login:`, error);
+      return {
+        success: true,
+        isHA: false,
+      };
     }
-
-    const hb = await this.haService.heartbeatlistInternal(userId, uid);
-    const haNodes = flattenHanodelist(hb.hanodelist);
-    const currentNodeType =
-      resolveCurrentNodeRole(hb.currentnode, hb.currentnodestate, haNodes) || 'unknown';
-
-    return {
-      success: true,
-      isHA: true,
-      currentNodeType,
-      haNodes,
-    };
   }
 
   /**

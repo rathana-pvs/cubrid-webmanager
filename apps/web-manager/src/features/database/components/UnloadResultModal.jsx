@@ -45,8 +45,8 @@ export default function UnloadResultModal() {
             <table className="w-full text-left text-[11px] border-collapse">
               <thead className="bg-slate-50 dark:bg-background-dark/50 text-[10px] font-medium text-slate-400 border-b border-slate-100 dark:border-slate-800">
                 <tr>
-                  <th className="px-4 py-2">Class</th>
-                  <th className="px-4 py-2 text-right">Result</th>
+                  <th className="px-4 py-2">{CM.classLabel}</th>
+                  <th className="px-4 py-2 text-right">{CM.resultLabel}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5 font-mono text-[11px]">

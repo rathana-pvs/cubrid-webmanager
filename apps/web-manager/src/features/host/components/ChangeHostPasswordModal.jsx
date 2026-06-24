@@ -140,7 +140,7 @@ export default function ChangeHostPasswordModal() {
              <div className="w-16 h-16 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center mb-4">
                <Icon name="check_circle" size="32px" className="text-emerald-500" />
              </div>
-             <Typography variant="h3" className="text-lg font-bold text-slate-900 dark:text-white mb-2">Passcode Updated</Typography>
+             <Typography variant="h3" className="text-lg font-bold text-slate-900 dark:text-white mb-2">{CM.passcodeUpdated}</Typography>
              <Typography variant="p" className="text-slate-500 dark:text-slate-400 max-w-[280px]">
                The manager access passcode for <span className="font-bold text-slate-900 dark:text-white">{currentHost?.alias || currentHost?.id}</span> has been successfully changed.
              </Typography>
@@ -163,7 +163,7 @@ export default function ChangeHostPasswordModal() {
                 <Icon name="dns" size="md" className="text-amber-500" />
               </div>
               <div className="flex-1 min-w-0">
-                <Typography variant="caption" className="font-bold text-amber-600/70 dark:text-amber-400/60 uppercase tracking-widest block mb-0.5">Target Host</Typography>
+                <Typography variant="caption" className="font-bold text-amber-600/70 dark:text-amber-400/60 uppercase tracking-widest block mb-0.5">{CM.targetHost}</Typography>
                 <Typography variant="span" className="text-sm font-black text-slate-900 dark:text-white truncate block tracking-tight font-mono">
                   {currentHost?.alias || currentHost?.id || 'N/A'}
                 </Typography>

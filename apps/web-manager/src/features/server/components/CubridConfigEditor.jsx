@@ -173,7 +173,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
         {loading ? (
           <div className="flex-1 flex flex-col items-center justify-center gap-4">
             <Spinner size="lg" />
-            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 animate-pulse">Loading Configuration...</span>
+            <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 animate-pulse">{CM.loadingConfiguration}</span>
           </div>
         ) : (
           /* ══ SOURCE VIEW ═════════════════════════════════════════════════════ */

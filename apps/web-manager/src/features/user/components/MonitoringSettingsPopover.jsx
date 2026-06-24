@@ -142,7 +142,7 @@ export default function MonitoringSettingsPopover() {
       {isOpen && (
         <div className="absolute top-12 right-0 w-80 bg-white dark:bg-background-dark border border-slate-200 dark:border-white/10 rounded-2xl shadow-2xl z-110 overflow-hidden animate-in fade-in zoom-in-95 duration-200 backdrop-blur-xl">
           <div className="px-5 py-3.5 bg-slate-50/50 dark:bg-white/5 border-b border-slate-100 dark:border-white/5 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-900 dark:text-white uppercase tracking-widest">Global Heartbeat</Typography>
+            <Typography variant="caption" className="font-black text-slate-900 dark:text-white uppercase tracking-widest">{CM.globalHeartbeat}</Typography>
             <div className="flex items-center gap-1.5">
                <div className={`w-1.5 h-1.5 rounded-full ${hasActiveMonitoring ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
                <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">{hasActiveMonitoring ? 'Active' : 'Manual'}</span>
@@ -153,7 +153,7 @@ export default function MonitoringSettingsPopover() {
             {/* Dashboard Interval */}
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">Resource Dashboard</Typography>
+                <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">{CM.resourceDashboard}</Typography>
                 <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center font-mono">
                   {localPrefs.dashboardInterval > 0 ? `${localPrefs.dashboardInterval}s` : 'OFF'}
                 </span>
@@ -187,13 +187,13 @@ export default function MonitoringSettingsPopover() {
                 />
               </div>
 
-              <p className="text-[9px] text-slate-400 italic px-1">Synchronizes database throughput and disk IO latency.</p>
+              <p className="text-[9px] text-slate-400 italic px-1">{CM.syncDbThroughputMsg}</p>
             </div>
 
             {/* Broker Interval */}
             <div className="space-y-3">
               <div className="flex justify-between items-center">
-                <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">Broker Infrastructure</Typography>
+                <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">{CM.brokerInfrastructure}</Typography>
                 <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center font-mono">
                   {localPrefs.brokerStatusInterval > 0 ? `${localPrefs.brokerStatusInterval}s` : 'OFF'}
                 </span>
@@ -227,12 +227,12 @@ export default function MonitoringSettingsPopover() {
                 />
               </div>
 
-              <p className="text-[9px] text-slate-400 italic px-1">Propagates connection pool health and query load balancing.</p>
+              <p className="text-[9px] text-slate-400 italic px-1">{CM.propagatesConnectionMsg}</p>
             </div>
           </div>
 
           <div className="px-5 py-4 bg-slate-50 dark:bg-white/2 border-t border-slate-100 dark:border-white/5 flex items-center justify-between">
-            <Typography variant="caption" className="text-slate-400 font-medium">Session Preferences</Typography>
+            <Typography variant="caption" className="text-slate-400 font-medium">{CM.sessionPreferences}</Typography>
             <div className="flex gap-2">
               <Button variant="ghost" size="sm" onClick={() => setIsOpen(false)}>{CM.dismiss}</Button>
               <Button 

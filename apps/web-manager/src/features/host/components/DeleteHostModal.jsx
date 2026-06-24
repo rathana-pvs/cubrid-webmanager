@@ -88,7 +88,7 @@ export default function DeleteHostModal() {
         <div className="space-y-2">
           <div className="flex items-center gap-2 mb-2">
             <div className="w-1.5 h-1.5 rounded-full bg-rose-500"></div>
-            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">Impact Summary</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 uppercase tracking-[0.2em]">{CM.impactSummary}</Typography>
           </div>
 
           <div className="bg-slate-50/50 dark:bg-bk-main/30 border border-slate-100 dark:border-white/5 rounded-2xl p-3 space-y-0">

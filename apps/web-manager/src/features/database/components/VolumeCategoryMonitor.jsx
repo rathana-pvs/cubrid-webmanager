@@ -58,12 +58,12 @@ const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh
     <div className="flex items-center gap-1.5">
       <div className="hidden lg:flex items-center gap-6 mr-4 opacity-80">
         <div className="text-right">
-          <Typography variant="label" className="text-[8px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">Capacity</Typography>
+          <Typography variant="label" className="text-[8px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">{CM.capacityLabel}</Typography>
           <Typography variant="p" className="text-[12px] font-black text-slate-700 dark:text-slate-200 font-mono leading-none">{formatPagesToSize(summary.total, pageSize)}</Typography>
         </div>
         <div className="w-px h-6 bg-slate-200 dark:bg-white/6" />
         <div className="text-right">
-          <Typography variant="label" className="text-[8px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">Usage</Typography>
+          <Typography variant="label" className="text-[8px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">{CM.usageLabel}</Typography>
           <Typography variant="p" className={`text-[12px] font-black font-mono leading-none ${usageSeverity}`}>{summary.pct.toFixed(1)}%</Typography>
         </div>
       </div>
@@ -109,7 +109,7 @@ const CategoryStats = memo(({ volumes, summary, pageSize }) => (
 const UtilizationBar = memo(({ summary, usageSeverity, pageSize }) => (
   <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm px-5 py-4">
     <div className="flex items-center justify-between mb-2">
-      <Typography variant="label" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">Overall Utilization</Typography>
+      <Typography variant="label" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{CM.overallUtilization}</Typography>
       <Typography variant="label" className={`text-[10px] font-black font-mono ${usageSeverity}`}>{summary.pct.toFixed(2)}%</Typography>
     </div>
     <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-none overflow-hidden">

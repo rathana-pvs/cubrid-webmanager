@@ -130,7 +130,7 @@ export default function CMSUserManagementModal() {
               </>
             )}
             {isAdmin && (
-              <span className="text-[10px] text-slate-400 font-medium">Full system authorization</span>
+              <span className="text-[10px] text-slate-400 font-medium">{CM.fullSystemAuthorization}</span>
             )}
           </div>
         </div>

@@ -147,9 +147,9 @@ export default function TransactionInfoModal() {
                   <th className="px-4 py-2">{CM.host}</th>
                   <th className="px-4 py-2">{CM.processId}</th>
                   <th className="px-4 py-2">{CM.programName}</th>
-                  <th className="px-4 py-2 text-right">Query time</th>
-                  <th className="px-4 py-2 text-right">Tran time</th>
-                  <th className="px-4 py-2 text-right">Wait holder</th>
+                  <th className="px-4 py-2 text-right">{CM.queryTime}</th>
+                  <th className="px-4 py-2 text-right">{CM.tranTime}</th>
+                  <th className="px-4 py-2 text-right">{CM.waitHolder}</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 dark:divide-white/5">

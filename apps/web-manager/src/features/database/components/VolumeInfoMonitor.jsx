@@ -95,7 +95,7 @@ export default function VolumeInfoMonitor({ tabId }) {
           </div>
           <div>
             <div className="flex items-center gap-2">
-              <Typography variant="h1" className="text-[13px] font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">Volume Info</Typography>
+              <Typography variant="h1" className="text-[13px] font-bold text-slate-800 dark:text-slate-100 tracking-tight leading-tight">{CM.volumeInfo}</Typography>
               <div className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 shrink-0 transition-all duration-300 ${preferences.dashboardInterval > 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
                 <div className={`w-1 h-1 rounded-full ${preferences.dashboardInterval > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
                 <span className={`text-[9px] font-bold ${preferences.dashboardInterval > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -157,7 +157,7 @@ export default function VolumeInfoMonitor({ tabId }) {
           <div className="m-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/6 border border-amber-100 dark:border-amber-500/20">
             <div className="flex items-center gap-1.5 mb-1 text-amber-600 dark:text-amber-400">
               <Icon name="auto_awesome" size="sm" weight={300} />
-              <Typography variant="label" className="text-[9px] font-bold uppercase tracking-wider">Volume Health</Typography>
+              <Typography variant="label" className="text-[9px] font-bold uppercase tracking-wider">{CM.volumeHealth}</Typography>
             </div>
             <Typography variant="p" className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
               {freeM.toFixed(1)} MB headroom remaining.
@@ -207,26 +207,26 @@ export default function VolumeInfoMonitor({ tabId }) {
             <div className="flex-1 bg-amber-50 dark:bg-amber-500/6 border border-amber-100 dark:border-amber-500/20 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                <Typography variant="label" className="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest">Used</Typography>
+                <Typography variant="label" className="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest">{CM.usedLabel}</Typography>
               </div>
               <Typography variant="p" className="text-lg font-black text-slate-700 dark:text-slate-200 font-mono">{usedM.toFixed(1)}</Typography>
-              <Typography variant="label" className="text-[9px] text-slate-400">MB Physical</Typography>
+              <Typography variant="label" className="text-[9px] text-slate-400">{CM.mbPhysical}</Typography>
             </div>
 
             <div className="flex-1 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/6 rounded-xl p-4">
               <div className="flex items-center gap-2 mb-1">
                 <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20 shrink-0" />
-                <Typography variant="label" className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">Free</Typography>
+                <Typography variant="label" className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{CM.freeLabel}</Typography>
               </div>
               <Typography variant="p" className="text-lg font-black text-slate-700 dark:text-slate-200 font-mono">{freeM.toFixed(1)}</Typography>
-              <Typography variant="label" className="text-[9px] text-slate-400">MB Available</Typography>
+              <Typography variant="label" className="text-[9px] text-slate-400">{CM.mbAvailable}</Typography>
             </div>
           </div>
 
           {/* Utilization bar */}
           <div className="w-full max-w-sm">
             <div className="flex justify-between mb-1.5">
-              <Typography variant="label" className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest">Utilization</Typography>
+              <Typography variant="label" className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest">{CM.utilizationLabel}</Typography>
               <Typography variant="label" className={`text-[9px] font-black font-mono ${severity}`}>{usedPct.toFixed(2)}%</Typography>
             </div>
             <div className="w-full h-1.5 bg-slate-100 dark:bg-white/6 overflow-hidden">

@@ -1135,4 +1135,112 @@ export const CM_KO = {
   agreeTermsPrefix: '계정을 생성하면 CUBRID 오픈 소스 ',
   projectTerms: '프로젝트 약관',
   agreeTermsSuffix: ' 및 데이터 정책에 동의하는 것으로 간주됩니다.',
+
+  // 사이드바 — 호스트 트리 비어있는 상태 / 로그인 상태
+  addFirstHostTitle: '첫 번째 호스트 추가',
+  addFirstHostMsg: 'CUBRID 서버에 연결',
+  hostLoginTitle: '호스트 로그인',
+  establishingSession: '보안 세션을 설정하는 중...',
+  connectionFailed: '연결 실패',
+  tryAgain: '다시 시도',
+  allBrokers: '모든 브로커',
+  brokerLogs: '브로커 로그',
+  errorLogs: '오류 로그',
+  adminLogs: '관리자 로그',
+  managerLogs: '매니저 로그',
+  serverLogs: '서버 로그',
+  backupPlanLabel: '백업 계획',
+  indexEmpty: '인덱스 없음',
+  noDatabasesAvailable: '사용 가능한 데이터베이스 없음',
+
+  // 데이터베이스 공간 모니터
+  databaseLabel: '데이터베이스',
+  usedLabel: '사용됨',
+  freeLabel: '여유',
+  headroomAvailable: '여유 공간',
+  usageLabel: '사용량',
+  volumeCategorization: '볼륨 분류',
+  physicalVolumeTopology: '물리 볼륨 구성',
+  fileSpaceUsage: '파일 공간 사용량',
+  distributionLabel: '분포',
+
+  // 볼륨 정보 모니터
+  volumeInfo: '볼륨 정보',
+  volumeHealth: '볼륨 상태',
+  mbPhysical: 'MB 물리',
+  mbAvailable: 'MB 사용 가능',
+  utilizationLabel: '사용률',
+
+  // 볼륨 카테고리 모니터
+  capacityLabel: '용량',
+  overallUtilization: '전체 사용률',
+
+  // 트랜잭션 정보 모달
+  queryTime: '쿼리 시간',
+  tranTime: '트랜잭션 시간',
+  waitHolder: '대기 홀더',
+
+  // 언로드 결과 모달
+  classLabel: '클래스',
+  resultLabel: '결과',
+
+  // 자동화 볼륨 설정 모달
+  targetDatabase: '대상 데이터베이스',
+
+  // 데이터베이스 플랜 덤프 모달
+  selectedInstance: '선택된 인스턴스',
+  xaslCache: 'XASL 캐시',
+  flushCacheAfterExport: '내보내기 후 캐시 초기화',
+  clearsXaslEntries: '서버 메모리에서 XASL 항목을 지웁니다',
+
+  // CMS 사용자 관리 모달
+  fullSystemAuthorization: '전체 시스템 권한',
+  addManagementUser: '관리 사용자 추가',
+
+  // 호스트 비밀번호 변경 모달
+  passcodeUpdated: '패스코드 업데이트됨',
+  targetHost: '대상 호스트',
+
+  // 호스트 삭제 모달
+  impactSummary: '영향 요약',
+
+  // 호스트 가져오기/내보내기 모달
+  filenameLabel: '파일명:',
+  duplicateLabel: '중복',
+  invalidLabel: '유효하지 않음',
+
+  // CUBRID 설정 편집기
+  loadingConfiguration: '설정 로드 중...',
+
+  // 데이터베이스 대시보드 레거시
+  databasesLabel: '데이터베이스',
+
+  // 사용자 생성 모달
+  availableLabel: '사용 가능',
+  noIdentities: '아이덴티티 없음',
+  groupsLabel: '그룹',
+  dropGroupsHere: '여기에 그룹 놓기',
+  membersLabel: '멤버',
+  dropMembersHere: '여기에 멤버 놓기',
+  loadingLabel: '로딩 중...',
+  noObjects: '객체 없음',
+  accessMaskConfig: '접근 마스크 설정',
+  dmlLabel: 'DML',
+  ddlLabel: 'DDL',
+  grantDelegation: '권한 위임',
+  selectAnObject: '객체 선택',
+
+  // 모니터링 설정 팝오버
+  globalHeartbeat: '전역 하트비트',
+  resourceDashboard: '리소스 대시보드',
+  syncDbThroughputMsg: '데이터베이스 처리량 및 디스크 IO 지연 시간을 동기화합니다.',
+  brokerInfrastructure: '브로커 인프라',
+  propagatesConnectionMsg: '연결 풀 상태 및 쿼리 부하 분산을 전파합니다.',
+  sessionPreferences: '세션 환경설정',
+
+  // 사용자 프로필 모달
+  userIdLabel: '사용자 계정',
+  departmentLabel: '부서',
+  lockedLabel: '잠김',
 };
+

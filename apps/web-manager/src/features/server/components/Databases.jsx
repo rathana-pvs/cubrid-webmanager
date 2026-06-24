@@ -39,7 +39,7 @@ export default function Databases() {
   const cardTitle = (
     <div className="flex items-center gap-2">
       <Icon name="database" size="sm" className="text-bk-yellow"  weight={300} />
-      <Typography variant="span" className="font-bold">Databases</Typography>
+      <Typography variant="span" className="font-bold">{CM.databasesLabel}</Typography>
     </div>
   );
 

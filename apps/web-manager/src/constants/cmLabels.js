@@ -1157,4 +1157,111 @@ export const CM = {
   agreeTermsPrefix: 'By creating an account, you agree to the CUBRID Open Source ',
   projectTerms: 'Project Terms',
   agreeTermsSuffix: ' and data policies.',
+
+  // Sidebar — host tree empty/login state
+  addFirstHostTitle: 'Add your first host',
+  addFirstHostMsg: 'Connect to a CUBRID server',
+  hostLoginTitle: 'Host login',
+  establishingSession: 'Establishing secure session...',
+  connectionFailed: 'Connection failed',
+  tryAgain: 'Try Again',
+  allBrokers: 'All Brokers',
+  brokerLogs: 'Broker Logs',
+  errorLogs: 'Error Logs',
+  adminLogs: 'Admin Logs',
+  managerLogs: 'Manager Logs',
+  serverLogs: 'Server Logs',
+  backupPlanLabel: 'Backup Plan',
+  indexEmpty: 'Index Empty',
+  noDatabasesAvailable: 'No databases available',
+
+  // DatabaseSpaceMonitor
+  databaseLabel: 'Database',
+  usedLabel: 'Used',
+  freeLabel: 'Free',
+  headroomAvailable: 'headroom available',
+  usageLabel: 'Usage',
+  volumeCategorization: 'Volume Categorization',
+  physicalVolumeTopology: 'Physical Volume Topology',
+  fileSpaceUsage: 'File Space Usage',
+  distributionLabel: 'Distribution',
+
+  // VolumeInfoMonitor
+  volumeInfo: 'Volume Info',
+  volumeHealth: 'Volume Health',
+  mbPhysical: 'MB Physical',
+  mbAvailable: 'MB Available',
+  utilizationLabel: 'Utilization',
+
+  // VolumeCategoryMonitor
+  capacityLabel: 'Capacity',
+  overallUtilization: 'Overall Utilization',
+
+  // TransactionInfoModal
+  queryTime: 'Query time',
+  tranTime: 'Tran time',
+  waitHolder: 'Wait holder',
+
+  // UnloadResultModal
+  classLabel: 'Class',
+  resultLabel: 'Result',
+
+  // SetAutomationVolumeModal
+  targetDatabase: 'Target database',
+
+  // DatabasePlanDumpModal
+  selectedInstance: 'Selected Instance',
+  xaslCache: 'XASL Cache',
+  flushCacheAfterExport: 'Flush Cache after export',
+  clearsXaslEntries: 'Clears XASL entries from server memory',
+
+  // CMSUserManagementModal
+  fullSystemAuthorization: 'Full system authorization',
+  addManagementUser: 'Add a management user',
+
+  // ChangeHostPasswordModal
+  passcodeUpdated: 'Passcode Updated',
+  targetHost: 'Target Host',
+
+  // DeleteHostModal
+  impactSummary: 'Impact Summary',
+
+  // ImportExportHostModal
+  filenameLabel: 'Filename:',
+  duplicateLabel: 'DUPLICATE',
+  invalidLabel: 'INVALID',
+
+  // CubridConfigEditor
+  loadingConfiguration: 'Loading Configuration...',
+
+  // Databases (server dashboard legacy component)
+  databasesLabel: 'Databases',
+
+  // CreateUserModal
+  availableLabel: 'Available',
+  noIdentities: 'No identities',
+  groupsLabel: 'Groups',
+  dropGroupsHere: 'Drop groups here',
+  membersLabel: 'Members',
+  dropMembersHere: 'Drop members here',
+  loadingLabel: 'Loading...',
+  noObjects: 'No objects',
+  accessMaskConfig: 'Access mask configuration',
+  dmlLabel: 'DML',
+  ddlLabel: 'DDL',
+  grantDelegation: 'Grant Delegation',
+  selectAnObject: 'Select an object',
+
+  // MonitoringSettingsPopover
+  globalHeartbeat: 'Global Heartbeat',
+  resourceDashboard: 'Resource Dashboard',
+  syncDbThroughputMsg: 'Synchronizes database throughput and disk IO latency.',
+  brokerInfrastructure: 'Broker Infrastructure',
+  propagatesConnectionMsg: 'Propagates connection pool health and query load balancing.',
+  sessionPreferences: 'Session Preferences',
+
+  // UserProfileModal
+  userIdLabel: 'User ID',
+  departmentLabel: 'Department',
+  lockedLabel: 'locked',
 };

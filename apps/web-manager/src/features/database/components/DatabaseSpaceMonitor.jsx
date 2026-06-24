@@ -90,25 +90,27 @@ const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboar
   );
 });
 
-const SummaryCards = memo(({ dbname, data, totals }) => (
+const SummaryCards = memo(({ dbname, data, totals }) => {
+  const CM = useCM();
+  return (
   <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
     <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1.5">
-      <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Database</Typography>
+      <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.databaseLabel}</Typography>
       <Typography variant="p" className="text-[13px] font-bold text-slate-700 dark:text-slate-200 font-mono truncate">{data?.dbname || dbname}</Typography>
     </div>
     <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1">
-      <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Used</Typography>
+      <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.usedLabel}</Typography>
       <Typography variant="p" className="text-base font-black text-slate-700 dark:text-slate-100 font-mono leading-none">{formatSize(totals?.used)}</Typography>
       <Typography variant="label" className="text-[9px] text-slate-400">of {formatSize(totals?.total)}</Typography>
     </div>
     <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1">
-      <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Free</Typography>
+      <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.freeLabel}</Typography>
       <Typography variant="p" className="text-base font-black text-emerald-500 font-mono leading-none">{formatSize(totals?.free)}</Typography>
-      <Typography variant="label" className="text-[9px] text-slate-400">headroom available</Typography>
+      <Typography variant="label" className="text-[9px] text-slate-400">{CM.headroomAvailable}</Typography>
     </div>
     <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1">
       <div className="flex items-center justify-between">
-        <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Usage</Typography>
+        <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.usageLabel}</Typography>
         <Typography variant="label" className={`text-[9px] font-black font-mono ${usageSeverity(totals?.pct || 0)}`}>{(totals?.pct || 0).toFixed(1)}%</Typography>
       </div>
       <div className="w-full h-1 bg-slate-100 dark:bg-white/6 overflow-hidden mt-1.5">
@@ -123,9 +125,11 @@ const SummaryCards = memo(({ dbname, data, totals }) => (
       </div>
     </div>
   </div>
-));
+);
+});
 
 const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
+  const CM = useCM();
   const dispatch = useDispatch();
 
   const handleOpenCategory = (type) => {
@@ -147,7 +151,7 @@ const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
       title={
         <div className="flex items-center gap-1.5">
           <Icon name="layers" size="xs" weight={300} className="text-amber-500" />
-          <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">Volume Categorization</span>
+          <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">{CM.volumeCategorization}</span>
         </div>
       }
       bodyClassName="p-0"
@@ -197,6 +201,7 @@ const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
 });
 
 const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
+  const CM = useCM();
   const dispatch = useDispatch();
 
   return (
@@ -204,7 +209,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
       title={
         <div className="flex items-center gap-1.5">
           <Icon name="dataset" size="xs" weight={300} className="text-amber-500" />
-          <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">Physical Volume Topology</span>
+          <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">{CM.physicalVolumeTopology}</span>
         </div>
       }
       bodyClassName="p-0"
@@ -282,12 +287,14 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
   );
 });
 
-const FileSpaceUsage = memo(({ fileinfo }) => (
+const FileSpaceUsage = memo(({ fileinfo }) => {
+  const CM = useCM();
+  return (
   <Card
     title={
       <div className="flex items-center gap-1.5">
         <Icon name="analytics" size="xs" weight={300} className="text-amber-500" />
-        <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">File Space Usage</span>
+        <span className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">{CM.fileSpaceUsage}</span>
       </div>
     }
     bodyClassName="p-0"
@@ -302,13 +309,16 @@ const FileSpaceUsage = memo(({ fileinfo }) => (
       data={fileinfo || []}
     />
   </Card>
-));
+);
+});
 
-const DistributionChart = memo(({ totals }) => (
+const DistributionChart = memo(({ totals }) => {
+  const CM = useCM();
+  return (
   <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-4 flex flex-col gap-4 h-full">
     <div className="flex items-center gap-1.5">
       <Icon name="pie_chart" size="xs" weight={300} className="text-amber-500" />
-      <Typography variant="p" className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">Distribution</Typography>
+      <Typography variant="p" className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">{CM.distributionLabel}</Typography>
     </div>
 
     <div className="flex items-center gap-6 flex-1">
@@ -334,21 +344,23 @@ const DistributionChart = memo(({ totals }) => (
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Used</span>
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">{CM.usedLabel}</span>
           </div>
           <span className="text-[11px] font-black font-mono text-slate-700 dark:text-slate-200">{formatSize(totals?.used)}</span>
         </div>
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-slate-200 dark:bg-white/10" />
-            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">Free</span>
+            <span className="text-[10px] text-slate-400 uppercase font-bold tracking-tight">{CM.freeLabel}</span>
           </div>
           <span className="text-[11px] font-black font-mono text-slate-700 dark:text-slate-200">{formatSize(totals?.free)}</span>
         </div>
       </div>
     </div>
   </div>
-));
+);
+});
+
 
 // ── Main Component ──
 
