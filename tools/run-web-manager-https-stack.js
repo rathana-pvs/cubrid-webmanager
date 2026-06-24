@@ -83,7 +83,7 @@ function startApi() {
     cwd: REPO_ROOT,
     shell: true,
     stdio: 'inherit',
-    env: { ...process.env },
+    env: { ...process.env, NX_TUI: 'false' },
   });
 }
 
@@ -93,7 +93,7 @@ function startWebDev() {
     cwd: REPO_ROOT,
     shell: true,
     stdio: 'inherit',
-    env: { ...process.env },
+    env: { ...process.env, NX_TUI: 'false' },
   });
 }
 
@@ -103,6 +103,9 @@ function startWebProxy() {
   if (!isProduction) {
     env.USE_DEV_PROXY = '1';
     env.WEB_DEV_TARGET = process.env.WEB_DEV_TARGET || `http://${WEB_DEV_HOST}:${WEB_DEV_PORT}`;
+    if (env.PROXY_INSECURE_TLS === undefined) {
+      env.PROXY_INSECURE_TLS = '1';
+    }
   }
   webChild = spawn(process.execPath, [scriptPath, WEB_HTTPS_PORT], {
     cwd: REPO_ROOT,
