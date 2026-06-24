@@ -1323,5 +1323,31 @@ export const CM_KO = {
   resendRecoveryEmail: '복구 이메일 재전송',
   serverListHeader: '서버 목록',
   resourcesHeader: '리소스',
+
+  // CMSUserManagementModal
+  managementAccountsRegistered: (count) => `${count}개의 관리자 계정이 등록되었습니다.`,
+  confirmDeleteCmsUser: (username) => `관리자 계정 "${username}"을(를) 영구히 삭제하시겠습니까?`,
+  synchronizingRegistry: '설정을 동기화하는 중...',
+  noUsersFound: '등록된 사용자가 없습니다',
+  managementRegistryEmpty: '관리자 설정이 비어 있거나 액세스할 수 없습니다.',
+
+  // EditCMSUserModal & ChangeHostPasswordModal
+  updatePasscode: '암호 변경',
+  passcodeChangedSuccessMsg: (host) => `${host}의 관리자 암호 변경을 성공적으로 완료하였습니다.`,
+  passcodeUpdateNote: '이 작업은 이 연결에 대해 로컬에 저장된 관리자 접속 암호를 업데이트합니다.',
+  userUpdatedSuccessMsg: (username) => `사용자 @${username}이(가) 성공적으로 수정되었습니다.`,
+  userCreatedSuccessMsg: (username) => `사용자 @${username}이(가) 성공적으로 생성되었습니다.`,
+  synchronizationFailed: '동기화에 실패했습니다.',
+  savingChanges: '변경 사항 저장 중',
+  creatingUser: '사용자 생성 중',
+  updating: '업데이트 중...',
+  creating: '생성 중...',
+  editingUser: (username) => `@${username} 편집 중`,
+  createManagementAccount: '새 관리자 계정 생성',
+  primaryAdminNotice: '기본 시스템 관리자 계정입니다. 시스템 수준 권한은 고정되어 있으며 수정할 수 없습니다.',
+  operationCompletedSuccess: '작업이 성공적으로 완료되었습니다.',
+  operationCouldNotBeCompleted: '작업을 완료할 수 없습니다.',
+  viewAll: '전체 보기',
+  paginated: '페이지별 보기',
 };
 

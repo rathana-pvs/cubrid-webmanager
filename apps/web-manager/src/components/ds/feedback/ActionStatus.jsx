@@ -2,95 +2,113 @@ import React from 'react';
 import { Icon } from '../foundation/Icon';
 import { Button } from '../foundation/Button';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
-export const ModalStatusLoading = ({ title = 'Loading', subtitle = 'Please wait.' }) => (
-  <div className="flex flex-col items-center justify-center py-16 gap-7 text-center animate-in fade-in duration-200">
-    <div className="relative w-16 h-16">
-      <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-      <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500 animate-spin" style={{ animationDuration: '0.9s' }} />
-      <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-amber-500/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-      <div className="absolute inset-0 flex items-center justify-center">
-        <Icon name="schedule" size="md" weight={400} className="text-amber-500 animate-pulse" />
+export const ModalStatusLoading = ({ title, subtitle }) => {
+  const CM = useCM();
+  const displayTitle = title || CM.processing;
+  const displaySubtitle = subtitle || CM.pleaseWait;
+  return (
+    <div className="flex flex-col items-center justify-center py-16 gap-7 text-center animate-in fade-in duration-200">
+      <div className="relative w-16 h-16">
+        <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
+        <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500 animate-spin" style={{ animationDuration: '0.9s' }} />
+        <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-amber-500/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
+        <div className="absolute inset-0 flex items-center justify-center">
+          <Icon name="schedule" size="md" weight={400} className="text-amber-500 animate-pulse" />
+        </div>
+      </div>
+
+      <div className="space-y-1.5 px-8">
+        <Typography variant="h4" className="text-[15px] font-bold text-slate-900 dark:text-white">{displayTitle}</Typography>
+        <Typography variant="p" className="text-[12px] text-slate-500 dark:text-slate-400 max-w-[320px] mx-auto leading-relaxed">
+          {displaySubtitle}
+        </Typography>
+      </div>
+
+      <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
+        <div className="h-full bg-amber-500 rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
       </div>
     </div>
-
-    <div className="space-y-1.5 px-8">
-      <Typography variant="h4" className="text-[15px] font-bold text-slate-900 dark:text-white">{title}</Typography>
-      <Typography variant="p" className="text-[12px] text-slate-500 dark:text-slate-400 max-w-[320px] mx-auto leading-relaxed">
-        {subtitle}
-      </Typography>
-    </div>
-
-    <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
-      <div className="h-full bg-amber-500 rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
-    </div>
-  </div>
-);
+  );
+};
 
 export const ModalStatusSuccess = ({
-  title = 'Completed',
-  message = 'The operation completed successfully.',
+  title,
+  message,
   onConfirm,
-  confirmText = 'OK',
-}) => (
-  <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in zoom-in-95 duration-500">
-    <div className="relative">
-      <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-      <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-        <Icon name="verified" size="lg" weight={700} className="text-white" />
+  confirmText,
+}) => {
+  const CM = useCM();
+  const displayTitle = title || CM.operationComplete;
+  const displayMessage = message || CM.operationCompletedSuccess;
+  const displayConfirmText = confirmText || CM.ok;
+  return (
+    <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in zoom-in-95 duration-500">
+      <div className="relative">
+        <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
+        <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
+          <Icon name="verified" size="lg" weight={700} className="text-white" />
+        </div>
       </div>
-    </div>
 
-    <div className="space-y-2 px-8">
-      <Typography variant="h4" className="text-[15px] font-bold text-slate-900 dark:text-white">{title}</Typography>
-      <Typography variant="p" className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[360px] mx-auto">
-        {message}
-      </Typography>
-    </div>
+      <div className="space-y-2 px-8">
+        <Typography variant="h4" className="text-[15px] font-bold text-slate-900 dark:text-white">{displayTitle}</Typography>
+        <Typography variant="p" className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[360px] mx-auto">
+          {displayMessage}
+        </Typography>
+      </div>
 
-    {onConfirm && (
-      <Button variant="primary" onClick={onConfirm} icon="check_circle" className="px-10">{confirmText}</Button>
-    )}
-  </div>
-);
+      {onConfirm && (
+        <Button variant="primary" onClick={onConfirm} icon="check_circle" className="px-10">{displayConfirmText}</Button>
+      )}
+    </div>
+  );
+};
 
 export const ModalStatusError = ({
-  title = 'Failed',
+  title,
   error,
   onRetry,
   onCancel,
-  retryText = 'Retry',
-  cancelText = 'Close',
-}) => (
-  <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
-    <div className="relative">
-      <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2.5s' }} />
-      <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(244,63,94,0.3)]">
-        <Icon name="report_problem" size="sm" weight={300} className="text-white" />
+  retryText,
+  cancelText,
+}) => {
+  const CM = useCM();
+  const displayTitle = title || CM.operationFailed;
+  const displayRetryText = retryText || CM.retry;
+  const displayCancelText = cancelText || CM.close;
+  return (
+    <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in slide-in-from-bottom-4 duration-500">
+      <div className="relative">
+        <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2.5s' }} />
+        <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(244,63,94,0.3)]">
+          <Icon name="report_problem" size="sm" weight={300} className="text-white" />
+        </div>
       </div>
-    </div>
 
-    <div className="space-y-2 px-6">
-      <Typography variant="h4" className="text-[15px] font-bold text-rose-600 dark:text-rose-400">{title}</Typography>
-      <Typography variant="p" className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed">
-        The operation could not be completed.
-      </Typography>
-    </div>
-
-    {error && (
-      <div className="w-full max-w-[440px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-5 py-4 text-left">
-        <Typography variant="caption" className="text-[10px] font-semibold uppercase tracking-wide text-rose-400 mb-1 block">
-          Message
-        </Typography>
-        <Typography variant="caption" className="text-rose-600/90 dark:text-rose-400/90 font-mono leading-relaxed block break-words text-[11px]">
-          {typeof error === 'string' ? error : (error?.message || 'Unknown error')}
+      <div className="space-y-2 px-6">
+        <Typography variant="h4" className="text-[15px] font-bold text-rose-600 dark:text-rose-400">{displayTitle}</Typography>
+        <Typography variant="p" className="text-[12px] text-slate-500 dark:text-slate-400 leading-relaxed">
+          {CM.operationCouldNotBeCompleted}
         </Typography>
       </div>
-    )}
 
-    <div className="flex items-center gap-3">
-      {onCancel && <Button variant="secondary" onClick={onCancel}>{cancelText}</Button>}
-      {onRetry && <Button variant="primary" icon="refresh" onClick={onRetry}>{retryText}</Button>}
+      {error && (
+        <div className="w-full max-w-[440px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-5 py-4 text-left">
+          <Typography variant="caption" className="text-[10px] font-semibold uppercase tracking-wide text-rose-400 mb-1 block">
+            {CM.message || 'Message'}
+          </Typography>
+          <Typography variant="caption" className="text-rose-600/90 dark:text-rose-400/90 font-mono leading-relaxed block break-words text-[11px]">
+            {typeof error === 'string' ? error : (error?.message || 'Unknown error')}
+          </Typography>
+        </div>
+      )}
+
+      <div className="flex items-center gap-3">
+        {onCancel && <Button variant="secondary" onClick={onCancel}>{displayCancelText}</Button>}
+        {onRetry && <Button variant="primary" icon="refresh" onClick={onRetry}>{displayRetryText}</Button>}
+      </div>
     </div>
-  </div>
-);
+  );
+};

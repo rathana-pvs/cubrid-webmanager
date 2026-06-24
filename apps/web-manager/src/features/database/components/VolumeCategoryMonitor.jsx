@@ -106,26 +106,29 @@ const CategoryStats = memo(({ volumes, summary, pageSize }) => (
   </div>
 ));
 
-const UtilizationBar = memo(({ summary, usageSeverity, pageSize }) => (
-  <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm px-5 py-4">
-    <div className="flex items-center justify-between mb-2">
-      <Typography variant="label" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{CM.overallUtilization}</Typography>
-      <Typography variant="label" className={`text-[10px] font-black font-mono ${usageSeverity}`}>{summary.pct.toFixed(2)}%</Typography>
-    </div>
-    <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-none overflow-hidden">
-      <div
-        className="h-full bg-amber-500 transition-all duration-1s ease-out relative"
-        style={{ width: `${summary.pct}%` }}
-      >
-        <div className="absolute inset-0 bg-white/20" />
+const UtilizationBar = memo(({ summary, usageSeverity, pageSize }) => {
+  const CM = useCM();
+  return (
+    <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm px-5 py-4">
+      <div className="flex items-center justify-between mb-2">
+        <Typography variant="label" className="text-[10px] font-bold text-slate-500 uppercase tracking-widest">{CM.overallUtilization}</Typography>
+        <Typography variant="label" className={`text-[10px] font-black font-mono ${usageSeverity}`}>{summary.pct.toFixed(2)}%</Typography>
+      </div>
+      <div className="w-full h-2 bg-slate-100 dark:bg-white/5 rounded-none overflow-hidden">
+        <div
+          className="h-full bg-amber-500 transition-all duration-1s ease-out relative"
+          style={{ width: `${summary.pct}%` }}
+        >
+          <div className="absolute inset-0 bg-white/20" />
+        </div>
+      </div>
+      <div className="flex justify-between mt-1.5">
+        <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.used, pageSize)} used</Typography>
+        <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.free, pageSize)} free</Typography>
       </div>
     </div>
-    <div className="flex justify-between mt-1.5">
-      <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.used, pageSize)} used</Typography>
-      <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.free, pageSize)} free</Typography>
-    </div>
-  </div>
-));
+  );
+});
 
 const VolumeTableContainer = memo(({ volumes, pageSize }) => (
   <Card bodyClassName="p-0 overflow-hidden" className="border-slate-200 dark:border-white/5 shadow-xs bg-white dark:bg-white/1 rounded-sm">

@@ -208,7 +208,7 @@ export default function AutoQueryLogModal() {
                   : 'text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-amber-400'
                 }`}
               >
-                {showAll ? 'Paginated' : 'View All'}
+                {showAll ? CM.paginated : CM.viewAll}
               </button>
             </div>
           </div>

@@ -128,7 +128,7 @@ export default function ChangeHostPasswordModal() {
               icon="verified_user"
               className="min-w-[120px]"
             >
-              Update Passcode
+              {CM.updatePasscode}
             </Button>
           </>
         )
@@ -142,7 +142,7 @@ export default function ChangeHostPasswordModal() {
              </div>
              <Typography variant="h3" className="text-lg font-bold text-slate-900 dark:text-white mb-2">{CM.passcodeUpdated}</Typography>
              <Typography variant="p" className="text-slate-500 dark:text-slate-400 max-w-[280px]">
-               The manager access passcode for <span className="font-bold text-slate-900 dark:text-white">{currentHost?.alias || currentHost?.id}</span> has been successfully changed.
+               {CM.passcodeChangedSuccessMsg(currentHost?.alias || currentHost?.id)}
              </Typography>
           </div>
         ) : (
@@ -199,7 +199,7 @@ export default function ChangeHostPasswordModal() {
             <div className="flex items-start gap-3 p-3.5 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-xl">
               <Icon name="info" size="sm" className="text-sky-500 shrink-0 mt-0.5" weight={300} />
               <Typography variant="caption" className="text-slate-500 font-medium leading-relaxed italic">
-                This will update the manager access passcode stored locally for this connection.
+                {CM.passcodeUpdateNote}
               </Typography>
             </div>
           </>

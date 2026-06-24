@@ -1345,5 +1345,31 @@ export const CM = {
   resendRecoveryEmail: 'Resend recovery email',
   serverListHeader: 'Server List',
   resourcesHeader: 'Resources',
+
+  // CMSUserManagementModal
+  managementAccountsRegistered: (count) => count === 1 ? '1 management account registered' : `${count} management accounts registered`,
+  confirmDeleteCmsUser: (username) => `Are you sure you want to permanently delete the management user "${username}"?`,
+  synchronizingRegistry: 'Synchronizing registry...',
+  noUsersFound: 'No users found',
+  managementRegistryEmpty: 'Management registry is empty or inaccessible.',
+
+  // EditCMSUserModal & ChangeHostPasswordModal
+  updatePasscode: 'Update Passcode',
+  passcodeChangedSuccessMsg: (host) => `The manager access passcode for ${host} has been successfully changed.`,
+  passcodeUpdateNote: 'This will update the manager access passcode stored locally for this connection.',
+  userUpdatedSuccessMsg: (username) => `User @${username} successfully updated.`,
+  userCreatedSuccessMsg: (username) => `User @${username} successfully created.`,
+  synchronizationFailed: 'Synchronization failed.',
+  savingChanges: 'Saving Changes',
+  creatingUser: 'Creating User',
+  updating: 'Updating...',
+  creating: 'Creating...',
+  editingUser: (username) => `Editing @${username}`,
+  createManagementAccount: 'Create a new management account',
+  primaryAdminNotice: 'This is the primary system administrator account. System level permissions are fixed and cannot be modified.',
+  operationCompletedSuccess: 'The operation completed successfully.',
+  operationCouldNotBeCompleted: 'The operation could not be completed.',
+  viewAll: 'View All',
+  paginated: 'Paginated',
 };
 

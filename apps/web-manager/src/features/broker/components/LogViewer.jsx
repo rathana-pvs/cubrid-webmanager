@@ -334,7 +334,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
                 : 'text-slate-500 dark:text-slate-400 hover:bg-white dark:hover:bg-white/5 hover:text-amber-600 dark:hover:text-bk-yellow'
               }`}
             >
-              {isAll ? 'Paginated' : 'View All'}
+              {isAll ? CM.paginated : CM.viewAll}
             </button>
           </div>
         </div>

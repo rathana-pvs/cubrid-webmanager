@@ -122,7 +122,7 @@ export default function EditCMSUserModal() {
             }
           })).unwrap();
         }
-        endSuccess(`User @${formData.targetid} successfully updated.`);
+        endSuccess(CM.userUpdatedSuccessMsg(formData.targetid));
       } else {
         await dispatch(addCmsUser({
           hostUid: selectedHostUid,
@@ -134,11 +134,11 @@ export default function EditCMSUserModal() {
             statusmonitorauth: formData.statusmonitorauth,
           }
         })).unwrap();
-        endSuccess(`User @${formData.targetid} successfully created.`);
+        endSuccess(CM.userCreatedSuccessMsg(formData.targetid));
       }
       dispatch(fetchCmsUsers(selectedHostUid));
     } catch (err) {
-      endError(err?.message || 'Synchronization failed.');
+      endError(err?.message || CM.synchronizationFailed);
     }
   };
 
@@ -147,8 +147,8 @@ export default function EditCMSUserModal() {
   if (!isOpen) return null;
 
   if (isLoading) return (
-    <Modal isOpen title={isEditMode ? 'Saving Changes' : 'Creating User'} icon="person" onClose={resetAction} maxWidth="500px" showCloseButton={false}>
-      <ModalStatusLoading title={isEditMode ? 'Updating...' : 'Creating...'} />
+    <Modal isOpen title={isEditMode ? CM.savingChanges : CM.creatingUser} icon="person" onClose={resetAction} maxWidth="500px" showCloseButton={false}>
+      <ModalStatusLoading title={isEditMode ? CM.updating : CM.creating} />
     </Modal>
   );
 
@@ -169,7 +169,7 @@ export default function EditCMSUserModal() {
       isOpen={isOpen}
       onClose={handleClose}
       title={isEditMode ? CM.editUser : CM.addUser}
-      subtitle={isEditMode ? `Editing @${username}` : 'Create a new management account'}
+      subtitle={isEditMode ? CM.editingUser(username) : CM.createManagementAccount}
       icon={isEditMode ? 'manage_accounts' : 'person_add'}
       maxWidth="540px"
       footer={
@@ -185,7 +185,7 @@ export default function EditCMSUserModal() {
         {isAdmin && (
           <div className="px-1">
             <InfoBanner title={CM.administratorAccount}>
-              This is the primary system administrator account. System level permissions are fixed and cannot be modified.
+              {CM.primaryAdminNotice}
             </InfoBanner>
           </div>
         )}
