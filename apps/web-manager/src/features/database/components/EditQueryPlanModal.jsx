@@ -263,7 +263,7 @@ export default function EditQueryPlanModal() {
       isOpen={isEditQueryPlanModalOpen}
       onClose={handleClose}
       title={CM.editQueryPlan}
-      subtitle={`Modify automated SQL execution for ${selectedDatabase}`}
+      subtitle={CM.editQueryPlanSubtitle(selectedDatabase)}
       icon="edit"
       maxWidth="max-w-[720px]"
       footer={

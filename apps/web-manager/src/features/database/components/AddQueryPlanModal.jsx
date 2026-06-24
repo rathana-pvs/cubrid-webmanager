@@ -198,7 +198,7 @@ export default function AddQueryPlanModal() {
       isOpen={isAddQueryPlanModalOpen}
       onClose={handleClose}
       title={CM.addQueryPlan}
-      subtitle={`Schedule automated SQL execution for ${selectedDatabase}`}
+      subtitle={CM.addQueryPlanSubtitle(selectedDatabase)}
       icon="bolt"
       maxWidth="max-w-[720px]"
       footer={

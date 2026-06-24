@@ -36,12 +36,12 @@ const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh
       <div>
         <div className="flex items-center gap-2">
           <Typography variant="h1" className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-tight">
-            Volume Category Monitor
+            {CM.volumeCategoryMonitor}
           </Typography>
           <div className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 shrink-0 transition-all duration-300 ${dashboardInterval > 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
             <div className={`w-1 h-1 rounded-full ${dashboardInterval > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
             <span className={`text-[9px] font-bold ${dashboardInterval > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
-              {dashboardInterval > 0 ? 'Live' : 'Paused'}
+              {dashboardInterval > 0 ? CM.live : CM.paused}
             </span>
           </div>
         </div>
@@ -58,7 +58,7 @@ const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh
     <div className="flex items-center gap-1.5">
       <div className="hidden lg:flex items-center gap-6 mr-4 opacity-80">
         <div className="text-right">
-          <Typography variant="label" className="text-[8px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">{CM.capacityLabel}</Typography>
+          <Typography variant="label" className="text-[8px] text-slate-400 font-bold uppercase tracking-widest block mb-0.5">{CM.capacity}</Typography>
           <Typography variant="p" className="text-[12px] font-black text-slate-700 dark:text-slate-200 font-mono leading-none">{formatPagesToSize(summary.total, pageSize)}</Typography>
         </div>
         <div className="w-px h-6 bg-slate-200 dark:bg-white/6" />
@@ -69,7 +69,7 @@ const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh
       </div>
 
       <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block mr-2">
-        Synced {lastRefreshed.toLocaleTimeString('en-US', { hour12: true })}
+        {CM.syncedAt(lastRefreshed.toLocaleTimeString('en-US', { hour12: true }))}
       </Typography>
 
       <button
@@ -91,20 +91,23 @@ const CategoryHeader = memo(({ meta, summary, usageSeverity, pageSize, onRefresh
   );
 });
 
-const CategoryStats = memo(({ volumes, summary, pageSize }) => (
-  <div className="grid grid-cols-3 gap-3">
-    {[
-      { label: 'Volumes', val: volumes.length, icon: 'layers', color: 'text-sky-500' },
-      { label: 'Provisioned', val: formatPagesToSize(summary.total, pageSize), icon: 'dns', color: 'text-slate-600' },
-      { label: 'Used capacity', val: `${summary.pct.toFixed(1)}%`, icon: 'donut_small', color: 'text-amber-500' },
-    ].map((stat, i) => (
-      <div key={i} className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1.5 shadow-xs">
-        <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{stat.label}</Typography>
-        <Typography variant="p" className={`text-[13px] font-bold font-mono tracking-tight truncate ${stat.color === 'text-slate-600' ? 'text-slate-700 dark:text-slate-200' : stat.color}`}>{stat.val}</Typography>
-      </div>
-    ))}
-  </div>
-));
+const CategoryStats = memo(({ volumes, summary, pageSize }) => {
+  const CM = useCM();
+  return (
+    <div className="grid grid-cols-3 gap-3">
+      {[
+        { label: CM.volumesLabel, val: volumes.length, icon: 'layers', color: 'text-sky-500' },
+        { label: CM.totalLabel, val: formatPagesToSize(summary.total, pageSize), icon: 'dns', color: 'text-slate-600' },
+        { label: CM.spaceUsage, val: `${summary.pct.toFixed(1)}%`, icon: 'donut_small', color: 'text-amber-500' },
+      ].map((stat, i) => (
+        <div key={i} className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1.5 shadow-xs">
+          <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{stat.label}</Typography>
+          <Typography variant="p" className={`text-[13px] font-bold font-mono tracking-tight truncate ${stat.color === 'text-slate-600' ? 'text-slate-700 dark:text-slate-200' : stat.color}`}>{stat.val}</Typography>
+        </div>
+      ))}
+    </div>
+  );
+});
 
 const UtilizationBar = memo(({ summary, usageSeverity, pageSize }) => {
   const CM = useCM();
@@ -123,85 +126,88 @@ const UtilizationBar = memo(({ summary, usageSeverity, pageSize }) => {
         </div>
       </div>
       <div className="flex justify-between mt-1.5">
-        <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.used, pageSize)} used</Typography>
-        <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.free, pageSize)} free</Typography>
+        <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.used, pageSize)} {CM.usedLabel}</Typography>
+        <Typography variant="label" className="text-[9px] text-slate-400 font-mono">{formatPagesToSize(summary.free, pageSize)} {CM.freeLabel}</Typography>
       </div>
     </div>
   );
 });
 
-const VolumeTableContainer = memo(({ volumes, pageSize }) => (
-  <Card bodyClassName="p-0 overflow-hidden" className="border-slate-200 dark:border-white/5 shadow-xs bg-white dark:bg-white/1 rounded-sm">
-    <Table
-      columns={[
-        {
-          header: 'Volume Name',
-          accessor: 'spacename',
-          render: (val) => {
-            const fileName = val?.split(/[/\\]/).pop() || val;
-            return (
-              <div className="flex items-center gap-3 py-0.5">
-                <div className="w-7 h-7 rounded-sm bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
-                  <Icon name="draft" size="sm" weight={300} />
+const VolumeTableContainer = memo(({ volumes, pageSize }) => {
+  const CM = useCM();
+  return (
+    <Card bodyClassName="p-0 overflow-hidden" className="border-slate-200 dark:border-white/5 shadow-xs bg-white dark:bg-white/1 rounded-sm">
+      <Table
+        columns={[
+          {
+            header: CM.volumeName,
+            accessor: 'spacename',
+            render: (val) => {
+              const fileName = val?.split(/[/\\]/).pop() || val;
+              return (
+                <div className="flex items-center gap-3 py-0.5">
+                  <div className="w-7 h-7 rounded-sm bg-slate-100 dark:bg-white/5 flex items-center justify-center text-slate-400 shrink-0">
+                    <Icon name="draft" size="sm" weight={300} />
+                  </div>
+                  <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 font-mono" title={val}>
+                    {fileName}
+                  </span>
                 </div>
-                <span className="text-[13px] font-semibold text-slate-700 dark:text-slate-200 font-mono" title={val}>
-                  {fileName}
-                </span>
-              </div>
-            );
+              );
+            }
+          },
+          {
+            header: CM.spaceUsage,
+            accessor: 'usedpage',
+            render: (val, row) => {
+              const usedPages = parseInt(val || 0);
+              const totalPages = parseInt(row.totalpage || 0);
+              const pct = totalPages > 0 ? (usedPages / totalPages) * 100 : 0;
+              const barColor = pct > 85 ? 'bg-rose-500' : pct > 60 ? 'bg-amber-500' : 'bg-blue-500';
+              return (
+                <div className="flex flex-col gap-1.5 py-1 min-w-[240px]">
+                  <div className="w-full h-1.5 bg-slate-100 dark:bg-white/6 overflow-hidden">
+                    <div className={`h-full ${barColor} transition-all duration-700ms`} style={{ width: `${pct}%` }} />
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-[10px] font-bold font-mono text-slate-500">{formatMB(usedPages, pageSize)} MB {CM.usedLabel}</span>
+                    <span className="text-[10px] font-bold font-mono text-slate-400">{pct.toFixed(1)}%</span>
+                  </div>
+                </div>
+              );
+            }
+          },
+          {
+            header: CM.totalLabel,
+            accessor: 'totalpage',
+            className: 'text-right',
+            render: (val) => (
+              <span className="text-[13px] font-bold text-slate-600 dark:text-slate-300 font-mono">{formatPagesToSize(val, pageSize)}</span>
+            )
+          },
+          {
+            header: CM.pagesLabel,
+            accessor: 'totalpage',
+            className: 'text-right pr-4',
+            render: (val) => (
+              <span className="text-[12px] text-slate-400 font-mono">
+                {parseInt(val).toLocaleString()}
+              </span>
+            )
           }
-        },
-        {
-          header: 'Allocation',
-          accessor: 'usedpage',
-          render: (val, row) => {
-            const usedPages = parseInt(val || 0);
-            const totalPages = parseInt(row.totalpage || 0);
-            const pct = totalPages > 0 ? (usedPages / totalPages) * 100 : 0;
-            const barColor = pct > 85 ? 'bg-rose-500' : pct > 60 ? 'bg-amber-500' : 'bg-blue-500';
-            return (
-              <div className="flex flex-col gap-1.5 py-1 min-w-[240px]">
-                <div className="w-full h-1.5 bg-slate-100 dark:bg-white/6 overflow-hidden">
-                  <div className={`h-full ${barColor} transition-all duration-700ms`} style={{ width: `${pct}%` }} />
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-[10px] font-bold font-mono text-slate-500">{formatMB(usedPages, pageSize)} MB used</span>
-                  <span className="text-[10px] font-bold font-mono text-slate-400">{pct.toFixed(1)}%</span>
-                </div>
-              </div>
-            );
-          }
-        },
-        {
-          header: 'Provisioned',
-          accessor: 'totalpage',
-          className: 'text-right',
-          render: (val) => (
-            <span className="text-[13px] font-bold text-slate-600 dark:text-slate-300 font-mono">{formatPagesToSize(val, pageSize)}</span>
-          )
-        },
-        {
-          header: 'Pages',
-          accessor: 'totalpage',
-          className: 'text-right pr-4',
-          render: (val) => (
-            <span className="text-[12px] text-slate-400 font-mono">
-              {parseInt(val).toLocaleString()}
-            </span>
-          )
-        }
-      ]}
-      data={volumes}
-    />
-  </Card>
-));
+        ]}
+        data={volumes}
+      />
+    </Card>
+  );
+});
 
 // ── Main Component ──
 
 const Component = function VolumeCategoryMonitor({ hostUid, dbname, category }) {
   const { spaceInfo, spaceInfoLoading } = useSelector((state) => state.databaseMonitoring || {}, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
-  
+
   const tabId = `vol_category:${hostUid}:${dbname}:${category}`;
   const { isManualRefreshing: isRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
     hostUid,
@@ -242,10 +248,10 @@ const Component = function VolumeCategoryMonitor({ hostUid, dbname, category }) 
 
   return (
     <div className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden select-none animate-in fade-in duration-300">
-      <CategoryHeader 
-        meta={meta} 
-        summary={summary} 
-        usageSeverity={usageSeverity} 
+      <CategoryHeader
+        meta={meta}
+        summary={summary}
+        usageSeverity={usageSeverity}
         pageSize={pageSize}
         isLoading={isLoading || isRefreshing}
         onRefresh={handleRefresh}

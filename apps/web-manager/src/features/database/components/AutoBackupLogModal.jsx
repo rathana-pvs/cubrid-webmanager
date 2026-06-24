@@ -138,22 +138,22 @@ export default function AutoBackupLogModal() {
       </div>
       
       <div className="flex items-center gap-2.5">
-        <Button 
-          variant="secondary" 
+        <Button
+          variant="secondary"
           icon="close"
           onClick={() => dispatch(closeAutoBackupLogModal())}
           className="min-w-[100px]"
         >
-          Close
+          {CM.close}
         </Button>
-        <Button 
+        <Button
           variant="primary"
           onClick={() => dispatch(fetchAutoBackupLog({ hostUid: selectedHostUid }))}
           loading={logsLoading}
           icon="refresh"
           className="min-w-[120px] shadow-lg shadow-amber-500/10"
         >
-          Refresh Now
+          {CM.refresh}
         </Button>
       </div>
     </div>

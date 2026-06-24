@@ -1,6 +1,9 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { closeBackupDatabaseModal, backupDatabase, fetchBackupDbInfo } from '../databaseSlice';
+import { closeBackupDatabaseModal, fetchBackupDbInfo, setPendingBackupJob, clearPendingBackupJob } from '../databaseSlice';
+import { databaseJobApi } from '../databaseJobApi';
+import { useCmsJobs } from '../../../infrastructure/context/CmsJobContext';
+import { getCmsJobLoadingSubtitle } from '../../../infrastructure/cmsJob/cmsJobUi';
 
 import { Modal } from '../../../components/ds/layout/Modal';
 import {
@@ -51,21 +54,23 @@ const deriveBackupDir = (dbdir) => {
 export default function BackupDatabaseModal() {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { isBackupDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
+  const { isBackupDatabaseModalOpen, pendingBackupJob } = useSelector((state) => state.databaseUI, shallowEqual);
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { backupDbInfo: databaseBackupInfo } = useSelector((state) => state.databaseOperation, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
-  const { 
-    error, 
-    startAction, 
-    endSuccess, 
-    endError, 
+  const {
+    error,
+    startAction,
+    endSuccess,
+    endError,
     resetAction,
     isLoading,
     isSuccess,
     isError
   } = useActionState();
+  const { trackJob } = useCmsJobs();
+  const [jobStatus, setJobStatus] = useState(null);
 
   const [formData, setFormData] = useState({
     volPath: `${selectedDatabase}_backup_lv0`,
@@ -181,6 +186,7 @@ export default function BackupDatabaseModal() {
     }
 
     startAction();
+    const progressOpts = { onProgress: (j) => setJobStatus(j.jobStatus ?? j.status) };
     try {
       const payload = {
         level: formData.backupLevel,
@@ -192,13 +198,39 @@ export default function BackupDatabaseModal() {
         zip: formData.compress ? 'y' : 'n',
         safereplication: 'n'
       };
-      await dispatch(backupDatabase({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
+
+      // Reuse an accepted job only when host, db, AND full payload all match.
+      // Any change (different host, path, level, or flags) means a new backup is needed.
+      const exactMatch =
+        pendingBackupJob?.hostUid === selectedHostUid &&
+        pendingBackupJob?.dbname === selectedDatabase &&
+        JSON.stringify(pendingBackupJob?.payload) === JSON.stringify(payload);
+
+      let jobId;
+      if (exactMatch) {
+        jobId = pendingBackupJob.jobId;
+      } else {
+        const created = await databaseJobApi.submitBackup(selectedHostUid, selectedDatabase, payload);
+        jobId = created?.jobId;
+        if (!jobId) throw new Error('Server did not return a job id');
+        // Replace only after confirmed acceptance — preserves the previous pending job if submit fails
+        dispatch(setPendingBackupJob({ jobId, hostUid: selectedHostUid, dbname: selectedDatabase, payload }));
+      }
+
+      await trackJob(jobId, progressOpts);
+      dispatch(clearPendingBackupJob());
       endSuccess(`Database "${selectedDatabase}" has been successfully backed up to "${formData.backupDir}".`);
     } catch (err) {
-      endError(err);
+      if (!err?.cancelled) {
+        // Terminal job failure on the server — clear pending so retry submits a new backup.
+        // Transient polling failures keep pendingBackupJob to allow reconnect on retry.
+        if (err?.jobTerminalFailure) dispatch(clearPendingBackupJob());
+        endError(typeof err === 'string' ? err : err.message || CM.failure);
+      }
     }
   };
 
+  // Don't clear pendingBackupJob on close — the open effect reconnects on reopen
   const handleClose = () => dispatch(closeBackupDatabaseModal());
 
   const flags = [
@@ -291,9 +323,9 @@ export default function BackupDatabaseModal() {
   if (isLoading) {
     return (
       <Modal isOpen title={CM.backupDatabase} icon="backup" onClose={handleClose} maxWidth="720px" showCloseButton={false}>
-        <ModalStatusLoading 
-          title={CM.snapshotInProgress} 
-          subtitle={selectedDatabase} 
+        <ModalStatusLoading
+          title={CM.snapshotInProgress}
+          subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
         />
       </Modal>
     );

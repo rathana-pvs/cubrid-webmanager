@@ -246,7 +246,7 @@ export default function SetAutomationVolumeModal() {
       isOpen={isSetAutomationVolumeModalOpen}
       onClose={handleClose}
       title={CM.autoVolume}
-      subtitle={selectedDatabase ? `Configure expansion policies for "${selectedDatabase}"` : ''}
+      subtitle={selectedDatabase ? CM.setAutomationVolumeSubtitle(selectedDatabase) : ''}
       icon="settings_suggest"
       maxWidth="max-w-[580px]"
       footer={

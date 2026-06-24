@@ -1,5 +1,6 @@
 import {
   AddVolDbRequest,
+  BackupDbClientRequest,
   CheckDatabaseRequest,
   CompactDatabaseRequest,
   CopyDbRequest,
@@ -21,7 +22,8 @@ export type CmsJobPayload =
   | CompactDatabaseRequest
   | CopyDbRequest
   | AddVolDbRequest
-  | RenameDatabaseRequest;
+  | RenameDatabaseRequest
+  | BackupDbClientRequest;
 
 export type CmsJobRecord = {
   jobId: string;

@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { brokerApi } from '../../broker/brokerApi';
 import LogViewer from '../../broker/components/LogViewer';
+import { useCM } from '../../../constants/useCM';
 
 import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
@@ -42,7 +43,7 @@ export default function CASLogModal({ isOpen, onClose, hostUid, brokerName, casI
     }
   };
 
-  const title = type === 'sql' ? CM.casSqlTransactionLog : CM.casSlowQueryRegistry;
+  const title = type === 'sql' ? CM.casSqlLog : CM.casSlowQueryLog;
 
   return (
     <Modal

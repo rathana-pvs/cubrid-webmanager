@@ -65,14 +65,14 @@ export default function AutoQueryLogModal() {
 
   const columns = [
     {
-      header: 'Query ID',
+      header: CM.queryIdentifierLabel,
       accessor: 'query_id',
       render: (val) => (
         <span className="text-sky-600 dark:text-sky-400 italic font-mono">{val}</span>
       )
     },
     {
-      header: 'Execution Time',
+      header: CM.executionTime,
       accessor: 'error_time',
       className: 'w-[180px]'
     },
@@ -141,7 +141,7 @@ export default function AutoQueryLogModal() {
           onClick={() => dispatch(closeAutoQueryLogModal())}
           className="min-w-[100px]"
         >
-          Close
+          {CM.close}
         </Button>
         <Button
           variant="primary"
@@ -150,7 +150,7 @@ export default function AutoQueryLogModal() {
           icon="refresh"
           className="min-w-[120px] shadow-lg shadow-amber-500/10"
         >
-          Refresh Now
+          {CM.refresh}
         </Button>
       </div>
     </div>
@@ -161,7 +161,7 @@ export default function AutoQueryLogModal() {
       isOpen={isAutoQueryLogModalOpen}
       onClose={() => dispatch(closeAutoQueryLogModal())}
       title={CM.autoQueryLog}
-      subtitle={selectedDatabase ? `History for database: ${selectedDatabase}` : 'Global Query Execution History'}
+      subtitle={selectedDatabase ? CM.historyForDatabase(selectedDatabase) : CM.globalQueryHistory}
       icon="history"
       iconVariant="info"
       maxWidth="max-w-[800px]"

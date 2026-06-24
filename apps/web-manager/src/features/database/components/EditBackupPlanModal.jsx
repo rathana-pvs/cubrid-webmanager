@@ -237,7 +237,7 @@ export default function EditBackupPlanModal() {
       isOpen={isEditBackupPlanModalOpen}
       onClose={handleClose}
       title={CM.editBackupPlanTitle}
-      subtitle={`Modify automated scheduled backup for ${selectedDatabase}`}
+      subtitle={CM.editBackupPlanSubtitle(selectedDatabase)}
       icon="edit_calendar"
       maxWidth="700px"
       footer={

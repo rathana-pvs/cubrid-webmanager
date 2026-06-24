@@ -76,17 +76,6 @@ export const addVolume = createAsyncThunk(
 );
 
 // Backup & Restore
-export const backupDatabase = createAsyncThunk(
-  'database/backupDatabase',
-  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
-    try {
-      const response = await databaseApi.backupDatabase(hostUid, dbname, payload);
-      return response;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || `Failed to backup ${dbname}`);
-    }
-  }
-);
 
 export const restoreDatabase = createAsyncThunk(
   'database/restoreDatabase',
@@ -488,15 +477,6 @@ const databaseOperationSlice = createSlice({
         state.error = action.payload; 
       })
 
-      .addCase(backupDatabase.pending, (state) => { 
-        state.operationLoading = true; 
-        state.error = null; 
-      })
-      .addCase(backupDatabase.fulfilled, (state) => { state.operationLoading = false; })
-      .addCase(backupDatabase.rejected, (state, action) => { 
-        state.operationLoading = false; 
-        state.error = action.payload; 
-      })
       
       .addCase(fetchQueryPlan.rejected, (state, action) => {
         const { dbname } = action.meta.arg;

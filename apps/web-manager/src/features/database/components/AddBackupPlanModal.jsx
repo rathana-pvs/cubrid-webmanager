@@ -217,7 +217,7 @@ export default function AddBackupPlanModal() {
       isOpen={isAddBackupPlanModalOpen}
       onClose={handleClose}
       title={CM.createBackupPlan}
-      subtitle={`Configure automated scheduled backups for ${selectedDatabase}`}
+      subtitle={CM.addBackupPlanSubtitle(selectedDatabase)}
       icon="backup_table"
       maxWidth="700px"
       footer={
