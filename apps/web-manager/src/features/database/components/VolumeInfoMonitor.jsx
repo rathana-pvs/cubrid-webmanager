@@ -13,7 +13,7 @@ import { useCM } from '../../../constants/useCM';
 const parseNumber = (value) => {
   if (typeof value === 'number') return value;
   if (!value) return 0;
-  return parseInt(value.toString().replace(/,/g, '').split(' ')[0], 10) || 0;
+  return parseInt(value.toString().trim().replace(/,/g, '').split(/\s+/)[0], 10) || 0;
 };
 
 const formatNumber = (value) => parseNumber(value).toLocaleString();
