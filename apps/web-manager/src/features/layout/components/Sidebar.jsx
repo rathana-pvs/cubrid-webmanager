@@ -508,7 +508,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                 </div>
                 <Typography variant="caption" className={`font-bold text-[12px] uppercase tracking-widest transition-colors
                   ${!isServerListCollapsed ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-500 group-hover/host-header:text-amber-500'}`}>
-                  Server List
+                  {CM.serverListHeader}
                 </Typography>
               </div>
 
@@ -631,7 +631,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                     </div>
                     <Typography variant="caption" className={`font-bold text-[11px] uppercase tracking-widest transition-colors
                       ${!isTreeCollapsed ? 'text-slate-600 dark:text-slate-400' : 'text-slate-400 dark:text-slate-500 group-hover/tree-header:text-amber-500'}`}>
-                      Resources
+                      {CM.resourcesHeader}
                     </Typography>
                   </div>
                   <div className="flex items-center gap-1.5">

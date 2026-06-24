@@ -1321,5 +1321,7 @@ export const CM_KO = {
   recoveryInstructionsSent: '복구 지침이 다음 이메일로 전송되었습니다:',
   checkSpamMsg: '링크는 15분 후에 만료됩니다. 메일이 오지 않으면 스팸 메일함을 확인해 주세요.',
   resendRecoveryEmail: '복구 이메일 재전송',
+  serverListHeader: '서버 목록',
+  resourcesHeader: '리소스',
 };
 

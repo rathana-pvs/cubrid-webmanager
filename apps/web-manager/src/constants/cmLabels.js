@@ -1343,5 +1343,7 @@ export const CM = {
   recoveryInstructionsSent: 'Recovery instructions have been sent to',
   checkSpamMsg: 'The link expires in 15 minutes. Check your spam folder if it doesn\'t arrive.',
   resendRecoveryEmail: 'Resend recovery email',
+  serverListHeader: 'Server List',
+  resourcesHeader: 'Resources',
 };
 
