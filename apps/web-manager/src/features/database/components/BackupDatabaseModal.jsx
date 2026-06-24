@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeBackupDatabaseModal, backupDatabase, fetchBackupDbInfo } from '../databaseSlice';
 
@@ -21,6 +21,7 @@ import {
   ModalStatusError 
 } from '../../../components/ds/feedback/ActionStatus';
 import { useCM } from '../../../constants/useCM';
+import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 
 const TAB_INFO = 'info';
 const TAB_HISTORY = 'history';
@@ -38,6 +39,13 @@ const formatBackupSize = (value) => {
   const size = Number(value);
   if (!Number.isFinite(size)) return '-';
   return (size / 1024 / 1024).toLocaleString(undefined, { maximumFractionDigits: 2 });
+};
+
+// Strip all trailing /backup segments then re-append one canonical /backup.
+// Handles cases like /home/db/backup/backup or /home/db/backup/ from CMS.
+const deriveBackupDir = (dbdir) => {
+  if (!dbdir) return '';
+  return `${dbdir.replace(/(?:\/backup)+\/?$/, '')}/backup`;
 };
 
 export default function BackupDatabaseModal() {
@@ -69,8 +77,14 @@ export default function BackupDatabaseModal() {
     compress: true
   });
   const [activeTab, setActiveTab] = useState(TAB_INFO);
+  const [backupInfoFetchError, setBackupInfoFetchError] = useState(false);
 
   const backupInfo = selectedDatabase ? databaseBackupInfo[selectedDatabase] : null;
+
+  // Keep a ref so the modal-open effect can read the latest backupInfo
+  // synchronously without adding it to its own dependency array.
+  const backupInfoRef = useRef(null);
+  useEffect(() => { backupInfoRef.current = backupInfo; }, [backupInfo]);
   const backupHistory = useMemo(() => {
     if (!backupInfo) return [];
     return [0, 1, 2].flatMap((level) => {
@@ -109,20 +123,18 @@ export default function BackupDatabaseModal() {
   useEffect(() => {
     if (selectedDatabase) {
       setFormData(prev => ({ ...prev, volPath: `${selectedDatabase}_backup_lv${prev.backupLevel}` }));
-      if (isBackupDatabaseModalOpen && selectedHostUid) {
-        dispatch(fetchBackupDbInfo({ hostUid: selectedHostUid, dbname: selectedDatabase }));
-      }
     }
-  }, [selectedDatabase, isBackupDatabaseModalOpen, selectedHostUid, dispatch]);
+  }, [selectedDatabase]);
 
+  // When backupInfo loads (fetch completes after modal open), fill backupDir only if still empty.
+  // Uses functional updater so prev.backupDir is always current — no stale-closure race.
   useEffect(() => {
-    if (backupInfo) {
-      const { dbdir } = backupInfo;
-      if (dbdir && !formData.backupDir) {
-        setFormData(prev => ({ ...prev, backupDir: dbdir }));
-      }
-    }
-  }, [backupInfo, formData.backupDir]);
+    if (!isBackupDatabaseModalOpen || !backupInfo?.dbdir) return;
+    setFormData(prev => {
+      if (prev.backupDir) return prev;
+      return { ...prev, backupDir: deriveBackupDir(backupInfo.dbdir) };
+    });
+  }, [backupInfo, isBackupDatabaseModalOpen]);
 
   useEffect(() => {
     if (!availableLevels.includes(formData.backupLevel)) {
@@ -136,11 +148,19 @@ export default function BackupDatabaseModal() {
   }, [availableLevels, formData.backupLevel, selectedDatabase]);
 
   useEffect(() => {
-    if (isBackupDatabaseModalOpen) {
-      resetAction();
-      setActiveTab(TAB_INFO);
+    if (!isBackupDatabaseModalOpen) return;
+    resetAction();
+    setActiveTab(TAB_INFO);
+    setBackupInfoFetchError(false);
+    // Init backupDir immediately from cached backupInfo so the field is never
+    // blank when reopening the same DB. If no cache, stays '' until fetch returns.
+    setFormData(prev => ({ ...prev, backupDir: deriveBackupDir(backupInfoRef.current?.dbdir) }));
+    if (selectedDatabase && selectedHostUid) {
+      dispatch(fetchBackupDbInfo({ hostUid: selectedHostUid, dbname: selectedDatabase }))
+        .unwrap()
+        .catch(() => setBackupInfoFetchError(true));
     }
-  }, [isBackupDatabaseModalOpen, resetAction]);
+  }, [isBackupDatabaseModalOpen, selectedDatabase, selectedHostUid, dispatch, resetAction]);
 
   if (!isBackupDatabaseModalOpen) return null;
 
@@ -218,6 +238,14 @@ export default function BackupDatabaseModal() {
           onChange={(e) => handleInputChange('backupDir', e.target.value)}
         />
       </CaDialogField>
+
+      {backupInfoFetchError && !formData.backupDir && (
+        <CaDialogField fullWidth>
+          <InfoBanner variant="warning" title={CM.warning} icon="warning">
+            {CM.backupDirFetchError}
+          </InfoBanner>
+        </CaDialogField>
+      )}
 
       <CaDialogField label={CM.parallelThreads}>
         <Input

@@ -44,6 +44,7 @@ const monitoringSlice = createSlice({
           ...state.hostsData[hostUid],
           history: [],
           prevHostStat: null,
+          error: null,
           currentStatus: { cpu: 0, memory: 0, tps: 0, qps: 0, memUsed: 0, memTotal: 0 },
           averages: { cpu: 0, memory: 0, tps: 0, qps: 0 },
         };
@@ -65,14 +66,16 @@ const monitoringSlice = createSlice({
           };
         } else {
           state.hostsData[hostUid].loading = true;
+          state.hostsData[hostUid].error = null;
         }
       })
       .addCase(fetchMonitoringData.fulfilled, (state, action) => {
         const hostUid = action.meta.arg;
         const hostData = state.hostsData[hostUid];
         if (!hostData) return;
-        
+
         hostData.loading = false;
+        hostData.error = null;
         const { hostStat, brokers, haHeartbeat } = action.payload;
         const now = Date.now();
 

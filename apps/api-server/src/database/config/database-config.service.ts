@@ -90,7 +90,7 @@ export class DatabaseConfigService extends BaseService {
     const cmsRequest: SetAutoExecQueryCmsRequest = {
       task: 'setautoexecquery',
       dbname: dbname,
-      planlist: autoExecQuery.planlist,
+      planlist: autoExecQuery.planlist.map((item) => ({ ...item, dbname })),
     };
 
     await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
@@ -571,7 +571,7 @@ export class DatabaseConfigService extends BaseService {
       const cmsRequest: SetAutoExecQueryCmsRequest = {
         task: 'setautoexecquery',
         dbname,
-        planlist: [{ queryplan: [...existingPlans, newPlan] }],
+        planlist: [{ dbname, queryplan: [...existingPlans, newPlan] }],
       };
       await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
         userId,
@@ -607,7 +607,7 @@ export class DatabaseConfigService extends BaseService {
       const cmsRequest: SetAutoExecQueryCmsRequest = {
         task: 'setautoexecquery',
         dbname,
-        planlist: [{ queryplan: remaining }],
+        planlist: [{ dbname, queryplan: remaining }],
       };
       await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
         userId,
