@@ -1197,6 +1197,10 @@ export const CM_KO = {
   physicalVolumeTopology: '물리 볼륨 구성',
   fileSpaceUsage: '파일 공간 사용량',
   distributionLabel: '분포',
+  dbSpaceMonitor: '데이터베이스 공간 모니터',
+  qtyLabel: '개수',
+  dataTypeLabel: '데이터 유형',
+  analyzingStorage: '저장 용량 분석 중...',
 
   // 볼륨 정보 모니터
   volumeInfo: '볼륨 정보',

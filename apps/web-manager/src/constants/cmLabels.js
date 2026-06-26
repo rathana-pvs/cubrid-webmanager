@@ -1219,6 +1219,10 @@ export const CM = {
   physicalVolumeTopology: 'Physical Volume Topology',
   fileSpaceUsage: 'File Space Usage',
   distributionLabel: 'Distribution',
+  dbSpaceMonitor: 'Database Space Monitor',
+  qtyLabel: 'Qty',
+  dataTypeLabel: 'Data Type',
+  analyzingStorage: 'Analyzing storage capacity...',
 
   // VolumeInfoMonitor
   volumeInfo: 'Volume Info',

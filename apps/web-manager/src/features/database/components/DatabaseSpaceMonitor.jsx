@@ -54,12 +54,12 @@ const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboar
       <div>
         <div className="flex items-center gap-2">
           <Typography variant="h1" className="text-[13px] font-bold text-slate-800 dark:text-slate-100 leading-tight">
-            Database Space Monitor
+            {CM.dbSpaceMonitor}
           </Typography>
           <div className={`px-2 py-0.5 rounded-full border flex items-center gap-1.5 shrink-0 transition-all duration-300 ${dashboardInterval > 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10'}`}>
             <div className={`w-1 h-1 rounded-full ${dashboardInterval > 0 ? 'bg-emerald-500 animate-pulse' : 'bg-slate-400'}`} />
             <span className={`text-[9px] font-bold ${dashboardInterval > 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-slate-500 dark:text-slate-400'}`}>
-              {dashboardInterval > 0 ? 'Live' : 'Paused'}
+              {dashboardInterval > 0 ? CM.live : CM.paused}
             </span>
           </div>
         </div>
@@ -69,7 +69,7 @@ const StatusHeader = memo(({ dbname, lastRefreshed, loading, onRefresh, dashboar
     
     <div className="flex items-center gap-1.5">
       <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block mr-2">
-        Synced {lastRefreshed.toLocaleTimeString('en-US', { hour12: true })}
+        {CM.syncedAt(lastRefreshed.toLocaleTimeString('en-US', { hour12: true }))}
       </Typography>
       <button
         onClick={onRefresh}
@@ -160,7 +160,7 @@ const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
       <Table
         columns={[
           {
-            header: 'Type',
+            header: CM.type,
             accessor: 'type',
             width: '140px',
             render: (val) => (
@@ -172,12 +172,12 @@ const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
               </button>
             )
           },
-          { header: 'Qty', accessor: 'volume_count', className: 'text-center', width: '60px' },
-          { header: 'Used', accessor: 'used_size', render: (val) => <span className="font-mono text-[11px]">{formatSize(val)}</span> },
-          { header: 'Free', accessor: 'free_size', render: (val) => <span className="font-mono text-[11px] text-slate-400">{formatSize(val)}</span> },
-          { header: 'Total', accessor: 'total_size', render: (val) => <span className="font-mono text-[11px] font-bold">{formatSize(val)}</span> },
+          { header: CM.qtyLabel, accessor: 'volume_count', className: 'text-center', width: '60px' },
+          { header: CM.usedLabel, accessor: 'used_size', render: (val) => <span className="font-mono text-[11px]">{formatSize(val)}</span> },
+          { header: CM.freeLabel, accessor: 'free_size', render: (val) => <span className="font-mono text-[11px] text-slate-400">{formatSize(val)}</span> },
+          { header: CM.totalLabel, accessor: 'total_size', render: (val) => <span className="font-mono text-[11px] font-bold">{formatSize(val)}</span> },
           {
-            header: 'Usage',
+            header: CM.usageLabel,
             accessor: 'pct',
             render: (_, row) => {
               const used = cleanInt(row.used_size);
@@ -218,7 +218,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
       <Table
         columns={[
           {
-            header: 'Volume',
+            header: CM.volumeLabel,
             accessor: 'spacename',
             width: '150px',
             render: (val) => {
@@ -235,7 +235,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
             }
           },
           {
-            header: 'Type',
+            header: CM.type,
             accessor: 'type',
             width: '110px',
             render: (val) => (
@@ -243,7 +243,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
             )
           },
           {
-            header: 'Allocation',
+            header: CM.allocationLabel,
             accessor: 'usedpage',
             render: (val, row) => {
               const usedPages = cleanInt(val);
@@ -271,7 +271,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
             }
           },
           { 
-            header: 'Path', 
+            header: CM.path, 
             accessor: 'location',
             render: (val) => (
               <div className="flex items-center gap-1 group min-w-0">
@@ -301,10 +301,10 @@ const FileSpaceUsage = memo(({ fileinfo }) => {
   >
     <Table
       columns={[
-        { header: 'Data Type', accessor: 'data_type' },
-        { header: 'Qty', accessor: 'file_count', className: 'text-center' },
-        { header: 'Used', accessor: 'used_size', className: 'text-right', render: (val) => <span className="font-mono text-[11px] font-bold">{formatPages(val)}</span> },
-        { header: 'Total', accessor: 'total_size', className: 'text-right', render: (val) => <span className="font-mono text-[11px] text-slate-400">{formatPages(val)}</span> },
+        { header: CM.dataTypeLabel, accessor: 'data_type' },
+        { header: CM.qtyLabel, accessor: 'file_count', className: 'text-center' },
+        { header: CM.usedLabel, accessor: 'used_size', className: 'text-right', render: (val) => <span className="font-mono text-[11px] font-bold">{formatPages(val)}</span> },
+        { header: CM.totalLabel, accessor: 'total_size', className: 'text-right', render: (val) => <span className="font-mono text-[11px] text-slate-400">{formatPages(val)}</span> },
       ]}
       data={fileinfo || []}
     />
@@ -396,7 +396,7 @@ const Component = function DatabaseSpaceMonitor({ hostUid, dbname }) {
     return (
       <div className="flex-1 flex flex-col items-center justify-center bg-white dark:bg-background-dark gap-3">
         <div className="h-8 w-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin" />
-        <Typography variant="p" className="text-xs text-slate-400">Analyzing storage capacity…</Typography>
+        <Typography variant="p" className="text-xs text-slate-400">{CM.analyzingStorage}</Typography>
       </div>
     );
   }
