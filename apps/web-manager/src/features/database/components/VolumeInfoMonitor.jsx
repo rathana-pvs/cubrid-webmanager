@@ -10,6 +10,18 @@ import { PageLoader } from '../../../components/ds/feedback/PageLoader';
 import { EmptyState } from '../../../components/ds/feedback/EmptyState';
 import { useCM } from '../../../constants/useCM';
 
+const parseNumber = (value) => {
+  if (typeof value === 'number') return value;
+  if (!value) return 0;
+  return parseInt(value.toString().trim().replace(/,/g, '').split(/\s+/)[0], 10) || 0;
+};
+
+const formatNumber = (value) => parseNumber(value).toLocaleString();
+
+const formatMegabytes = (value) => `${value.toFixed(2)} MB`;
+
+const clampPercent = (value) => Math.min(100, Math.max(0, value));
+
 export default function VolumeInfoMonitor({ tabId }) {
   const CM = useCM();
   const dispatch = useDispatch();
@@ -32,7 +44,7 @@ export default function VolumeInfoMonitor({ tabId }) {
     return dbSpace.volumes.find(v => v.spacename === volname);
   }, [dbSpace, volname]);
 
-  const pageSize = dbSpace?.summary?.[0]?.pagesize || 4096;
+  const pageSize = parseNumber(dbSpace?.summary?.[0]?.pagesize) || 4096;
 
   if (isLoading && !volume) {
     return (
@@ -58,30 +70,28 @@ export default function VolumeInfoMonitor({ tabId }) {
     );
   }
 
-  const freePages  = volume.freepage  || 0;
-  const totalPages = volume.totalpage || 0;
-  const usedPages  = totalPages - freePages;
+  const freePages  = parseNumber(volume.freepage);
+  const totalPages = parseNumber(volume.totalpage);
+  const usedPages  = Math.max(0, totalPages - freePages);
   const freeM      = (freePages  * pageSize) / (1024 * 1024);
   const totalM     = (totalPages * pageSize) / (1024 * 1024);
   const usedM      = (usedPages  * pageSize) / (1024 * 1024);
-  const usedPct    = totalPages > 0 ? (usedPages / totalPages) * 100 : 0;
-
-  // SVG donut math (r=38, circumference ≈ 238.76)
-  const R   = 38;
-  const C   = 2 * Math.PI * R;
-  const arc = (usedPct / 100) * C;
+  const usedPct    = totalPages > 0 ? clampPercent((usedPages / totalPages) * 100) : 0;
+  const freePct    = totalPages > 0 ? clampPercent((freePages / totalPages) * 100) : 0;
 
   const severity = usedPct > 85 ? 'text-rose-500' : usedPct > 60 ? 'text-amber-500' : 'text-emerald-500';
+  const barColor = usedPct > 85 ? 'bg-rose-500' : usedPct > 60 ? 'bg-amber-500' : 'bg-emerald-500';
 
+  const volumeName = volume.spacename?.split(/[/\\]/).pop() || volume.spacename;
   const infoRows = [
-    { label: 'Volume Name', val: volume.spacename?.split(/[/\\]/).pop() || volume.spacename },
-    { label: 'Location',    val: volume.location },
-    { label: 'Type',        val: volume.type },
-    { label: 'Purpose',     val: volume.purpose || '—' },
-    { label: 'Page Size',   val: `${parseInt(pageSize).toLocaleString()} B` },
-    { label: 'Total Pages', val: parseInt(totalPages).toLocaleString() },
-    { label: 'Free Pages',  val: parseInt(freePages).toLocaleString() },
-    { label: 'Total Size',  val: `${totalM.toFixed(2)} MB` },
+    { label: 'Volume Name', value: volumeName, icon: 'storage' },
+    { label: 'Location',    value: volume.location, icon: 'folder' },
+    { label: 'Purpose',     value: volume.purpose || '-', icon: 'flag' },
+    { label: 'Page Size',   value: `${formatNumber(pageSize)} B`, icon: 'data_array' },
+    { label: 'Total Pages', value: formatNumber(totalPages), icon: 'article' },
+    { label: 'Used Pages',  value: formatNumber(usedPages), icon: 'inventory' },
+    { label: 'Free Pages',  value: formatNumber(freePages), icon: 'inventory_2' },
+    { label: 'Total Size',  value: formatMegabytes(totalM), icon: 'straighten' },
   ];
 
   return (
@@ -135,114 +145,112 @@ export default function VolumeInfoMonitor({ tabId }) {
       </header>
 
       {/* ── Body ── */}
-      <div className="flex-1 min-h-0 flex gap-0 overflow-hidden">
+      <div className="flex-1 min-h-0 overflow-y-auto p-5 space-y-4">
+        <section className="border border-slate-200 dark:border-white/6 bg-white dark:bg-white/2 rounded-sm p-4 space-y-4">
+          <div className="flex flex-col gap-3 lg:flex-row lg:items-start lg:justify-between">
+            <div className="min-w-0">
+              <div className="flex items-center gap-2">
+                <Icon name="bar_chart" size="sm" weight={300} className="text-amber-500" />
+                <Typography variant="p" className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">
+                  Volume Usage
+                </Typography>
+              </div>
+              <Typography variant="label" className="mt-1 block text-[10px] text-slate-400 font-mono truncate" title={volumeName}>
+                {volumeName}
+              </Typography>
+            </div>
 
-        {/* Left — Info sidebar */}
-        <aside className="w-[380px] shrink-0 border-r border-slate-100 dark:border-white/4 flex flex-col overflow-y-auto">
-          {/* Info rows */}
-          <div className="p-4 space-y-0 flex-1">
-            <Typography variant="label" className="text-[9px] font-bold text-slate-400 uppercase tracking-widest px-2 pb-2 block">
+            <div className="grid grid-cols-3 gap-2 w-full lg:w-auto lg:min-w-[360px]">
+              <div className="border border-slate-100 dark:border-white/6 bg-slate-50 dark:bg-white/[0.03] rounded-sm p-2">
+                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Used</Typography>
+                <Typography variant="p" className="text-[13px] font-black text-slate-700 dark:text-slate-100 font-mono leading-tight">{formatMegabytes(usedM)}</Typography>
+              </div>
+              <div className="border border-slate-100 dark:border-white/6 bg-slate-50 dark:bg-white/[0.03] rounded-sm p-2">
+                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Free</Typography>
+                <Typography variant="p" className="text-[13px] font-black text-emerald-500 font-mono leading-tight">{formatMegabytes(freeM)}</Typography>
+              </div>
+              <div className="border border-slate-100 dark:border-white/6 bg-slate-50 dark:bg-white/[0.03] rounded-sm p-2">
+                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Total</Typography>
+                <Typography variant="p" className="text-[13px] font-black text-slate-700 dark:text-slate-100 font-mono leading-tight">{formatMegabytes(totalM)}</Typography>
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <div className="flex items-center justify-between">
+              <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
+                Allocation
+              </Typography>
+              <Typography variant="label" className={`text-[10px] font-black font-mono ${severity}`}>
+                {usedPct.toFixed(2)}% used
+              </Typography>
+            </div>
+            <div className="h-8 w-full bg-slate-100 dark:bg-white/6 border border-slate-200 dark:border-white/6 overflow-hidden rounded-sm flex">
+              <div
+                className={`${barColor} transition-all duration-1000 ease-out`}
+                style={{ width: `${usedPct}%` }}
+                title={`${formatMegabytes(usedM)} used`}
+              />
+              <div
+                className="bg-slate-300 dark:bg-white/20 transition-all duration-1000 ease-out"
+                style={{ width: `${freePct}%` }}
+                title={`${formatMegabytes(freeM)} free`}
+              />
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <div className="flex items-center gap-4">
+                <span className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span className={`w-2 h-2 rounded-full ${barColor}`} />
+                  Used {formatMegabytes(usedM)}
+                </span>
+                <span className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
+                  <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20" />
+                  Free {formatMegabytes(freeM)}
+                </span>
+              </div>
+              <Typography variant="label" className="text-[10px] text-slate-400 font-mono">
+                {formatNumber(usedPages)} / {formatNumber(totalPages)} pages
+              </Typography>
+            </div>
+          </div>
+        </section>
+
+        <section className="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] gap-4">
+          <div className="border border-slate-200 dark:border-white/6 bg-white dark:bg-white/2 rounded-sm p-4">
+            <Typography variant="label" className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
+              Type
+            </Typography>
+            <div className="flex items-center gap-2 min-w-0">
+              <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
+                <Icon name="category" size="sm" weight={300} className="text-amber-500" />
+              </div>
+              <Typography variant="p" className="text-[13px] font-black text-slate-700 dark:text-slate-100 font-mono truncate" title={volume.type}>
+                {volume.type || '-'}
+              </Typography>
+            </div>
+          </div>
+
+          <div className="border border-slate-200 dark:border-white/6 bg-white dark:bg-white/2 rounded-sm p-4">
+            <Typography variant="label" className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
               Properties
             </Typography>
-            {infoRows.map((row, i) => (
-              <div key={i} className="flex flex-col px-2 py-2 border-b border-slate-50 dark:border-white/3 last:border-0">
-                <Typography variant="label" className="text-[9px] text-slate-400 uppercase tracking-wider font-semibold">{row.label}</Typography>
-                <Typography variant="p" className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 font-mono" title={row.val}>{row.val}</Typography>
-              </div>
-            ))}
-          </div>
-
-
-          {/* Health note */}
-          <div className="m-4 p-3 rounded-lg bg-amber-50 dark:bg-amber-500/6 border border-amber-100 dark:border-amber-500/20">
-            <div className="flex items-center gap-1.5 mb-1 text-amber-600 dark:text-amber-400">
-              <Icon name="auto_awesome" size="sm" weight={300} />
-              <Typography variant="label" className="text-[9px] font-bold uppercase tracking-wider">{CM.volumeHealth}</Typography>
-            </div>
-            <Typography variant="p" className="text-[11px] text-slate-600 dark:text-slate-400 leading-relaxed">
-              {freeM.toFixed(1)} MB headroom remaining.
-            </Typography>
-          </div>
-        </aside>
-
-        {/* Right — Chart area */}
-        <div className="flex-1 flex flex-col items-center justify-center p-8 gap-8 overflow-hidden">
-
-          {/* Donut chart */}
-          <div className="relative w-52 h-52 shrink-0">
-            <svg viewBox="0 0 100 100" className="w-full h-full -rotate-90">
-              {/* Track */}
-              <circle
-                cx="50" cy="50" r={R}
-                fill="none"
-                stroke="#e2e8f0"
-                strokeWidth="14"
-                className="dark:opacity-20"
-              />
-              {/* Used arc */}
-              {usedPct > 0 && (
-                <circle
-                  cx="50" cy="50" r={R}
-                  fill="none"
-                  stroke="#ffc107"
-                  strokeWidth="14"
-                  strokeDasharray={`${arc} ${C}`}
-                  strokeLinecap="butt"
-                  style={{ transition: 'stroke-dasharray 1s ease-out' }}
-                />
-              )}
-            </svg>
-            {/* Center label */}
-            <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className={`text-4xl font-black font-mono leading-none ${severity}`}>
-                {usedPct.toFixed(0)}
-              </span>
-              <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-0.5">%</span>
-              <span className="text-[9px] text-slate-400 uppercase tracking-widest">{CM.usedLabel}</span>
+            <div className="divide-y divide-slate-100 dark:divide-white/6">
+              {infoRows.map((row) => (
+                <div key={row.label} className="grid grid-cols-1 sm:grid-cols-[180px_minmax(0,1fr)] gap-1 sm:gap-4 py-2.5 first:pt-0 last:pb-0">
+                  <div className="flex items-center gap-1.5 text-slate-400 min-w-0">
+                    <Icon name={row.icon} size="xs" weight={300} className="shrink-0" />
+                    <Typography variant="label" className="text-[9px] uppercase tracking-wider font-semibold truncate">
+                      {row.label}
+                    </Typography>
+                  </div>
+                  <Typography variant="p" className="text-[12px] font-semibold text-slate-700 dark:text-slate-200 font-mono break-all" title={row.value}>
+                    {row.value}
+                  </Typography>
+                </div>
+              ))}
             </div>
           </div>
-
-          {/* Legend cards */}
-          <div className="flex gap-4 w-full max-w-sm">
-            <div className="flex-1 bg-amber-50 dark:bg-amber-500/6 border border-amber-100 dark:border-amber-500/20 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full bg-amber-500 shrink-0" />
-                <Typography variant="label" className="text-[9px] text-amber-600 dark:text-amber-400 font-bold uppercase tracking-widest">{CM.usedLabel}</Typography>
-              </div>
-              <Typography variant="p" className="text-lg font-black text-slate-700 dark:text-slate-200 font-mono">{usedM.toFixed(1)}</Typography>
-              <Typography variant="label" className="text-[9px] text-slate-400">{CM.mbPhysical}</Typography>
-            </div>
-
-            <div className="flex-1 bg-slate-50 dark:bg-white/2 border border-slate-200 dark:border-white/6 rounded-xl p-4">
-              <div className="flex items-center gap-2 mb-1">
-                <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20 shrink-0" />
-                <Typography variant="label" className="text-[9px] text-slate-500 font-bold uppercase tracking-widest">{CM.freeLabel}</Typography>
-              </div>
-              <Typography variant="p" className="text-lg font-black text-slate-700 dark:text-slate-200 font-mono">{freeM.toFixed(1)}</Typography>
-              <Typography variant="label" className="text-[9px] text-slate-400">{CM.mbAvailable}</Typography>
-            </div>
-          </div>
-
-          {/* Utilization bar */}
-          <div className="w-full max-w-sm">
-            <div className="flex justify-between mb-1.5">
-              <Typography variant="label" className="text-[9px] text-slate-400 font-semibold uppercase tracking-widest">{CM.utilizationLabel}</Typography>
-              <Typography variant="label" className={`text-[9px] font-black font-mono ${severity}`}>{usedPct.toFixed(2)}%</Typography>
-            </div>
-            <div className="w-full h-1.5 bg-slate-100 dark:bg-white/6 overflow-hidden">
-              <div
-                className="h-full bg-amber-500 transition-all duration-1000 ease-out"
-                style={{ width: `${usedPct}%` }}
-              />
-            </div>
-            <div className="flex justify-between mt-1">
-              <span className="text-[9px] text-slate-400 font-mono">{usedM.toFixed(1)} MB used</span>
-              <span className="text-[9px] text-slate-400 font-mono">{totalM.toFixed(1)} MB total</span>
-            </div>
-          </div>
-
-
-        </div>
+        </section>
       </div>
     </div>
   );
