@@ -53,6 +53,38 @@ const LEVEL_META = {
   },
 };
 
+/* ── date helpers ────────────────────────────────────────────── */
+// Handles multiple CMS date formats (best-effort; no timezone conversion):
+//   "dd-mm-yyyy:HH:MM:SS"   — restoredb date param
+//   "yyyy.MM.dd.HH.mm"      — getbackuplist date field (no seconds)
+//   "yyyy.MM.dd.HH.mm.ss"   — getbackuplist date field (with seconds)
+const parseCmsDate = (cmsDate) => {
+  if (!cmsDate) return null;
+
+  let m = cmsDate.match(/^(\d{2})-(\d{2})-(\d{4}):(\d{2}):(\d{2}):(\d{2})$/);
+  if (m) return new Date(`${m[3]}-${m[2]}-${m[1]}T${m[4]}:${m[5]}:${m[6]}`);
+
+  m = cmsDate.match(/^(\d{4})\.(\d{2})\.(\d{2})\.(\d{2})\.(\d{2})(?:\.(\d{2}))?$/);
+  if (m) return new Date(`${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6] ?? '00'}`);
+
+  return null;
+};
+
+// "dd-mm-yyyy:HH:MM:SS" → "yyyy-MM-ddTHH:mm" (datetime-local min value)
+const toDatetimeLocal = (cmsDate) => {
+  const d = parseCmsDate(cmsDate);
+  if (!d || isNaN(d.getTime())) return undefined;
+  const p = (n) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}T${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+// datetime-local "yyyy-MM-ddTHH:mm" → CMS "dd-mm-yyyy:HH:mm:ss"
+const formatCmsDate = (datetimeLocal) => {
+  const [datePart, timePart] = datetimeLocal.split('T');
+  const [year, month, day] = datePart.split('-');
+  return `${day}-${month}-${year}:${timePart}:00`;
+};
+
 /* ── helpers ─────────────────────────────────────────────────── */
 const SectionLabel = ({ children, count }) => (
   <div className="flex items-center gap-3 mb-3">
@@ -88,7 +120,7 @@ export default function RestoreDatabaseModal() {
     isError
   } = useActionState();
 
-  const [formData, setFormData] = useState({ selectedBackup: null, recoveryPath: '', isPartial: false });
+  const [formData, setFormData] = useState({ selectedBackup: null, recoveryPath: '', isPartial: false, usePointInTime: false, restoreDate: '' });
   const [filter, setFilter] = useState('all'); // 'all' | 0 | 1 | 2
 
   const parseBackupString = (str, level) => {
@@ -108,8 +140,8 @@ export default function RestoreDatabaseModal() {
     ...(Array.isArray(backupData.level1) ? backupData.level1.map(b => ({ ...b, level: 1 })) : parseBackupString(backupData.level1, 1)),
     ...(Array.isArray(backupData.level2) ? backupData.level2.map(b => ({ ...b, level: 2 })) : parseBackupString(backupData.level2, 2)),
   ].filter(b => b.pathname).sort((a, b) => {
-    const tA = (a.date && !isNaN(new Date(a.date).getTime())) ? new Date(a.date).getTime() : 0;
-    const tB = (b.date && !isNaN(new Date(b.date).getTime())) ? new Date(b.date).getTime() : 0;
+    const tA = parseCmsDate(a.date)?.getTime() ?? 0;
+    const tB = parseCmsDate(b.date)?.getTime() ?? 0;
     return tB - tA;
   });
 
@@ -118,7 +150,7 @@ export default function RestoreDatabaseModal() {
 
   useEffect(() => {
     if (isRestoreDatabaseModalOpen && selectedHostUid && selectedDatabase) {
-      setFormData({ selectedBackup: null, recoveryPath: '', isPartial: false });
+      setFormData({ selectedBackup: null, recoveryPath: '', isPartial: false, usePointInTime: false, restoreDate: '' });
       setFilter('all');
       resetAction();
       dispatch(fetchBackupList({ hostUid: selectedHostUid, dbname: selectedDatabase }));
@@ -135,18 +167,35 @@ export default function RestoreDatabaseModal() {
       return;
     }
 
+    if (formData.usePointInTime && !formData.restoreDate) {
+      endError(CM.restoreDateRequired);
+      return;
+    }
+
+    const backup = allBackups.find(b => b.pathname === formData.selectedBackup);
+
+    if (formData.usePointInTime && formData.restoreDate && backup?.date) {
+      const backupDate = parseCmsDate(backup.date);
+      if (backupDate && new Date(formData.restoreDate) < backupDate) {
+        endError(CM.restoreDateBeforeBackup);
+        return;
+      }
+    }
+
     startAction();
     try {
-      const backup = allBackups.find(b => b.pathname === formData.selectedBackup);
+      const date = formData.usePointInTime
+        ? formatCmsDate(formData.restoreDate)
+        : 'backuptime';
       await dispatch(restoreDatabase({
         hostUid: selectedHostUid,
         dbname: selectedDatabase,
         payload: {
-          date: backup.date,
+          date,
           level: String(backup.level),
           partial: formData.isPartial ? 'y' : 'n',
-          pathname: backup.pathname,
-          recoverypath: formData.recoveryPath || '',
+          pathname: backup.pathname || 'none',
+          recoverypath: formData.recoveryPath || 'none',
         }
       })).unwrap();
       endSuccess(selectedDatabase);
@@ -158,6 +207,8 @@ export default function RestoreDatabaseModal() {
   const handleClose = () => dispatch(closeRestoreDatabaseModal());
 
   const levelCounts = { 0: allBackups.filter(b => b.level === 0).length, 1: allBackups.filter(b => b.level === 1).length, 2: allBackups.filter(b => b.level === 2).length };
+  const selectedBackupObj = formData.selectedBackup ? allBackups.find(b => b.pathname === formData.selectedBackup) ?? null : null;
+  const backupMinDatetime = selectedBackupObj?.date ? toDatetimeLocal(selectedBackupObj.date) : undefined;
 
   /* ─── LOADING view ─── */
   if (isLoading) {
@@ -416,6 +467,49 @@ export default function RestoreDatabaseModal() {
                 icon="drive_file_move"
               />
               <p className="text-[9px] text-slate-400 dark:text-slate-500 italic px-0.5">{CM.restoreInPlaceHint}</p>
+            </div>
+
+            {/* Point-in-time recovery */}
+            <div className="col-span-2 space-y-2">
+              <div
+                className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-200 cursor-pointer group
+                  ${formData.usePointInTime
+                    ? 'bg-amber-500/5 border-amber-500/30 dark:border-amber-500/25 shadow-xs'
+                    : 'bg-slate-50/50 dark:bg-white/2 border-slate-200 dark:border-white/8 hover:border-slate-300 dark:hover:border-white/15'
+                  }`}
+                onClick={() => handleInputChange('usePointInTime', !formData.usePointInTime)}
+              >
+                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border transition-all
+                  ${formData.usePointInTime
+                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 border-amber-400'
+                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 group-hover:text-slate-600'
+                  }`}
+                >
+                  <Icon name="schedule" size="sm" weight={300} />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-[12px] font-bold transition-colors ${formData.usePointInTime ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
+                    {CM.pointInTimeRecovery}
+                  </p>
+                  <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{CM.pointInTimeHint}</p>
+                </div>
+                <div onClick={(e) => e.stopPropagation()}>
+                  <Toggle checked={formData.usePointInTime} onChange={() => handleInputChange('usePointInTime', !formData.usePointInTime)} />
+                </div>
+              </div>
+              {formData.usePointInTime && (
+                <div className="px-1 space-y-1.5">
+                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{CM.restoreToDate}</p>
+                  <Input
+                    type="datetime-local"
+                    value={formData.restoreDate}
+                    onChange={(e) => handleInputChange('restoreDate', e.target.value)}
+                    icon="schedule"
+                    min={backupMinDatetime}
+                  />
+                  <p className="text-[9px] text-slate-400 dark:text-slate-500 italic">{CM.restoreDateFormatHint}</p>
+                </div>
+              )}
             </div>
           </div>
         </div>

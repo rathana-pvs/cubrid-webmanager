@@ -336,7 +336,7 @@ export class DatabaseManagementService extends BaseService {
     const cmsRequest: OptimizeDatabaseCmsRequest = {
       task: 'optimizedb',
       dbname: dbname,
-      ...(request.class && { class: request.class }),
+      ...(request.classname && { classname: request.classname }),
     };
 
     return this.executeLongRunningCmsRequest<OptimizeDatabaseCmsRequest, OptimizeDatabaseCmsResponse>(

@@ -10,12 +10,8 @@ import React, {
 import { useSelector, shallowEqual } from 'react-redux';
 import { databaseJobApi } from '../../features/database/databaseJobApi';
 import { runCmsJobInBackground, isCmsJobPolling, cancelAllCmsJobPolls } from '../services/cmsJobRunner';
-import { useToast } from '../hooks/useToast';
-import { useCM } from '../../constants/useCM';
-import {
-  getCmsJobTypeLabel,
-  isTerminalCmsJobStatus,
-} from '../cmsJob/cmsJobLabels';
+import { JobResultModal } from '../cmsJob/JobResultModal';
+import { isTerminalCmsJobStatus } from '../cmsJob/cmsJobLabels';
 import { normalizeTrackedJob } from '../cmsJob/cmsJobUtils';
 
 export const CmsJobContext = createContext(null);
@@ -29,12 +25,14 @@ function sortJobs(a, b) {
 }
 
 export function CmsJobProvider({ children }) {
-  const CM = useCM();
-  const toast = useToast();
   const { isAuthenticated } = useSelector((state) => state.auth, shallowEqual);
   const [jobs, setJobs] = useState([]);
   const [panelExpanded, setPanelExpanded] = useState(false);
+  const [jobResults, setJobResults] = useState([]);
   const trackingRef = useRef(new Set());
+  // Incremented on logout so in-flight continuations that already have a terminal
+  // result cannot enqueue a JobResultModal for the next session.
+  const sessionRef = useRef(0);
 
   const upsertJob = useCallback((jobId, patch) => {
     setJobs((prev) => {
@@ -49,21 +47,23 @@ export function CmsJobProvider({ children }) {
   }, []);
 
   const notifyTerminal = useCallback(
-    (job, { notify, successMessage, errorMessage }) => {
+    (job, { notify, successMessage, errorMessage }, session) => {
       if (notify === false) return;
-      const op = getCmsJobTypeLabel(job.type, CM);
-      const db = job.dbname || '—';
-      if (job.jobStatus === 'succeeded') {
-        toast.success(successMessage || CM.jobNotifySucceeded(op, db), { duration: 5000 });
-      } else if (job.jobStatus === 'failed') {
-        const msg =
-          errorMessage ||
-          job.error?.message ||
-          CM.jobNotifyFailed(op, db);
-        toast.error(msg, { duration: 6000 });
-      }
+      if (job.jobStatus !== 'succeeded' && job.jobStatus !== 'failed') return;
+      if (session !== sessionRef.current) return;
+      setJobResults((prev) => [
+        ...prev,
+        {
+          type: job.type,
+          dbname: job.dbname,
+          status: job.jobStatus,
+          error: job.error,
+          successMessage,
+          errorMessage,
+        },
+      ]);
     },
-    [CM, toast]
+    []
   );
 
   const startTracking = useCallback(
@@ -71,6 +71,7 @@ export function CmsJobProvider({ children }) {
       if (!jobId) {
         throw new Error('Job id is required');
       }
+      const session = sessionRef.current;
 
       if (trackingRef.current.has(jobId) || isCmsJobPolling(jobId)) {
         return runCmsJobInBackground(jobId, {
@@ -120,7 +121,7 @@ export function CmsJobProvider({ children }) {
         const result = await pollPromise;
         const final = normalizeTrackedJob(result);
         upsertJob(jobId, final);
-        notifyTerminal(final, { notify, successMessage, errorMessage });
+        notifyTerminal(final, { notify, successMessage, errorMessage }, session);
         return result;
       } catch (err) {
         // Cancelled polls (logout / unmount) are not job failures — skip UI update and toast.
@@ -133,7 +134,7 @@ export function CmsJobProvider({ children }) {
             { ...(cur || {}), jobId, jobStatus: 'failed', error: { message: err?.message } },
             cur || {}
           );
-          notifyTerminal(failed, { notify, successMessage, errorMessage });
+          notifyTerminal(failed, { notify, successMessage, errorMessage }, session);
           return prev.map((j) => (j.jobId === jobId ? { ...j, ...failed } : j));
         });
         throw err;
@@ -173,8 +174,10 @@ export function CmsJobProvider({ children }) {
 
   useEffect(() => {
     if (!isAuthenticated) {
+      sessionRef.current += 1;
       cancelAllCmsJobPolls();
       setJobs([]);
+      setJobResults([]);
       trackingRef.current.clear();
       return;
     }
@@ -247,7 +250,17 @@ export function CmsJobProvider({ children }) {
     ]
   );
 
-  return <CmsJobContext.Provider value={value}>{children}</CmsJobContext.Provider>;
+  return (
+    <CmsJobContext.Provider value={value}>
+      {children}
+      {jobResults.length > 0 && (
+        <JobResultModal
+          result={jobResults[0]}
+          onClose={() => setJobResults((prev) => prev.slice(1))}
+        />
+      )}
+    </CmsJobContext.Provider>
+  );
 }
 
 export function useCmsJobs() {

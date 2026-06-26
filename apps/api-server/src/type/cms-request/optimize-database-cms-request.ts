@@ -18,14 +18,9 @@ export type OptimizeDatabaseCmsRequest = BaseCmsRequest & {
   dbname: string;
 
   /**
-   * Optional: Array of class objects to optimize.
-   * If provided, only the specified classes will be optimized.
+   * Optional: Class name to optimize.
+   * If provided, only the specified class will be optimized.
    * If not provided, the entire database will be optimized.
    */
-  class?: Array<{
-    /**
-     * Class name to optimize
-     */
-    classname: string;
-  }>;
+  classname?: string;
 };

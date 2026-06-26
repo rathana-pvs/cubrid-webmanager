@@ -243,9 +243,7 @@ export default function OptimizeDatabaseModal() {
     setView(VIEW_LOADING);
     setErrorMsg('');
     try {
-      const payload = selectedClassName && selectedClassName !== '' 
-        ? { class: [{ classname: selectedClassName }] }
-        : {};
+      const payload = selectedClassName ? { classname: selectedClassName } : {};
         
       await runJob(
         () => databaseJobApi.submitOptimize(selectedHostUid, selectedDatabase, payload),

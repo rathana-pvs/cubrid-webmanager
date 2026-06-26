@@ -8,6 +8,7 @@ const TYPE_KEYS = {
   copy: 'jobTypeCopy',
   addvol: 'jobTypeAddVol',
   rename: 'jobTypeRename',
+  backupdb: 'jobTypeBackupDb',
 };
 
 export function getCmsJobTypeLabel(type, CM) {
