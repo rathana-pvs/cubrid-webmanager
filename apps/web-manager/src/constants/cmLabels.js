@@ -1226,6 +1226,17 @@ export const CM = {
   mbPhysical: 'MB Physical',
   mbAvailable: 'MB Available',
   utilizationLabel: 'Utilization',
+  volumeUsage: 'Volume Usage',
+  allocationLabel: 'Allocation',
+  percentUsed: '{0}% used',
+  volNameRow: 'Volume Name',
+  locationRow: 'Location',
+  purposeRow: 'Purpose',
+  pageSizeRow: 'Page Size',
+  totalPagesRow: 'Total Pages',
+  usedPagesRow: 'Used Pages',
+  freePagesRow: 'Free Pages',
+  totalSizeRow: 'Total Size',
 
   // VolumeCategoryMonitor
   capacityLabel: 'Capacity',

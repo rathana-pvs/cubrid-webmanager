@@ -84,14 +84,14 @@ export default function VolumeInfoMonitor({ tabId }) {
 
   const volumeName = volume.spacename?.split(/[/\\]/).pop() || volume.spacename;
   const infoRows = [
-    { label: 'Volume Name', value: volumeName, icon: 'storage' },
-    { label: 'Location',    value: volume.location, icon: 'folder' },
-    { label: 'Purpose',     value: volume.purpose || '-', icon: 'flag' },
-    { label: 'Page Size',   value: `${formatNumber(pageSize)} B`, icon: 'data_array' },
-    { label: 'Total Pages', value: formatNumber(totalPages), icon: 'article' },
-    { label: 'Used Pages',  value: formatNumber(usedPages), icon: 'inventory' },
-    { label: 'Free Pages',  value: formatNumber(freePages), icon: 'inventory_2' },
-    { label: 'Total Size',  value: formatMegabytes(totalM), icon: 'straighten' },
+    { label: CM.volNameRow, value: volumeName, icon: 'storage' },
+    { label: CM.locationRow,    value: volume.location, icon: 'folder' },
+    { label: CM.purposeRow,     value: volume.purpose || '-', icon: 'flag' },
+    { label: CM.pageSizeRow,   value: `${formatNumber(pageSize)} B`, icon: 'data_array' },
+    { label: CM.totalPagesRow, value: formatNumber(totalPages), icon: 'article' },
+    { label: CM.usedPagesRow,  value: formatNumber(usedPages), icon: 'inventory' },
+    { label: CM.freePagesRow,  value: formatNumber(freePages), icon: 'inventory_2' },
+    { label: CM.totalSizeRow,  value: formatMegabytes(totalM), icon: 'straighten' },
   ];
 
   return (
@@ -124,7 +124,7 @@ export default function VolumeInfoMonitor({ tabId }) {
 
         <div className="flex items-center gap-1.5">
           <Typography variant="label" className="text-[10px] text-slate-400 font-mono tracking-tight hidden lg:block mr-2">
-            Synced {lastRefreshed.toLocaleTimeString('en-US', { hour12: true })}
+            {CM.syncedAt(lastRefreshed.toLocaleTimeString('en-US', { hour12: true }))}
           </Typography>
 
           <button
@@ -152,7 +152,7 @@ export default function VolumeInfoMonitor({ tabId }) {
               <div className="flex items-center gap-2">
                 <Icon name="bar_chart" size="sm" weight={300} className="text-amber-500" />
                 <Typography variant="p" className="text-[12px] font-semibold text-slate-800 dark:text-slate-100">
-                  Volume Usage
+                  {CM.volumeUsage}
                 </Typography>
               </div>
               <Typography variant="label" className="mt-1 block text-[10px] text-slate-400 font-mono truncate" title={volumeName}>
@@ -162,15 +162,15 @@ export default function VolumeInfoMonitor({ tabId }) {
 
             <div className="grid grid-cols-3 gap-2 w-full lg:w-auto lg:min-w-[360px]">
               <div className="border border-slate-100 dark:border-white/6 bg-slate-50 dark:bg-white/[0.03] rounded-sm p-2">
-                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Used</Typography>
+                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.usedLabel}</Typography>
                 <Typography variant="p" className="text-[13px] font-black text-slate-700 dark:text-slate-100 font-mono leading-tight">{formatMegabytes(usedM)}</Typography>
               </div>
               <div className="border border-slate-100 dark:border-white/6 bg-slate-50 dark:bg-white/[0.03] rounded-sm p-2">
-                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Free</Typography>
+                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.freeLabel}</Typography>
                 <Typography variant="p" className="text-[13px] font-black text-emerald-500 font-mono leading-tight">{formatMegabytes(freeM)}</Typography>
               </div>
               <div className="border border-slate-100 dark:border-white/6 bg-slate-50 dark:bg-white/[0.03] rounded-sm p-2">
-                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">Total</Typography>
+                <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.totalLabel}</Typography>
                 <Typography variant="p" className="text-[13px] font-black text-slate-700 dark:text-slate-100 font-mono leading-tight">{formatMegabytes(totalM)}</Typography>
               </div>
             </div>
@@ -179,37 +179,37 @@ export default function VolumeInfoMonitor({ tabId }) {
           <div className="space-y-2">
             <div className="flex items-center justify-between">
               <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">
-                Allocation
+                {CM.allocationLabel}
               </Typography>
               <Typography variant="label" className={`text-[10px] font-black font-mono ${severity}`}>
-                {usedPct.toFixed(2)}% used
+                {CM.percentUsed.replace('{0}', usedPct.toFixed(2))}
               </Typography>
             </div>
             <div className="h-8 w-full bg-slate-100 dark:bg-white/6 border border-slate-200 dark:border-white/6 overflow-hidden rounded-sm flex">
               <div
                 className={`${barColor} transition-all duration-1000 ease-out`}
                 style={{ width: `${usedPct}%` }}
-                title={`${formatMegabytes(usedM)} used`}
+                title={`${formatMegabytes(usedM)} ${CM.usedLabel.toLowerCase()}`}
               />
               <div
                 className="bg-slate-300 dark:bg-white/20 transition-all duration-1000 ease-out"
                 style={{ width: `${freePct}%` }}
-                title={`${formatMegabytes(freeM)} free`}
+                title={`${formatMegabytes(freeM)} ${CM.freeLabel.toLowerCase()}`}
               />
             </div>
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex items-center gap-4">
                 <span className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                   <span className={`w-2 h-2 rounded-full ${barColor}`} />
-                  Used {formatMegabytes(usedM)}
+                  {CM.usedLabel} {formatMegabytes(usedM)}
                 </span>
                 <span className="flex items-center gap-1.5 text-[10px] text-slate-500 dark:text-slate-400">
                   <span className="w-2 h-2 rounded-full bg-slate-300 dark:bg-white/20" />
-                  Free {formatMegabytes(freeM)}
+                  {CM.freeLabel} {formatMegabytes(freeM)}
                 </span>
               </div>
               <Typography variant="label" className="text-[10px] text-slate-400 font-mono">
-                {formatNumber(usedPages)} / {formatNumber(totalPages)} pages
+                {formatNumber(usedPages)} / {formatNumber(totalPages)} {CM.pagesLabel}
               </Typography>
             </div>
           </div>
@@ -218,7 +218,7 @@ export default function VolumeInfoMonitor({ tabId }) {
         <section className="grid grid-cols-1 xl:grid-cols-[280px_minmax(0,1fr)] gap-4">
           <div className="border border-slate-200 dark:border-white/6 bg-white dark:bg-white/2 rounded-sm p-4">
             <Typography variant="label" className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
-              Type
+              {CM.type}
             </Typography>
             <div className="flex items-center gap-2 min-w-0">
               <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
@@ -232,7 +232,7 @@ export default function VolumeInfoMonitor({ tabId }) {
 
           <div className="border border-slate-200 dark:border-white/6 bg-white dark:bg-white/2 rounded-sm p-4">
             <Typography variant="label" className="text-[9px] font-bold text-slate-400 uppercase tracking-widest block mb-2">
-              Properties
+              {CM.properties}
             </Typography>
             <div className="divide-y divide-slate-100 dark:divide-white/6">
               {infoRows.map((row) => (

@@ -1204,6 +1204,17 @@ export const CM_KO = {
   mbPhysical: 'MB 물리',
   mbAvailable: 'MB 사용 가능',
   utilizationLabel: '사용률',
+  volumeUsage: '볼륨 사용량',
+  allocationLabel: '할당',
+  percentUsed: '{0}% 사용됨',
+  volNameRow: '볼륨 이름',
+  locationRow: '볼륨 위치',
+  purposeRow: '볼륨 형식',
+  pageSizeRow: '페이지 크기',
+  totalPagesRow: '총 페이지 수',
+  usedPagesRow: '사용된 페이지',
+  freePagesRow: '남은 페이지',
+  totalSizeRow: '총 용량',
 
   // 볼륨 카테고리 모니터
   capacityLabel: '용량',
