@@ -377,7 +377,7 @@ const Component = function ServiceDashboard() {
                   isConnected ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'
                 }`}>{displayName}</span>
                 {roleConfig && (
-                  <span className={`inline-flex items-center justify-center w-[56px] h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 ${roleConfig.className}`}>
+                  <span className={`inline-flex items-center justify-center min-w-[56px] px-1.5 h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 whitespace-nowrap ${roleConfig.className}`}>
                     {roleConfig.label}
                   </span>
                 )}

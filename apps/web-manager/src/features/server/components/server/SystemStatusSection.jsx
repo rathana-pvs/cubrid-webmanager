@@ -169,7 +169,7 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
             <Icon name="bar_chart" size="sm" weight={300} className="text-amber-500" />
             <span className="text-sm font-semibold text-slate-800 dark:text-slate-100">{CM.systemStatus}</span>
             {isHA && (
-              <div className={`w-[84px] justify-center px-1 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight flex items-center gap-1 ${
+              <div className={`min-w-[84px] justify-center px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-tight flex items-center gap-1 whitespace-nowrap ${
                 hostHaInfo.currentNodeType === 'master' 
                   ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/20' 
                   : hostHaInfo.currentNodeType === 'replica'
