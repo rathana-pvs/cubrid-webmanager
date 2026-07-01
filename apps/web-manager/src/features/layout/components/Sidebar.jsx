@@ -137,6 +137,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   const [adminLogContextMenu, setAdminLogContextMenu] = useState(null);
   const [managerLogContextMenu, setManagerLogContextMenu] = useState(null);
   const [serverLogRootContextMenu, setServerLogRootContextMenu] = useState(null);
+  const [logTabContextMenu, setLogTabContextMenu] = useState(null);
 
   const dispatch = useDispatch();
   const { 
@@ -157,7 +158,9 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
 
   const { hosts, hostGroups, selectedHostUid, selectedGroupUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors, haInfo, skipAutoHostLogin } = useSelector((state) => state.host, shallowEqual);
   const { databases, activeDatabases, loggedInDatabases } = useSelector((state) => state.database, shallowEqual);
-  const { brokers } = useSelector((state) => state.broker, shallowEqual);
+  const { brokers, logsLoading, adminLogsLoading, cmsLogsLoading, dbLogsLoading } = useSelector((state) => state.broker, shallowEqual);
+  const isRefreshingLogs = logsLoading || adminLogsLoading || cmsLogsLoading || dbLogsLoading;
+
 
   useEffect(() => {
     dispatch(fetchHosts());
@@ -185,6 +188,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     setAdminLogContextMenu(null);
     setManagerLogContextMenu(null);
     setServerLogRootContextMenu(null);
+    setLogTabContextMenu(null);
   }, []);
 
   const handleHostLogin = useCallback((uid) => {
@@ -350,6 +354,36 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     closeAllContextMenus();
     setBrokerLogRootContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
   };
+
+  const handleLogTabContextMenu = (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllContextMenus();
+    setLogTabContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
+  };
+
+  const handleRefreshAllLogs = useCallback(async () => {
+    if (!selectedHostUid) return;
+    try {
+      const updatedBrokers = await dispatch(fetchBrokerList(selectedHostUid)).unwrap().catch(() => brokers);
+      if (Array.isArray(updatedBrokers)) {
+        updatedBrokers.forEach(broker => {
+          dispatch(fetchBrokerLogs({ hostUid: selectedHostUid, brokerName: broker.name }));
+        });
+      } else {
+        brokers.forEach(broker => {
+          dispatch(fetchBrokerLogs({ hostUid: selectedHostUid, brokerName: broker.name }));
+        });
+      }
+      dispatch(fetchCMSLogs(selectedHostUid));
+      dispatch(fetchAdminLogs(selectedHostUid));
+      (databases || []).forEach(db => {
+        dispatch(fetchDatabaseLogs({ hostUid: selectedHostUid, dbname: db.dbname }));
+      });
+    } catch (error) {
+      console.error('Failed to refresh logs:', error);
+    }
+  }, [dispatch, selectedHostUid, brokers, databases]);
 
   const handleBrokerErrorLogContextMenu = (e) => {
     e.preventDefault();
@@ -662,6 +696,9 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                       setActiveTab={setActiveTab} 
                       onDbTabContextMenu={handleDbRootContextMenu} 
                       onBrokerTabContextMenu={handleBrokerRootContextMenu}
+                      onLogTabContextMenu={handleLogTabContextMenu}
+                      onRefreshLog={handleRefreshAllLogs}
+                      isRefreshing={isRefreshingLogs}
                     />
 
                     <div className="flex-1 overflow-y-auto px-4 pb-4 relative min-h-[200px]">
@@ -1411,6 +1448,24 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           />
         </ContextMenuWrapper>
       )}
+
+      {logTabContextMenu && (
+        <ContextMenuWrapper x={logTabContextMenu.mouseX} y={logTabContextMenu.mouseY} onClose={() => setLogTabContextMenu(null)}>
+          <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.log}</Typography>
+            <Icon name="receipt_long" size="xs" className="opacity-30" weight={300} />
+          </div>
+          <MenuItem
+            icon="refresh"
+            label={CM.refresh}
+            onClick={() => {
+              handleRefreshAllLogs();
+              setLogTabContextMenu(null);
+            }}
+          />
+        </ContextMenuWrapper>
+      )}
+
 
       {usersContextMenu && (
         <ContextMenuWrapper x={usersContextMenu.mouseX} y={usersContextMenu.mouseY} onClose={() => setUsersContextMenu(null)}>
