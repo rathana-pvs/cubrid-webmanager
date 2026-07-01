@@ -206,11 +206,6 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
       isCollapsed={!isExpanded}
       onToggle={(collapsed) => setIsExpanded(!collapsed)}
     >
-      {error && (
-        <InfoBanner variant="danger" title={CM.systemStatusError} icon="error" className="m-4">
-          {typeof error === 'object' ? (error.message || error.note || JSON.stringify(error)) : error}
-        </InfoBanner>
-      )}
 
       <Table columns={columns} data={rows} className="font-mono text-[12px]" />
     </Card>

@@ -1,5 +1,29 @@
 import axios from 'axios';
 
+export const hostActions = {
+  revokeHostLogin: (hostUid) => ({ type: 'host/revokeHostLogin', payload: hostUid }),
+  openReconnectModal: (hostUid) => ({ type: 'host/openReconnectModal', payload: hostUid }),
+  loginToHost: null,
+  clearReconnectingHost: null,
+};
+
+export const registerLoginToHost = (fn) => {
+  hostActions.loginToHost = fn;
+};
+
+export const registerClearReconnectingHost = (fn) => {
+  hostActions.clearReconnectingHost = fn;
+};
+
+// Tracks hosts currently awaiting a user reconnect decision.
+// Suppresses duplicate 401 modal triggers while the modal is visible.
+const reconnectingHosts = new Set();
+
+// Directly export so ReconnectHostModal can clear the guard on close.
+export const clearReconnectingHost = (hostUid) => {
+  reconnectingHosts.delete(hostUid);
+};
+
 const isDesktopRuntime = () =>
   typeof window !== 'undefined' &&
   (Boolean(window.desktopConfig?.apiBaseUrl) || window.location.protocol === 'app:');
@@ -141,7 +165,18 @@ async function handleSystemSessionExpired() {
 
 const getHostUidFromUrl = (url) => {
   if (!url) return null;
-  const cleanUrl = url.replace(/^\//, '');
+  // Handle absolute URLs by extracting pathname
+  let path = url;
+  if (url.startsWith('http://') || url.startsWith('https://')) {
+    try {
+      path = new URL(url).pathname;
+    } catch {
+      path = url.replace(/^https?:\/\/[^/]+/i, '');
+    }
+  }
+  // Strip leading /api/ or api/ if present
+  let cleanUrl = path.replace(/^\/?api\//i, '');
+  cleanUrl = cleanUrl.replace(/^\//, '');
   const segments = cleanUrl.split('/');
   let hostUid = segments[0];
 
@@ -205,26 +240,57 @@ apiClient.interceptors.response.use(
           return Promise.reject(error);
         }
 
+        // If the server explicitly signals an invalid/stolen token (CMS session takeover),
+        // do NOT silently re-login — show the Reconnect modal so the user can decide.
+        // We keep the host in authorizedHosts so all UI state stays intact.
+        const errorCode = apiData?.data?.code || apiData?.code;
+        const isInvalidTokenError = errorCode === 'INVALID_TOKEN';
+
+        if (isInvalidTokenError) {
+          // If we're already waiting for the user to reconnect, silently drop this 401.
+          if (reconnectingHosts.has(hostUid)) {
+            return Promise.reject(error);
+          }
+          console.warn(`Host token for ${hostUid} was invalidated (session taken over). Showing reconnect modal.`);
+          reconnectingHosts.add(hostUid);
+          try {
+            const { store } = await import('../app/store');
+            // Do NOT revokeHostLogin here — preserve all UI state so reconnect is seamless.
+            store.dispatch(hostActions.openReconnectModal(hostUid));
+          } catch (e) {
+            reconnectingHosts.delete(hostUid);
+            console.error('Failed to dispatch reconnect modal:', e);
+          }
+          return Promise.reject(error);
+        }
+
         console.warn(`Host session for ${hostUid} expired. Initiating revocation and re-login...`);
 
         try {
           const { store } = await import('../app/store');
-          const { revokeHostLogin, loginToHost } = await import('../features/host/hostSlice');
 
-          store.dispatch(revokeHostLogin(hostUid));
+          store.dispatch(hostActions.revokeHostLogin(hostUid));
 
-          if (!refreshingHosts.has(hostUid)) {
-            const refreshPromise = store.dispatch(loginToHost(hostUid)).unwrap();
-            refreshingHosts.set(hostUid, refreshPromise);
+          if (hostActions.loginToHost) {
+            if (!refreshingHosts.has(hostUid)) {
+              const refreshPromise = hostActions.loginToHost(hostUid);
+              refreshingHosts.set(hostUid, refreshPromise);
+            }
+
+            await refreshingHosts.get(hostUid);
+            refreshingHosts.delete(hostUid);
           }
-
-          await refreshingHosts.get(hostUid);
-          refreshingHosts.delete(hostUid);
 
           originalRequest._retry = true;
           return apiClient(originalRequest);
         } catch (refreshError) {
           refreshingHosts.delete(hostUid);
+          try {
+            const { store } = await import('../app/store');
+            store.dispatch(hostActions.openReconnectModal(hostUid));
+          } catch (e) {
+            console.error('Failed to dispatch openReconnectModal:', e);
+          }
           return Promise.reject(error);
         }
       }

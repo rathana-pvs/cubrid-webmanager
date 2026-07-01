@@ -69,15 +69,28 @@ export const usePollingRefresh = ({ hostUid, tabId, pollingIntervalSeconds, onFe
     }
   }, [refreshCounter, handleRefresh, isTabActive]);
 
-  // 3. Initial Load
+  // 3. Initial Load & Recovery
+  const wasAuthorizedRef = useRef(false);
   useEffect(() => {
     const isAuthorized = hostUid === 'global' || (hostUid && authorizedHosts.includes(hostUid));
-    if (!isAuthorized || initialLoadDone.current) return;
+    
     // For the global dashboard, wait until at least one host is authorized before marking done.
     // Otherwise the fetch is skipped (no hosts yet) and never retried after hosts become available.
-    if (hostUid === 'global' && authorizedHosts.length === 0) return;
-    initialLoadDone.current = true;
-    handleRefresh();
+    if (hostUid === 'global' && authorizedHosts.length === 0) {
+      wasAuthorizedRef.current = false;
+      return;
+    }
+
+    if (!isAuthorized) {
+      wasAuthorizedRef.current = false;
+      return;
+    }
+
+    if (!initialLoadDone.current || !wasAuthorizedRef.current) {
+      initialLoadDone.current = true;
+      wasAuthorizedRef.current = true;
+      handleRefresh();
+    }
   }, [hostUid, authorizedHosts, handleRefresh]);
 
   // 4. On Tab Resume

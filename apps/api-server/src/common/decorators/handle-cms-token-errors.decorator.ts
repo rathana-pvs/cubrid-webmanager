@@ -16,8 +16,20 @@ export function isInvalidTokenError(response: any): boolean {
     return false;
   }
 
-  if ('note' in response) {
-    return response.note === INVALID_TOKEN_MESSAGE;
+  if (typeof response.note === 'string') {
+    const cleanNote = response.note.replace(/<end>\s*$/i, '').trim();
+    if (cleanNote === INVALID_TOKEN_MESSAGE) {
+      return true;
+    }
+    const lowerNote = cleanNote.toLowerCase();
+    return (
+      lowerNote.includes('invalid token') ||
+      lowerNote.includes('reconnect') ||
+      lowerNote.includes('already connected') ||
+      lowerNote.includes('session lock') ||
+      lowerNote.includes('concurrent connection') ||
+      (lowerNote.includes('session') && lowerNote.includes('lock'))
+    );
   }
 
   return false;

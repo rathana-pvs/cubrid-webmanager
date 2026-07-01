@@ -77,6 +77,7 @@ import AddVolumeModal from '../features/database/components/AddVolumeModal';
 import SuggestedHaNodesModal from '../features/host/components/SuggestedHaNodesModal';
 import HaPeerMergeModal from '../features/host/components/HaPeerMergeModal';
 import HaClusterLinkedModal from '../features/host/components/HaClusterLinkedModal';
+import ReconnectHostModal from '../features/host/components/ReconnectHostModal';
 
 import { Icon } from '../components/ds/foundation/Icon';
 import { useCM } from '../constants/useCM';
@@ -423,6 +424,7 @@ function DashboardLayout() {
         <ChangeHostPasswordModal />
         <ServerVersionModal />
         <ImportExportHostModal />
+        <ReconnectHostModal />
 
         <UnloadDatabaseModal />
         <LoadDatabaseModal />

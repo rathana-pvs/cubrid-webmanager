@@ -464,6 +464,8 @@ const initialState = {
   isEditCmsUserModalOpen: false,
   cmsUserToEdit: null, // { hostUid, user }
   error: null,
+  isReconnectModalOpen: false,
+  reconnectHostUid: null,
 };
 
 const hostSlice = createSlice({
@@ -635,9 +637,13 @@ const hostSlice = createSlice({
       state.isEditCmsUserModalOpen = true;
       state.cmsUserToEdit = action.payload; // { hostUid, user } (user is null for add)
     },
-    closeEditCmsUserModal: (state) => {
-      state.isEditCmsUserModalOpen = false;
-      state.cmsUserToEdit = null;
+    openReconnectModal: (state, action) => {
+      state.isReconnectModalOpen = true;
+      state.reconnectHostUid = action.payload;
+    },
+    closeReconnectModal: (state) => {
+      state.isReconnectModalOpen = false;
+      state.reconnectHostUid = null;
     },
   },
   extraReducers: (builder) => {
@@ -979,6 +985,8 @@ export const {
   closeCmsUserManagementModal,
   openEditCmsUserModal,
   closeEditCmsUserModal,
+  openReconnectModal,
+  closeReconnectModal,
 } = hostSlice.actions;
 
 /** HA merge / discovery / alias updates after loginToHost stores haInfo. */
@@ -1115,5 +1123,13 @@ export const loginHostsBatch = createAsyncThunk(
     return { successCount, failed, attempted: pending.length };
   }
 );
+
+import { registerLoginToHost } from '../../api/apiClient';
+
+registerLoginToHost((hostUid) => {
+  return import('../../app/store').then(({ store }) => {
+    return store.dispatch(loginToHost(hostUid)).unwrap();
+  });
+});
 
 export default hostSlice.reducer;
