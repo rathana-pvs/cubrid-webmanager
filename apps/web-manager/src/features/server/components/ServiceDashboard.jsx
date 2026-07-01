@@ -372,12 +372,12 @@ const Component = function ServiceDashboard() {
 
             {/* Name + role */}
             <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2 flex-wrap">
+              <div className="flex items-center gap-2 min-w-0">
                 <span className={`text-[13px] font-medium leading-tight truncate ${
                   isConnected ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'
                 }`}>{displayName}</span>
                 {roleConfig && (
-                  <span className={`inline-flex items-center px-1.5 h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 ${roleConfig.className}`}>
+                  <span className={`inline-flex items-center justify-center w-[56px] h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 ${roleConfig.className}`}>
                     {roleConfig.label}
                   </span>
                 )}

@@ -116,7 +116,7 @@ export default function ServerListItem({
 
       {/* Right side: HA role badge */}
       {roleConfig && (
-        <span className={`shrink-0 inline-flex items-center justify-center px-1.5 h-4 rounded border text-[8.5px] font-black leading-none transition-all ${roleConfig.className}`}>
+        <span className={`shrink-0 inline-flex items-center justify-center w-[56px] h-4 rounded border text-[8.5px] font-black leading-none transition-all ${roleConfig.className}`}>
           {roleConfig.label}
         </span>
       )}
