@@ -355,26 +355,20 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     setBrokerLogRootContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
   };
 
-  const handleLogTabContextMenu = (e) => {
+  const handleLogTabContextMenu = useCallback((e) => {
     e.preventDefault();
     e.stopPropagation();
     closeAllContextMenus();
     setLogTabContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
-  };
+  }, [closeAllContextMenus]);
 
   const handleRefreshAllLogs = useCallback(async () => {
     if (!selectedHostUid) return;
     try {
       const updatedBrokers = await dispatch(fetchBrokerList(selectedHostUid)).unwrap().catch(() => brokers);
-      if (Array.isArray(updatedBrokers)) {
-        updatedBrokers.forEach(broker => {
-          dispatch(fetchBrokerLogs({ hostUid: selectedHostUid, brokerName: broker.name }));
-        });
-      } else {
-        brokers.forEach(broker => {
-          dispatch(fetchBrokerLogs({ hostUid: selectedHostUid, brokerName: broker.name }));
-        });
-      }
+      updatedBrokers.forEach(broker => {
+        dispatch(fetchBrokerLogs({ hostUid: selectedHostUid, brokerName: broker.name }));
+      });
       dispatch(fetchCMSLogs(selectedHostUid));
       dispatch(fetchAdminLogs(selectedHostUid));
       (databases || []).forEach(db => {
@@ -697,8 +691,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                       onDbTabContextMenu={handleDbRootContextMenu} 
                       onBrokerTabContextMenu={handleBrokerRootContextMenu}
                       onLogTabContextMenu={handleLogTabContextMenu}
-                      onRefreshLog={handleRefreshAllLogs}
-                      isRefreshing={isRefreshingLogs}
                     />
 
                     <div className="flex-1 overflow-y-auto px-4 pb-4 relative min-h-[200px]">
