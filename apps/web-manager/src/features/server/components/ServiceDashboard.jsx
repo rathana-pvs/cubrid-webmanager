@@ -286,7 +286,7 @@ const Component = function ServiceDashboard() {
       render: (val, row) => {
         if (row._type === 'group') {
           return (
-            <div className="flex items-center gap-2 py-1">
+            <div className="flex items-center gap-2 py-1 w-full">
               <button
                 type="button"
                 className="w-6 h-6 rounded-md flex items-center justify-center text-slate-400 hover:text-amber-500 hover:bg-amber-500/5 transition-colors"
@@ -306,15 +306,17 @@ const Component = function ServiceDashboard() {
               <div className="w-7 h-7 rounded-lg bg-slate-100 dark:bg-white/4 border border-slate-200 dark:border-white/8 flex items-center justify-center">
                 <Icon name="folder" size="16px" className="text-slate-400 dark:text-slate-500" />
               </div>
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="text-[13px] font-black text-slate-800 dark:text-slate-100 truncate">
-                  {row.groupName}
-                </span>
-                <span className="inline-flex items-center px-1.5 h-[14px] rounded-[3px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[9px] font-black tracking-wide leading-none shrink-0 text-slate-500 dark:text-slate-400 uppercase">
-                  {row.hostCount} nodes
-                </span>
+              <div className="flex-1 flex items-center justify-between min-w-0">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="text-[13px] font-black text-slate-800 dark:text-slate-100 truncate">
+                    {row.groupName}
+                  </span>
+                  <span className="inline-flex items-center px-1.5 h-[14px] rounded-[3px] border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[9px] font-black tracking-wide leading-none shrink-0 text-slate-500 dark:text-slate-400 uppercase">
+                    {row.hostCount} nodes
+                  </span>
+                </div>
                 {row.isHa && (
-                  <span className="inline-flex items-center px-1.5 h-[14px] rounded-[3px] border border-amber-500/20 bg-amber-500/10 text-[9px] font-black tracking-wide leading-none shrink-0 text-amber-600 dark:text-amber-400 uppercase">
+                  <span className="inline-flex items-center justify-center min-w-[56px] px-1.5 h-[14px] rounded-[3px] border border-amber-500/20 bg-amber-500/10 text-[8px] font-black tracking-wide leading-none shrink-0 text-amber-600 dark:text-amber-400 uppercase ml-[12px]">
                     HA
                   </span>
                 )}
@@ -346,7 +348,7 @@ const Component = function ServiceDashboard() {
           .trim();
 
         return (
-          <div className="flex items-center gap-3 py-0.5">
+          <div className="flex items-center gap-3 py-0.5 w-full">
             <div className="w-[34px] shrink-0" aria-hidden="true" />
             {/* Server icon box with connection status */}
             <div className="relative shrink-0">
@@ -371,17 +373,15 @@ const Component = function ServiceDashboard() {
             </div>
 
             {/* Name + role */}
-            <div className="flex flex-col min-w-0">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className={`text-[13px] font-medium leading-tight truncate ${
-                  isConnected ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'
-                }`}>{displayName}</span>
-                {roleConfig && (
-                  <span className={`inline-flex items-center justify-center min-w-[56px] px-1.5 h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 whitespace-nowrap ${roleConfig.className}`}>
-                    {roleConfig.label}
-                  </span>
-                )}
-              </div>
+            <div className="flex-1 flex items-center justify-between min-w-0">
+              <span className={`text-[13px] font-medium leading-tight truncate ${
+                isConnected ? 'text-slate-800 dark:text-slate-100' : 'text-slate-600 dark:text-slate-400'
+              }`}>{displayName}</span>
+              {roleConfig && (
+                <span className={`inline-flex items-center justify-center min-w-[56px] px-1.5 h-[14px] rounded-[3px] border text-[8px] font-black tracking-wide leading-none shrink-0 whitespace-nowrap ${roleConfig.className} ml-[12px]`}>
+                  {roleConfig.label}
+                </span>
+              )}
             </div>
           </div>
         );
