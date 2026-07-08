@@ -257,6 +257,34 @@ export default function RestoreDatabaseModal() {
       if (isNaN(day) || day < 1 || day > 31) {
         return CM.errDay || 'The day value of date is not valid.';
       }
+
+      // Calendar check for leap years and month lengths
+      const testDate = new Date(year, month - 1, day);
+      if (testDate.getFullYear() !== year || (testDate.getMonth() + 1) !== month || testDate.getDate() !== day) {
+        return CM.errDay || 'The day value of date is not valid.';
+      }
+
+      // Check if restore date is before the backup date
+      let backupDate = null;
+      if (formData.selectBackupFilePath) {
+        const activeLevel = formData.manualBackupLevel;
+        const activePath = activeLevel === '0' ? formData.manualLevel0Path :
+                           activeLevel === '1' ? formData.manualLevel1Path :
+                           formData.manualLevel2Path;
+        const matchingBackup = allBackups.find(b => b.pathname === activePath);
+        if (matchingBackup?.date) {
+          backupDate = parseCmsDate(matchingBackup.date);
+        }
+      } else {
+        const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        if (latestL0?.date) {
+          backupDate = parseCmsDate(latestL0.date);
+        }
+      }
+      const combinedDateTime = formData.restoreDateOnly + 'T' + formData.restoreTimeOnly;
+      if (backupDate && new Date(combinedDateTime) < backupDate) {
+        return CM.restoreDateBeforeBackup || 'Recovery date must be on or after the backup date.';
+      }
     }
 
     // 2. Backup File Validation (only if selectBackupFilePath is checked)
@@ -280,7 +308,7 @@ export default function RestoreDatabaseModal() {
     }
 
     return null;
-  }, [formData]);
+  }, [formData, allBackups]);
 
   const isExecuteDisabled = !!validationError;
 
@@ -340,24 +368,24 @@ export default function RestoreDatabaseModal() {
         else endError(CM.errLevel2File || 'The level 2 file is not valid.');
         return;
       }
+
+      // Check backup date for point-in-time recovery verification
+      const matchingBackup = allBackups.find(b => b.pathname === pathnameVal);
+      if (matchingBackup?.date) {
+        backupDate = parseCmsDate(matchingBackup.date);
+      }
     } else {
-      if (!formData.selectedBackup) {
-        endError(CM.selectBackupFirst);
-        return;
-      }
-      const backup = allBackups.find(b => b.pathname === formData.selectedBackup);
-      if (!backup) {
-        endError(CM.selectBackupFirst);
-        return;
-      }
-      levelVal = String(backup.level);
-      pathnameVal = backup.pathname || 'none';
-      if (backup.date) {
-        backupDate = parseCmsDate(backup.date);
+      // Default catalog restore (no selectedBackup, matches desktop when selectBackupButton is false)
+      levelVal = '0';
+      pathnameVal = 'none';
+
+      const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      if (latestL0?.date) {
+        backupDate = parseCmsDate(latestL0.date);
       }
     }
 
-    let dateParam = 'backuptime';
+    let dateParam = '';
     if (formData.selectRecoveryDateTime) {
       if (formData.recoveryTimeType === 'specificTime') {
         if (!formData.restoreDateOnly || !formData.restoreTimeOnly) {
@@ -371,6 +399,8 @@ export default function RestoreDatabaseModal() {
           return;
         }
         dateParam = formatCmsDate(combinedDateTime);
+      } else {
+        dateParam = 'backuptime';
       }
     }
 
@@ -556,7 +586,14 @@ export default function RestoreDatabaseModal() {
               <Checkbox
                 label={CM.selectBackupInfoLabel}
                 checked={formData.selectBackupFilePath}
-                onChange={(e) => handleInputChange('selectBackupFilePath', e.target.checked)}
+                onChange={(e) => {
+                  const checked = e.target.checked;
+                  setFormData(prev => ({
+                    ...prev,
+                    selectBackupFilePath: checked,
+                    selectRecoveryDateTime: checked ? false : prev.selectRecoveryDateTime
+                  }));
+                }}
               />
             </CaDialogField>
             
