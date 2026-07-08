@@ -271,9 +271,19 @@ export default function RestoreDatabaseModal() {
         const activePath = activeLevel === '0' ? formData.manualLevel0Path :
                            activeLevel === '1' ? formData.manualLevel1Path :
                            formData.manualLevel2Path;
-        const matchingBackup = allBackups.find(b => b.pathname === activePath);
+        const matchingBackup = allBackups.find(b => {
+          if (!b.pathname || !activePath) return false;
+          const p1 = b.pathname.replace(/\\/g, '/').toLowerCase();
+          const p2 = activePath.replace(/\\/g, '/').toLowerCase();
+          return p1 === p2 || p1.endsWith('/' + p2) || p2.endsWith('/' + p1);
+        });
         if (matchingBackup?.date) {
           backupDate = parseCmsDate(matchingBackup.date);
+        } else {
+          const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+          if (latestL0?.date) {
+            backupDate = parseCmsDate(latestL0.date);
+          }
         }
       } else {
         const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
@@ -370,9 +380,19 @@ export default function RestoreDatabaseModal() {
       }
 
       // Check backup date for point-in-time recovery verification
-      const matchingBackup = allBackups.find(b => b.pathname === pathnameVal);
+      const matchingBackup = allBackups.find(b => {
+        if (!b.pathname || !pathnameVal) return false;
+        const p1 = b.pathname.replace(/\\/g, '/').toLowerCase();
+        const p2 = pathnameVal.replace(/\\/g, '/').toLowerCase();
+        return p1 === p2 || p1.endsWith('/' + p2) || p2.endsWith('/' + p1);
+      });
       if (matchingBackup?.date) {
         backupDate = parseCmsDate(matchingBackup.date);
+      } else {
+        const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        if (latestL0?.date) {
+          backupDate = parseCmsDate(latestL0.date);
+        }
       }
     } else {
       // Default catalog restore (no selectedBackup, matches desktop when selectBackupButton is false)
@@ -385,7 +405,7 @@ export default function RestoreDatabaseModal() {
       }
     }
 
-    let dateParam = '';
+    let dateParam = 'backuptime';
     if (formData.selectRecoveryDateTime) {
       if (formData.recoveryTimeType === 'specificTime') {
         if (!formData.restoreDateOnly || !formData.restoreTimeOnly) {
@@ -399,8 +419,6 @@ export default function RestoreDatabaseModal() {
           return;
         }
         dateParam = formatCmsDate(combinedDateTime);
-      } else {
-        dateParam = 'backuptime';
       }
     }
 
