@@ -637,6 +637,10 @@ const hostSlice = createSlice({
       state.isEditCmsUserModalOpen = true;
       state.cmsUserToEdit = action.payload; // { hostUid, user } (user is null for add)
     },
+    closeEditCmsUserModal: (state) => {
+      state.isEditCmsUserModalOpen = false;
+      state.cmsUserToEdit = null;
+    },
     openReconnectModal: (state, action) => {
       state.isReconnectModalOpen = true;
       state.reconnectHostUid = action.payload;
