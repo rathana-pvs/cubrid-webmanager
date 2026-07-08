@@ -35,19 +35,12 @@ describe('handle-cms-token-errors.decorator', () => {
       ).toBe(true);
     });
 
-    it('should return true for case-insensitive matches containing invalid token and reconnect', () => {
+    it('should return true for case-insensitive matches of INVALID_TOKEN_MESSAGE', () => {
       expect(
         isInvalidTokenError({
           note: 'request is rejected due to invalid token. please reconnect',
         })
       ).toBe(true);
-    });
-
-    it('should return true for session lock and concurrent connection variations', () => {
-      expect(isInvalidTokenError({ note: 'session lock error' })).toBe(true);
-      expect(isInvalidTokenError({ note: 'Another user is already connected to this host.' })).toBe(true);
-      expect(isInvalidTokenError({ note: 'concurrent connection occurred' })).toBe(true);
-      expect(isInvalidTokenError({ note: 'session is locked by another user' })).toBe(true);
     });
 
     it('should return false for unrelated notes', () => {

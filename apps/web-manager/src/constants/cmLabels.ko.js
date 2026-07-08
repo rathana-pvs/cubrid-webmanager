@@ -336,7 +336,7 @@ export const CM_KO = {
   connectionFailed: '연결 실패',
   connectionLost: '연결 끊김',
   reconnect: '재연결',
-  reconnectPrompt: '세션 연결이 끊어졌습니다. 다른 사용자가 이 호스트에 로그인했을 수 있습니다. 재연결을 클릭하여 연결을 다시 설정하십시오.',
+  reconnectPrompt: '세션 연결이 끊어졌습니다. 토큰이 만료되었거나 다른 사용자가 이 호스트에 로그인했을 수 있습니다. 재연결을 클릭하여 연결을 다시 설정하십시오.',
   editHost: '호스트 편집',
   deleteHost: '호스트 삭제',
   changePassword: '비밀번호 변경',

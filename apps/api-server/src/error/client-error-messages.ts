@@ -19,8 +19,6 @@ export type PublicErrorPayload = {
 
 const GENERIC_INTERNAL = 'An internal server error occurred.';
 const GENERIC_CMS_FAILURE = 'The CMS request failed.';
-const CMS_INVALID_TOKEN_MSG =
-  'Another user is already connected to this host.';
 
 function isMeaningfulCmsNote(note: unknown): boolean {
   if (note === undefined || note === null) return false;
@@ -79,22 +77,11 @@ export function getPublicClientErrorMessage(payload: PublicErrorPayload): string
   if (kind === 'CMS') {
     const resolved = cmsNoteFromPayload(additionalData);
     if (resolved) {
-      const lowerNote = resolved.toLowerCase();
-      if (
-        lowerNote.includes('already connected') ||
-        lowerNote.includes('session lock') ||
-        lowerNote.includes('concurrent connection') ||
-        lowerNote.includes('invalid token') ||
-        lowerNote.includes('reconnect') ||
-        (lowerNote.includes('session') && lowerNote.includes('lock'))
-      ) {
-        return CMS_INVALID_TOKEN_MSG;
-      }
       return resolved;
     }
     switch (code as CmsErrorCode) {
       case CmsErrorCode.INVALID_TOKEN:
-        return CMS_INVALID_TOKEN_MSG;
+        return 'Request is rejected due to invalid token. Please reconnect.';
       case CmsErrorCode.NO_RESPONSE:
         return 'No response was received from CMS.';
       case CmsErrorCode.REQUEST_FAILED:

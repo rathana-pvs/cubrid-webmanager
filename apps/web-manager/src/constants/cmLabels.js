@@ -346,7 +346,7 @@ export const CM = {
   connectionFailed: 'Connection failed',
   connectionLost: 'Connection Lost',
   reconnect: 'Reconnect',
-  reconnectPrompt: 'Your session was disconnected, possibly because another user logged into this host. Click Reconnect to attempt to re-establish the connection.',
+  reconnectPrompt: 'Your session was disconnected, possibly because the token expired or another user logged into this host. Click Reconnect to attempt to re-establish the connection.',
   editHost: 'Edit Host',
   deleteHost: 'Delete Host',
   changePassword: 'Change Password',
