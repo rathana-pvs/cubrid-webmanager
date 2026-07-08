@@ -12,7 +12,7 @@ export const Radio = ({
 }) => {
   return (
     <label className={`flex items-center gap-2 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
-      <div className="relative flex items-center justify-center">
+      <div className="relative flex items-center justify-center pt-0.5">
         <input
           type="radio"
           name={name}
@@ -22,12 +22,13 @@ export const Radio = ({
           disabled={disabled}
           className="peer sr-only"
         />
-        <div className="w-3.5 h-3.5 rounded-full border border-slate-300 dark:border-slate-800 transition-all peer-checked:border-bk-yellow/50 bg-slate-50 dark:bg-bk-main/30 shadow-xs"></div>
-        <div className={`absolute w-1.5 h-1.5 rounded-full bg-bk-yellow transition-transform scale-0 peer-checked:scale-100 flex items-center justify-center shadow-xs shadow-bk-yellow/20`}></div>
+        <div className="w-4.5 h-4.5 rounded-full border border-slate-300 dark:border-white/25 transition-all bg-white dark:bg-white/10 shadow-xs group-hover:border-amber-500/50 dark:group-hover:border-amber-500/50 peer-checked:border-amber-500 dark:peer-checked:border-amber-500"></div>
+        <div className="absolute w-2 h-2 rounded-full bg-amber-500 transition-transform scale-0 peer-checked:scale-100 flex items-center justify-center shadow-xs shadow-amber-500/20"></div>
       </div>
-      {label && <Typography variant="label" className="select-none text-[11px] font-medium text-slate-700 dark:text-slate-200 tracking-wide">{label}</Typography>}
+      {label && <Typography variant="label" className="select-none text-[12px] font-medium text-slate-700 dark:text-slate-200 tracking-normal">{label}</Typography>}
     </label>
   );
+
 };
 
 export const RadioGroup = ({

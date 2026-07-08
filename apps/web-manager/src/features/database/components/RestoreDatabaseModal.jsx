@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeRestoreDatabaseModal, fetchBackupList, restoreDatabase } from '../databaseSlice';
 
@@ -7,6 +7,8 @@ import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Toggle } from '../../../components/ds/forms/Toggle';
+import { Checkbox } from '../../../components/ds/forms/Checkbox';
+import { Radio } from '../../../components/ds/forms/Radio';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { EmptyState } from '../../../components/ds/feedback/EmptyState';
@@ -18,6 +20,13 @@ import {
 } from '../../../components/ds/feedback/ActionStatus';
 import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { useCM } from '../../../constants/useCM';
+import {
+  CaDialogField,
+  CaDialogFieldGrid,
+  CaDialogGroup,
+} from '../../../components/ds/layout/CaDialogLayout';
+import { DatePicker } from '../../../components/ds/forms/DatePicker';
+import { TimePicker } from '../../../components/ds/forms/TimePicker';
 
 // view states
 const VIEW_FORM    = 'form';
@@ -101,7 +110,8 @@ export default function RestoreDatabaseModal() {
   const CM = useCM();
   const dispatch = useDispatch();
   const { isRestoreDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
-  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedDatabase, databases } = useSelector((state) => state.database, shallowEqual);
+  const currentDb = databases?.find((db) => db.dbname === selectedDatabase);
   const {
     databaseBackups,
     databaseBackupsLoading,
@@ -120,7 +130,23 @@ export default function RestoreDatabaseModal() {
     isError
   } = useActionState();
 
-  const [formData, setFormData] = useState({ selectedBackup: null, recoveryPath: '', isPartial: false, usePointInTime: false, restoreDate: '' });
+  const [formData, setFormData] = useState({
+    selectedBackup: null,
+    recoveryPath: '',
+    isPartial: false,
+    usePointInTime: false,
+    restoreDate: '',
+    restoreDateOnly: '',
+    restoreTimeOnly: '00:00',
+    selectRecoveryDateTime: true,
+    recoveryTimeType: 'backupTime',
+    selectBackupFilePath: false,
+    manualBackupLevel: '0',
+    manualLevel0Path: '',
+    manualLevel1Path: '',
+    manualLevel2Path: '',
+    changeRestorePath: false
+  });
   const [filter, setFilter] = useState('all'); // 'all' | 0 | 1 | 2
 
   const parseBackupString = (str, level) => {
@@ -135,67 +161,237 @@ export default function RestoreDatabaseModal() {
   };
 
   const backupData = databaseBackups[selectedDatabase] || {};
-  const allBackups = [
-    ...(Array.isArray(backupData.level0) ? backupData.level0.map(b => ({ ...b, level: 0 })) : parseBackupString(backupData.level0, 0)),
-    ...(Array.isArray(backupData.level1) ? backupData.level1.map(b => ({ ...b, level: 1 })) : parseBackupString(backupData.level1, 1)),
-    ...(Array.isArray(backupData.level2) ? backupData.level2.map(b => ({ ...b, level: 2 })) : parseBackupString(backupData.level2, 2)),
-  ].filter(b => b.pathname).sort((a, b) => {
-    const tA = parseCmsDate(a.date)?.getTime() ?? 0;
-    const tB = parseCmsDate(b.date)?.getTime() ?? 0;
-    return tB - tA;
-  });
+  const allBackups = useMemo(() => {
+    return [
+      ...(Array.isArray(backupData.level0) ? backupData.level0.map(b => ({ ...b, level: 0 })) : parseBackupString(backupData.level0, 0)),
+      ...(Array.isArray(backupData.level1) ? backupData.level1.map(b => ({ ...b, level: 1 })) : parseBackupString(backupData.level1, 1)),
+      ...(Array.isArray(backupData.level2) ? backupData.level2.map(b => ({ ...b, level: 2 })) : parseBackupString(backupData.level2, 2)),
+    ].filter(b => b.pathname).sort((a, b) => {
+      const tA = parseCmsDate(a.date)?.getTime() ?? 0;
+      const tB = parseCmsDate(b.date)?.getTime() ?? 0;
+      return tB - tA;
+    });
+  }, [backupData]);
+
 
   const backups = filter === 'all' ? allBackups : allBackups.filter(b => b.level === filter);
   const isLoadingBackups = databaseBackupsLoading[selectedDatabase];
 
   useEffect(() => {
     if (isRestoreDatabaseModalOpen && selectedHostUid && selectedDatabase) {
-      setFormData({ selectedBackup: null, recoveryPath: '', isPartial: false, usePointInTime: false, restoreDate: '' });
+      const now = new Date();
+      const localYear = now.getFullYear();
+      const localMonth = String(now.getMonth() + 1).padStart(2, '0');
+      const localDay = String(now.getDate()).padStart(2, '0');
+      const localHours = String(now.getHours()).padStart(2, '0');
+      const localMinutes = String(now.getMinutes()).padStart(2, '0');
+
+      const currentDateOnly = `${localYear}-${localMonth}-${localDay}`;
+      const currentTimeOnly = `${localHours}:${localMinutes}`;
+
+      setFormData({
+        selectedBackup: null,
+        recoveryPath: '',
+        isPartial: false,
+        usePointInTime: false,
+        restoreDate: '',
+        restoreDateOnly: currentDateOnly,
+        restoreTimeOnly: currentTimeOnly,
+        selectRecoveryDateTime: true,
+        recoveryTimeType: 'backupTime',
+        selectBackupFilePath: false,
+        manualBackupLevel: '0',
+        manualLevel0Path: '',
+        manualLevel1Path: '',
+        manualLevel2Path: '',
+        changeRestorePath: false
+      });
       setFilter('all');
       resetAction();
       dispatch(fetchBackupList({ hostUid: selectedHostUid, dbname: selectedDatabase }));
     }
   }, [isRestoreDatabaseModalOpen, selectedHostUid, selectedDatabase, dispatch, resetAction]);
+  // Auto-populate manual path inputs if backup information is available in catalog
+  useEffect(() => {
+    if (allBackups && allBackups.length > 0) {
+      const b0 = allBackups.find(b => b.level === 0);
+      const b1 = allBackups.find(b => b.level === 1);
+      const b2 = allBackups.find(b => b.level === 2);
+
+      setFormData(prev => {
+        const updates = {};
+        if (b0 && !prev.manualLevel0Path) {
+          updates.manualLevel0Path = b0.pathname;
+        }
+        if (b1 && !prev.manualLevel1Path) {
+          updates.manualLevel1Path = b1.pathname;
+        }
+        if (b2 && !prev.manualLevel2Path) {
+          updates.manualLevel2Path = b2.pathname;
+        }
+        
+        if (Object.keys(updates).length > 0) {
+          return { ...prev, ...updates };
+        }
+        return prev;
+      });
+    }
+  }, [allBackups]);
+
+  const validationError = useMemo(() => {
+    // 1. Date & Time validation (only if selectRecoveryDateTime is checked and specify restore date is active)
+    if (formData.selectRecoveryDateTime && formData.recoveryTimeType === 'specificTime') {
+      if (!formData.restoreDateOnly || !formData.restoreTimeOnly) {
+        return CM.restoreDateRequired;
+      }
+      const parts = formData.restoreDateOnly.split('-');
+      const year = parseInt(parts[0], 10);
+      const month = parseInt(parts[1], 10);
+      const day = parseInt(parts[2], 10);
+      if (isNaN(year) || year < 1 || year > new Date().getFullYear()) {
+        return CM.errYear || 'The year value of date is not valid.';
+      }
+      if (isNaN(month) || month < 1 || month > 12) {
+        return CM.errMonth || 'The month value of date is not valid.';
+      }
+      if (isNaN(day) || day < 1 || day > 31) {
+        return CM.errDay || 'The day value of date is not valid.';
+      }
+    }
+
+    // 2. Backup File Validation (only if selectBackupFilePath is checked)
+    if (formData.selectBackupFilePath) {
+      const levelVal = formData.manualBackupLevel;
+      const path = levelVal === '0' ? formData.manualLevel0Path :
+                   levelVal === '1' ? formData.manualLevel1Path :
+                   formData.manualLevel2Path;
+      if (!path) {
+        if (levelVal === '0') return CM.errLevel0File || 'The level 0 file is not valid.';
+        if (levelVal === '1') return CM.errLevel1File || 'The level 1 file is not valid.';
+        return CM.errLevel2File || 'The level 2 file is not valid.';
+      }
+    }
+
+    // 3. Recovery Path Validation (only if changeRestorePath is checked)
+    if (formData.changeRestorePath) {
+      if (!formData.recoveryPath) {
+        return CM.errRecoveryPath || 'The user-defined recovery path is not valid.';
+      }
+    }
+
+    return null;
+  }, [formData]);
+
+  const isExecuteDisabled = !!validationError;
 
   if (!isRestoreDatabaseModalOpen) return null;
 
   const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
 
+  const handleRestorePathToggle = (checked) => {
+    setFormData(prev => ({
+      ...prev,
+      changeRestorePath: checked,
+      recoveryPath: checked ? (prev.recoveryPath || currentDb?.dbdir || allBackups.find(b => b.recoverypath)?.recoverypath || '') : ''
+    }));
+  };
+
+  const handleBackupSelect = (backup) => {
+    const isSel = formData.selectedBackup === backup.pathname;
+    const nextBackup = isSel ? null : backup.pathname;
+    
+    let nextDate = '';
+    let nextTime = '00:00';
+    if (nextBackup && backup.date) {
+      const dt = toDatetimeLocal(backup.date);
+      if (dt) {
+        const [dPart, tPart] = dt.split('T');
+        nextDate = dPart;
+        nextTime = tPart;
+      }
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      selectedBackup: nextBackup,
+      restoreDateOnly: nextDate,
+      restoreTimeOnly: nextTime
+    }));
+  };
+
   const handleRestore = async () => {
-    if (!formData.selectedBackup) {
-      endError(CM.selectBackupFirst);
-      return;
-    }
+    let levelVal = '';
+    let pathnameVal = '';
+    let backupDate = null;
 
-    if (formData.usePointInTime && !formData.restoreDate) {
-      endError(CM.restoreDateRequired);
-      return;
-    }
+    if (formData.selectBackupFilePath) {
+      levelVal = formData.manualBackupLevel;
+      if (levelVal === '0') {
+        pathnameVal = formData.manualLevel0Path;
+      } else if (levelVal === '1') {
+        pathnameVal = formData.manualLevel1Path;
+      } else {
+        pathnameVal = formData.manualLevel2Path;
+      }
 
-    const backup = allBackups.find(b => b.pathname === formData.selectedBackup);
-
-    if (formData.usePointInTime && formData.restoreDate && backup?.date) {
-      const backupDate = parseCmsDate(backup.date);
-      if (backupDate && new Date(formData.restoreDate) < backupDate) {
-        endError(CM.restoreDateBeforeBackup);
+      if (!pathnameVal) {
+        if (levelVal === '0') endError(CM.errLevel0File || 'The level 0 file is not valid.');
+        else if (levelVal === '1') endError(CM.errLevel1File || 'The level 1 file is not valid.');
+        else endError(CM.errLevel2File || 'The level 2 file is not valid.');
         return;
+      }
+    } else {
+      if (!formData.selectedBackup) {
+        endError(CM.selectBackupFirst);
+        return;
+      }
+      const backup = allBackups.find(b => b.pathname === formData.selectedBackup);
+      if (!backup) {
+        endError(CM.selectBackupFirst);
+        return;
+      }
+      levelVal = String(backup.level);
+      pathnameVal = backup.pathname || 'none';
+      if (backup.date) {
+        backupDate = parseCmsDate(backup.date);
       }
     }
 
+    let dateParam = 'backuptime';
+    if (formData.selectRecoveryDateTime) {
+      if (formData.recoveryTimeType === 'specificTime') {
+        if (!formData.restoreDateOnly || !formData.restoreTimeOnly) {
+          endError(CM.restoreDateRequired);
+          return;
+        }
+        
+        const combinedDateTime = formData.restoreDateOnly + 'T' + formData.restoreTimeOnly;
+        if (backupDate && new Date(combinedDateTime) < backupDate) {
+          endError(CM.restoreDateBeforeBackup);
+          return;
+        }
+        dateParam = formatCmsDate(combinedDateTime);
+      }
+    }
+
+    if (formData.changeRestorePath && !formData.recoveryPath) {
+      endError(CM.errRecoveryPath || 'The user-defined recovery path is not valid.');
+      return;
+    }
+    const recoverypathParam = formData.changeRestorePath ? formData.recoveryPath : 'none';
+    const partialParam = formData.isPartial ? 'y' : 'n';
+
     startAction();
     try {
-      const date = formData.usePointInTime
-        ? formatCmsDate(formData.restoreDate)
-        : 'backuptime';
       await dispatch(restoreDatabase({
         hostUid: selectedHostUid,
         dbname: selectedDatabase,
         payload: {
-          date,
-          level: String(backup.level),
-          partial: formData.isPartial ? 'y' : 'n',
-          pathname: backup.pathname || 'none',
-          recoverypath: formData.recoveryPath || 'none',
+          date: dateParam,
+          level: levelVal,
+          partial: partialParam,
+          pathname: pathnameVal,
+          recoverypath: recoverypathParam,
         }
       })).unwrap();
       endSuccess(selectedDatabase);
@@ -207,8 +403,6 @@ export default function RestoreDatabaseModal() {
   const handleClose = () => dispatch(closeRestoreDatabaseModal());
 
   const levelCounts = { 0: allBackups.filter(b => b.level === 0).length, 1: allBackups.filter(b => b.level === 1).length, 2: allBackups.filter(b => b.level === 2).length };
-  const selectedBackupObj = formData.selectedBackup ? allBackups.find(b => b.pathname === formData.selectedBackup) ?? null : null;
-  const backupMinDatetime = selectedBackupObj?.date ? toDatetimeLocal(selectedBackupObj.date) : undefined;
 
   /* ─── LOADING view ─── */
   if (isLoading) {
@@ -274,7 +468,7 @@ export default function RestoreDatabaseModal() {
               variant="primary"
               onClick={handleRestore}
               icon="settings_backup_restore"
-              disabled={!formData.selectedBackup}
+              disabled={isExecuteDisabled}
               className="px-6 min-w-[150px]"
             >
               {CM.executeRestore}
@@ -283,253 +477,198 @@ export default function RestoreDatabaseModal() {
         </div>
       }
     >
-      <div className="space-y-5 pb-2">
-
-        {/* ── Context banner ── */}
-        <div className="relative rounded-xl border border-rose-500/20 bg-linear-to-r from-rose-500/5 to-transparent dark:from-rose-500/8 p-4 overflow-hidden">
-          {/* subtle top-right flourish */}
-          <div className="absolute -top-4 -right-4 w-20 h-20 rounded-full bg-rose-500/5 blur-2xl pointer-events-none" />
-          <div className="flex items-center justify-between flex-wrap gap-3">
-            <div className="flex items-center gap-3">
-              <div className="w-10 h-10 rounded-xl bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0">
-                <Icon name="database" size="md" weight={300} className="text-rose-400" />
-              </div>
-              <div>
-                <p className="text-[9px] font-black uppercase tracking-widest text-rose-500/70 dark:text-rose-400/60 mb-0.5">{CM.targetInstance}</p>
-                <p className="text-[15px] font-bold font-mono text-rose-700 dark:text-rose-400 leading-none">{selectedDatabase}</p>
-              </div>
-            </div>
-            <StatusBadge label={CM.destructiveAction} variant="rose" icon="warning" pulse={true} className="rounded-full" />
+      <div className="space-y-4 pb-2 text-left">
+        {validationError && (
+          <div className="mb-2 p-2.5 bg-rose-500/10 border border-rose-500/20 text-rose-600 dark:text-rose-400 text-[11px] rounded-xl flex items-center gap-2 animate-in fade-in duration-200">
+            <Icon name="error" size="14px" className="shrink-0" />
+            <span className="font-medium">{validationError}</span>
           </div>
+        )}
 
-          {/* Available level summary */}
-          <div className="grid grid-cols-3 gap-2 mt-4 pt-3 border-t border-rose-500/10">
-            {[0, 1, 2].map(lvl => {
-              const m = LEVEL_META[lvl];
-              return (
-                <div key={lvl} className="flex items-center gap-2">
-                  <span className={`w-2 h-2 rounded-full shrink-0 ${m.dot}`} />
-                  <span className="text-[9px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">{CM[m.titleKey]}</span>
-                  <span className={`ml-auto text-[10px] font-black px-1.5 py-0.5 rounded-sm border ${m.badge}`}>{levelCounts[lvl]}</span>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* ── Snapshot catalog ── */}
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <SectionLabel count={allBackups.length}>{CM.snapshotCatalog}</SectionLabel>
-            {/* level filter pills */}
-            {allBackups.length > 0 && (
-              <div className="flex gap-1">
-                {['all', 0, 1, 2].map(f => {
-                  const meta = f === 'all' ? null : LEVEL_META[f];
-                  const isActive = filter === f;
-                  return (
-                    <button
-                      key={String(f)}
-                      onClick={() => setFilter(f)}
-                      className={`text-[9px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full border transition-all cursor-pointer
-                        ${isActive
-                          ? 'bg-slate-900 dark:bg-white dark:text-slate-900 text-white border-transparent shadow-xs'
-                          : 'text-slate-400 border-slate-200 dark:border-white/10 hover:border-slate-300 dark:hover:border-white/20 hover:text-slate-600 dark:hover:text-slate-200'
-                        }`}
-                    >
-                      {f === 'all' ? CM.all : `L${f}`}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          {isLoadingBackups ? (
-            <div className="flex flex-col items-center justify-center py-14 gap-3 bg-slate-50/50 dark:bg-white/2 border border-dashed border-slate-200 dark:border-white/10 rounded-xl">
-              <Spinner size="sm" />
-              <p className="text-[10px] text-slate-400 uppercase tracking-widest font-black">{CM.scanningCatalog}</p>
-            </div>
-          ) : backups.length === 0 ? (
-            <EmptyState
-              icon={filter === 'all' ? 'search_off' : 'filter_list_off'}
-              title={CM.noBackupFound}
-              subtitle={filter === 'all' ? CM.noBackupHint : CM.tryOtherBackupLevel}
-              action={filter !== 'all' && (
-                <button
-                  onClick={() => setFilter('all')}
-                  className="text-[10px] font-bold text-amber-500 hover:text-amber-600 transition-colors underline underline-offset-2 cursor-pointer"
-                >
-                  {CM.showAllBackups}
-                </button>
-              )}
-            />
-          ) : (
-            <div className="space-y-2 max-h-[260px] overflow-y-auto custom-scrollbar pr-1">
-              {backups.map((backup, idx) => {
-                const meta = LEVEL_META[backup.level] || LEVEL_META[0];
-                const isSel = formData.selectedBackup === backup.pathname;
-                return (
-                  <button
-                    key={backup.pathname || idx}
-                    onClick={() => handleInputChange('selectedBackup', isSel ? null : backup.pathname)}
-                    type="button"
-                    className={`w-full text-left flex items-center gap-3.5 p-3.5 rounded-xl border transition-all duration-200 group focus:outline-hidden focus-visible:ring-2 focus-visible:ring-amber-500 cursor-pointer
-                      ${isSel
-                        ? 'border-amber-500/40 bg-amber-500/5 dark:bg-amber-500/[0.07] shadow-xs'
-                        : `${meta.ring} hover:border-opacity-50 hover:shadow-xs`
-                      }`}
-                  >
-                    {/* level badge */}
-                    <div className={`w-11 h-11 rounded-xl flex flex-col items-center justify-center shrink-0 border shadow-xs transition-all
-                      ${isSel ? `${meta.ringSelected} shadow-md` : `${meta.ring} ${meta.iconColor}`}`}
-                    >
-                      <Icon name={meta.icon} size="sm" weight={300} />
-                      <span className="text-[8px] font-black leading-none mt-0.5 opacity-80">{meta.label}</span>
-                    </div>
-
-                    {/* details */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-2 mb-0.5 flex-wrap">
-                        <span className={`text-[12px] font-bold tracking-tight transition-colors ${isSel ? 'text-amber-600 dark:text-amber-400' : 'text-slate-800 dark:text-white'}`}>
-                          {CM[meta.titleKey]}
-                        </span>
-                        {backup.date && (
-                          <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500 bg-slate-100 dark:bg-white/5 px-1.5 py-0.5 rounded-sm border border-slate-200 dark:border-white/10">
-                            {backup.date}
-                          </span>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1.5 opacity-50 group-hover:opacity-90 transition-opacity">
-                        <Icon name="folder_open" size="12px" weight={300} className="text-slate-400 shrink-0" />
-                        <span className="text-[10px] font-mono text-slate-500 dark:text-slate-400 truncate">{backup.pathname}</span>
-                      </div>
-                      {isSel && (
-                        <p className="text-[9px] text-amber-600/70 dark:text-amber-400/60 mt-1 font-medium italic leading-tight">
-                          {CM[meta.descKey]}
-                        </p>
-                      )}
-                    </div>
-
-                    {/* radio dot */}
-                    <div className={`shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all
-                      ${isSel ? 'border-amber-500 bg-amber-500' : 'border-slate-200 dark:border-white/10 group-hover:border-amber-500/40'}`}
-                    >
-                      {isSel && <Icon name="check" size="12px" weight={700} className="text-white" />}
-                    </div>
-                  </button>
-                );
-              })}
-            </div>
-          )}
-        </div>
-
-        {/* ── Restore options ── */}
-        <div>
-          <SectionLabel>{CM.restoreOptions}</SectionLabel>
-          <div className="grid grid-cols-2 gap-3">
-
-            {/* Partial recovery toggle */}
-            <div
-              className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-200 text-left w-full group cursor-pointer
-                ${formData.isPartial
-                  ? 'bg-amber-500/5 border-amber-500/30 dark:border-amber-500/25 shadow-xs'
-                  : 'bg-slate-50/50 dark:bg-white/2 border-slate-200 dark:border-white/8 hover:border-slate-300 dark:hover:border-white/15'
-                }`}
-              onClick={() => handleInputChange('isPartial', !formData.isPartial)}
-            >
-              <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border transition-all
-                ${formData.isPartial
-                  ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 border-amber-400'
-                  : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 group-hover:text-slate-600'
-                }`}
-              >
-                <Icon name="history_edu" size="sm" weight={300} />
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className={`text-[12px] font-bold transition-colors ${formData.isPartial ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
-                  {CM.logCatchup}
-                </p>
-                <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{CM.applyIntermediateLogs}</p>
-              </div>
-              <div onClick={(e) => e.stopPropagation()}>
-                <Toggle checked={formData.isPartial} onChange={() => handleInputChange('isPartial', !formData.isPartial)} />
-              </div>
-            </div>
-
-            {/* Recovery path override */}
-            <div className="space-y-1.5">
-              <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 px-0.5">{CM.pathOverride}</p>
+        {/* ── Database Name Group ── */}
+        <CaDialogGroup title={CM.grpDbName || 'Database Name'}>
+          <CaDialogFieldGrid labelWidth="130px" className="pt-2">
+            <CaDialogField label={CM.lblDbNameRestore || 'Database name:'}>
               <Input
-                placeholder={CM.recoveryPathPlaceholder}
-                value={formData.recoveryPath}
-                onChange={(e) => handleInputChange('recoveryPath', e.target.value)}
-                icon="drive_file_move"
+                value={selectedDatabase}
+                disabled
+                icon="database"
+                className="flex-1"
+                inputClassName="font-mono text-rose-700 dark:text-rose-400 bg-rose-500/5 dark:bg-rose-500/8 border-rose-500/20"
               />
-              <p className="text-[9px] text-slate-400 dark:text-slate-500 italic px-0.5">{CM.restoreInPlaceHint}</p>
-            </div>
+            </CaDialogField>
+          </CaDialogFieldGrid>
+        </CaDialogGroup>
 
-            {/* Point-in-time recovery */}
-            <div className="col-span-2 space-y-2">
-              <div
-                className={`flex items-center gap-3 p-4 rounded-xl border transition-all duration-200 cursor-pointer group
-                  ${formData.usePointInTime
-                    ? 'bg-amber-500/5 border-amber-500/30 dark:border-amber-500/25 shadow-xs'
-                    : 'bg-slate-50/50 dark:bg-white/2 border-slate-200 dark:border-white/8 hover:border-slate-300 dark:hover:border-white/15'
-                  }`}
-                onClick={() => handleInputChange('usePointInTime', !formData.usePointInTime)}
-              >
-                <div className={`w-9 h-9 rounded-lg flex items-center justify-center shrink-0 border transition-all
-                  ${formData.usePointInTime
-                    ? 'bg-amber-500 text-white shadow-md shadow-amber-500/20 border-amber-400'
-                    : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/10 text-slate-400 group-hover:text-slate-600'
-                  }`}
-                >
-                  <Icon name="schedule" size="sm" weight={300} />
+        {/* ── Date and Time Option Group ── */}
+        <CaDialogGroup title={CM.grpRestoredData || 'Restored Data'}>
+          <CaDialogFieldGrid labelWidth="130px" className="gap-y-4 pt-2">
+            <CaDialogField fullWidth>
+              <Checkbox
+                label={CM.selectRestoreDateTime}
+                checked={formData.selectRecoveryDateTime}
+                onChange={(e) => handleInputChange('selectRecoveryDateTime', e.target.checked)}
+              />
+            </CaDialogField>
+
+            {formData.selectRecoveryDateTime && (
+              <CaDialogField fullWidth>
+                <div className="pl-6 space-y-3 pt-2 border-t border-slate-200/50 dark:border-white/5 animate-in slide-in-from-top-1 duration-200">
+                  <div className="flex gap-4">
+                    <Radio
+                      name="recoveryTimeType"
+                      label={CM.backupTimeLabel}
+                      value="backupTime"
+                      checked={formData.recoveryTimeType === 'backupTime'}
+                      onChange={(val) => handleInputChange('recoveryTimeType', val)}
+                    />
+                    <Radio
+                      name="recoveryTimeType"
+                      label={CM.specifyRestoreDate}
+                      value="specificTime"
+                      checked={formData.recoveryTimeType === 'specificTime'}
+                      onChange={(val) => handleInputChange('recoveryTimeType', val)}
+                    />
+                  </div>
+                  {formData.recoveryTimeType === 'specificTime' && (
+                    <div className="space-y-3 animate-in slide-in-from-top-1 duration-200">
+                      <div className="flex gap-4 max-w-md">
+                        <DatePicker
+                          label={CM.lblDate || 'Date:'}
+                          value={formData.restoreDateOnly}
+                          onChange={(e) => handleInputChange('restoreDateOnly', e.target.value)}
+                          className="flex-1"
+                        />
+                        <TimePicker
+                          label={CM.lblTime || 'Time:'}
+                          value={formData.restoreTimeOnly}
+                          onChange={(e) => handleInputChange('restoreTimeOnly', e.target.value)}
+                          className="flex-1"
+                        />
+                      </div>
+                    </div>
+                  )}
                 </div>
-                <div className="flex-1 min-w-0">
-                  <p className={`text-[12px] font-bold transition-colors ${formData.usePointInTime ? 'text-slate-800 dark:text-white' : 'text-slate-600 dark:text-slate-400'}`}>
-                    {CM.pointInTimeRecovery}
-                  </p>
-                  <p className="text-[10px] text-slate-400 dark:text-slate-500 leading-tight">{CM.pointInTimeHint}</p>
+              </CaDialogField>
+            )}
+
+            <CaDialogField fullWidth>
+              <Checkbox
+                label={CM.selectBackupInfoLabel}
+                checked={formData.selectBackupFilePath}
+                onChange={(e) => handleInputChange('selectBackupFilePath', e.target.checked)}
+              />
+            </CaDialogField>
+            
+            <CaDialogField fullWidth>
+              <div className="pl-6 space-y-3 pt-2 border-t border-slate-200/50 dark:border-white/5 animate-in slide-in-from-top-1 duration-200">
+                <div className="flex gap-4 mb-2">
+                  {['0', '1', '2'].map((lvl) => (
+                    <Radio
+                      key={lvl}
+                      name="manualBackupLevel"
+                      label={`L${lvl}`}
+                      value={lvl}
+                      checked={formData.manualBackupLevel === lvl}
+                      onChange={(val) => handleInputChange('manualBackupLevel', val)}
+                      disabled={!formData.selectBackupFilePath}
+                    />
+                  ))}
                 </div>
-                <div onClick={(e) => e.stopPropagation()}>
-                  <Toggle checked={formData.usePointInTime} onChange={() => handleInputChange('usePointInTime', !formData.usePointInTime)} />
+                <div className="space-y-3">
+                  <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                    <Typography variant="label" className={`text-[12px] ${formData.selectBackupFilePath ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-600'}`}>
+                      {CM.level0FileLabel}
+                    </Typography>
+                    <Input
+                      value={formData.manualLevel0Path}
+                      onChange={(e) => handleInputChange('manualLevel0Path', e.target.value)}
+                      disabled={!formData.selectBackupFilePath || formData.manualBackupLevel !== '0'}
+                      icon="folder_open"
+                      placeholder="e.g. /path/to/backup_bk0v000"
+                    />
+                  </div>
+                  <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                    <Typography variant="label" className={`text-[12px] ${formData.selectBackupFilePath ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-600'}`}>
+                      {CM.level1FileLabel}
+                    </Typography>
+                    <Input
+                      value={formData.manualLevel1Path}
+                      onChange={(e) => handleInputChange('manualLevel1Path', e.target.value)}
+                      disabled={!formData.selectBackupFilePath || formData.manualBackupLevel !== '1'}
+                      icon="folder_open"
+                      placeholder="e.g. /path/to/backup_bk1v000"
+                    />
+                  </div>
+                  <div className="grid grid-cols-[110px_1fr] items-center gap-3">
+                    <Typography variant="label" className={`text-[12px] ${formData.selectBackupFilePath ? 'text-slate-700 dark:text-slate-300' : 'text-slate-400 dark:text-slate-600'}`}>
+                      {CM.level2FileLabel}
+                    </Typography>
+                    <Input
+                      value={formData.manualLevel2Path}
+                      onChange={(e) => handleInputChange('manualLevel2Path', e.target.value)}
+                      disabled={!formData.selectBackupFilePath || formData.manualBackupLevel !== '2'}
+                      icon="folder_open"
+                      placeholder="e.g. /path/to/backup_bk2v000"
+                    />
+                  </div>
                 </div>
               </div>
-              {formData.usePointInTime && (
-                <div className="px-1 space-y-1.5">
-                  <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">{CM.restoreToDate}</p>
-                  <Input
-                    type="datetime-local"
-                    value={formData.restoreDate}
-                    onChange={(e) => handleInputChange('restoreDate', e.target.value)}
-                    icon="schedule"
-                    min={backupMinDatetime}
-                  />
-                  <p className="text-[9px] text-slate-400 dark:text-slate-500 italic">{CM.restoreDateFormatHint}</p>
+            </CaDialogField>
+
+        </CaDialogFieldGrid>
+      </CaDialogGroup>
+
+      {/* ── Recovery Path Group ── */}
+      {(() => {
+        const defaultDir = currentDb?.dbdir || allBackups.find(b => b.recoverypath)?.recoverypath || '';
+        if (!defaultDir) return null;
+
+        return (
+          <CaDialogGroup title={CM.grpDbPath || 'Recovery Path'}>
+            <CaDialogFieldGrid labelWidth="130px" className="pt-2">
+              <CaDialogField fullWidth>
+                <div className="flex items-center gap-4 w-full">
+                  <div className="shrink-0 min-w-[130px]">
+                    <Checkbox
+                      label={CM.changeRestorePathLabel}
+                      checked={formData.changeRestorePath}
+                      onChange={(e) => handleRestorePathToggle(e.target.checked)}
+                    />
+                  </div>
+                  <div className="flex-1">
+                    <Input
+                      placeholder={CM.recoveryPathPlaceholder}
+                      value={formData.changeRestorePath ? formData.recoveryPath : defaultDir}
+                      onChange={(e) => handleInputChange('recoveryPath', e.target.value)}
+                      disabled={!formData.changeRestorePath}
+                      icon="drive_file_move"
+                    />
+                  </div>
                 </div>
-              )}
-            </div>
-          </div>
-        </div>
+              </CaDialogField>
+            </CaDialogFieldGrid>
+          </CaDialogGroup>
+        );
+      })()}
 
-        {/* ── Danger notice ── */}
-        <div className="flex items-start gap-3.5 p-4 bg-rose-500/4 border border-rose-500/20 rounded-xl">
-          <div className="w-8 h-8 rounded-lg bg-rose-500/10 border border-rose-500/20 flex items-center justify-center shrink-0 mt-0.5">
-            <Icon name="priority_high" size="sm" weight={700} className="text-rose-500" />
-          </div>
-          <div className="flex-1">
-            <p className="text-[11px] font-bold text-rose-600 dark:text-rose-400 mb-1 uppercase tracking-tight">
-              {CM.irreversibleOperation}
-            </p>
-            <p className="text-[10px] text-slate-500 dark:text-slate-400 leading-relaxed">
-              {CM.restoreOverwriteNote}
-            </p>
-          </div>
-        </div>
+      {/* ── Partial Recovery Group ── */}
+      <CaDialogGroup title={CM.grpPartialRecovery || 'Partial Recovery'}>
+        <CaDialogFieldGrid labelWidth="130px" className="pt-2">
+          <CaDialogField fullWidth>
+            <Checkbox
+              label={CM.performPartialRecovery}
+              checked={formData.isPartial}
+              onChange={(e) => handleInputChange('isPartial', e.target.checked)}
+            />
+          </CaDialogField>
+        </CaDialogFieldGrid>
+      </CaDialogGroup>
 
-      </div>
+
+    </div>
+
     </Modal>
   );
+
 }
