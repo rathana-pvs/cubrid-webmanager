@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
 import { FormField } from './FormField';
+import { useCM } from '../../../constants/useCM';
 
 export const Select = ({
   label,
@@ -15,9 +16,11 @@ export const Select = ({
   disabled = false,
   value,
   onChange,
-  placeholder = 'Select option...',
+  placeholder = null,
   icon,
 }) => {
+  const CM = useCM();
+  const resolvedPlaceholder = placeholder ?? CM.selectOptionPlaceholder;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState({});
@@ -77,7 +80,7 @@ export const Select = ({
     >
       <div className="p-1 px-1.5 max-h-[190px] overflow-y-auto scrollbar-thin scrollbar-thumb-slate-200 dark:scrollbar-thumb-white/10 scrollbar-track-transparent flex flex-col gap-0.5">
         {options.length === 0 ? (
-          <div className="px-3 py-2 text-[10px] text-slate-400 italic">No options available</div>
+          <div className="px-3 py-2 text-[10px] text-slate-400 italic">{CM.noOptionsAvailableLabel}</div>
         ) : (
           options.map((opt) => (
             <div
@@ -119,7 +122,7 @@ export const Select = ({
             </div>
           )}
           <span className={`block truncate ${!selectedOption ? 'text-slate-400' : 'text-slate-900 dark:text-slate-200'}`}>
-            {selectedOption ? selectedOption.label : placeholder}
+            {selectedOption ? selectedOption.label : resolvedPlaceholder}
           </span>
           <div
             className="absolute right-3 top-1/2 flex items-center justify-center w-5 h-5 text-slate-400 pointer-events-none transition-transform duration-200"

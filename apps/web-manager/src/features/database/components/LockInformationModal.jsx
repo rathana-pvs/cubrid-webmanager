@@ -133,7 +133,7 @@ export default function LockInformationModal() {
                       return (
                         <tr key={idx} className={isWaiting ? 'bg-rose-50/40 dark:bg-rose-500/5' : ''}>
                           <td className="px-3 py-2">{t.index ?? idx}</td>
-                          <td className="px-3 py-2 font-sans">{t.pname || '-'}{isWaiting ? ' (waiting)' : ''}</td>
+                          <td className="px-3 py-2 font-sans">{t.pname || '-'}{isWaiting ? CM.waitingSuffix : ''}</td>
                           <td className="px-3 py-2">{t['@uid'] ?? '-'}</td>
                           <td className="px-3 py-2">{t.host ?? '-'}</td>
                           <td className="px-3 py-2">{t.pid ?? '-'}</td>

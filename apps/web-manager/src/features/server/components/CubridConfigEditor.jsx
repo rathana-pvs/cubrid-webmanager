@@ -38,7 +38,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
   const dispatch = useDispatch();
   const { hosts } = useSelector((state) => state.host, shallowEqual);
   const currentHost = hosts.find(h => h.uid === hostUid);
-  const hostDisplayName = currentHost ? (currentHost.alias || currentHost.id) : 'unknown host';
+  const hostDisplayName = currentHost ? (currentHost.alias || currentHost.id) : CM.unknownHost;
 
   const [content, setContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
@@ -61,7 +61,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
       setHasChanges(false);
       dispatch(setTabDirty({ tabId, isDirty: false }));
     } catch (err) {
-      dispatch(showStatusModal({ type: 'error', title: 'Fetch failed', message: 'Could not retrieve configuration file contents.' }));
+      dispatch(showStatusModal({ type: 'error', title: CM.fetchFailed, message: CM.configFetchErrorMsg }));
     } finally {
       setLoading(false);
     }
@@ -91,9 +91,9 @@ export default function CubridConfigEditor({ hostUid, confname }) {
       setOriginalContent(content);
       setHasChanges(false);
       dispatch(setTabDirty({ tabId, isDirty: false }));
-      dispatch(showStatusModal({ type: 'success', title: 'Config saved', message: `${confname} has been updated successfully.` }));
+      dispatch(showStatusModal({ type: 'success', title: CM.configSaved, message: CM.configUpdatedMsg(confname) }));
     } catch (err) {
-      dispatch(showStatusModal({ type: 'error', title: 'Save failed', message: err.response?.data?.message || 'An error occurred while saving.' }));
+      dispatch(showStatusModal({ type: 'error', title: CM.saveFailed, message: err.response?.data?.message || CM.saveErrorFallbackMsg }));
     } finally {
       setSaving(false);
     }
@@ -120,7 +120,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
             <Icon name="settings_applications" size="sm" weight={300} className="text-amber-600 dark:text-bk-yellow" />
           </div>
           <div className="min-w-0">
-            <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight truncate">Config Editor: {confname}</h2>
+            <h2 className="text-[12px] font-semibold text-slate-800 dark:text-slate-200 leading-tight truncate">{CM.configEditorColonLabel(confname)}</h2>
             <p className="text-[10px] text-slate-500 dark:text-slate-400 font-medium truncate">{hostDisplayName}</p>
           </div>
         </div>

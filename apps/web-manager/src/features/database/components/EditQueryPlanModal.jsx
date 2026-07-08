@@ -143,11 +143,11 @@ export default function EditQueryPlanModal() {
 
   const handleSave = async () => {
     if (!formData.queryId.trim()) {
-       endError('A unique Query Identifier is required.');
+       endError(CM.queryIdentifierRequired);
        return;
     }
     if (!formData.queryString.trim()) {
-      endError('No SQL statement provided.');
+      endError(CM.sqlStatementRequired);
       return;
     }
     const queryString = formData.queryString.trim();
@@ -206,10 +206,10 @@ export default function EditQueryPlanModal() {
 
     try {
       await dispatch(setAutoExecQuery({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
-      endSuccess(`Plan "${formData.queryId}" has been successfully updated.`);
+      endSuccess(CM.planUpdatedMsg(formData.queryId));
       dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: selectedDatabase }));
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'Operation failed.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.operationFailed));
     }
   };
 
@@ -335,7 +335,7 @@ export default function EditQueryPlanModal() {
         <div className="mt-[-10px] animate-in fade-in slide-in-from-top-2 duration-300">
           {formData.periodType === 'WEEK' && (
             <div className="grid grid-cols-7 gap-2">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, ix) => {
+              {CM.weekdaysShort.map((day, ix) => {
                 const isSel = formData.periodDetail.includes(ix + 1);
                 return (
                   <button 

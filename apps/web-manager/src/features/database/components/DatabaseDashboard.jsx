@@ -133,8 +133,8 @@ const Component = function DatabaseDashboard({ hostUid: propHostUid, dbname }) {
     name: v.spacename, 
     type: v.type, 
     purpose: v.purpose || '-',
-    free: v.freepage && v.freepage.trim() !== '' ? `${v.freepage} pages` : '-',
-    total: v.totalpage && v.totalpage.trim() !== '' ? `${v.totalpage} pages` : '-',
+    free: v.freepage && v.freepage.trim() !== '' ? CM.pagesCountLabel(v.freepage) : '-',
+    total: v.totalpage && v.totalpage.trim() !== '' ? CM.pagesCountLabel(v.totalpage) : '-',
     freePct: v.totalpage && parseInt(v.totalpage) > 0 && v.freepage && v.freepage.trim() !== '' ? (parseInt(v.freepage) / parseInt(v.totalpage)) * 100 : 0,
     date: v.date || '-', 
     path: v.location
@@ -143,10 +143,10 @@ const Component = function DatabaseDashboard({ hostUid: propHostUid, dbname }) {
   const mappedSpaceInfo = (data.spaceInfo || []).map(f => ({
     type: f.data_type, 
     fileCount: f.file_count, 
-    usedPages: f.used_size ? `${f.used_size} pages` : '-',
-    fileTablePages: f.file_table_size ? `${f.file_table_size} pages` : '-', 
-    reservedPages: f.reserved_size ? `${f.reserved_size} pages` : '-', 
-    totalPages: f.total_size ? `${f.total_size} pages` : '-'
+    usedPages: f.used_size ? CM.pagesCountLabel(f.used_size) : '-',
+    fileTablePages: f.file_table_size ? CM.pagesCountLabel(f.file_table_size) : '-',
+    reservedPages: f.reserved_size ? CM.pagesCountLabel(f.reserved_size) : '-',
+    totalPages: f.total_size ? CM.pagesCountLabel(f.total_size) : '-'
   }));
 
   const perf = data.performance || {};
@@ -180,18 +180,18 @@ const Component = function DatabaseDashboard({ hostUid: propHostUid, dbname }) {
   
   const mappedBrokers = brokersCAS.map(c => ({ broker: c.broker, id: c.id, pid: c.pid, qps: c.qps, lqs: c.lqs, status: c.status, lastConn: c.lastConn, dbname: c.dbname }));
   const handleExport = () => {
-    const headers = ['Section', 'Key', 'Value'];
+    const headers = [CM.sectionLabel, CM.keyLabel, CM.value];
     const rows = [
-      ['Summary', 'Database', dbname],
-      ['Summary', 'Host', `${activeHost?.address}:${activeHost?.port}`],
-      ['Performance', 'TPS', dbStats[0].tps],
-      ['Performance', 'QPS', dbStats[0].qps],
-      ['Performance', 'Hit Ratio', dbStats[0].hitRatio],
-      ['Performance', 'Fetch/s', dbStats[0].fetch],
-      ['Performance', 'Dirty/s', dbStats[0].dirty],
-      ['Performance', 'IO Reads/s', dbStats[0].ioReads],
-      ['Performance', 'IO Writes/s', dbStats[0].ioWrites],
-      ...mappedVolumes.map(v => ['Volume', v.name, `${v.free} / ${v.total}`])
+      [CM.summaryLabel, CM.database, dbname],
+      [CM.summaryLabel, CM.host, `${activeHost?.address}:${activeHost?.port}`],
+      [CM.performance, CM.tps, dbStats[0].tps],
+      [CM.performance, CM.qps, dbStats[0].qps],
+      [CM.performance, CM.hitRatioLabel, dbStats[0].hitRatio],
+      [CM.performance, CM.fetchPerSecLabel, dbStats[0].fetch],
+      [CM.performance, CM.dirtyPerSec, dbStats[0].dirty],
+      [CM.performance, CM.ioReadsPerSec, dbStats[0].ioReads],
+      [CM.performance, CM.ioWritesPerSec, dbStats[0].ioWrites],
+      ...mappedVolumes.map(v => [CM.volumeLabel, v.name, `${v.free} / ${v.total}`])
     ];
     const csv = [headers, ...rows].map(r => r.join(',')).join('\n');
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });

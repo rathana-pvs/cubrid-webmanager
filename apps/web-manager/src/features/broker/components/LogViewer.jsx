@@ -5,10 +5,10 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { useCM } from '../../../constants/useCM';
 
 // ─── Constants ────────────────────────────────────────────────────────────────
-const MODES = [
-  { key: 'raw', label: 'Raw Log',    icon: 'subject'      },
-  { key: 'sql', label: 'Parsed SQL', icon: 'code'         },
-  { key: 'top', label: 'Top SQL',    icon: 'query_stats'  },
+const MODE_KEYS = [
+  { key: 'raw', cmKey: 'rawLog',    icon: 'subject'     },
+  { key: 'sql', cmKey: 'parsedSQL', icon: 'code'        },
+  { key: 'top', cmKey: 'topSQL',    icon: 'query_stats' },
 ];
 
 const esc = s => s.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
@@ -235,7 +235,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
         {/* Center: mode switcher */}
         {!isErrorLogFile && (
           <div className="flex items-center bg-slate-100 dark:bg-white/5 rounded-lg p-0.5 shrink-0">
-            {MODES.map(m => (
+            {MODE_KEYS.map(m => (
               <button
                 key={m.key}
                 onClick={() => setViewMode(m.key)}
@@ -246,7 +246,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
                 }`}
               >
                 <Icon name={m.icon} size="sm" />
-                {m.label}
+                {CM[m.cmKey]}
               </button>
             ))}
           </div>
@@ -269,7 +269,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
                   } ${activeViewMode === 'top' ? 'visible' : 'invisible pointer-events-none'}`}
               >
                 <Icon name="download" size="18px" />
-                Export
+                {CM.exportBtn}
               </button>
 
               <div className="h-4 w-px bg-slate-200 dark:bg-white/10 mx-0.5" />
@@ -382,7 +382,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
               {sqls.map((s, i) => (
                 <div key={i} className="border border-slate-200 dark:border-slate-800 rounded-lg overflow-hidden">
                   <div className="flex items-center justify-between px-3 py-1.5 bg-slate-50 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800">
-                    <span className="text-[10px] font-bold text-slate-400">Statement #{i + 1}</span>
+                    <span className="text-[10px] font-bold text-slate-400">{CM.statementNumberLabel(i + 1)}</span>
                     <button
                       onClick={() => navigator.clipboard.writeText(s)}
                       className="p-1 text-slate-400 hover:text-amber-500 rounded transition-colors"
@@ -405,7 +405,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
           <div className="min-w-full inline-block">
             {/* Column headers */}
             <div className="flex items-center gap-4 px-4 py-2 bg-slate-100 dark:bg-white/5 border-b border-slate-200 dark:border-slate-800 text-[10px] font-bold text-slate-500 dark:text-slate-400 sticky top-0">
-              <div className="w-10 shrink-0">ID</div>
+              <div className="w-10 shrink-0">{CM.idLabel}</div>
               <div className="w-20 shrink-0 text-right">{CM.maxSeconds}</div>
               <div className="w-20 shrink-0 text-right text-sky-500">{CM.avgSeconds}</div>
               <div className="w-20 shrink-0 text-right text-emerald-500">{CM.countLabel}</div>
@@ -434,13 +434,13 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
       {/* ── Footer ───────────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
         <div className="flex items-center gap-4">
-          <span>Lines: {startLine}–{Math.min(endLine, totalLines)} of {totalLines.toLocaleString()}</span>
-          {activeViewMode === 'sql' && <span>{sqls.length} statements</span>}
-          {activeViewMode === 'top' && <span>{top.length} patterns</span>}
+          <span>{CM.linesRangeLabel(startLine, Math.min(endLine, totalLines), totalLines.toLocaleString())}</span>
+          {activeViewMode === 'sql' && <span>{CM.statementsCountLabel(sqls.length)}</span>}
+          {activeViewMode === 'top' && <span>{CM.patternsCountLabel(top.length)}</span>}
         </div>
         <div className="flex items-center gap-1.5">
           <div className={`h-1.5 w-1.5 rounded-full ${loading ? 'bg-amber-400 animate-pulse' : logState?.error ? 'bg-rose-500' : 'bg-emerald-500'}`} />
-          {loading ? 'Synchronizing...' : logState?.error ? 'Disconnected' : 'Connected'}
+          {loading ? CM.synchronizing : logState?.error ? CM.disconnectedLabel : CM.connected}
         </div>
       </div>
     </div>

@@ -100,7 +100,7 @@ export const ModalStatusError = ({
             {CM.message || 'Message'}
           </Typography>
           <Typography variant="caption" className="text-rose-600/90 dark:text-rose-400/90 font-mono leading-relaxed block break-words text-[11px]">
-            {typeof error === 'string' ? error : (error?.message || 'Unknown error')}
+            {typeof error === 'string' ? error : (error?.message || CM.unknownErrorFallback)}
           </Typography>
         </div>
       )}

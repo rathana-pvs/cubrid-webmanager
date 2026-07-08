@@ -220,8 +220,8 @@ export default function BrokerPropertyModal() {
   const handleClose = () => dispatch(closeBrokerPropertyModal());
   const modifiedCount = Object.keys(localParams).filter(k => localParams[k] !== initialParams[k]).length;
   const tabs = [
-    { id: 'common',   label: 'Common',   icon: 'settings' },
-    { id: 'advance',  label: 'Advanced',  icon: 'tune' },
+    { id: 'common',   label: CM.common,   icon: 'settings' },
+    { id: 'advance',  label: CM.advanced,  icon: 'tune' },
   ];
 
   if (!isOpen) return null;
@@ -259,7 +259,7 @@ export default function BrokerPropertyModal() {
           {modifiedCount > 0 && (
             <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
               <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">{modifiedCount} Pending</span>
+              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">{CM.pendingCountLabel(modifiedCount)}</span>
             </div>
           )}
         </div>
@@ -274,7 +274,7 @@ export default function BrokerPropertyModal() {
             {config.loading ? (
               <div className="flex flex-col items-center justify-center h-full gap-4">
                 <div className="h-10 w-10 border-4 border-amber-500/20 border-t-amber-500 rounded-full animate-spin" />
-                <p className="text-[12px] text-slate-400 font-medium">Synchronizing…</p>
+                <p className="text-[12px] text-slate-400 font-medium">{CM.synchronizing}</p>
               </div>
             ) : (
               <div>
@@ -313,7 +313,7 @@ export default function BrokerPropertyModal() {
             <Icon name="check" size="lg" weight={700} />
           </div>
           <Typography variant="h4">{CM.updateSynchronized}</Typography>
-          <Typography variant="p" className="text-slate-500">Broker settings for {brokerName} have been applied successfully.</Typography>
+          <Typography variant="p" className="text-slate-500">{CM.brokerSettingsAppliedMsg(brokerName)}</Typography>
         </div>
       )}
     </Modal>

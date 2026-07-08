@@ -1,16 +1,19 @@
 import React from 'react';
+import { useCM } from '../../../constants/useCM';
 
 /**
  * A sleek, high-fidelity loading overlay for in-place actions.
- * Adopts the premium design from common/LoadingOverlay while maintaining 
+ * Adopts the premium design from common/LoadingOverlay while maintaining
  * context-aware dynamic feedback.
  */
-export const RefreshingOverlay = ({ 
-  show, 
-  title = "Processing...", 
+export const RefreshingOverlay = ({
+  show,
+  title = null,
   subtitle = "",
-  className = "" 
+  className = ""
 }) => {
+  const CM = useCM();
+  const resolvedTitle = title ?? CM.processingEllipsis;
   if (!show) return null;
 
   // Standardized formatting for action-based text
@@ -27,21 +30,21 @@ export const RefreshingOverlay = ({
 
   // Context detection for the top label
   const getContextLabel = () => {
-    const text = (title + ' ' + subtitle).toLowerCase();
-    if (text.includes('database') || text.includes('db')) return "DATABASE ACTION";
-    if (text.includes('broker')) return "BROKER ACTION";
-    if (text.includes('service')) return "SERVICE ACTION";
-    if (text.includes('host') || text.includes('server')) return "HOST ACTION";
-    return "ACTION";
+    const text = (resolvedTitle + ' ' + subtitle).toLowerCase();
+    if (text.includes('database') || text.includes('db')) return CM.databaseAction;
+    if (text.includes('broker')) return CM.brokerAction;
+    if (text.includes('service')) return CM.serviceActionLabel;
+    if (text.includes('host') || text.includes('server')) return CM.hostActionLabel;
+    return CM.actionLabel;
   };
 
   const contextLabel = getContextLabel();
-  let primaryText = formatText(title);
+  let primaryText = formatText(resolvedTitle);
   let secondaryText = formatText(subtitle);
 
   // Auto-deduplicate: If title is just a generic 'Database Action' or similar, 
   // and it matches our header, use the more specific subtitle instead.
-  if (primaryText.toUpperCase() === contextLabel || primaryText.toLowerCase().includes('action')) {
+  if (primaryText.toUpperCase() === contextLabel.toUpperCase() || primaryText.toLowerCase().includes('action')) {
     if (secondaryText) {
       primaryText = secondaryText;
       secondaryText = "";
@@ -106,7 +109,7 @@ export const RefreshingOverlay = ({
         <div className="flex items-center gap-2.5 px-3.5 py-1.5 rounded-full bg-slate-50 dark:bg-white/5 border border-slate-100 dark:border-white/10 shadow-sm transition-all duration-300">
           <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-bounce" style={{ animationDuration: '1s' }} />
           <span className="text-[9.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500">
-            Request in Progress
+            {CM.requestInProgressLabel}
           </span>
         </div>
 

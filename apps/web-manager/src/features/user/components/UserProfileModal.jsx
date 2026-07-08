@@ -51,11 +51,11 @@ export default function UserProfileModal({ isOpen, onClose }) {
     try {
       if (editMode === 'password') {
         if (!passwords.oldPassword || !passwords.newPassword || !passwords.confirmPassword) {
-          setError('Please fill in all password fields.');
+          setError(CM.fillAllPasswordFieldsMsg);
           return;
         }
         if (passwords.newPassword !== passwords.confirmPassword) {
-          setError('New passwords do not match.');
+          setError(CM.newPasswordsDoNotMatchMsg);
           return;
         }
         setLoading(true);
@@ -70,12 +70,12 @@ export default function UserProfileModal({ isOpen, onClose }) {
           await dispatch(fetchUser());
           setEditMode(null);
         } else {
-          setError(resultAction.payload || 'Failed to update profile');
+          setError(resultAction.payload || CM.profileUpdateFailedMsg);
         }
         setLoading(false);
       }
     } catch (err) {
-      setError(err.response?.data?.message || 'An unexpected error occurred');
+      setError(err.response?.data?.message || CM.unexpectedErrorMsg);
       setLoading(false);
     }
   };
@@ -144,7 +144,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                   {profile.id || '—'}
                 </p>
                 <p className="text-[10px] font-semibold text-amber-600 dark:text-amber-400 uppercase tracking-widest mt-0.5">
-                  Administrator
+                  {CM.administratorLabel}
                 </p>
               </div>
             </div>
@@ -162,7 +162,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 <div className="flex items-center px-4 py-3 gap-3">
                   <Icon name="corporate_fare" size="16px" weight={300} className="text-slate-400 shrink-0" />
                   <span className="text-[11px] text-slate-400 dark:text-slate-500 w-24 shrink-0">{CM.departmentLabel}</span>
-                  <span className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 truncate">{profile.department || 'Not assigned'}</span>
+                  <span className="text-[11.5px] font-medium text-slate-700 dark:text-slate-300 truncate">{profile.department || CM.notAssignedFallback}</span>
                 </div>
               </div>
               </div>
@@ -189,7 +189,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
                 label={CM.departmentLabel}
                 value={editProfile.department}
                 onChange={(e) => setEditProfile((prev) => ({ ...prev, department: e.target.value }))}
-                placeholder="e.g. Engineering"
+                placeholder={CM.departmentPlaceholderHint}
                 icon="corporate_fare"
                 disabled={loading || globalLoading}
               />

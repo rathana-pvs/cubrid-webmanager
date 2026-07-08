@@ -1,13 +1,15 @@
 import React from 'react';
 import { Icon } from '../foundation/Icon';
+import { useCM } from '../../../constants/useCM';
 
 export const Breadcrumbs = ({
   items = [],
   onNavigate,
   className = '',
 }) => {
+  const CM = useCM();
   return (
-    <nav className={`flex text-sm text-slate-500 font-medium ${className}`} aria-label="Breadcrumb">
+    <nav className={`flex text-sm text-slate-500 font-medium ${className}`} aria-label={CM.breadcrumbAriaLabel}>
       <ol className="inline-flex items-center space-x-1 md:space-x-2">
         {items.map((item, idx) => {
           const isLast = idx === items.length - 1;

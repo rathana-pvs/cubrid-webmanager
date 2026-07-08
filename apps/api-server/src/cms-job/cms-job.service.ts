@@ -17,6 +17,7 @@ import {
   UnloadDatabaseRequest,
 } from '@api-interfaces';
 import { extractCmsLongJobFailureMessage, isCmsLongJobFailure } from '@common';
+import { AppError } from '@error';
 import { DatabaseError } from '@error/database/database-error';
 import { DatabaseManagementService } from '@database/management/database-management.service';
 import { DatabaseLifecycleService } from '@database/lifecycle/database-lifecycle.service';
@@ -353,7 +354,7 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
       if (job.type === 'create') {
         job.status = 'failed';
         job.error = {
-          message: err instanceof Error ? err.message : 'Create database failed',
+          message: this.jobErrorMessage(err, 'Create database failed'),
         };
       } else {
         const cmsFromError = this.cmsResponseFromError(err);
@@ -362,7 +363,7 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
         } else {
           job.status = 'failed';
           job.error = {
-            message: err instanceof Error ? err.message : 'CMS operation failed',
+            message: this.jobErrorMessage(err, 'CMS operation failed'),
           };
         }
       }
@@ -377,6 +378,17 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
         }
       });
     }
+  }
+
+  /**
+   * AppError#message is the internal error code (e.g. 'REQUEST_FAILED'), not the
+   * human-readable CMS detail — that only exists via toProblemDetails().detail.
+   */
+  private jobErrorMessage(err: unknown, fallback: string): string {
+    if (err instanceof AppError) {
+      return err.toProblemDetails().detail ?? fallback;
+    }
+    return err instanceof Error ? err.message : fallback;
   }
 
   async getJob(userId: string, jobId: string): Promise<CmsJobStatusResponse> {

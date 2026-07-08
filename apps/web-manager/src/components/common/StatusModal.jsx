@@ -2,8 +2,9 @@ import { useEffect, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeStatusModal } from '../../features/layout/layoutSlice';
 import { Icon } from '../ds/foundation/Icon';
+import { useCM } from '../../constants/useCM';
 
-const themes = {
+const THEME_STYLES = {
   success: {
     accent: 'bg-emerald-500',
     iconBg: 'bg-emerald-500/10 border-emerald-500/20',
@@ -11,7 +12,6 @@ const themes = {
     glow: 'rgba(16,185,129,0.12)',
     badgeBg: 'bg-emerald-500/10 border-emerald-500/20 text-emerald-500',
     btn: 'bg-emerald-500 hover:bg-emerald-600 shadow-lg shadow-emerald-500/20 text-white',
-    label: 'Completed',
     icon: 'check_circle',
   },
   error: {
@@ -21,7 +21,6 @@ const themes = {
     glow: 'rgba(244,63,94,0.12)',
     badgeBg: 'bg-rose-500/10 border-rose-500/20 text-rose-500',
     btn: 'bg-rose-500 hover:bg-rose-600 shadow-lg shadow-rose-500/20 text-white',
-    label: 'Failed',
     icon: 'report',
   },
   info: {
@@ -31,18 +30,19 @@ const themes = {
     glow: 'rgba(255,193,7,0.12)',
     badgeBg: 'bg-amber-500/10 border-amber-500/20 text-amber-500',
     btn: 'bg-amber-500 hover:bg-amber-400 shadow-lg shadow-amber-500/20 text-bk-side',
-    label: 'Notice',
     icon: 'info',
   },
 };
 
 export default function StatusModal() {
+  const CM = useCM();
   const dispatch = useDispatch();
   const { statusModal } = useSelector((state) => state.layout, shallowEqual);
   const { isOpen, type, title, message } = statusModal;
   const btnRef = useRef(null);
 
-  const t = themes[type] || themes.info;
+  const t = THEME_STYLES[type] || THEME_STYLES.info;
+  const tLabel = { success: CM.jobStatusSucceeded, error: CM.jobStatusFailed, info: CM.statusNotice }[type] ?? CM.statusNotice;
 
   // Focus the button when opened for keyboard accessibility
   useEffect(() => {
@@ -104,7 +104,7 @@ export default function StatusModal() {
           {/* Status badge */}
           <div className={`flex items-center gap-1.5 px-2.5 py-1 rounded-full border text-[9px] font-bold uppercase tracking-widest mb-3 ${t.badgeBg}`}>
             <div className={`w-1.5 h-1.5 rounded-full ${t.accent}`} />
-            {t.label}
+            {tLabel}
           </div>
 
           {/* Title & message */}

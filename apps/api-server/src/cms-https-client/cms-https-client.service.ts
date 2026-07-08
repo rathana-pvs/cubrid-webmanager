@@ -5,7 +5,19 @@ import { HandleCmsErrors } from '@common';
 import { CmsForwardClientRequest } from '@api-interfaces';
 import { BaseCmsRequest } from '@type';
 import * as https from 'https';
+import * as net from 'net';
 import { ConfigService } from '@config/config.service';
+
+class CmsHttpsAgent extends https.Agent {
+  createConnection(
+    options: Parameters<https.Agent['createConnection']>[0],
+    callback?: Parameters<https.Agent['createConnection']>[1]
+  ): ReturnType<https.Agent['createConnection']> {
+    const socket = super.createConnection(options, callback);
+    (socket as net.Socket).setKeepAlive?.(true, 30_000);
+    return socket;
+  }
+}
 import { HostService } from '@host';
 import { EncryptionService } from '@security';
 import { checkCmsTokenError, checkCmsStatusError } from '@common';
@@ -32,12 +44,8 @@ export type ShouldSkipStatusCheckCallback = (task: string, response: any) => boo
 @Injectable()
 export class CmsHttpsClientService {
   private readonly logger = new Logger(CmsHttpsClientService.name);
+  private httpsAgent: CmsHttpsAgent | null = null;
 
-  /**
-   * @param httpService - The NestJS HttpService for making HTTP requests.
-   * @param hostService - Service for retrieving host-related information.
-   * @param encryptionService - Service for handling encryption and hashing operations.
-   */
   constructor(
     private readonly httpService: HttpService,
     private readonly hostService: HostService,
@@ -60,7 +68,7 @@ export class CmsHttpsClientService {
   ): Promise<P> {
     const config = {
       headers: { 'Content-Type': 'application/json' },
-      httpsAgent: this.createHttpsAgent(),
+      httpsAgent: this.getHttpsAgent(),
     };
     const startedAt = Date.now();
     this.logCmsRequest('public', url, data);
@@ -85,7 +93,7 @@ export class CmsHttpsClientService {
   ): Promise<P> {
     const config = {
       headers: { 'Content-Type': 'application/json' },
-      httpsAgent: this.createHttpsAgent(),
+      httpsAgent: this.getHttpsAgent(),
       ...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
     };
     const startedAt = Date.now();
@@ -177,11 +185,15 @@ export class CmsHttpsClientService {
     return typeof task === 'string' ? task : undefined;
   }
 
-  private createHttpsAgent(): https.Agent {
-    const ca = this.configService.getCmsCaCert();
-    return new https.Agent({
-      rejectUnauthorized: this.configService.getCmsRejectUnauthorized(),
-      ...(ca ? { ca } : {}),
-    });
+  private getHttpsAgent(): CmsHttpsAgent {
+    if (!this.httpsAgent) {
+      const ca = this.configService.getCmsCaCert();
+      this.httpsAgent = new CmsHttpsAgent({
+        rejectUnauthorized: this.configService.getCmsRejectUnauthorized(),
+        keepAlive: true,
+        ...(ca ? { ca } : {}),
+      });
+    }
+    return this.httpsAgent;
   }
 }

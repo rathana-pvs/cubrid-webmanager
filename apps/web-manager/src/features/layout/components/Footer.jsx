@@ -18,7 +18,7 @@ export default function Footer() {
             <>
               <div className={`size-1.5 rounded-full ${isConnected ? 'bg-emerald-500 shadow-[0_0_8px_rgba(16,185,129,0.4)]' : 'bg-slate-400 opacity-50'}`}></div>
               <Typography variant="caption" className="text-slate-600 dark:text-slate-400 font-medium">
-                {CM.connectedTo(`${currentHost?.address || 'unknown'}:${currentHost?.port || '1523'}`)}
+                {CM.connectedTo(`${currentHost?.address || CM.unknownFallback}:${currentHost?.port || '1523'}`)}
               </Typography>
             </>
           ) : (

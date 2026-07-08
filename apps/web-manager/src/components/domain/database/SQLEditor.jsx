@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Button } from '../../ds/foundation/Button';
 import { CodeBlock } from '../../ds/layout/CodeBlock';
 import { Icon } from '../../ds/foundation/Icon';
+import { useCM } from '../../../constants/useCM';
 
 export const SQLEditor = ({
   value = '',
@@ -12,6 +13,7 @@ export const SQLEditor = ({
   readOnly = false,
   height = 'h-64',
 }) => {
+  const CM = useCM();
   const [internalCode, setInternalCode] = useState(value);
 
   const handleChange = (e) => {
@@ -42,7 +44,7 @@ export const SQLEditor = ({
               onClick={() => onFormat(internalCode)}
               className="px-2 py-1 text-xs"
             >
-              Format
+              {CM.formatBtn}
             </Button>
           )}
           <Button
@@ -52,7 +54,7 @@ export const SQLEditor = ({
             onClick={handleExecute}
             className="px-3 py-1 text-xs shadow-xs"
           >
-            Execute
+            {CM.execute}
           </Button>
         </div>
       </div>
@@ -63,7 +65,7 @@ export const SQLEditor = ({
           value={internalCode}
           onChange={handleChange}
           spellCheck={false}
-          placeholder="Enter SQL query here..."
+          placeholder={CM.sqlQueryPlaceholder}
         />
       </div>
     </div>

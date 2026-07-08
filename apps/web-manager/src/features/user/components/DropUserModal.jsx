@@ -41,10 +41,10 @@ export default function DropUserModal() {
         dbname: dropUserData.dbname, 
         userName: dropUserData.userName 
       })).unwrap();
-      endSuccess(`Identity @${dropUserData.userName} has been successfully purged from ${dropUserData.dbname}.`);
+      endSuccess(CM.identityPurgedMsg(dropUserData.userName, dropUserData.dbname));
       dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname: dropUserData.dbname }));
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'Purge request rejected by foreign host boundary.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.purgeRejectedMsg));
     }
   };
 

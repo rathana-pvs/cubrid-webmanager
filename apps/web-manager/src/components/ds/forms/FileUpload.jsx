@@ -2,14 +2,17 @@ import React, { useRef } from 'react';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
 import { Button } from '../foundation/Button';
+import { useCM } from '../../../constants/useCM';
 
 export const FileUpload = ({
   onFileSelect,
   accept = '*',
   disabled = false,
-  label = 'Choose file',
+  label = null,
   className = '',
 }) => {
+  const CM = useCM();
+  const resolvedLabel = label ?? CM.chooseFileLabel;
   const fileInputRef = useRef(null);
 
   const handleClick = () => {
@@ -54,9 +57,9 @@ export const FileUpload = ({
       <div className="w-12 h-12 rounded-full bg-amber-100 dark:bg-amber-900/30 flex items-center justify-center mb-3 text-amber-600 dark:text-amber-500">
         <Icon name="cloud_upload" size="xl"  weight={300} />
       </div>
-      <Typography variant="h6" className="text-slate-700 dark:text-slate-200 mb-1 font-medium">{label}</Typography>
+      <Typography variant="h6" className="text-slate-700 dark:text-slate-200 mb-1 font-medium">{resolvedLabel}</Typography>
       <Typography variant="p" className="text-sm text-slate-500">
-        Drag and drop a file, or click to browse
+        {CM.dragDropFileHint}
       </Typography>
     </div>
   );

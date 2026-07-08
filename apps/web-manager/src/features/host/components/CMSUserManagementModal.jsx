@@ -106,7 +106,7 @@ export default function CMSUserManagementModal() {
             </Typography>
             {isAdmin && (
               <span className="shrink-0 text-[9px] font-black px-1.5 py-0.5 rounded-sm bg-amber-500/10 border border-amber-500/20 text-amber-500 uppercase tracking-wider">
-                Admin
+                {CM.admin}
               </span>
             )}
           </div>

@@ -49,7 +49,7 @@ export default function HostGroupNameModal() {
   const handleSubmit = async () => {
     const trimmed = (name || '').trim();
     if (!trimmed) {
-      setLocalError('Group name is required');
+      setLocalError(CM.groupNameRequired);
       return;
     }
     setLocalError('');
@@ -102,7 +102,7 @@ export default function HostGroupNameModal() {
             if (localError) setLocalError('');
             if (apiError) dispatch(clearHostError());
           }}
-          placeholder="e.g. Production Cluster"
+          placeholder={CM.groupNamePlaceholderHint}
           autoFocus
         />
       </div>

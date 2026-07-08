@@ -1,8 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { createPortal } from 'react-dom';
+import { useSelector, shallowEqual } from 'react-redux';
 import { FormField } from './FormField';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 export const DatePicker = ({
   label,
@@ -16,6 +18,11 @@ export const DatePicker = ({
   disabled = false,
   ...props
 }) => {
+  const CM = useCM();
+  const locale = useSelector(
+    (state) => state.user?.preferences?.uiLocale ?? 'en',
+    shallowEqual
+  );
   const [isOpen, setIsOpen] = useState(false);
   const [dropdownStyle, setDropdownStyle] = useState({});
   const [viewDate, setViewDate] = useState(new Date(value || new Date()));
@@ -105,7 +112,7 @@ export const DatePicker = ({
           <Icon name="chevron_left" size="sm" />
         </button>
         <Typography variant="span" className="text-[12px] font-black tracking-tight text-slate-900 dark:text-white">
-          {viewDate.toLocaleString('default', { month: 'long', year: 'numeric' })}
+          {viewDate.toLocaleString(locale === 'ko' ? 'ko-KR' : 'en-US', { month: 'long', year: 'numeric' })}
         </Typography>
         <button 
           type="button"
@@ -156,7 +163,7 @@ export const DatePicker = ({
           <span className="flex items-center gap-3">
             <Icon name={icon} size="sm" weight={300} className="text-amber-500" />
             <span className={value ? 'font-mono text-slate-900 dark:text-slate-100' : 'text-slate-400'}>
-              {value || 'Select date…'}
+              {value || CM.selectDatePlaceholder}
             </span>
           </span>
           <Icon name="expand_more" size="sm" className={`text-slate-400 transition-transform ${isOpen ? 'rotate-180' : ''}`} />

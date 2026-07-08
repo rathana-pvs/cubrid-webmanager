@@ -144,7 +144,7 @@ export default function AddQueryPlanModal() {
       dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: selectedDatabase }));
       endSuccess(`${CM.queryPlanAdded}: ${formData.queryId}`);
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'Failed to add query plan.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.addQueryPlanFailedMsg));
     }
   };
 
@@ -300,7 +300,7 @@ export default function AddQueryPlanModal() {
           <div className="mt-[-10px] animate-in fade-in slide-in-from-top-2 duration-300">
             {formData.periodType === 'WEEK' && (
             <div className="grid grid-cols-7 gap-2">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, ix) => {
+              {CM.weekdaysShort.map((day, ix) => {
                 const isSel = formData.periodDetail.includes(ix + 1);
                 return (
                   <button 

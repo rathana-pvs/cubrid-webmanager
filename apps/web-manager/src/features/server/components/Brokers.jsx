@@ -41,7 +41,7 @@ const Component = function Brokers({ hostUid, isSection = false }) {
         />
       )
     },
-    { header: 'PID',  accessor: 'pid',         render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
+    { header: CM.pid,  accessor: 'pid',         render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
     { header: CM.port, accessor: 'port', render: (val) => <span className="font-mono text-[12px] text-slate-500">{val}</span> },
     { header: CM.asLabel, accessor: 'as', render: (val) => <span className="font-mono text-[12px]">{val}</span> },
     { header: CM.jqLabel, accessor: 'jq', render: (val) => <span className="font-mono text-[12px]">{val}</span> },

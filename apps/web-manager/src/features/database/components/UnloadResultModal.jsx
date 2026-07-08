@@ -60,7 +60,7 @@ export default function UnloadResultModal() {
                 ) : (
                   <tr>
                     <td colSpan={2} className="px-4 py-12 text-center text-slate-400 text-[10px]">
-                      No results
+                      {CM.noResultsLabel}
                     </td>
                   </tr>
                 )}

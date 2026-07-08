@@ -60,15 +60,15 @@ export default function DeleteBackupPlanModal() {
         payload: { backupid: selectedBackupId } 
       })).unwrap();
       
-      endSuccess(`Backup plan ${selectedBackupId} successfully removed.`);
+      endSuccess(CM.backupPlanRemovedMsg(selectedBackupId));
       dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase }));
-      
+
       // Auto close after brief success
       setTimeout(() => {
         dispatch(closeDeleteBackupPlanModal());
       }, 1500);
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'System controller rejected the deletion signal. Registry remains active.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.deletionSignalRejectedMsg));
     }
   };
 
@@ -93,7 +93,7 @@ export default function DeleteBackupPlanModal() {
       <Modal isOpen title={CM.deletionSuccess} icon="verified" iconVariant="success" onClose={handleClose} maxWidth="440px">
         <ModalStatusSuccess
           title={CM.backupPlanDeleted}
-          message={CM.backupPlanRemovedMsg}
+          message={CM.backupPlanRemovedMsg(selectedBackupId)}
           onConfirm={handleClose}
           confirmText={CM.ok}
         />

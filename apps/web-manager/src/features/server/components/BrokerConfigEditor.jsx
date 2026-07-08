@@ -16,7 +16,7 @@ export default function BrokerConfigEditor({ hostUid }) {
   const dispatch = useDispatch();
   const { hosts } = useSelector((state) => state.host, shallowEqual);
   const currentHost = hosts.find(h => h.uid === hostUid);
-  const hostDisplayName = currentHost ? (currentHost.alias || currentHost.id) : 'unknown host';
+  const hostDisplayName = currentHost ? (currentHost.alias || currentHost.id) : CM.unknownHost;
 
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -39,10 +39,10 @@ export default function BrokerConfigEditor({ hostUid }) {
       dispatch(setTabDirty({ tabId, isDirty: false }));
     } catch (err) {
       console.error('Failed to fetch broker config:', err);
-      dispatch(showStatusModal({ 
-        type: 'error', 
-        title: CM.fetchFailed, 
-        message: CM.brokerConfigRetrieveError 
+      dispatch(showStatusModal({
+        type: 'error',
+        title: CM.fetchFailed,
+        message: CM.brokerConfigRetrieveError
       }));
     } finally {
       setLoading(false);
@@ -79,16 +79,16 @@ export default function BrokerConfigEditor({ hostUid }) {
       setOriginalRawContent(rawContent);
       setHasChanges(false);
       dispatch(setTabDirty({ tabId, isDirty: false }));
-      dispatch(showStatusModal({ 
-        type: 'success', 
-        title: CM.configSaved, 
-        message: CM.brokerConfigSaveSuccess 
+      dispatch(showStatusModal({
+        type: 'success',
+        title: CM.configSaved,
+        message: CM.brokerConfigSaveSuccess
       }));
     } catch (err) {
-      dispatch(showStatusModal({ 
-        type: 'error', 
-        title: CM.saveFailed, 
-        message: CM.brokerConfigSaveError 
+      dispatch(showStatusModal({
+        type: 'error',
+        title: CM.saveFailed,
+        message: CM.brokerConfigSaveError
       }));
     } finally {
       setSaving(false);
@@ -131,7 +131,7 @@ export default function BrokerConfigEditor({ hostUid }) {
             </div>
          </div>
          <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium tracking-tight">
-           Configuration: cubrid_broker.conf
+           {CM.brokerConfigFile}
          </Typography>
       </div>
     </div>

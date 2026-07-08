@@ -133,7 +133,7 @@ export default function AddBackupPlanModal() {
 
     let periodDateValue = '';
     if (formData.periodType === 'Weekly') {
-      const dayNames = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+      const dayNames = CM.weekdaysFull;
       const selectedDays = Array.isArray(formData.periodDetail) ? formData.periodDetail : [];
       periodDateValue = selectedDays.map(dayNum => dayNames[dayNum - 1]).join(',');
     } else if (formData.periodType === 'Monthly') {
@@ -265,8 +265,8 @@ export default function AddBackupPlanModal() {
 
         {/* Identity & Path */}
         <div className="grid grid-cols-2 gap-4">
-          <Input label={CM.planRegistryId} value={formData.backupId} onChange={(e) => handleInputChange('backupId', e.target.value)} placeholder="backup_plan_1" icon="badge" size="sm" />
-          <Input label={CM.payloadPath} value={formData.backupPath} onChange={(e) => handleInputChange('backupPath', e.target.value)} placeholder="/var/backups" icon="folder_zip" size="sm" className="font-mono!" />
+          <Input label={CM.planRegistryId} value={formData.backupId} onChange={(e) => handleInputChange('backupId', e.target.value)} placeholder={CM.backupPlanIdPlaceholder} icon="badge" size="sm" />
+          <Input label={CM.payloadPath} value={formData.backupPath} onChange={(e) => handleInputChange('backupPath', e.target.value)} placeholder={CM.backupDirPlaceholder} icon="folder_zip" size="sm" className="font-mono!" />
         </div>
 
         {/* Recurrence */}
@@ -298,10 +298,10 @@ export default function AddBackupPlanModal() {
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
                     {[
-                      { id: 'all', label: 'Full Spectrum', icon: 'select_all' },
-                      { id: 'clear', label: 'Reset Grid', icon: 'backspace' },
-                      { id: 'weekdays', label: 'Standard Week', icon: 'work' },
-                      { id: 'weekends', label: 'Weekend Cycle', icon: 'beach_access' },
+                      { id: 'all', label: CM.fullSpectrumPreset, icon: 'select_all' },
+                      { id: 'clear', label: CM.resetGridPreset, icon: 'backspace' },
+                      { id: 'weekdays', label: CM.standardWeekPreset, icon: 'work' },
+                      { id: 'weekends', label: CM.weekendCyclePreset, icon: 'beach_access' },
                     ].map(preset => (
                       <button
                         key={preset.id}
@@ -334,7 +334,7 @@ export default function AddBackupPlanModal() {
 
               {formData.periodType === 'Weekly' && (
                 <div className="grid grid-cols-7 gap-2 p-3.5 bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+                  {CM.weekdaysShort.map((day, index) => {
                     const dayValue = index + 1;
                     const isActive = formData.periodDetail.includes(dayValue);
                     return (
@@ -357,7 +357,7 @@ export default function AddBackupPlanModal() {
 
               {formData.periodType === 'Daily' && (
                 <InfoBanner title={CM.standard24hCycle}>
-                  Instance synchronized daily at exactly <span className="font-bold text-amber-500 font-mono italic non-block">{formData.backupTime}</span>.
+                  {CM.dailySyncInfoBanner(formData.backupTime)}
                 </InfoBanner>
               )}
 

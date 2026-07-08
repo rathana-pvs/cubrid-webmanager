@@ -18,7 +18,7 @@ export default function DatabaseListSection({ dbListDisplay, handleAutoStartTogg
           <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{val}</span>
           {row.isHA && (
             <span className="px-1 py-0.5 rounded-sm bg-amber-500/10 border border-amber-500/20 text-[8px] font-bold text-amber-600 dark:text-amber-400 tracking-wide uppercase leading-none">
-              HA
+              {CM.haBadge}
             </span>
           )}
         </div>

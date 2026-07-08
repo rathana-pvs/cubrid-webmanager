@@ -22,7 +22,7 @@ export default function MonitoringSettingsPopover() {
   const [brokerPresetActive, setBrokerPresetActive] = useState(true);
 
   const intervals = [
-    { label: 'Off', value: 0 },
+    { label: CM.statusOff, value: 0 },
     { label: '1s', value: 1 },
     { label: '3s', value: 3 },
     { label: '5s', value: 5 },
@@ -145,7 +145,7 @@ export default function MonitoringSettingsPopover() {
             <Typography variant="caption" className="font-black text-slate-900 dark:text-white uppercase tracking-widest">{CM.globalHeartbeat}</Typography>
             <div className="flex items-center gap-1.5">
                <div className={`w-1.5 h-1.5 rounded-full ${hasActiveMonitoring ? 'bg-green-500 animate-pulse' : 'bg-slate-300'}`}></div>
-               <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">{hasActiveMonitoring ? 'Active' : 'Manual'}</span>
+               <span className="text-[8px] font-black uppercase text-slate-400 tracking-tighter">{hasActiveMonitoring ? CM.active : CM.manualLabel}</span>
             </div>
           </div>
           
@@ -155,7 +155,7 @@ export default function MonitoringSettingsPopover() {
               <div className="flex justify-between items-center">
                 <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">{CM.resourceDashboard}</Typography>
                 <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center font-mono">
-                  {localPrefs.dashboardInterval > 0 ? `${localPrefs.dashboardInterval}s` : 'OFF'}
+                  {localPrefs.dashboardInterval > 0 ? `${localPrefs.dashboardInterval}s` : CM.statusOff.toUpperCase()}
                 </span>
               </div>
               <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5">
@@ -180,7 +180,7 @@ export default function MonitoringSettingsPopover() {
                   placeholder={CM.customIntervalPlaceholder}
                   value={customDashboardText}
                   onChange={handleDashboardCustomChange}
-                  suffix="seconds"
+                  suffix={CM.secondsSuffix}
                   min="0"
                   max="86400"
                   disabled={actionLoading}
@@ -195,7 +195,7 @@ export default function MonitoringSettingsPopover() {
               <div className="flex justify-between items-center">
                 <Typography variant="caption" className="font-bold text-slate-500 uppercase tracking-tight">{CM.brokerInfrastructure}</Typography>
                 <span className="text-[10px] text-amber-500 font-black px-1.5 py-0.5 rounded-md bg-amber-500/5 border border-amber-500/10 min-w-[32px] text-center font-mono">
-                  {localPrefs.brokerStatusInterval > 0 ? `${localPrefs.brokerStatusInterval}s` : 'OFF'}
+                  {localPrefs.brokerStatusInterval > 0 ? `${localPrefs.brokerStatusInterval}s` : CM.statusOff.toUpperCase()}
                 </span>
               </div>
               <div className="flex p-1 bg-slate-100 dark:bg-white/5 rounded-xl border border-slate-200/50 dark:border-white/5">
@@ -220,7 +220,7 @@ export default function MonitoringSettingsPopover() {
                   placeholder={CM.customIntervalPlaceholder}
                   value={customBrokerText}
                   onChange={handleBrokerCustomChange}
-                  suffix="seconds"
+                  suffix={CM.secondsSuffix}
                   min="0"
                   max="86400"
                   disabled={actionLoading}

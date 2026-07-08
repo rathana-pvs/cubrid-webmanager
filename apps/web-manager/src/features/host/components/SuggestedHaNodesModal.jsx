@@ -16,6 +16,12 @@ export default function SuggestedHaNodesModal() {
 
   const filteredNodes = findUndiscoveredHaPeers(hosts, suggestedHaNodes);
 
+  const HA_ROLE_LABEL = {
+    master: CM.haMaster,
+    slave: CM.haSlave,
+    replica: CM.haReplica,
+  };
+
   useEffect(() => {
     if (isDiscoveryModalOpen && filteredNodes.length === 0) {
       dispatch(clearSuggestedHaNodes());
@@ -100,7 +106,7 @@ export default function SuggestedHaNodesModal() {
                     {node.hostname || node.ip}
                   </p>
                   <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
-                    {node.ip && node.hostname ? `${node.ip} · ` : ''}{node.state}
+                    {node.ip && node.hostname ? `${node.ip} · ` : ''}{HA_ROLE_LABEL[node.state] || node.state}
                   </p>
                 </div>
               </div>

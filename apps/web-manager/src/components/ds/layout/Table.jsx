@@ -2,13 +2,14 @@ import React, { useState } from 'react';
 import { Icon } from '../foundation/Icon';
 import { Skeleton } from './Skeleton';
 import { EmptyState } from './EmptyState';
+import { useCM } from '../../../constants/useCM';
 
 export const Table = ({
   columns = [],
   data = [],
   onRowClick,
   onRowContextMenu,
-  emptyMessage = 'No data available',
+  emptyMessage = null,
   headersVisible = true,
   sortable = true,
   loading = false,
@@ -16,6 +17,8 @@ export const Table = ({
   bordered = false,
   className = '',
 }) => {
+  const CM = useCM();
+  const resolvedEmptyMessage = emptyMessage ?? CM.noDataAvailableMsg;
   const [sortConfig, setSortConfig] = useState(null);
 
   const handleSort = (accessor) => {
@@ -67,7 +70,7 @@ export const Table = ({
   }
 
   if (!loading && data.length === 0) {
-    return <EmptyState title={emptyMessage} icon="table_chart" />;
+    return <EmptyState title={resolvedEmptyMessage} icon="table_chart" />;
   }
 
   return (

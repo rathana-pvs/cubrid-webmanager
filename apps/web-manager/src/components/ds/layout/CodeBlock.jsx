@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Icon } from '../foundation/Icon';
+import { useCM } from '../../../constants/useCM';
 
 export const CodeBlock = ({
   language = 'sql',
@@ -7,6 +8,7 @@ export const CodeBlock = ({
   copyable = true,
   className = '',
 }) => {
+  const CM = useCM();
   const [copied, setCopied] = useState(false);
 
   const handleCopy = () => {
@@ -23,7 +25,7 @@ export const CodeBlock = ({
           <button
             onClick={handleCopy}
             className="text-slate-400 hover:text-white transition-colors"
-            title="Copy to clipboard"
+            title={CM.copyToClipboard}
           >
             {copied ? <Icon name="check" size="sm" className="text-emerald-400"  weight={300} /> : <Icon name="content_copy" size="sm"  weight={300} />}
           </button>

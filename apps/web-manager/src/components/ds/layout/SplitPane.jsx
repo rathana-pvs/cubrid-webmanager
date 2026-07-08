@@ -1,4 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
+import { useCM } from '../../../constants/useCM';
 
 export const SplitPane = ({
   children,
@@ -10,6 +11,7 @@ export const SplitPane = ({
   size: propSize,
   onSizeChange,
 }) => {
+  const CM = useCM();
   const [internalSize, setInternalSize] = useState(defaultSize);
   const size = propSize !== undefined ? propSize : internalSize;
   const setSize = onSizeChange || setInternalSize;
@@ -83,7 +85,7 @@ export const SplitPane = ({
           document.body.style.cursor = isVertical ? 'col-resize' : 'row-resize';
           document.body.style.userSelect = 'none';
         }}
-        title="Drag to resize"
+        title={CM.dragToResizeTitle}
       >
         <div className={`transition-all duration-200 ${
           isVertical ? 'w-0.5 h-full' : 'h-0.5 w-full'

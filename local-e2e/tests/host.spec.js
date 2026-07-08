@@ -35,6 +35,32 @@ test.describe('Host Management', () => {
     await expect(page.getByText('New connection')).not.toBeVisible();
   });
 
+  test('should reset database context when switching between hosts', async ({ page }) => {
+    // Regression for: selectedDatabase not cleared on host switch (Sidebar.jsx / resetDatabaseState fix)
+    // Requires 2+ registered hosts in the app.
+    const hosts = page.locator('#host-section div[title*=":"]');
+    const hostCount = await hosts.count();
+    if (hostCount < 2) {
+      test.skip();
+      return;
+    }
+
+    // 1. Connect to first host and wait for DB tree
+    await hosts.first().dblclick();
+    await expect(page.locator('#db-tree-container')).toBeVisible({ timeout: 15000 });
+
+    // 2. Select a database to create state
+    const firstDb = page.locator('#db-tree-container').locator('div[role="treeitem"]').first();
+    await firstDb.click();
+
+    // 3. Switch to second host
+    await hosts.nth(1).dblclick();
+
+    // 4. DB tree should re-render fresh (no error from stale cross-host state)
+    await expect(page.locator('#db-tree-container')).toBeVisible({ timeout: 15000 });
+    await expect(page.getByText(/error|failed/i)).not.toBeVisible();
+  });
+
   test('should successfully add and then remove a host connection', async ({ page }) => {
     const testHostName = `TestHost_${Date.now().toString().slice(-4)}`;
     

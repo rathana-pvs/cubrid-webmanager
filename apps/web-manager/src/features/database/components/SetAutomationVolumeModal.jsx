@@ -188,9 +188,9 @@ export default function SetAutomationVolumeModal() {
     };
     try {
       await dispatch(updateAutoVolumeConfig({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
-      endSuccess(`Auto-volume policies for "${selectedDatabase}" were saved successfully.`);
+      endSuccess(CM.autoVolumePoliciesSavedMsg(selectedDatabase));
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err?.message || 'Failed to save configuration. Please try again.'));
+      endError(typeof err === 'string' ? err : (err?.message || CM.saveConfigFailedRetryMsg));
     }
   }, [combinedEnabled, combinedThreshold, combinedAddSize, selectedHostUid, selectedDatabase, dispatch, startAction, endSuccess, endError]);
 
@@ -252,7 +252,7 @@ export default function SetAutomationVolumeModal() {
       footer={
         <div className="flex items-center justify-between w-full">
           <Typography variant="caption" className="text-[9px] text-slate-400 font-mono hidden sm:block">
-            Page size: 16K
+            {CM.pageSize16kLabel}
           </Typography>
           <div className="flex gap-2">
             <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
@@ -318,7 +318,7 @@ export default function SetAutomationVolumeModal() {
         <div className="flex items-center gap-2 px-1">
           <Icon name="info" size="11px" weight={300} className="text-slate-300 dark:text-slate-600 shrink-0" />
           <Typography variant="caption" className="text-[9px] text-slate-400">
-            Volumes expand automatically when free space falls below the trigger threshold. Calculations are based on a 16K page size.
+            {CM.autoVolumeExpandDesc}
           </Typography>
         </div>
       </div>

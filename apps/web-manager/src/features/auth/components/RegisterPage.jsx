@@ -68,7 +68,7 @@ export default function RegisterPage() {
       await authApi.register(username, password);
       navigate('/login');
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'Registration failed. Please try again.';
+      const msg = err.response?.data?.message || err.response?.data?.error || CM.registrationFailed;
       setApiError(msg);
     } finally {
       setLoading(false);

@@ -33,7 +33,7 @@ export default function TransactionInfoModal() {
   const fetchTransactionInfo = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
     if (!dbuser.trim()) {
-      setErrorMsg('Database user (dbuser) is required for transaction diagnostics.');
+      setErrorMsg(CM.dbUserRequiredForDiagnosticsMsg);
       setView(VIEW_ERROR);
       return;
     }
@@ -120,7 +120,7 @@ export default function TransactionInfoModal() {
       <div className="flex flex-col h-[540px] animate-in fade-in slide-in-from-bottom-4 duration-400">
         <div className="mb-4 grid grid-cols-2 gap-3 shrink-0">
           <Input label={CM.userName} value={dbuser} onChange={(e) => setDbuser(e.target.value)} icon="account_circle" size="sm" />
-          <Input type="password" label={CM.password} value={dbpasswd} onChange={(e) => setDbpasswd(e.target.value)} icon="password" size="sm" placeholder="(empty allowed)" />
+          <Input type="password" label={CM.password} value={dbpasswd} onChange={(e) => setDbpasswd(e.target.value)} icon="password" size="sm" placeholder={CM.emptyAllowedPlaceholder} />
         </div>
         <div className="mb-4 flex items-center justify-between bg-slate-50/80 dark:bg-black/20 border border-slate-200 dark:border-white/8 rounded-xl px-4 py-3 shrink-0">
           <div className="flex items-center gap-3">

@@ -8,7 +8,7 @@ export default function SidebarHeader() {
       
       {/* Logo */}
       <div className="relative w-7 h-7 rounded-md bg-white dark:bg-white/[0.07] border border-slate-200 dark:border-white/10 shadow-xs flex items-center justify-center p-1 shrink-0">
-        <img src="/cubrid-logo.png" alt="CUBRID Logo" className="w-full h-full object-contain" />
+        <img src="/cubrid-logo.png" alt={CM.cubridLogoAlt} className="w-full h-full object-contain" />
       </div>
 
       {/* Branding */}

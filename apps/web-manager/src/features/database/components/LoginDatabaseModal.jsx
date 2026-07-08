@@ -21,8 +21,7 @@ import {
 export default function LoginDatabaseModal() {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { isLoginDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
-  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { isLoginDatabaseModalOpen, loginDatabaseName } = useSelector((state) => state.databaseUI, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
 
   const {
@@ -64,23 +63,23 @@ export default function LoginDatabaseModal() {
       if (rememberMe) {
         dispatch(registerDatabase({
           hostUid: selectedHostUid,
-          dbname: selectedDatabase,
+          dbname: loginDatabaseName,
           payload: { id: formData.dbuser, password: formData.dbpasswd },
         }));
       }
 
       await dispatch(loginDatabase({
         hostUid: selectedHostUid,
-        dbname: selectedDatabase,
+        dbname: loginDatabaseName,
         payload: {
           id: formData.dbuser,
           password: formData.dbpasswd,
         },
       })).unwrap();
 
-      dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname: selectedDatabase }));
-      dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase }));
-      dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: selectedDatabase }));
+      dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname: loginDatabaseName }));
+      dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: loginDatabaseName }));
+      dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: loginDatabaseName }));
 
       endSuccess();
       setTimeout(() => dispatch(closeLoginDatabaseModal()), 800);
@@ -94,7 +93,7 @@ export default function LoginDatabaseModal() {
   if (isLoading) {
     return (
       <Modal isOpen title={CM.loginDatabase} icon="lock" onClose={handleClose} maxWidth="440px" showCloseButton={false}>
-        <ModalStatusLoading title={CM.loginDatabase} subtitle={CM.loggingInto(selectedDatabase)} />
+        <ModalStatusLoading title={CM.loginDatabase} subtitle={CM.loggingInto(loginDatabaseName)} />
       </Modal>
     );
   }
@@ -144,7 +143,7 @@ export default function LoginDatabaseModal() {
       <form onSubmit={handleLogin} className="space-y-4">
         <Input
           label={CM.databaseName}
-          value={selectedDatabase}
+          value={loginDatabaseName}
           disabled
           size="sm"
         />

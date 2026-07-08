@@ -1,5 +1,6 @@
 import React from 'react';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 export const FormField = ({
   label,
@@ -10,6 +11,7 @@ export const FormField = ({
   className = '',
   children,
 }) => {
+  const CM = useCM();
   return (
     <div className={`flex flex-col gap-1.5 w-full ${className}`}>
       {label && (
@@ -18,7 +20,7 @@ export const FormField = ({
             <Typography variant="label" className="text-[11px] font-medium text-slate-500 dark:text-slate-300 font-sans">
               {label}
             </Typography>
-            {required && <span className="text-rose-500 text-[10px]" title="Required">*</span>}
+            {required && <span className="text-rose-500 text-[10px]" title={CM.requiredFieldTitle}>*</span>}
             {labelExtra && (
               <span className="text-[9px] text-slate-400 dark:text-slate-500 font-normal italic leading-none pt-0.5">
                 {labelExtra}

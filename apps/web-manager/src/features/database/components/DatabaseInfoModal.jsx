@@ -140,7 +140,7 @@ export default function DatabaseInfoModal() {
           <div className="space-y-2 px-6">
             <Typography variant="h4" className="text-[15px] font-bold text-slate-900 dark:text-white">{CM.failure}</Typography>
             <Typography variant="p" className="text-[11.5px] text-slate-500">
-              Could not get parameters for {selectedDatabase}.
+              {CM.paramsFetchErrorMsg(selectedDatabase)}
             </Typography>
           </div>
           <div className="w-full max-w-[420px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
@@ -250,7 +250,7 @@ export default function DatabaseInfoModal() {
                 <Icon name="info" size="md" weight={300} />
               </div>
               <Typography variant="p" className="text-[11px] text-slate-500 dark:text-slate-400 italic font-medium leading-relaxed">
-                Extraction profile captures a snapshot of parameters currently active in the database memory heap. Provides visibility into the hardware-tailored operational metrics.
+                {CM.extractionProfileDesc}
               </Typography>
             </div>
 

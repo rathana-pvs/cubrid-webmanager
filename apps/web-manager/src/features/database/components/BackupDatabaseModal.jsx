@@ -98,25 +98,26 @@ export default function BackupDatabaseModal() {
         ? entries.map((entry, index) => ({
           ...entry,
           rowKey: `${level}-${entry.path || index}`,
-          level: `Level${level}`,
+          level: CM.levelNumberLabel(level),
+          levelNum: level,
           date: formatBackupDate(entry.date || entry.data),
           size: formatBackupSize(entry.size),
           path: entry.path || '-',
         }))
         : [];
     });
-  }, [backupInfo]);
+  }, [backupInfo, CM]);
 
   const availableLevels = useMemo(() => {
     const levels = ['0'];
-    if (backupHistory.some((entry) => entry.level === 'Level0')) levels.push('1');
-    if (backupHistory.some((entry) => entry.level === 'Level1')) levels.push('2');
+    if (backupHistory.some((entry) => entry.levelNum === 0)) levels.push('1');
+    if (backupHistory.some((entry) => entry.levelNum === 1)) levels.push('2');
     return levels;
   }, [backupHistory]);
 
   const backupLevelOptions = useMemo(() => (
-    availableLevels.map((level) => ({ value: level, label: `Level${level}` }))
-  ), [availableLevels]);
+    availableLevels.map((level) => ({ value: level, label: CM.levelNumberLabel(level) }))
+  ), [availableLevels, CM]);
 
   const backupHistoryColumns = useMemo(() => [
     { header: CM.backupLevel, accessor: 'level', width: '100px' },
@@ -181,7 +182,7 @@ export default function BackupDatabaseModal() {
 
   const handleBackup = async () => {
     if (!formData.volPath || !formData.backupDir) {
-      endError("Volume path and Backup directory are required.");
+      endError(CM.volumePathBackupDirRequiredMsg);
       return;
     }
 
@@ -219,7 +220,7 @@ export default function BackupDatabaseModal() {
 
       await trackJob(jobId, progressOpts);
       dispatch(clearPendingBackupJob());
-      endSuccess(`Database "${selectedDatabase}" has been successfully backed up to "${formData.backupDir}".`);
+      endSuccess(CM.databaseBackedUpMsg(selectedDatabase, formData.backupDir));
     } catch (err) {
       if (!err?.cancelled) {
         // Terminal job failure on the server — clear pending so retry submits a new backup.

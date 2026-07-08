@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../foundation/Icon';
 import { Button } from '../foundation/Button';
+import { useCM } from '../../../constants/useCM';
 
 export const Pagination = ({
   currentPage = 1,
@@ -8,6 +9,7 @@ export const Pagination = ({
   onPageChange,
   className = '',
 }) => {
+  const CM = useCM();
   // Simple logic to show window of numbers
   const getPageNumbers = () => {
     const pages = [];
@@ -35,7 +37,7 @@ export const Pagination = ({
   if (totalPages <= 1) return null;
 
   return (
-    <nav className={`flex items-center justify-center gap-1 ${className}`} aria-label="Pagination">
+    <nav className={`flex items-center justify-center gap-1 ${className}`} aria-label={CM.paginationAriaLabel}>
       <Button
         variant="outline"
         size="icon"

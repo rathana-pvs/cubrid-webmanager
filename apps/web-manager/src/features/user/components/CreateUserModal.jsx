@@ -52,13 +52,12 @@ const encodeCUBRIDAuth = (authObj) => {
   return String(mask);
 };
 
-const TABS = [
-  { id: 'general', label: 'Identity', icon: 'person' },
-  { id: 'auth', label: 'Permissions', icon: 'shield_lock' },
-];
-
 export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }) {
   const CM = useCM();
+  const TABS = [
+    { id: 'general', label: CM.identity,    icon: 'person' },
+    { id: 'auth',    label: CM.permissions, icon: 'shield_lock' },
+  ];
   const dispatch = useDispatch();
   const isEditMode = !!editingUser;
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
@@ -235,14 +234,14 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
     try {
       if (isEditMode) {
         await dispatch(updateDatabaseUser({ hostUid: selectedHostUid, dbname, userName: editingUser, payload: { userpass: formData.password, groups: { group: formData.groups.map(g => g.name || g) }, authorization: authList } })).unwrap();
-        endSuccess(`Account @${editingUser} has been successfully updated.`);
+        endSuccess(CM.userUpdatedSuccessMsg(editingUser));
       } else {
         await dispatch(createDatabaseUser({ hostUid: selectedHostUid, dbname, payload: { username: formData.name, userpass: formData.password, groups: { group: formData.groups.map(g => g.name || g) }, authorization: authList } })).unwrap();
-        endSuccess(`Identity @${formData.name} has been successfully registered.`);
+        endSuccess(CM.userCreatedSuccessMsg(formData.name));
       }
       dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname }));
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'Identity synchronization failed. Please check host availability.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.identitySyncFailedMsg));
     }
   };
 
@@ -327,12 +326,12 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                 </div>
                 <div>
                   <p className="text-[13px] font-black text-slate-800 dark:text-white">
-                    {isEditMode ? `Editing @${editingUser}` : 'New Database User'}
+                    {isEditMode ? CM.editingUser(editingUser) : CM.newDatabaseUserTitle}
                   </p>
                   <p className="text-[11px] text-slate-400 mt-0.5">
                     {isEditMode
-                      ? 'Update credentials and group memberships below.'
-                      : 'Define identity, credentials, and role membership.'}
+                      ? CM.updateCredentialsSubtitle
+                      : CM.defineIdentitySubtitle}
                   </p>
                 </div>
               </div>
@@ -342,7 +341,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                 <div className="flex items-center gap-2.5 mb-1">
                   <span className="w-1 h-3.5 rounded-full bg-amber-500 shrink-0" />
                   <Typography variant="caption" className="font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-[10px]">
-                    Account
+                    {CM.accountSectionLabel}
                   </Typography>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
@@ -351,7 +350,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
-                    placeholder="e.g. sys_auditor"
+                    placeholder={CM.usernamePlaceholderHint}
                     disabled={isEditMode}
                     required
                   />
@@ -360,7 +359,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                     name="memo"
                     value={formData.memo}
                     onChange={handleInputChange}
-                    placeholder="Role or purpose"
+                    placeholder={CM.rolePurposePlaceholder}
                   />
                 </div>
               </section>
@@ -370,11 +369,11 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                 <div className="flex items-center gap-2.5 mb-1">
                   <span className="w-1 h-3.5 rounded-full bg-slate-400 shrink-0" />
                   <Typography variant="caption" className="font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-[10px]">
-                    Password
+                    {CM.password}
                   </Typography>
                   {isEditMode && (
                     <span className="text-[9px] font-bold text-slate-400 bg-slate-100 dark:bg-white/5 px-2 py-0.5 rounded-full">
-                      leave blank to keep current
+                      {CM.leaveBlankToKeep}
                     </span>
                   )}
                 </div>
@@ -385,7 +384,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                 {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
                   <div className="flex items-center gap-2 text-[11px] text-rose-500 font-bold px-1">
                     <Icon name="error" size="xs" />
-                    Passwords do not match
+                    {CM.passwordsDoNotMatch}
                   </div>
                 )}
               </section>
@@ -396,11 +395,11 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                   <div className="flex items-center gap-2.5">
                     <span className="w-1 h-3.5 rounded-full bg-sky-400 shrink-0" />
                     <Typography variant="caption" className="font-black text-slate-600 dark:text-slate-300 uppercase tracking-widest text-[10px]">
-                      Groups &amp; Members
+                      {CM.groupsAndMembersLabel}
                     </Typography>
                   </div>
                   <span className="text-[10px] text-slate-400 font-medium">
-                    Drag or double-click to assign
+                    {CM.dragOrDoubleClickHint}
                   </span>
                 </div>
 
@@ -416,7 +415,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                       <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{CM.availableLabel}</p>
                     </div>
                     <div className="p-2 border-b border-slate-100 dark:border-white/5 shrink-0">
-                      <SearchInput placeholder="Search..." value={searchTerm} onChange={setSearchTerm} onClear={() => setSearchTerm('')} size="sm" />
+                      <SearchInput placeholder={CM.searchPlaceholder} value={searchTerm} onChange={setSearchTerm} onClear={() => setSearchTerm('')} size="sm" />
                     </div>
                     <div className="flex-1 overflow-y-auto p-1.5 custom-scrollbar space-y-0.5">
                       {databaseUsersLoading[dbname] ? (
@@ -446,7 +445,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                           <span className="truncate">{user.name}</span>
                           {(user.name === 'PUBLIC' || user.members) && (
                             <span className={`ml-auto text-[8px] font-black px-1.5 py-0.5 rounded-full shrink-0 ${selectedAvailable?.name === user.name ? 'bg-black/10 text-slate-900' : 'bg-slate-200 dark:bg-white/10 text-slate-400'}`}>
-                              GROUP
+                              {CM.groupBadge}
                             </span>
                           )}
                         </div>
@@ -595,7 +594,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                 {/* Object list sidebar */}
                 <div className="w-[220px] border-r border-slate-100 dark:border-white/5 flex flex-col shrink-0">
                   <div className="p-2.5 border-b border-slate-100 dark:border-white/5 shrink-0">
-                    <SearchInput placeholder="Filter objects..." value={objectSearchTerm} onChange={setObjectSearchTerm} onClear={() => setObjectSearchTerm('')} size="sm" />
+                    <SearchInput placeholder={CM.filterObjects} value={objectSearchTerm} onChange={setObjectSearchTerm} onClear={() => setObjectSearchTerm('')} size="sm" />
                   </div>
                   <div className="flex-1 overflow-y-auto custom-scrollbar p-1.5 space-y-0.5">
                     {isClassesLoading ? (
@@ -655,10 +654,10 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                         </div>
                         <div className="flex gap-1.5">
                           <button onClick={() => handleSelectAll(selectedObjectId)} className="px-3 py-1.5 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-green-400/50 hover:text-green-500 hover:bg-green-500/5 transition-all">
-                            All
+                            {CM.all}
                           </button>
                           <button onClick={() => handleClearAll(selectedObjectId)} className="px-3 py-1.5 text-[10px] font-bold rounded-lg border border-slate-200 dark:border-white/10 text-slate-500 dark:text-slate-400 hover:border-rose-400/50 hover:text-rose-500 hover:bg-rose-500/5 transition-all">
-                            Clear
+                            {CM.clearBtn}
                           </button>
                         </div>
                       </div>
@@ -688,7 +687,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                                   </span>
                                 )}
                                 <span className={`text-[10px] font-black uppercase tracking-tight block ${isActive ? 'text-sky-500' : 'text-slate-400'}`}>{perm}</span>
-                                <span className="text-[8px] text-slate-300 dark:text-slate-600 font-medium mt-0.5 block capitalize">{perm.toLowerCase()} rows</span>
+                                <span className="text-[8px] text-slate-300 dark:text-slate-600 font-medium mt-0.5 block capitalize">{perm.toLowerCase()} {CM.rowsSuffix}</span>
                               </button>
                             );
                           })}
@@ -721,7 +720,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                                 )}
                                 <span className={`text-[10px] font-black uppercase tracking-tight block ${isActive ? 'text-amber-500' : 'text-slate-400'}`}>{perm}</span>
                                 <span className="text-[8px] text-slate-300 dark:text-slate-600 font-medium mt-0.5 block">
-                                  {perm === 'Execute' ? 'Procedures' : `Structural ${perm.toLowerCase()}`}
+                                  {perm === 'Execute' ? CM.proceduresLabel : CM.structuralPermLabel(perm.toLowerCase())}
                                 </span>
                               </button>
                             );

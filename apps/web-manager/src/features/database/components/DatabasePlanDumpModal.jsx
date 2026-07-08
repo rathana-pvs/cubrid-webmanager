@@ -74,14 +74,14 @@ export default function DatabasePlanDumpModal() {
     : null;
 
   const statCards = [
-    { label: 'Hit Ratio', value: hitRatio ? `${hitRatio}%` : '—', color: 'text-amber-500' },
-    { label: 'Hits', value: stats['Hits'] || '0', color: 'text-emerald-500' },
-    { label: 'Misses', value: stats['Miss'] || '0', color: 'text-rose-500' },
+    { label: CM.hitRatioLabel, value: hitRatio ? `${hitRatio}%` : '—', color: 'text-amber-500' },
+    { label: CM.hitsLabel, value: stats['Hits'] || '0', color: 'text-emerald-500' },
+    { label: CM.missesLabel, value: stats['Miss'] || '0', color: 'text-rose-500' },
   ];
   const planSteps = [
-    { icon: 'query_stats', label: 'Inspect' },
-    { icon: 'schema', label: 'Extract' },
-    { icon: 'analytics', label: 'Aggregate' },
+    { icon: 'query_stats', label: CM.inspectStepLabel },
+    { icon: 'schema', label: CM.extractStepLabel },
+    { icon: 'analytics', label: CM.aggregateStepLabel },
   ];
 
 
@@ -98,11 +98,11 @@ export default function DatabasePlanDumpModal() {
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="secondary" onClick={handleClose}>
-            {step === 'setup' ? 'Cancel' : 'Close'}
+            {step === 'setup' ? CM.cancel : CM.close}
           </Button>
           {step === 'setup' ? (
             <Button variant="primary" onClick={handleRunDump} loading={planDumpLoading} icon="play_circle">
-              Run Dump
+              {CM.runDumpBtn}
             </Button>
           ) : (
             <Button
@@ -110,7 +110,7 @@ export default function DatabasePlanDumpModal() {
               onClick={() => setStep('setup')}
               icon="arrow_back"
             >
-              Back
+              {CM.back}
             </Button>
           )}
         </div>
@@ -193,7 +193,7 @@ export default function DatabasePlanDumpModal() {
                 <div className="flex items-start gap-2.5 px-3 py-2.5 bg-rose-50/50 dark:bg-rose-500/5 border border-rose-200 dark:border-rose-500/20 rounded-xl animate-in fade-in slide-in-from-top-2">
                   <Icon name="warning" size="xs" weight={300} className="text-rose-500 shrink-0 mt-0.5" />
                   <Typography variant="caption" className="text-rose-600 dark:text-rose-400 font-medium leading-relaxed text-[10px]">
-                    This will permanently clear all cached plans. Performance may decrease temporarily.
+                    {CM.clearCachedPlansWarning}
                   </Typography>
                 </div>
               )}
@@ -229,11 +229,11 @@ export default function DatabasePlanDumpModal() {
               <div className="flex items-center gap-2">
                 <Icon name="list_alt" size="sm" weight={300} className="text-slate-400" />
                 <Typography variant="label" className="text-[10px] font-black uppercase tracking-widest text-slate-500">
-                  Query Plan Entries
+                  {CM.queryPlanEntriesLabel}
                 </Typography>
               </div>
               <span className={`px-2 py-0.5 rounded-full text-[9px] font-black uppercase tracking-widest border ${visibleLines.length > 0 ? 'bg-emerald-500/10 text-emerald-500 border-emerald-500/20' : 'bg-slate-100 dark:bg-white/5 text-slate-400 border-slate-200 dark:border-white/10'}`}>
-                {visibleLines.length > 0 ? `${visibleLines.length} lines` : 'Empty'}
+                {visibleLines.length > 0 ? CM.linesCountLabel(visibleLines.length) : CM.emptyLabel}
               </span>
             </div>
 

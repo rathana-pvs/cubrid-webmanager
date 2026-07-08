@@ -137,6 +137,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   const [adminLogContextMenu, setAdminLogContextMenu] = useState(null);
   const [managerLogContextMenu, setManagerLogContextMenu] = useState(null);
   const [serverLogRootContextMenu, setServerLogRootContextMenu] = useState(null);
+  const [logTabContextMenu, setLogTabContextMenu] = useState(null);
 
   const dispatch = useDispatch();
   const { 
@@ -157,7 +158,9 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
 
   const { hosts, hostGroups, selectedHostUid, selectedGroupUid, loading: hostsLoading, authorizedHosts, isLoggingIntoHost, hostAuthErrors, haInfo, skipAutoHostLogin } = useSelector((state) => state.host, shallowEqual);
   const { databases, activeDatabases, loggedInDatabases } = useSelector((state) => state.database, shallowEqual);
-  const { brokers } = useSelector((state) => state.broker, shallowEqual);
+  const { brokers, logsLoading, adminLogsLoading, cmsLogsLoading, dbLogsLoading } = useSelector((state) => state.broker, shallowEqual);
+  const isRefreshingLogs = logsLoading || adminLogsLoading || cmsLogsLoading || dbLogsLoading;
+
 
   useEffect(() => {
     dispatch(fetchHosts());
@@ -185,6 +188,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     setAdminLogContextMenu(null);
     setManagerLogContextMenu(null);
     setServerLogRootContextMenu(null);
+    setLogTabContextMenu(null);
   }, []);
 
   const handleHostLogin = useCallback((uid) => {
@@ -194,6 +198,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     if (loginInProgressRef.current) return;
 
     if (authorizedHosts.includes(uid)) {
+      dispatch(resetDatabaseState());
+      dispatch(resetBrokerState());
       dispatch(setActiveMainTab('host:' + uid));
       dispatch(fetchDatabaseStartInfo(uid));
       dispatch(fetchBrokerList(uid));
@@ -206,6 +212,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     dispatch(loginToHostWithSideEffects(uid))
       .unwrap()
       .then(() => {
+        dispatch(resetDatabaseState());
+        dispatch(resetBrokerState());
         dispatch(setActiveMainTab('host:' + uid));
         dispatch(fetchDatabaseStartInfo(uid));
         dispatch(fetchBrokerList(uid));
@@ -229,9 +237,9 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     dispatch(loginHostsBatch(uids))
       .unwrap()
       .then(({ successCount, failed }) => {
-        let message = `Connected ${successCount} host(s).`;
+        let message = CM.connectedHostsMsg(successCount);
         if (failed.length > 0) {
-          message += ` Failed: ${failed.join(', ')}.`;
+          message += CM.failedListSuffix(failed.join(', '));
         }
         dispatch(showStatusModal({
           type: failed.length > 0 && successCount === 0 ? 'error' : 'success',
@@ -243,7 +251,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         dispatch(showStatusModal({
           type: 'error',
           title: CM.loginAll,
-          message: 'Failed to log in to hosts.',
+          message: CM.loginToHostsFailedMsg,
         }));
       });
   }, [dispatch, hostGroups, authorizedHosts, CM.loginAll]);
@@ -306,7 +314,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
   const handleHostRootContextMenu = (e) => {
     e.preventDefault();
     closeAllContextMenus();
-    setGroupContextMenu({ mouseX: e.clientX, mouseY: e.clientY, groupId: null, groupName: 'Server List' });
+    setGroupContextMenu({ mouseX: e.clientX, mouseY: e.clientY, groupId: null, groupName: CM.serverListHeader });
   };
 
   const handleDbContextMenu = (e, dbName, isActive) => {
@@ -350,6 +358,30 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
     closeAllContextMenus();
     setBrokerLogRootContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
   };
+
+  const handleLogTabContextMenu = useCallback((e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    closeAllContextMenus();
+    setLogTabContextMenu({ mouseX: e.clientX, mouseY: e.clientY });
+  }, [closeAllContextMenus]);
+
+  const handleRefreshAllLogs = useCallback(async () => {
+    if (!selectedHostUid) return;
+    try {
+      const updatedBrokers = await dispatch(fetchBrokerList(selectedHostUid)).unwrap().catch(() => brokers);
+      updatedBrokers.forEach(broker => {
+        dispatch(fetchBrokerLogs({ hostUid: selectedHostUid, brokerName: broker.name }));
+      });
+      dispatch(fetchCMSLogs(selectedHostUid));
+      dispatch(fetchAdminLogs(selectedHostUid));
+      (databases || []).forEach(db => {
+        dispatch(fetchDatabaseLogs({ hostUid: selectedHostUid, dbname: db.dbname }));
+      });
+    } catch (error) {
+      console.error('Failed to refresh logs:', error);
+    }
+  }, [dispatch, selectedHostUid, brokers, databases]);
 
   const handleBrokerErrorLogContextMenu = (e) => {
     e.preventDefault();
@@ -549,7 +581,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                         dispatch(showStatusModal({
                           type: 'info',
                           title: CM.loginAll,
-                          message: 'All hosts are already connected.',
+                          message: CM.allHostsAlreadyConnectedMsg,
                         }));
                         return;
                       }
@@ -644,7 +676,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                           weight={400}
                         />
                         <span className="text-[9px] font-bold text-amber-600 dark:text-amber-500 uppercase tracking-tight">
-                          {activeTab === 'db' ? 'DB' : activeTab === 'broker' ? 'Broker' : 'Log'}
+                          {activeTab === 'db' ? 'DB' : activeTab === 'broker' ? CM.broker : CM.log}
                         </span>
                       </div>
                     ) : (
@@ -662,6 +694,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                       setActiveTab={setActiveTab} 
                       onDbTabContextMenu={handleDbRootContextMenu} 
                       onBrokerTabContextMenu={handleBrokerRootContextMenu}
+                      onLogTabContextMenu={handleLogTabContextMenu}
                     />
 
                     <div className="flex-1 overflow-y-auto px-4 pb-4 relative min-h-[200px]">
@@ -751,7 +784,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {contextMenu && (
         <ContextMenuWrapper x={contextMenu.mouseX} y={contextMenu.mouseY} onClose={() => setContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Server: {contextMenu.server}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.serverColon(contextMenu.server)}</Typography>
             <Icon name="dns" size="xs" className="opacity-30" weight={300} />
           </div>
           {authorizedHosts.includes(contextMenu.hostUid) ? (
@@ -829,7 +862,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         <ContextMenuWrapper x={groupContextMenu.mouseX} y={groupContextMenu.mouseY} onClose={() => setGroupContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
             <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">
-              Group: {groupContextMenu.groupName}
+              {CM.groupColonLabel(groupContextMenu.groupName)}
             </Typography>
             <Icon name="folder" size="xs" className="opacity-30" weight={300} />
           </div>
@@ -900,7 +933,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {dbContextMenu && (
         <ContextMenuWrapper x={dbContextMenu.mouseX} y={dbContextMenu.mouseY} onClose={() => setDbContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Database: {dbContextMenu.db}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.databaseColon(dbContextMenu.db)}</Typography>
             <Icon name="database" size="xs" className="opacity-30" weight={300} />
           </div>
           {dbContextMenu.isActive ? (
@@ -910,7 +943,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               onClick={async () => {
                 const dbName = dbContextMenu.db;
                 setDbContextMenu(null);
-                setLoadingText(`Stopping database : ${dbName} ...`);
+                setLoadingText(`${CM.stoppingDbNamed(dbName)} ...`);
                 startAction();
                 try {
                   await dispatch(stopDatabase({ hostUid: selectedHostUid, dbname: dbName })).unwrap();
@@ -928,7 +961,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               onClick={async () => {
                 const dbName = dbContextMenu.db;
                 setDbContextMenu(null);
-                setLoadingText(`Starting database : ${dbName} ...`);
+                setLoadingText(`${CM.startingDbNamed(dbName)} ...`);
                 startAction();
                 try {
                   await dispatch(startDatabase({ hostUid: selectedHostUid, dbname: dbName })).unwrap();
@@ -1015,7 +1048,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             label={CM.startAllDatabases}
             onClick={async () => {
               setDbRootContextMenu(null);
-              setLoadingText(`Starting all databases ...`);
+              setLoadingText(CM.startingAllDatabasesMsg);
               startAction();
               try {
                 for (const db of databases) {
@@ -1035,7 +1068,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             label={CM.stopAllDatabases}
             onClick={async () => {
               setDbRootContextMenu(null);
-              setLoadingText(`Stopping all databases ...`);
+              setLoadingText(CM.stoppingAllDatabasesMsg);
               startAction();
               try {
                 for (const dbname of activeDatabases) {
@@ -1053,7 +1086,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             label={CM.restartAllDatabases}
             onClick={async () => {
               setDbRootContextMenu(null);
-              setLoadingText(`Restarting all databases ...`);
+              setLoadingText(CM.restartingAllDatabasesMsg);
               startAction();
               try {
                 const currentActive = [...activeDatabases];
@@ -1103,7 +1136,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             label={CM.startAllBrokers}
             onClick={async () => {
               setBrokerRootContextMenu(null);
-              setLoadingText(`Starting all brokers ...`);
+              setLoadingText(CM.startingAllBrokersMsg);
               startAction();
               try {
                 for (const broker of brokers) {
@@ -1123,7 +1156,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             label={CM.stopAllBrokers}
             onClick={async () => {
               setBrokerRootContextMenu(null);
-              setLoadingText(`Stopping all brokers ...`);
+              setLoadingText(CM.stoppingAllBrokersMsg);
               startAction();
               try {
                 for (const broker of brokers) {
@@ -1143,7 +1176,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             label={CM.restartAllBrokers}
             onClick={async () => {
               setBrokerRootContextMenu(null);
-              setLoadingText(`Restarting all brokers ...`);
+              setLoadingText(CM.restartingAllBrokersMsg);
               startAction();
               try {
                 const currentActive = brokers.filter(b => b.state === 'ON').map(b => b.name);
@@ -1198,7 +1231,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {brokerContextMenu && (
         <ContextMenuWrapper x={brokerContextMenu.mouseX} y={brokerContextMenu.mouseY} onClose={() => setBrokerContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Broker: {brokerContextMenu.broker}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.brokerColon(brokerContextMenu.broker)}</Typography>
             <Icon name="hub" size="xs" className="opacity-30" weight={300} />
           </div>
           {brokerContextMenu.state === 'ON' ? (
@@ -1208,7 +1241,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               onClick={async () => {
                 const bName = brokerContextMenu.broker;
                 setBrokerContextMenu(null);
-                setLoadingText(`Stopping broker : ${bName} ...`);
+                setLoadingText(`${CM.stoppingBrokerNamed(bName)} ...`);
                 startAction();
                 try {
                   await dispatch(stopBroker({ hostUid: selectedHostUid, brokerName: bName })).unwrap();
@@ -1226,7 +1259,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               onClick={async () => {
                 const bName = brokerContextMenu.broker;
                 setBrokerContextMenu(null);
-                setLoadingText(`Starting broker : ${bName} ...`);
+                setLoadingText(`${CM.startingBrokerNamed(bName)} ...`);
                 startAction();
                 try {
                   await dispatch(startBroker({ hostUid: selectedHostUid, brokerName: bName })).unwrap();
@@ -1274,7 +1307,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {sqlLogContextMenu && (
         <ContextMenuWrapper x={sqlLogContextMenu.mouseX} y={sqlLogContextMenu.mouseY} onClose={() => setSqlLogContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">SQL Logs: {sqlLogContextMenu.broker}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.sqlLogsColonLabel(sqlLogContextMenu.broker)}</Typography>
             <Icon name="history_edu" size="xs" className="opacity-30" weight={300} />
           </div>
           <MenuItem
@@ -1293,7 +1326,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {dbLogContextMenu && (
         <ContextMenuWrapper x={dbLogContextMenu.mouseX} y={dbLogContextMenu.mouseY} onClose={() => setDbLogContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Server Logs: {dbLogContextMenu.db}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.serverLogsColonLabel(dbLogContextMenu.db)}</Typography>
             <Icon name="dns" size="xs" className="opacity-30" weight={300} />
           </div>
           <MenuItem
@@ -1412,10 +1445,28 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         </ContextMenuWrapper>
       )}
 
+      {logTabContextMenu && (
+        <ContextMenuWrapper x={logTabContextMenu.mouseX} y={logTabContextMenu.mouseY} onClose={() => setLogTabContextMenu(null)}>
+          <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.log}</Typography>
+            <Icon name="receipt_long" size="xs" className="opacity-30" weight={300} />
+          </div>
+          <MenuItem
+            icon="refresh"
+            label={CM.refresh}
+            onClick={() => {
+              handleRefreshAllLogs();
+              setLogTabContextMenu(null);
+            }}
+          />
+        </ContextMenuWrapper>
+      )}
+
+
       {usersContextMenu && (
         <ContextMenuWrapper x={usersContextMenu.mouseX} y={usersContextMenu.mouseY} onClose={() => setUsersContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-             <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Users: {usersContextMenu.db}</Typography>
+             <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.usersColonLabel(usersContextMenu.db)}</Typography>
              <Icon name="groups" size="xs" className="opacity-30"  weight={300} />
           </div>
           <MenuItem
@@ -1510,7 +1561,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {spaceContextMenu && (
         <ContextMenuWrapper x={spaceContextMenu.mouseX} y={spaceContextMenu.mouseY} onClose={() => setSpaceContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Space: {spaceContextMenu.db}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.spaceColonLabel(spaceContextMenu.db)}</Typography>
             <Icon name="donut_small" size="xs" className="opacity-30"  weight={300} />
           </div>
           <MenuItem
@@ -1563,7 +1614,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {backupItemContextMenu && (
         <ContextMenuWrapper x={backupItemContextMenu.mouseX} y={backupItemContextMenu.mouseY} onClose={() => setBackupItemContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Backup: {backupItemContextMenu.planId}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.backupColonLabel(backupItemContextMenu.planId)}</Typography>
             <Icon name="event_note" size="xs" className="opacity-30"  weight={300} />
           </div>
 
@@ -1602,7 +1653,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {queryPlanContextMenu && (
         <ContextMenuWrapper x={queryPlanContextMenu.mouseX} y={queryPlanContextMenu.mouseY} onClose={() => setQueryPlanContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Query Plan: {queryPlanContextMenu.db}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.queryPlanColonLabel(queryPlanContextMenu.db)}</Typography>
             <Icon name="bolt" size="xs" className="opacity-30" weight={300} />
           </div>
           <MenuItem
@@ -1640,7 +1691,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
       {queryItemContextMenu && (
         <ContextMenuWrapper x={queryItemContextMenu.mouseX} y={queryItemContextMenu.mouseY} onClose={() => setQueryItemContextMenu(null)}>
           <div className="px-3 py-2 border-b border-slate-100 dark:border-white/5 mb-1 flex items-center justify-between">
-            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">Query Plan Item: {queryItemContextMenu.qId}</Typography>
+            <Typography variant="caption" className="font-black text-slate-400 dark:text-slate-500 uppercase tracking-widest text-[9px]">{CM.queryPlanItemColonLabel(queryItemContextMenu.qId)}</Typography>
             <Icon name="bolt" size="xs" className="opacity-30" weight={300} />
           </div>
           <MenuItem

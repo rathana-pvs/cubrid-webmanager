@@ -24,8 +24,8 @@ export default function Breadcrumb({
       onTabChange(tabId);
       setConfirmModal({
         isOpen: true,
-        title: 'Discard Changes?',
-        message: `You have unsaved changes in "${labels[tabId] || tabId}". If you close it, your changes will be lost.`,
+        title: `${CM.discardChanges}?`,
+        message: CM.unsavedChangesDesc(labels[tabId] || tabId),
         onConfirm: () => {
           onCloseTab(tabId);
           if (queue.length > 1) {

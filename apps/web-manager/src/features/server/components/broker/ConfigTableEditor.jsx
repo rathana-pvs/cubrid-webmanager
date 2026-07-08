@@ -29,13 +29,13 @@ export default function ConfigTableEditor({
           {/* Sticky header */}
           <div className="sticky top-0 z-20 flex w-full bg-slate-50 dark:bg-[#0D1117] border-b border-slate-200 dark:border-white/8">
             <div className="w-80 shrink-0 px-4 py-2.5 border-r border-slate-200 dark:border-white/8 text-[10px] font-bold uppercase tracking-widest text-slate-400">
-              Property
+              {CM.propertyLabel}
             </div>
             {sections.map((sec, idx) => (
               <div key={idx} className="w-full min-w-0 px-4 py-2.5 border-r border-slate-200 dark:border-white/8 flex items-center gap-1.5">
                 <Icon name="hub" size="sm" weight={300} className="text-amber-500 dark:text-bk-yellow shrink-0" />
                 <span className="text-[10px] font-bold uppercase tracking-widest text-amber-600 dark:text-bk-yellow truncate">
-                  {sec.properties?.BROKER_NAME || `Broker ${idx + 1}`}
+                  {sec.properties?.BROKER_NAME || CM.brokerNumberFallback(idx + 1)}
                 </span>
               </div>
             ))}
@@ -124,7 +124,7 @@ export default function ConfigTableEditor({
 
       {/* Footer */}
       <div className="shrink-0 px-4 py-1.5 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
-        <span>{allPropertyKeys.length} properties · {sections.length} brokers</span>
+        <span>{CM.propertiesBrokersCountLabel(allPropertyKeys.length, sections.length)}</span>
         <StatusBadge label={CM.tableEditor} variant="emerald" className="border-none bg-transparent" />
       </div>
     </div>

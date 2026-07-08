@@ -167,7 +167,7 @@ export default function EditHostModal() {
             value={formData.alias}
             onChange={handleChange}
             error={errors.alias}
-            placeholder="e.g. Production Server"
+            placeholder={CM.friendlyNamePlaceholder}
             icon="label"
             disabled={loading}
           />
@@ -188,7 +188,7 @@ export default function EditHostModal() {
                 value={formData.address}
                 onChange={handleChange}
                 error={errors.address}
-                placeholder="localhost"
+                placeholder={CM.hostAddressPlaceholder}
                 icon="dns"
                 disabled={loading}
               />
@@ -201,7 +201,7 @@ export default function EditHostModal() {
                 value={formData.port}
                 onChange={handleChange}
                 error={errors.port}
-                placeholder="8001"
+                placeholder={CM.hostPortPlaceholder}
                 disabled={loading}
               />
             </div>
@@ -218,7 +218,7 @@ export default function EditHostModal() {
               value={formData.id}
               onChange={handleChange}
               error={errors.id}
-              placeholder="admin"
+              placeholder={CM.hostUsernamePlaceholder}
               icon="person"
               disabled={loading}
             />

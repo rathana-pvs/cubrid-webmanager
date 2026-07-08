@@ -181,9 +181,9 @@ export default function EditBackupPlanModal() {
     try {
       await dispatch(editBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
       dispatch(fetchBackupSchedule({ hostUid: selectedHostUid, dbname: selectedDatabase }));
-      endSuccess(`Backup plan ${formData.backupId} successfully updated.`);
+      endSuccess(CM.backupPlanUpdatedMsg(formData.backupId));
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'System controller rejected the patch. Verify schema integrity.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.patchRejectedMsg));
     }
   };
 
@@ -317,14 +317,19 @@ export default function EditBackupPlanModal() {
               {formData.periodType === 'Monthly' && (
                 <div className="space-y-4">
                   <div className="flex flex-wrap gap-2">
-                    {['all', 'clear', 'weekdays', 'weekends'].map(id => (
+                    {[
+                      { id: 'all', label: CM.fullSpectrumPreset },
+                      { id: 'clear', label: CM.resetGridPreset },
+                      { id: 'weekdays', label: CM.standardWeekPreset },
+                      { id: 'weekends', label: CM.weekendCyclePreset },
+                    ].map(({ id, label }) => (
                       <button
                         key={id}
                         type="button"
                         onClick={() => setBulkDays(id)}
                         className="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-white/3 text-[10px] font-bold text-slate-400 hover:border-amber-500/50 hover:text-amber-500 transition-all"
                       >
-                         {id.replace('_', ' ')}
+                         {label}
                       </button>
                     ))}
                   </div>
@@ -349,7 +354,7 @@ export default function EditBackupPlanModal() {
 
               {formData.periodType === 'Weekly' && (
                 <div className="grid grid-cols-7 gap-2 p-3.5 bg-white/50 dark:bg-black/20 border border-slate-200 dark:border-white/5 rounded-2xl">
-                  {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day, index) => {
+                  {CM.weekdaysShort.map((day, index) => {
                     const dayValue = index + 1;
                     const isActive = Array.isArray(formData.periodDetail) && formData.periodDetail.includes(dayValue);
                     return (
@@ -372,7 +377,7 @@ export default function EditBackupPlanModal() {
 
               {formData.periodType === 'Daily' && (
                 <InfoBanner title={CM.standard24hCycle}>
-                  Instance synchronized daily at exactly <span className="font-bold text-amber-500 font-mono italic non-block">{formData.backupTime}</span>.
+                  {CM.dailySyncInfoBanner(formData.backupTime)}
                 </InfoBanner>
               )}
 

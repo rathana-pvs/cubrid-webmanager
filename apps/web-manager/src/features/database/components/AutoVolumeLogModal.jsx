@@ -106,7 +106,7 @@ export default function AutoVolumeLogModal() {
     <div className="flex items-center justify-between w-full px-1">
       <div className="flex items-center gap-6">
         <div className="flex items-center gap-2.5">
-          <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">Status:</Typography>
+          <Typography variant="caption" className="font-bold text-slate-400 dark:text-slate-500 text-[10px]">{CM.status}:</Typography>
           {logsLoading ? (
             <StatusBadge label={CM.buffering} variant="amber" pulse={true} className="rounded-full" />
           ) : (
@@ -117,9 +117,9 @@ export default function AutoVolumeLogModal() {
         <div className="flex items-center gap-2 text-[10px] text-slate-400 dark:text-slate-500 font-bold">
           <div className="w-1 h-1 rounded-full bg-slate-300 dark:bg-white/10" />
           {showAll ? (
-            <span>Showing all {filteredLogs.length} records</span>
+            <span>{CM.showingAllRecordsCount(filteredLogs.length)}</span>
           ) : (
-            <span>Showing {Math.min(filteredLogs.length, startIdx + 1)}–{Math.min(filteredLogs.length, startIdx + pageSize)} of {filteredLogs.length}</span>
+            <span>{CM.showingRangeOfTotal(Math.min(filteredLogs.length, startIdx + 1), Math.min(filteredLogs.length, startIdx + pageSize), filteredLogs.length)}</span>
           )}
         </div>
       </div>
@@ -206,7 +206,7 @@ export default function AutoVolumeLogModal() {
 
           <div className="flex items-center gap-2">
             <Typography variant="caption" className="text-slate-400 font-semibold font-mono">
-              {filteredLogs.length} Records
+              {CM.recordsCountLabel(filteredLogs.length)}
             </Typography>
           </div>
         </div>
@@ -216,7 +216,7 @@ export default function AutoVolumeLogModal() {
             columns={columns}
             data={paginatedLogs}
             loading={logsLoading}
-            emptyMessage="No automation logs found."
+            emptyMessage={CM.noAutomationLogsFoundMsg}
             className="h-full"
           />
         </div>

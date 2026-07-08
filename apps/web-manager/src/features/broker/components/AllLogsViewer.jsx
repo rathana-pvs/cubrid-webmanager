@@ -156,8 +156,8 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
   // ─── Dynamic Branding Configurations ─────────────────────────────────────
   const config = {
     icon: isDb ? 'dns' : 'history_edu',
-    title: isDb ? `All Server Logs for Database: ${targetName}` : `All SQL Logs for ${targetName}`,
-    subtitle: isDb ? 'Displaying aggregate database server logs' : 'Displaying aggregate logs for all active CAS processes',
+    title: isDb ? CM.allServerLogsTitle(targetName) : CM.allSqlLogsTitle(targetName),
+    subtitle: isDb ? CM.aggregateServerLogsDesc : CM.aggregateCasLogsDesc,
     downloadPrefix: isDb ? 'CUBRID SERVER DB LOG DUMP' : 'CUBRID BROKER SQL LOG DUMP',
     downloadSuffix: isDb ? 'all_db_logs' : 'all_logs',
     iconAccent: isDb ? 'text-emerald-600 dark:text-emerald-500' : 'text-amber-600 dark:text-bk-yellow',
@@ -238,7 +238,7 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
   const handleDownloadAll = () => {
     let content = `============================================================\n`;
     content += `${config.downloadPrefix}\n`;
-    content += `${isDb ? 'DATABASE' : 'BROKER'}: ${targetName}\n`;
+    content += `${isDb ? CM.database.toUpperCase() : CM.broker.toUpperCase()}: ${targetName}\n`;
     content += `HOST UID: ${hostUid}\n`;
     content += `DUMPED AT: ${new Date().toLocaleString()}\n`;
     content += `============================================================\n\n`;
@@ -256,7 +256,7 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
       if (lines.length > 0) {
         content += lines.join('\n') + '\n\n';
       } else {
-        content += `(No cached log lines available for this file)\n\n`;
+        content += `${CM.noCachedLogLinesMsg}\n\n`;
       }
     });
     
@@ -295,13 +295,13 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
               onClick={handleExpandAll}
               className="px-3 py-1.5 text-[11px] font-bold bg-white dark:bg-white/2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-white/10 transition-colors"
             >
-              Expand All
+              {CM.expandAllBtn}
             </button>
             <button
               onClick={handleCollapseAll}
               className="px-3 py-1.5 text-[11px] font-bold bg-white dark:bg-white/2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors"
             >
-              Collapse All
+              {CM.collapseAllBtn}
             </button>
           </div>
 
@@ -311,7 +311,7 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
             className={`flex items-center gap-1.5 h-8 px-3 rounded-lg border bg-transparent transition-all active:scale-[0.98] text-[11px] font-bold shadow-xs ${config.borderAccent}`}
           >
             <Icon name="refresh" size="16px" className={logsLoading ? 'animate-spin' : ''} />
-            Refresh All
+            {CM.refreshAllBtn}
           </button>
 
           <button
@@ -321,7 +321,7 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
             title={CM.downloadAllLogs}
           >
             <Icon name="download" size="16px" />
-            Download All
+            {CM.downloadAllBtn}
           </button>
         </div>
       </div>
@@ -360,8 +360,8 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
       {/* Footer */}
       <div className="shrink-0 px-5 py-2.5 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-mono uppercase tracking-wider">
         <div className="flex items-center gap-4 font-medium">
-          <span>Total Files: {targetLogs.length}</span>
-          <span>Host: {hostUid}</span>
+          <span>{CM.totalFilesLabel(targetLogs.length)}</span>
+          <span>{CM.hostColonLabel(hostUid)}</span>
         </div>
         <StatusBadge label={CM.monitoring} variant="emerald" pulse className="border-none bg-transparent" />
       </div>

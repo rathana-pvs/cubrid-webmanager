@@ -1,6 +1,7 @@
 import React, { useEffect, useRef } from 'react';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 export const Modal = ({
   isOpen,
@@ -17,6 +18,7 @@ export const Modal = ({
   /** Tailwind z-index class for overlay (StatusModal uses z-[2100]). */
   zIndexClass = 'z-2000',
 }) => {
+  const CM = useCM();
   const modalRef = useRef(null);
 
   useEffect(() => {
@@ -73,7 +75,7 @@ export const Modal = ({
             className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 w-7 h-7 rounded-md transition-all flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/5 z-10"
             onClick={onClose}
           >
-            <span className="sr-only">Close</span>
+            <span className="sr-only">{CM.close}</span>
             <Icon name="close" size="md"  weight={300} />
           </button>
         )}

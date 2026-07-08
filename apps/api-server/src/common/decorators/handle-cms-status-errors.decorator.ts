@@ -26,6 +26,10 @@ export function isCmsStatusFailure(response: any): boolean {
 
 const CMS_ERROR_LINE_PREFIX = /^\s*ERROR:/i;
 const CMS_ERROR_LINE_PHRASE = /error occurred/i;
+// loaddb returns status=success but reports file errors in line[]
+const CMS_CANT_OPEN_FILE = /can't open file/i;
+const CMS_LOAD_FAILED = /^load failed\./i;
+const CMS_STOPPED_WITH_ERROR = /^stopped with error\./i;
 
 export function getCmsErrorLines(response: any): string[] {
   if (!response || !Array.isArray(response.line)) {
@@ -36,7 +40,12 @@ export function getCmsErrorLines(response: any): string[] {
     .map((line: unknown) => String(line).trim())
     .filter(
       (text) =>
-        text !== '' && (CMS_ERROR_LINE_PREFIX.test(text) || CMS_ERROR_LINE_PHRASE.test(text))
+        text !== '' &&
+        (CMS_ERROR_LINE_PREFIX.test(text) ||
+          CMS_ERROR_LINE_PHRASE.test(text) ||
+          CMS_CANT_OPEN_FILE.test(text) ||
+          CMS_LOAD_FAILED.test(text) ||
+          CMS_STOPPED_WITH_ERROR.test(text))
     );
 }
 

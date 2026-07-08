@@ -75,11 +75,11 @@ export default function RenameDatabaseModal() {
         { onProgress: (j) => setJobStatus(j.jobStatus ?? j.status) }
       );
       dispatch(fetchDatabaseStartInfo(selectedHostUid));
-      endSuccess(`Database "${selectedDatabase}" has been renamed to "${newDbName.trim()}".`);
+      endSuccess(CM.databaseRenamedMsg(selectedDatabase, newDbName.trim()));
     } catch (err) {
       endError(
         typeof err === 'string' ? err
-          : err?.message || err?.note || 'Failed to rename database. Ensure the database is stopped.'
+          : err?.message || err?.note || CM.renameFailedMsg
       );
     }
   };
@@ -108,9 +108,9 @@ export default function RenameDatabaseModal() {
   if (isSuccess) {
     return (
       <Modal isOpen title={CM.renameComplete} icon="drive_file_rename_outline" iconVariant="success" onClose={handleClose} maxWidth="480px">
-        <ModalStatusSuccess 
+        <ModalStatusSuccess
           title={CM.renameSuccessful}
-          message={`Database ${selectedDatabase} has been renamed to ${newDbName.trim()}.`}
+          message={CM.databaseRenamedMsg(selectedDatabase, newDbName.trim())}
           onConfirm={handleClose}
           confirmText={CM.ok}
         />

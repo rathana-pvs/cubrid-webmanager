@@ -64,8 +64,9 @@ export default function CopyDatabaseModal() {
   const CM = useCM();
   const dispatch = useDispatch();
   const { isCopyDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
-  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedDatabase, databases } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
+  const currentDb = databases?.find((db) => db.dbname === selectedDatabase);
 
   const { 
     state, 
@@ -83,9 +84,9 @@ export default function CopyDatabaseModal() {
 
   const [formData, setFormData] = useState({
     destName: '',
-    destPath: '/home/cubrid/CUBRID/databases/',
-    extPath: '/home/cubrid/CUBRID/databases/',
-    logPath: '/home/cubrid/CUBRID/databases/',
+    destPath: '',
+    extPath: '',
+    logPath: '',
     replaceExisting: false,
     deleteSource: false,
   });
@@ -93,16 +94,17 @@ export default function CopyDatabaseModal() {
   useEffect(() => {
     if (isCopyDatabaseModalOpen) {
       resetAction();
+      const defaultPath = currentDb?.dbdir || '/home/cubrid/CUBRID/databases/';
       setFormData({
         destName: '',
-        destPath: '/home/cubrid/CUBRID/databases/',
-        extPath: '/home/cubrid/CUBRID/databases/',
-        logPath: '/home/cubrid/CUBRID/databases/',
+        destPath: defaultPath,
+        extPath: defaultPath,
+        logPath: defaultPath,
         replaceExisting: false,
         deleteSource: false,
       });
     }
-  }, [isCopyDatabaseModalOpen, resetAction]);
+  }, [isCopyDatabaseModalOpen, resetAction, currentDb?.dbdir]);
 
   if (!isCopyDatabaseModalOpen) return null;
 

@@ -97,6 +97,7 @@ const GENERAL_PARAMS_KEYS = Object.keys(GENERAL_PARAMS_SCHEMA);
 
 /* ─── BufferCard ─── */
 function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, units, setParams, setBufferSettings, setUnits }) {
+  const CM = useCM();
   const isPages = bufferSettings[type] === 'pages';
   const isSize = bufferSettings[type] === 'size';
   const hasPages = params[pagesKey] !== undefined;
@@ -125,7 +126,7 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
           <div className="flex items-center justify-between mb-2">
             <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isPages ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
               <Icon name="tag" size="10px" weight={700} />
-              Pages Count
+              {CM.pagesCountTitle}
             </div>
             <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isPages ? 'border-amber-500' : 'border-slate-300 dark:border-slate-700'}`}>
               {isPages && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
@@ -138,7 +139,7 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
             value={hasPages ? params[pagesKey] : (GENERAL_PARAMS_SCHEMA[pagesKey] || '')}
             onChange={e => setParams({ ...params, [pagesKey]: e.target.value })}
             disabled={!isPages}
-            placeholder="Default"
+            placeholder={CM.defaultValuePlaceholder}
             className={isPages ? '' : 'opacity-40'}
             onClick={e => e.stopPropagation()}
           />
@@ -158,7 +159,7 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
           <div className="flex items-center justify-between mb-2">
             <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isSize ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
               <Icon name="straighten" size="10px" weight={700} />
-              Physical Size
+              {CM.physicalSizeLabel}
             </div>
             <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isSize ? 'border-amber-500' : 'border-slate-300 dark:border-slate-700'}`}>
               {isSize && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
@@ -172,7 +173,7 @@ function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, un
               value={hasSize ? params[sizeKey] : (GENERAL_PARAMS_SCHEMA[sizeKey]?.replace(/[A-Z]/g, '') || '')}
               onChange={e => setParams({ ...params, [sizeKey]: e.target.value })}
               disabled={!isSize}
-              placeholder="Default"
+              placeholder={CM.defaultValuePlaceholder}
               className="flex-1 min-w-0"
             />
             <div className="w-[86px] shrink-0" onClick={e => e.stopPropagation()}>
@@ -418,7 +419,7 @@ export default function DatabasePropertyModal() {
       await hostApi.setHostConfig(selectedHostUid, { confname: 'cubridconf', confdata: [...otherBefore, ...updatedSection, ...otherAfter] });
       endSuccess(`Changes to the ${selectedDatabase || 'kernel'} configuration have been committed and synchronized.`);
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'System controller rejected the configuration patch.'));
+      endError(typeof err === 'string' ? err : (err.message || CM.configPatchRejectedMsg));
     }
   };
 
@@ -439,12 +440,12 @@ export default function DatabasePropertyModal() {
   , [params]);
 
   const navItems = selectedDatabase
-    ? [{ id: 'Connection Information', icon: 'cable', label: 'Connection' }, { id: 'Server Parameter', icon: 'tune', label: 'Server' }]
-    : [{ id: 'Server Parameter', icon: 'tune', label: 'Server' }];
+    ? [{ id: 'Connection Information', icon: 'cable', label: CM.connectionNavLabel }, { id: 'Server Parameter', icon: 'tune', label: CM.serverNavLabel }]
+    : [{ id: 'Server Parameter', icon: 'tune', label: CM.serverNavLabel }];
 
   const SERVER_TABS = [
-    { id: 'General', label: 'General Parameters', icon: 'tune' },
-    { id: 'Advanced', label: 'Advanced Parameters', icon: 'settings_applications' },
+    { id: 'General', label: CM.generalParamsTab, icon: 'tune' },
+    { id: 'Advanced', label: CM.advancedParamsTab, icon: 'settings_applications' },
   ];
 
   if (!isDatabasePropertyModalOpen) return null;
@@ -496,10 +497,10 @@ export default function DatabasePropertyModal() {
       onClose={handleClose}
       title={activeSidebar === 'Connection Information'
         ? `${selectedDatabase} · Connection`
-        : (selectedDatabase ? `${selectedDatabase} · Registry` : 'Kernel Parameters')}
+        : (selectedDatabase ? CM.registrySubtitle(selectedDatabase) : CM.kernelParamsTitle)}
       subtitle={activeSidebar === 'Connection Information'
-        ? 'Broker and charset configuration for this database'
-        : 'Deep system configuration for the CUBRID instance'}
+        ? CM.brokerCharsetConfigDesc
+        : CM.deepSystemConfigDesc}
       icon={activeSidebar === 'Connection Information' ? 'cable' : 'tune'}
       maxWidth="900px"
       footer={
@@ -512,7 +513,7 @@ export default function DatabasePropertyModal() {
                 onClick={handleReset}
                 className="text-amber-500 hover:bg-amber-500/5"
               >
-                Reset to Original
+                {CM.resetToOriginalBtn}
               </Button>
             )}
           </div>
@@ -598,7 +599,7 @@ export default function DatabasePropertyModal() {
               <div className="p-6 space-y-5">
                 {/* Header Banner */}
                 <InfoBanner title={CM.brokerConnection}>
-                  Configure how Web Manager connects to {selectedDatabase}. These parameters define how the Web Manager communicates with the CUBRID Broker.
+                  {CM.webManagerConnectionDesc(selectedDatabase)}
                 </InfoBanner>
 
                 <div className="space-y-3 p-5 bg-slate-50 dark:bg-white/2 border border-slate-100 dark:border-white/6 rounded-xl">
@@ -649,7 +650,7 @@ export default function DatabasePropertyModal() {
                 </div>
 
                 <InfoBanner title={CM.synchronizationNotice}>
-                  Broker parameters define how the Web Manager communicates with the CUBRID Broker. Changes only impact <span className="text-amber-500 font-bold non-italic">Manager-to-Host</span> synchronization logic.
+                  {CM.brokerParamsNotice}
                 </InfoBanner>
               </div>
 
@@ -659,9 +660,9 @@ export default function DatabasePropertyModal() {
 
                 {/* Buffer Allocation Cards */}
                 {[
-                  { type: 'data', label: 'Data Buffer Allocation', pagesKey: 'data_buffer_pages', sizeKey: 'data_buffer_size' },
-                  { type: 'sort', label: 'Sort Buffer Allocation', pagesKey: 'sort_buffer_pages', sizeKey: 'sort_buffer_size' },
-                  { type: 'log',  label: 'Log Buffer Allocation',  pagesKey: 'log_buffer_pages',  sizeKey: 'log_buffer_size'  },
+                  { type: 'data', label: CM.dataBufferAllocLabel, pagesKey: 'data_buffer_pages', sizeKey: 'data_buffer_size' },
+                  { type: 'sort', label: CM.sortBufferAllocLabel, pagesKey: 'sort_buffer_pages', sizeKey: 'sort_buffer_size' },
+                  { type: 'log',  label: CM.logBufferAllocLabel,  pagesKey: 'log_buffer_pages',  sizeKey: 'log_buffer_size'  },
                 ].map(cfg => (
                   <BufferCard
                     key={cfg.type}
@@ -730,7 +731,7 @@ export default function DatabasePropertyModal() {
               <div>
                 <div className="px-6 py-6">
                   <InfoBanner title={CM.advancedHeuristics}>
-                    Advanced parameters — changes may affect server stability and performance. Exercise caution when modifying these values.
+                    {CM.advancedParamsWarning}
                   </InfoBanner>
                 </div>
                 <div className="border-b border-slate-100 dark:border-white/6">

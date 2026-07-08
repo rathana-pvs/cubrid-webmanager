@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 export const Toast = ({
   id,
@@ -9,6 +10,7 @@ export const Toast = ({
   duration = 3000,
   onClose,
 }) => {
+  const CM = useCM();
   useEffect(() => {
     if (duration > 0) {
       const timer = setTimeout(() => onClose(id), duration);
@@ -61,7 +63,7 @@ export const Toast = ({
         className="text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
         onClick={() => onClose(id)}
       >
-        <span className="sr-only">Close</span>
+        <span className="sr-only">{CM.close}</span>
         <Icon name="close" size="sm"  weight={300} />
       </button>
     </div>

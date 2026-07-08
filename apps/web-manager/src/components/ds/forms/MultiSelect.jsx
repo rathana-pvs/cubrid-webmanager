@@ -1,15 +1,18 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { Icon } from '../foundation/Icon';
 import { Badge } from '../foundation/Badge';
+import { useCM } from '../../../constants/useCM';
 
 export const MultiSelect = ({
   options = [],
   value = [],
   onChange,
-  placeholder = 'Select options...',
+  placeholder = null,
   disabled = false,
   className = '',
 }) => {
+  const CM = useCM();
+  const resolvedPlaceholder = placeholder ?? CM.selectOptionsPlaceholder;
   const [isOpen, setIsOpen] = useState(false);
   const containerRef = useRef(null);
 
@@ -54,7 +57,7 @@ export const MultiSelect = ({
       >
         <div className="flex flex-wrap gap-1 items-center flex-1">
           {selectedOptions.length === 0 ? (
-            <span className="text-slate-400 dark:text-slate-500 py-0.5">{placeholder}</span>
+            <span className="text-slate-400 dark:text-slate-500 py-0.5">{resolvedPlaceholder}</span>
           ) : (
             selectedOptions.map(opt => (
               <Badge key={opt.value} variant="default" size="sm" className="bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 font-normal pr-1 flex items-center gap-1">
@@ -76,7 +79,7 @@ export const MultiSelect = ({
       {isOpen && !disabled && (
         <div className="absolute z-50 w-full mt-1 bg-white dark:bg-slate-900 border border-slate-200 dark:border-slate-800 rounded-md shadow-lg max-h-60 overflow-y-auto">
           {options.length === 0 ? (
-            <div className="px-3 py-2 text-sm text-slate-500 italic">No options</div>
+            <div className="px-3 py-2 text-sm text-slate-500 italic">{CM.noOptionsLabel}</div>
           ) : (
             options.map((option) => {
               const isSelected = value.includes(option.value);

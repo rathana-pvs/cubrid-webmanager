@@ -14,7 +14,7 @@ export default function SystemInfo({ hostUid }) {
   const InfoRow = ({ label, value }) => (
     <div className="flex items-start py-2.5 border-b border-slate-100 dark:border-white/5 last:border-0 group/row hover:bg-slate-50 dark:hover:bg-white/2 transition-colors -mx-4 px-4">
       <Typography variant="span" className="text-slate-500 font-medium text-[13px] min-w-[140px] truncate">{label}</Typography>
-      <Typography variant="span" className="text-slate-900 dark:text-slate-100 font-mono text-[13px] break-all flex-1">{value || 'N/A'}</Typography>
+      <Typography variant="span" className="text-slate-900 dark:text-slate-100 font-mono text-[13px] break-all flex-1">{value || CM.notApplicableFallback}</Typography>
     </div>
   );
 
@@ -34,8 +34,8 @@ export default function SystemInfo({ hostUid }) {
         </div>
       ) : (
         <div className="flex flex-col">
-          <InfoRow label={CM.accessPoint} value={currentHost ? `${currentHost.address}:${currentHost.port}` : 'unknown'} />
-          <InfoRow label={CM.authUser} value={currentHost ? currentHost.id : 'unknown'} />
+          <InfoRow label={CM.accessPoint} value={currentHost ? `${currentHost.address}:${currentHost.port}` : CM.unknownFallback} />
+          <InfoRow label={CM.authUser} value={currentHost ? currentHost.id : CM.unknownFallback} />
           <InfoRow label={CM.operatingSystem} value={envData.osinfo} />
           <InfoRow label={CM.cubridEngine} value={envData.CUBRIDVER} />
           <InfoRow label={CM.broker} value={envData.BROKERVER} />

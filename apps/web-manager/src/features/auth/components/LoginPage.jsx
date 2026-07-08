@@ -71,7 +71,7 @@ export default function LoginPage() {
       }));
       navigate('/home', { replace: true });
     } catch (err) {
-      const msg = err.response?.data?.message || err.response?.data?.error || 'Login failed. Please check your credentials.';
+      const msg = err.response?.data?.message || err.response?.data?.error || CM.loginFailedMsg;
       dispatch(loginFailure(msg));
       setApiError(msg);
     }

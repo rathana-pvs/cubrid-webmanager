@@ -22,28 +22,26 @@ test.describe('Database Detailed Operations', () => {
     }
   });
 
-  test('should verify UI elements in Clone Database modal', async ({ page }) => {
+  test('should verify UI elements in Copy Database modal', async ({ page }) => {
     const dbNode = page.locator('#db-tree-container').locator('div').filter({ hasText: /^demodb$/ }).first();
     await dbNode.click({ button: 'right' });
-    
-    await page.getByRole('button', { name: /Clone Database/i }).click();
+
+    await page.getByRole('button', { name: /Copy Database/i }).click();
 
     // 1. Check title and visually rich elements
-    await expect(page.getByText('Clone Database', { exact: true })).toBeVisible();
-    await expect(page.getByText('Source', { exact: true })).toBeVisible();
-    await expect(page.getByText('Clone name', { exact: true })).toBeVisible();
+    await expect(page.getByText('Copy Database', { exact: true })).toBeVisible();
+    await expect(page.getByText('Database Name', { exact: true })).toBeVisible();
 
-    // 2. Check Migration flags (FlagCard)
-    const overwriteLabel = page.getByText('Overwrite existing database');
+    // 2. Check flag cards
+    const overwriteLabel = page.getByText('Overwrite Existing Files');
     await expect(overwriteLabel).toBeVisible();
-    
-    // 3. Toggle a flag and verify visual feedback (using a selector that targets the toggle pill)
-    const overwriteCard = page.locator('button').filter({ hasText: /Overwrite existing database/ });
+
+    // 3. Toggle a flag and verify visual feedback
+    const overwriteCard = page.locator('button').filter({ hasText: /Overwrite Existing Files/ });
     await overwriteCard.click();
-    // Assuming the 'bg-amber-500' class is added to the pill when checked
     await expect(overwriteCard.locator('div.bg-amber-500')).toBeVisible();
 
-    await page.getByRole('button', { name: 'Cancel' }).click();
+    await page.getByRole('button', { name: 'Close' }).click();
   });
 
   test('should load and verify Database Space Monitor dashboard', async ({ page }) => {

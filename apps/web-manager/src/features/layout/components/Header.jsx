@@ -154,7 +154,7 @@ export default function Header({ theme, toggleTheme }) {
                     />
                   </div>
                   <span className="text-[12px] font-bold text-slate-700 dark:text-slate-200 tracking-tight flex-1 text-left px-1 truncate">
-                    {user?.id || 'Admin'}
+                    {user?.id || CM.admin}
                   </span>
                   <Icon name="expand_more" size="14px" className="text-slate-400 group-hover:text-slate-600 dark:group-hover:text-slate-200" />
                 </>

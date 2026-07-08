@@ -25,8 +25,8 @@ export default function DeleteHostModal() {
 
   const consequences = [
     { icon: 'link_off', label: CM.activeConnectionsTerminated },
-    { icon: 'key_off', label: 'Saved credentials and authentication tokens removed' },
-    { icon: 'settings_backup_restore', label: 'Associated configuration profiles will be purged' },
+    { icon: 'key_off', label: CM.deleteHostBullet1 },
+    { icon: 'settings_backup_restore', label: CM.deleteHostBullet2 },
   ];
 
   return (
@@ -77,10 +77,10 @@ export default function DeleteHostModal() {
             <Icon name="warning" size="lg" weight={300} className="text-rose-500" />
           </div>
           <Typography variant="p" className="text-[13px] text-slate-900 dark:text-white font-bold leading-relaxed">
-            Permanently remove <span className="text-rose-500">{hostToDeleteAlias || hostToDeleteUid}</span>?
+            {CM.deleteHostConfirmTitle(hostToDeleteAlias || hostToDeleteUid)}
           </Typography>
           <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-1 max-w-[300px] leading-relaxed">
-            This action is irreversible and cannot be undone.
+            {CM.irreversibleActionNotice}
           </Typography>
         </div>
 

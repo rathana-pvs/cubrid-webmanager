@@ -101,8 +101,8 @@ export default function ImportExportHostModal() {
       } catch (err) {
         dispatch(showStatusModal({
           type: 'error',
-          title: 'Import Error',
-          message: err.message || 'An error occurred while parsing the file.',
+          title: CM.importErrorTitle,
+          message: err.message || CM.importParseErrorMsg,
         }));
         e.target.value = '';
       }
@@ -122,7 +122,7 @@ export default function ImportExportHostModal() {
     const groupsAfterCreate = await dispatch(createHostGroup({ name })).unwrap();
     const groupId = findNewGroupId(previousGroups, groupsAfterCreate);
     if (!groupId) {
-      throw new Error(`Failed to create import group "${name}".`);
+      throw new Error(CM.failedToCreateImportGroupMsg(name));
     }
     return groupId;
   };
@@ -163,7 +163,7 @@ export default function ImportExportHostModal() {
         if (!preflight.ok) {
           dispatch(showStatusModal({
             type: 'error',
-            title: 'Import validation failed',
+            title: CM.importValidationFailedTitle,
             message: preflight.messages.join('\n'),
           }));
           return;
@@ -172,8 +172,8 @@ export default function ImportExportHostModal() {
         if (hostsToAdd.length === 0) {
           dispatch(showStatusModal({
             type: 'info',
-            title: 'Import Result',
-            message: 'No valid hosts selected for import.',
+            title: CM.importResultTitle,
+            message: CM.importNoValidHostsMsg,
           }));
           return;
         }
@@ -235,8 +235,8 @@ export default function ImportExportHostModal() {
           } else {
             dispatch(showStatusModal({
               type: 'success',
-              title: 'Import Result',
-              message: `Imported ${addedCount} host(s) into ${groupSummary}. ${skippedCount} item(s) were skipped.`,
+              title: CM.importResultTitle,
+              message: CM.importSummaryMsg(addedCount, groupSummary, skippedCount),
             }));
             dispatch(closeImportExportModal());
           }
@@ -244,8 +244,8 @@ export default function ImportExportHostModal() {
           await rollbackImportGroups(createdGroupIds);
           dispatch(showStatusModal({
             type: 'error',
-            title: 'Import failed',
-            message: err?.message || 'Import was rolled back. No hosts were added.',
+            title: CM.importFailedTitle,
+            message: err?.message || CM.importRolledBackMsg,
           }));
         } finally {
           dispatch(setSkipAutoHostLogin(false));
@@ -254,8 +254,8 @@ export default function ImportExportHostModal() {
     } catch (err) {
       dispatch(showStatusModal({
         type: 'error',
-        title: 'Import Error',
-        message: err?.message || 'Failed to import hosts.',
+        title: CM.importErrorTitle,
+        message: err?.message || CM.importFailedMsg,
       }));
     } finally {
       setIsProcessing(false);
@@ -300,13 +300,13 @@ export default function ImportExportHostModal() {
 
       const messageParts = [];
       if (updatedCount > 0) {
-        messageParts.push(`Password saved for ${updatedCount} host(s). Log in from the sidebar when ready.`);
+        messageParts.push(CM.passwordSavedMsg(updatedCount));
       }
       if (passwordSaveFailed.length > 0) {
-        messageParts.push(`Password not saved: ${passwordSaveFailed.join(', ')}.`);
+        messageParts.push(CM.passwordNotSavedMsg(passwordSaveFailed.join(', ')));
       }
       if (messageParts.length === 0) {
-        messageParts.push('No passwords were entered.');
+        messageParts.push(CM.noPasswordsEnteredMsg);
       }
 
       let statusType = 'success';
@@ -318,7 +318,7 @@ export default function ImportExportHostModal() {
 
       dispatch(showStatusModal({
         type: statusType,
-        title: 'Import Result',
+        title: CM.importResultTitle,
         message: messageParts.join(' '),
       }));
       dispatch(closeImportExportModal());
@@ -369,15 +369,15 @@ export default function ImportExportHostModal() {
 
       const messageParts = [];
       if (savedUids.length > 0) {
-        messageParts.push(`Password saved for ${savedUids.length} host(s).`);
+        messageParts.push(CM.passwordSavedCountMsg(savedUids.length));
       }
       if (passwordSaveFailed.length > 0) {
-        messageParts.push(`Password not saved: ${passwordSaveFailed.join(', ')}.`);
+        messageParts.push(CM.passwordNotSavedMsg(passwordSaveFailed.join(', ')));
       }
       if (savedUids.length > 0) {
-        messageParts.push(`Connected ${successCount} host(s).`);
+        messageParts.push(CM.connectedHostsMsg(successCount));
         if (loginFailed.length > 0) {
-          messageParts.push(`Login failed: ${loginFailed.join(', ')}.`);
+          messageParts.push(CM.loginFailedListMsg(loginFailed.join(', ')));
         }
       }
 
@@ -402,7 +402,7 @@ export default function ImportExportHostModal() {
       dispatch(showStatusModal({
         type: 'error',
         title: CM.loginAll,
-        message: 'Failed to log in to imported hosts.',
+        message: CM.loginImportedFailedMsg,
       }));
     } finally {
       dispatch(setSkipAutoHostLogin(false));
@@ -418,12 +418,12 @@ export default function ImportExportHostModal() {
     (host) => (passwordDrafts[host.uid] ?? '') !== ''
   );
   const title = isPasswordPromptStep
-    ? 'Import Complete'
+    ? CM.importCompleteTitle
     : isPasswordStep
-    ? 'Set Passwords for Imported Hosts'
+    ? CM.setPasswordsForImportedTitle
     : (importExportMode === 'export' ? CM.exportHosts : CM.importHosts);
   const actionLabel = isPasswordStep
-    ? 'Apply Passwords'
+    ? CM.applyPasswordsBtn
     : (importExportMode === 'export' ? CM.exportHost : CM.importHost);
   const icon = importExportMode === 'export' ? 'file_upload' : 'file_download';
 
@@ -442,12 +442,12 @@ export default function ImportExportHostModal() {
       loading={isProcessing}
       maxWidth="max-w-[720px]"
       subtitle={isPasswordPromptStep
-        ? `${pendingPasswordHosts.length} host(s) imported. Add passwords now or skip.`
+        ? CM.pendingPasswordsSubtitle(pendingPasswordHosts.length)
         : isPasswordStep
-        ? 'Imported hosts were added without passwords. Enter passwords now or skip.'
+        ? CM.pendingPasswordsDesc
         : importExportMode === 'export'
-        ? 'Export hosts to XML file. Note: The passwords are not included.'
-        : 'Import flat host lists into a single group (legacy XML / .prefs / .properties).'}
+        ? CM.exportHostsDesc
+        : CM.importHostsDesc}
       footer={
         <div className="flex justify-between items-center w-full">
           <div className="flex items-center gap-4">
@@ -458,7 +458,7 @@ export default function ImportExportHostModal() {
                 icon="change_circle"
                 onClick={() => { setImportList([]); setSelectedHosts([]); }}
               >
-                Change File
+                {CM.changeFileBtn}
               </Button>
             )}
             {importExportMode === 'export' && !isPasswordStep && (
@@ -469,7 +469,7 @@ export default function ImportExportHostModal() {
                     size="sm"
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
-                    placeholder="export_servers"
+                    placeholder={CM.exportFilenamePlaceholder}
                     suffix=".XML"
                   />
                 </div>
@@ -487,21 +487,21 @@ export default function ImportExportHostModal() {
                     setShowPasswordPrompt(false);
                     dispatch(showStatusModal({
                       type: 'success',
-                      title: 'Import Result',
-                      message: `${pendingPasswordHosts.length} host(s) imported. You can set passwords later by editing each host.`,
+                      title: CM.importResultTitle,
+                      message: CM.importedSetPasswordsLaterMsg(pendingPasswordHosts.length),
                     }));
                     dispatch(closeImportExportModal());
                   }}
                   disabled={isProcessing}
                 >
-                  No
+                  {CM.no}
                 </Button>
                 <Button
                   variant="primary"
                   onClick={() => setShowPasswordPrompt(false)}
                   icon="lock"
                 >
-                  Add Passwords
+                  {CM.addPasswordsBtn}
                 </Button>
               </>
             ) : (
@@ -512,8 +512,8 @@ export default function ImportExportHostModal() {
                 if (isPasswordStep) {
                   dispatch(showStatusModal({
                     type: 'info',
-                    title: 'Import Result',
-                    message: 'Passwords were skipped for imported hosts. You can edit each host later.',
+                    title: CM.importResultTitle,
+                    message: CM.passwordsSkippedMsg,
                   }));
                 }
                 dispatch(closeImportExportModal());
@@ -522,7 +522,7 @@ export default function ImportExportHostModal() {
               }}
               disabled={isProcessing}
             >
-              {isPasswordStep ? 'Skip' : 'Discard'}
+              {isPasswordStep ? CM.skip : CM.discard}
             </Button>
             {isPasswordStep && (
               <Button
@@ -556,10 +556,10 @@ export default function ImportExportHostModal() {
           <div className="flex flex-col items-center justify-center flex-1 px-8 py-6 gap-5 text-center">
             <div className="space-y-1.5">
               <p className="text-[14px] font-bold text-slate-800 dark:text-slate-100">
-                Add passwords for imported hosts?
+                {CM.addPasswordsConfirmTitle}
               </p>
               <p className="text-[12px] text-slate-500 dark:text-slate-400 max-w-xs mx-auto leading-relaxed">
-                You can add them now, or skip and edit each host individually later.
+                {CM.addPasswordsConfirmDesc}
               </p>
             </div>
             <div className="w-full max-w-xs divide-y divide-slate-100 dark:divide-white/5 border border-slate-200 dark:border-white/8 rounded-xl overflow-hidden">
@@ -601,8 +601,7 @@ export default function ImportExportHostModal() {
                 }}
               />
               <Typography variant="p" className="text-slate-500 mt-4 text-center text-[11px] max-w-[320px] mx-auto">
-                CUBRID hosts XML or legacy desktop .prefs / .properties (CUBRID_SERVERS and host groups).
-                Encrypted passwords in .prefs are not imported.
+                {CM.importFormatHelp}
               </Typography>
             </div>
         ) : (
@@ -611,12 +610,12 @@ export default function ImportExportHostModal() {
               {importExportMode === 'import' && (
                 fileHasPrefsGroups ? (
                   <Typography variant="caption" className="text-slate-500 text-[10px]">
-                    Host groups from the .prefs file are preserved. Hosts not in any group use the name below.
+                    {CM.importGroupsHelp}
                   </Typography>
                 ) : (
                   <div className="flex items-center gap-2">
                     <Typography variant="caption" className="font-bold text-slate-400 uppercase tracking-tight shrink-0">
-                      Group
+                      {CM.groupLabel}
                     </Typography>
                     <div className="flex-1 max-w-xs">
                       <Input
@@ -627,7 +626,7 @@ export default function ImportExportHostModal() {
                       />
                     </div>
                     <Typography variant="caption" className="text-slate-400 text-[10px]">
-                      All selected hosts go into this group
+                      {CM.allHostsIntoGroupHelp}
                     </Typography>
                   </div>
                 )
@@ -635,7 +634,7 @@ export default function ImportExportHostModal() {
               {importExportMode === 'import' && fileHasPrefsGroups && (
                 <div className="flex items-center gap-2">
                   <Typography variant="caption" className="font-bold text-slate-400 uppercase tracking-tight shrink-0">
-                    Fallback group
+                    {CM.fallbackGroupLabel}
                   </Typography>
                   <div className="flex-1 max-w-xs">
                     <Input
@@ -649,7 +648,7 @@ export default function ImportExportHostModal() {
               )}
               {hasValidationErrors && (
                 <Typography variant="caption" className="text-amber-600 dark:text-amber-400 text-[10px]">
-                  Rows with validation errors cannot be imported. Fix the source file or deselect them.
+                  {CM.validationErrorRowsHelp}
                 </Typography>
               )}
               <div className="flex items-center justify-between">
@@ -664,7 +663,7 @@ export default function ImportExportHostModal() {
                   />
                 </div>
                 <Badge variant="yellow" size="sm">
-                  {selectedHosts.length} SELECTED
+                  {CM.selectedCountLabel(selectedHosts.length)}
                 </Badge>
               </div>
             </div>
@@ -696,12 +695,12 @@ export default function ImportExportHostModal() {
                     },
                     {
                       accessor: 'alias',
-                      header: 'Name',
+                      header: CM.name,
                       render: (alias, host) => (
                         <div className="flex flex-col gap-1">
                           <div className="flex items-center gap-2">
                             <Typography variant="caption" className={`font-bold ${host.isSelectable ? 'text-slate-700 dark:text-slate-200' : 'text-slate-400'}`}>
-                              {alias || 'Unnamed'}
+                              {alias || CM.unnamedFallback}
                             </Typography>
                             {host.isDuplicate && (
                               <Badge variant="secondary" size="xs">{CM.duplicateLabel}</Badge>
@@ -718,11 +717,11 @@ export default function ImportExportHostModal() {
                         </div>
                       )
                     },
-                    { accessor: 'address', header: 'Address' },
-                    { accessor: 'port', header: 'Port' },
+                    { accessor: 'address', header: CM.address },
+                    { accessor: 'port', header: CM.port },
                     ...(fileHasPrefsGroups ? [{
                       accessor: 'importGroupName',
-                      header: 'Group',
+                      header: CM.groupLabel,
                       render: (groupName) => (
                         <Typography variant="caption" className="text-slate-600 dark:text-slate-300">
                           {groupName || '—'}

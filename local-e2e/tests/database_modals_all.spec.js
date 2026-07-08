@@ -26,7 +26,7 @@ test.describe('Database All Modals', () => {
     { label: 'Check Database', expected: /Check Database/i, subMenu: 'Manage Database' },
     { label: 'Compact Database', expected: /Compact Database/i, subMenu: 'Manage Database' },
     { label: 'Optimize Database', expected: /Optimize Database/i, subMenu: 'Manage Database' },
-    { label: 'Copy Database', expected: /Clone Database/i, subMenu: 'Manage Database' },
+    { label: 'Copy Database', expected: /Copy Database/i, subMenu: 'Manage Database' },
     { label: 'Restore Database', expected: /Restore Database/i, subMenu: 'Manage Database' },
     { label: 'Backup Database', expected: /Database Backup/i, subMenu: 'Manage Database' },
     { label: 'Delete Database', expected: /Delete Database/i, subMenu: 'Manage Database' },

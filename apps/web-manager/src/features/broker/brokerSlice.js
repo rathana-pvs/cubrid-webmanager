@@ -238,6 +238,7 @@ const brokerSlice = createSlice({
       state.selectedBrokerSubItem = null;
       state.detailedStatus = {};
       state.logsByBroker = {};
+      state.dbLogsByDbName = {};
       state.viewingLogs = {};
       state.adminLogsByHost = {};
       state.cmsLogsByHost = {};

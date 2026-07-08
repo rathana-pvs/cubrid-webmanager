@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 /**
  * PageLoader - Standardized premium loading state for pages and major sections.
@@ -12,14 +13,17 @@ import { Typography } from '../foundation/Typography';
  * @param {string} className - Extra wrapper classes
  * @param {boolean} fullHeight - Take up full parent height
  */
-export function PageLoader({ 
-  title = "Synchronizing Data", 
-  subtitle = "Fetching real-time metrics from the instance...", 
+export function PageLoader({
+  title = null,
+  subtitle = null,
   icon = "analytics",
   accent = "amber",
   className = "",
   fullHeight = true
 }) {
+  const CM = useCM();
+  const resolvedTitle = title ?? CM.synchronizingDataTitle;
+  const resolvedSubtitle = subtitle ?? CM.fetchingMetricsSubtitle;
   const accentColors = {
     amber: "border-t-amber-500 text-amber-500",
     blue: "border-t-blue-500 text-blue-500",
@@ -50,10 +54,10 @@ export function PageLoader({
 
       <div className="text-center space-y-1.5 px-8 max-w-[320px]">
         <Typography variant="h4" className="text-[15px] font-black tracking-tight uppercase tracking-widest text-slate-800 dark:text-slate-100">
-          {title}
+          {resolvedTitle}
         </Typography>
         <Typography variant="p" className="text-[12px] text-slate-500 dark:text-slate-400 font-medium leading-relaxed">
-          {subtitle}
+          {resolvedSubtitle}
         </Typography>
       </div>
 

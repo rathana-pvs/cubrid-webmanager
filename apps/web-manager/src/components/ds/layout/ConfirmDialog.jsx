@@ -2,26 +2,30 @@ import React from 'react';
 import { Modal } from './Modal';
 import { Button } from '../foundation/Button';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 export const ConfirmDialog = ({
   isOpen,
   title,
   description,
-  confirmLabel = 'Confirm',
-  cancelLabel = 'Cancel',
+  confirmLabel = null,
+  cancelLabel = null,
   variant = 'primary',
   onConfirm,
   onCancel,
 }) => {
+  const CM = useCM();
   const isDanger = variant === 'danger';
+  const resolvedConfirmLabel = confirmLabel ?? CM.confirm;
+  const resolvedCancelLabel = cancelLabel ?? CM.cancel;
 
   const footer = (
     <>
       <Button variant="outline" onClick={onCancel}>
-        {cancelLabel}
+        {resolvedCancelLabel}
       </Button>
       <Button variant={isDanger ? 'danger' : 'primary'} onClick={onConfirm}>
-        {confirmLabel}
+        {resolvedConfirmLabel}
       </Button>
     </>
   );

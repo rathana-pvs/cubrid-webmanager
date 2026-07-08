@@ -18,6 +18,12 @@ export default function HaClusterLinkedModal() {
   const dispatch = useDispatch();
   const { haClusterLinkNotice, isHaClusterLinkModalOpen } = useSelector((state) => state.host, shallowEqual);
 
+  const HA_ROLE_LABEL = {
+    master: CM.haMaster,
+    slave: CM.haSlave,
+    replica: CM.haReplica,
+  };
+
   if (!haClusterLinkNotice?.peers?.length) return null;
 
   const { targetGroupName, peers } = haClusterLinkNotice;
@@ -40,7 +46,7 @@ export default function HaClusterLinkedModal() {
         <div className="p-4 bg-emerald-500/5 border border-emerald-500/10 rounded-xl flex gap-3">
           <Icon name="check_circle" className="text-emerald-500 shrink-0" size="sm" />
           <p className="text-[11.5px] text-slate-600 dark:text-slate-400 leading-relaxed">
-            This host is part of an HA cluster. {peers.length + 1} node(s) are registered in{' '}
+            {CM.haClusterLinkedDesc(peers.length + 1)}{' '}
             <span className="font-semibold">{targetGroupName}</span>.
           </p>
         </div>
@@ -61,7 +67,7 @@ export default function HaClusterLinkedModal() {
                 </p>
                 <p className="text-[10px] text-slate-400 dark:text-slate-500 truncate">
                   {peer.address}:{peer.port}
-                  {peer.haRole ? ` · ${peer.haRole}` : ''}
+                  {peer.haRole ? ` · ${HA_ROLE_LABEL[peer.haRole] || peer.haRole}` : ''}
                 </p>
               </div>
             </div>

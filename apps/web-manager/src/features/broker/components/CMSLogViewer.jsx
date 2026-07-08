@@ -18,7 +18,7 @@ function CMSLogViewer({ hostUid, type }) {
   const loading = useSelector((state) => state.broker.cmsLogsLoading);
 
   const logs = type === 'access' ? cmsLogs?.accesslog : cmsLogs?.errorlog;
-  const title = type === 'access' ? 'Manager Access Log' : 'Manager Error Log';
+  const title = type === 'access' ? CM.managerAccessLogTitle : CM.managerErrorLogTitle;
   const icon = type === 'access' ? 'login' : 'report';
 
   const totalEntries = logs?.length || 0;
@@ -68,7 +68,7 @@ function CMSLogViewer({ hostUid, type }) {
           {/* Copy */}
           <button
             onClick={() => {
-              const text = paginatedLogs.map(l => `[${l.time}] [${l['@user'] || 'System'}] [${l.taskname}] ${type === 'error' ? l.errornote : 'SUCCESS'}`).join('\n');
+              const text = paginatedLogs.map(l => `[${l.time}] [${l['@user'] || CM.systemFallback}] [${l.taskname}] ${type === 'error' ? l.errornote : CM.successLabel}`).join('\n');
               navigator.clipboard.writeText(text);
               setCopying(true);
               setTimeout(() => setCopying(false), 2000);
@@ -139,7 +139,7 @@ function CMSLogViewer({ hostUid, type }) {
         <div className="w-36 shrink-0">{CM.timeLabel}</div>
         <div className="w-24 shrink-0">{CM.userLabel}</div>
         <div className="w-40 shrink-0">{CM.taskLabel}</div>
-        <div className="flex-1">Detail / Note</div>
+        <div className="flex-1">{CM.detailNoteHeader}</div>
       </div>
 
       {/* Log List - One line format */}
@@ -181,7 +181,7 @@ function CMSLogViewer({ hostUid, type }) {
                   ) : (
                     <div className="flex gap-2 items-center">
                       <span className="text-emerald-600 dark:text-emerald-400 font-bold text-[10px] bg-emerald-400/10 px-1 rounded-sm shrink-0">{CM.successLabel}</span>
-                      <span className="text-slate-500 dark:text-slate-400 italic">Operation: {log.taskname} completed</span>
+                      <span className="text-slate-500 dark:text-slate-400 italic">{CM.operationCompletedLabel(log.taskname)}</span>
                     </div>
                   )}
                 </div>
@@ -194,11 +194,11 @@ function CMSLogViewer({ hostUid, type }) {
       {/* Footer Stats */}
       <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-500 dark:text-slate-400 font-medium tracking-tight">
         <div className="flex items-center gap-4">
-          <span>Total entries: {totalEntries.toLocaleString()}</span>
+          <span>{CM.totalEntriesLabel(totalEntries.toLocaleString())}</span>
           {showAll ? (
              <span>{CM.showingAllRecords}</span>
           ) : (
-             <span>Showing: {startIndex + 1} - {Math.min(startIndex + pageSize, totalEntries)}</span>
+             <span>{CM.showingRangeLabel(startIndex + 1, Math.min(startIndex + pageSize, totalEntries))}</span>
           )}
         </div>
         <StatusBadge label={CM.connected} variant="emerald" className="border-none bg-transparent" />

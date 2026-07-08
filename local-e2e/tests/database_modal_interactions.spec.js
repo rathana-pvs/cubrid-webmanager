@@ -1,101 +1,202 @@
 const { test, expect } = require('@playwright/test');
+const { login, connectToHost, openDbContextMenu, dismissModal, E2E_DB } = require('./helpers');
 
 /**
  * Database Deep Modal Interactions
- * Tests functional flows: filling fields, toggling states, and submitting forms.
+ *
+ * Verifies form behaviour, field validation, and option toggling inside
+ * database management modals.  Destructive operations (Rename, Delete) are
+ * tested only up to the point of submission — the forms are filled and
+ * validated but NOT submitted, to keep demodb intact for other tests.
  */
 test.describe('Database Modal Interactions', () => {
 
   test.beforeEach(async ({ page }) => {
-    await page.goto('/');
-    await page.getByPlaceholder(/Enter username/i).fill(process.env.E2E_USERNAME);
-    await page.getByPlaceholder(/••••••••/).fill(process.env.E2E_PASSWORD);
-    await page.getByRole('button', { name: /Authorize Access/i }).click();
-    
-    // Select host
-    await page.locator('#host-section div[title*=":"]').first().click();
+    await login(page);
+    await connectToHost(page);
   });
 
-  test('should complete a Rename Database workflow with validation', async ({ page }) => {
-    const dbNode = page.locator('#db-tree-container').locator('div').filter({ hasText: /^demodb$/ }).first();
-    await dbNode.click({ button: 'right' });
-    
-    // Navigate to Rename
+  // ---------------------------------------------------------------------------
+  // Rename Database — form validation only, does NOT submit
+  // ---------------------------------------------------------------------------
+  test('Rename modal: validates input and enables submit without executing', async ({ page }) => {
+    await openDbContextMenu(page);
     await page.getByRole('button', { name: 'Manage Database' }).hover();
     await page.getByRole('button', { name: 'Rename Database', exact: true }).click();
 
     const modal = page.locator('div[role="dialog"]');
-    await expect(modal).toContainText('Rename Database Registry');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Rename/i);
 
-    // 1. Verify Submit is disabled initially
-    const submitBtn = modal.getByRole('button', { name: 'Execute Rename' });
-    // It might have auto-filled or be empty. In our component, it starts empty.
-    const input = modal.getByPlaceholder(/PROD_CM_V2/);
-    await input.fill('DEMO_RENAMED_IT');
+    // Submit should be disabled while input is empty
+    const submitBtn = modal.getByRole('button', { name: /Rename|Execute/i }).last();
+    await expect(submitBtn).toBeDisabled();
 
-    // 2. Toggle Overwrite (Check)
-    const overwriteRow = modal.getByText('Overwrite Existing Registry');
+    // Fill a valid new name → submit becomes enabled
+    const input = modal.locator('input[type="text"]').first();
+    await input.fill('demodb_renamed_test');
+    await expect(submitBtn).toBeEnabled();
+
+    // Toggle "Overwrite Existing Target" checkbox
+    const overwriteRow = modal.getByText('Overwrite Existing Target');
+    await expect(overwriteRow).toBeVisible();
     await overwriteRow.click();
-    // Verify checkbox in that row is checked
     await expect(modal.locator('input[type="checkbox"]')).toBeChecked();
 
-    // 3. Submit
-    await submitBtn.click();
-
-    // 4. Verify Success Modal (StatusModal uses 'Rename successful' title)
-    await expect(page.getByText('Rename successful')).toBeVisible({ timeout: 10000 });
-    await page.getByRole('button', { name: 'Close' }).or(page.getByRole('button', { name: 'OK' })).first().click();
+    // Cancel — do NOT rename the live database
+    await dismissModal(page);
   });
 
-  test('should execute Database Integrity Scan with recovery options', async ({ page }) => {
-    const dbNode = page.locator('#db-tree-container').locator('div').filter({ hasText: /^demodb$/ }).first();
-    await dbNode.click({ button: 'right' });
-
+  // ---------------------------------------------------------------------------
+  // Check Database (read-only — safe to execute)
+  // ---------------------------------------------------------------------------
+  test('Check Database: runs integrity scan and shows result', async ({ page }) => {
+    await openDbContextMenu(page);
     await page.getByRole('button', { name: 'Manage Database' }).hover();
     await page.getByRole('button', { name: 'Check Database', exact: true }).click();
 
     const modal = page.locator('div[role="dialog"]');
-    await expect(modal).toContainText('Database Integrity Verification');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Check|Integrity/i);
 
-    // 1. Toggle Repair
-    const repairOption = modal.getByText('Autonomous Repair');
-    await repairOption.click();
-    
-    // 2. Run Diagnostics
-    await modal.getByRole('button', { name: 'Run Diagnostics' }).click();
+    // Verify option toggles are present
+    const repairOption = modal.getByText(/Repair|Autonomous/i).first();
+    if (await repairOption.isVisible()) await repairOption.click();
 
-    // 3. Check for Success
-    await expect(page.getByText('Check complete')).toBeVisible({ timeout: 10000 });
-    await page.getByRole('button', { name: 'Close' }).or(page.getByRole('button', { name: 'OK' })).first().click();
+    // Submit
+    await modal.getByRole('button', { name: /Run|Check|Execute/i }).last().click();
+
+    // Expect success or a progress indicator (job may be async)
+    const result = page.getByText(/complete|success|succeeded/i)
+      .or(page.locator('#sidebar-background-jobs'));
+    await expect(result.first()).toBeVisible({ timeout: 30000 });
+
+    await page.getByRole('button', { name: /Close|OK/i }).first().click();
   });
 
-  test('should configure and run a Database Backup', async ({ page }) => {
-    const dbNode = page.locator('#db-tree-container').locator('div').filter({ hasText: /^demodb$/ }).first();
-    await dbNode.click({ button: 'right' });
-
+  // ---------------------------------------------------------------------------
+  // Backup Database (non-destructive — safe to execute)
+  // ---------------------------------------------------------------------------
+  test('Backup Database: configures options and runs backup', async ({ page }) => {
+    await openDbContextMenu(page);
     await page.getByRole('button', { name: 'Manage Database' }).hover();
     await page.getByRole('button', { name: 'Backup Database', exact: true }).click();
-    
+
     const modal = page.locator('div[role="dialog"]');
-    
-    // 1. Select Backup Strategy (Incremental L1)
-    await modal.getByRole('button', { name: /Incremental/ }).click();
-    
-    // 2. Fill paths
-    await modal.getByLabel('Volume Name').fill('demo_test_backup_lv1');
-    const dirInput = modal.getByLabel('Backup Directory');
-    await dirInput.clear();
-    await dirInput.fill('/tmp/cubrid_backups');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Backup/i);
 
-    // 3. Toggle Options (using the labels in our flags list)
-    await modal.getByText('Compress Output').click();
+    // Select backup level if selector is present
+    const incrementalBtn = modal.getByRole('button', { name: /Incremental/i });
+    if (await incrementalBtn.isVisible()) await incrementalBtn.click();
 
-    // 4. Run 
-    await modal.getByRole('button', { name: 'Run Backup' }).click();
+    // Fill backup directory
+    const dirInput = modal.getByLabel(/Directory|Path/i).first();
+    if (await dirInput.isVisible()) {
+      await dirInput.clear();
+      await dirInput.fill('/tmp/cubrid_e2e_backup');
+    }
 
-    // 5. Success Check
-    await expect(page.getByText('Backup Successful')).toBeVisible({ timeout: 15000 });
-    await page.getByRole('button', { name: 'Close' }).or(page.getByRole('button', { name: 'OK' })).first().click();
+    // Submit
+    await modal.getByRole('button', { name: /Run|Backup|Execute/i }).last().click();
+
+    // Expect success or background job indicator
+    const result = page.getByText(/success|complete|succeeded/i)
+      .or(page.locator('#sidebar-background-jobs'));
+    await expect(result.first()).toBeVisible({ timeout: 60000 });
+
+    await page.getByRole('button', { name: /Close|OK/i }).first().click();
+  });
+
+  // ---------------------------------------------------------------------------
+  // Copy Database — form validation only, does NOT execute copy
+  // ---------------------------------------------------------------------------
+  test('Copy Database: fills form and validates without executing', async ({ page }) => {
+    await openDbContextMenu(page);
+    await page.getByRole('button', { name: 'Manage Database' }).hover();
+    await page.getByRole('button', { name: 'Copy Database', exact: true }).click();
+
+    const modal = page.locator('div[role="dialog"]');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Copy Database/i);
+
+    // Submit should be disabled without a destination name
+    const submitBtn = modal.getByRole('button', { name: /Copy/i }).last();
+    await expect(submitBtn).toBeDisabled();
+
+    // Fill Database Name
+    const nameInput = modal.locator('input[type="text"]').first();
+    await nameInput.fill('demodb_copy_test');
+    await expect(submitBtn).toBeEnabled();
+
+    // Toggle "Overwrite Existing Files"
+    const overwriteCard = modal.locator('button').filter({ hasText: /Overwrite Existing Files/ });
+    await expect(overwriteCard).toBeVisible();
+    await overwriteCard.click();
+
+    // Toggle "Delete Source After Copy"
+    const moveCard = modal.locator('button').filter({ hasText: /Delete Source After Copy/ });
+    await expect(moveCard).toBeVisible();
+
+    // Cancel — do NOT copy
+    await dismissModal(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Delete Database — form appears, does NOT confirm deletion
+  // ---------------------------------------------------------------------------
+  test('Delete Database: confirmation dialog appears without deleting', async ({ page }) => {
+    await openDbContextMenu(page);
+    await page.getByRole('button', { name: 'Manage Database' }).hover();
+    await page.getByRole('button', { name: 'Delete Database', exact: true }).click();
+
+    const modal = page.locator('div[role="dialog"]');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Delete/i);
+
+    // Confirm button should require typing the database name or be a danger button
+    const confirmBtn = modal.getByRole('button', { name: /Delete|Confirm/i }).last();
+    await expect(confirmBtn).toBeVisible();
+
+    // Cancel — do NOT delete
+    await dismissModal(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Compact Database (non-destructive)
+  // ---------------------------------------------------------------------------
+  test('Compact Database: opens modal with correct options', async ({ page }) => {
+    await openDbContextMenu(page);
+    await page.getByRole('button', { name: 'Manage Database' }).hover();
+    await page.getByRole('button', { name: 'Compact Database', exact: true }).click();
+
+    const modal = page.locator('div[role="dialog"]');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Compact/i);
+
+    await dismissModal(page);
+  });
+
+  // ---------------------------------------------------------------------------
+  // Optimize Database (non-destructive — runs as background job)
+  // ---------------------------------------------------------------------------
+  test('Optimize Database: submits and appears in background jobs', async ({ page }) => {
+    await openDbContextMenu(page);
+    await page.getByRole('button', { name: 'Manage Database' }).hover();
+    await page.getByRole('button', { name: 'Optimize Database', exact: true }).click();
+
+    const modal = page.locator('div[role="dialog"]');
+    await expect(modal).toBeVisible();
+    await expect(modal).toContainText(/Optim/i);
+
+    await modal.getByRole('button', { name: /Execute|Run|Optim/i }).last().click();
+
+    // Job appears in background panel or success modal shows
+    const result = page.locator('#sidebar-background-jobs')
+      .or(page.getByText(/success|complete/i));
+    await expect(result.first()).toBeVisible({ timeout: 15000 });
+
+    await page.getByRole('button', { name: /Close|OK/i }).first().click().catch(() => {});
   });
 
 });

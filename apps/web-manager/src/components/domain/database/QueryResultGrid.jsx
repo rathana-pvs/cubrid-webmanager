@@ -4,6 +4,7 @@ import { Badge } from '../../ds/foundation/Badge';
 import { Button } from '../../ds/foundation/Button';
 import { Typography } from '../../ds/foundation/Typography';
 import { InfoBanner } from '../../ds/foundation/InfoBanner';
+import { useCM } from '../../../constants/useCM';
 
 export const QueryResultGrid = ({
   columns = [],
@@ -14,9 +15,10 @@ export const QueryResultGrid = ({
   error = null,
   onExport,
 }) => {
+  const CM = useCM();
   if (error) {
     return (
-      <InfoBanner variant="danger" title="Query Failed" icon="error_outline" className="m-4">
+      <InfoBanner variant="danger" title={CM.queryFailedTitle} icon="error_outline" className="m-4">
         {error}
       </InfoBanner>
     );
@@ -32,7 +34,7 @@ export const QueryResultGrid = ({
       <div className="flex items-center justify-between px-4 py-2 bg-slate-50 dark:bg-slate-800/50 border-b border-slate-200 dark:border-slate-800">
         <div className="flex items-center gap-3">
           <Typography variant="span" className="text-xs font-medium text-slate-600 dark:text-slate-300">
-            Results <span className="text-slate-400 font-normal">({rows.length} of {totalRows})</span>
+            {CM.resultsLabel} <span className="text-slate-400 font-normal">({rows.length} of {totalRows})</span>
           </Typography>
           {executionTime > 0 && (
             <Badge variant="info" size="sm">
@@ -73,7 +75,7 @@ export const QueryResultGrid = ({
           columns={formattedColumns}
           data={rows}
           loading={loading}
-          emptyMessage="No results found"
+          emptyMessage={CM.noResultsFoundMsg}
           className="h-full"
         />
       </div>

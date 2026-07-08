@@ -4,7 +4,7 @@ import { setSelectedBroker } from '../../../broker/brokerSlice';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { useCM } from '../../../../constants/useCM';
 
-export default function TreeTabHeader({ activeTab, setActiveTab, onDbTabContextMenu, onBrokerTabContextMenu }) {
+export default function TreeTabHeader({ activeTab, setActiveTab, onDbTabContextMenu, onBrokerTabContextMenu, onLogTabContextMenu }) {
   const CM = useCM();
   const dispatch = useDispatch();
 
@@ -18,7 +18,7 @@ export default function TreeTabHeader({ activeTab, setActiveTab, onDbTabContextM
   const tabs = [
     { id: 'db',     label: CM.database, icon: 'database',      onContextMenu: onDbTabContextMenu },
     { id: 'broker', label: CM.broker,   icon: 'hub',           onContextMenu: onBrokerTabContextMenu },
-    { id: 'log',    label: CM.log,      icon: 'receipt_long' },
+    { id: 'log',    label: CM.log,      icon: 'receipt_long',  onContextMenu: onLogTabContextMenu },
   ];
 
   return (

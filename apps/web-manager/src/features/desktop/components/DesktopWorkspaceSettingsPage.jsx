@@ -57,7 +57,7 @@ export default function DesktopWorkspaceSettingsPage() {
       setWorkspaceRoot(next.workspaceRoot);
       setSetupMode(setupRequired);
     } catch (err) {
-      setError(err?.message || 'Failed to load workspace settings');
+      setError(err?.message || CM.workspaceSettingsLoadFailedMsg);
     } finally {
       setLoading(false);
     }
@@ -83,16 +83,16 @@ export default function DesktopWorkspaceSettingsPage() {
     setMessage('');
     try {
       await bridge.finishWorkspaceSetup(workspaceRoot);
-      setMessage('워크스페이스를 적용하는 중…');
+      setMessage(CM.applyingWorkspaceMsg);
     } catch (err) {
-      setError(err?.message || 'Failed to save workspace');
+      setError(err?.message || CM.workspaceSaveFailedMsg);
       setSaving(false);
     }
   };
 
   const afterWorkspaceApplied = () => {
     dispatch(logout());
-    setMessage('워크스페이스가 적용되었습니다. 다시 로그인해 주세요.');
+    setMessage(CM.workspaceAppliedRelogMsg);
     setSaving(false);
     navigate('/login', { replace: true });
   };
@@ -106,7 +106,7 @@ export default function DesktopWorkspaceSettingsPage() {
       await bridge.setWorkspaceRoot(workspaceRoot);
       afterWorkspaceApplied();
     } catch (err) {
-      setError(err?.message || 'Failed to save workspace');
+      setError(err?.message || CM.workspaceSaveFailedMsg);
       setSaving(false);
     }
   };
@@ -122,7 +122,7 @@ export default function DesktopWorkspaceSettingsPage() {
       await loadInfo();
       afterWorkspaceApplied();
     } catch (err) {
-      setError(err?.message || 'Failed to reset workspace');
+      setError(err?.message || CM.workspaceResetFailedMsg);
       setSaving(false);
     }
   };
@@ -131,10 +131,10 @@ export default function DesktopWorkspaceSettingsPage() {
     return (
       <SettingsShell>
         <InfoBanner variant="warning" title={CM.desktopOnly}>
-          Workspace settings are available in the CUBRID Web Manager desktop app.
+          {CM.workspaceDesktopOnlyDesc}
         </InfoBanner>
         <Link to="/login" className="text-amber-500 text-sm font-semibold hover:underline mt-4 inline-block">
-          Back to sign in
+          {CM.backToSignIn}
         </Link>
       </SettingsShell>
     );
@@ -144,7 +144,7 @@ export default function DesktopWorkspaceSettingsPage() {
     return (
       <SettingsShell>
         <InfoBanner variant="danger" title={CM.desktopBridgeUnavailable}>
-          Could not connect to the desktop app. Quit and run again with{' '}
+          {CM.desktopConnectFailedMsg}{' '}
           <code className="text-xs">npm run dev:desktop</code>.
         </InfoBanner>
       </SettingsShell>
@@ -157,25 +157,28 @@ export default function DesktopWorkspaceSettingsPage() {
         {!setupMode && (
           <Link to="/login" className="inline-flex items-center gap-1 text-[12px] text-slate-500 hover:text-amber-500 mb-4">
             <Icon name="arrow_back" size="sm" weight={300} />
-            Sign in
+            {CM.signIn}
           </Link>
         )}
         <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
-          {setupMode ? '워크스페이스 선택' : '워크스페이스'}
+          {setupMode ? CM.selectWorkspaceTitle : CM.workspaceTitle}
         </h1>
         <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
-          데이터·인증서·설정이 저장될 <strong className="font-semibold text-slate-700 dark:text-slate-200">폴더 하나</strong>만
-          지정하면 됩니다. 앱이 그 안에 <code className="text-xs">data/</code>,{' '}
-          <code className="text-xs">ssl/</code> 을 자동으로 만듭니다.
+          {CM.workspaceDescPrefix}
+          <strong className="font-semibold text-slate-700 dark:text-slate-200">{CM.workspaceDescFolderPhrase}</strong>
+          {CM.workspaceDescMiddle}
+          <code className="text-xs">data/</code>,{' '}
+          <code className="text-xs">ssl/</code>
+          {CM.workspaceDescSuffix}
         </p>
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-500">불러오는 중…</p>
+        <p className="text-sm text-slate-500">{CM.loadingLabel}</p>
       ) : (
         <div className="space-y-5">
           <Input
-            label="워크스페이스 폴더"
+            label={CM.workspaceFolderLabel}
             value={workspaceRoot}
             onChange={(e) => setWorkspaceRoot(e.target.value)}
             placeholder={info?.defaultWorkspaceRoot}
@@ -185,20 +188,20 @@ export default function DesktopWorkspaceSettingsPage() {
             <div className="text-[12px] text-slate-500 dark:text-slate-400 space-y-1 font-mono break-all">
               {!info.isCustomWorkspace && (
                 <p className="text-amber-600 dark:text-amber-400">
-                  기본 위치: {info.defaultWorkspaceRoot}
+                  {CM.defaultLocationLabel(info.defaultWorkspaceRoot)}
                 </p>
               )}
-              <p>설정 파일: {info.settingsFilePath}</p>
+              <p>{CM.settingsFileLabel(info.settingsFilePath)}</p>
             </div>
           )}
 
           {error && (
-            <InfoBanner variant="danger" title="오류">
+            <InfoBanner variant="danger" title={CM.error}>
               {error}
             </InfoBanner>
           )}
           {message && (
-            <InfoBanner variant="success" title="저장됨">
+            <InfoBanner variant="success" title={CM.policiesSaved}>
               {message}
             </InfoBanner>
           )}
@@ -209,7 +212,7 @@ export default function DesktopWorkspaceSettingsPage() {
               onClick={() => void handlePick()}
               className="h-10 px-4 text-[13px] font-semibold rounded-xl border border-slate-200 dark:border-white/10 hover:border-amber-500/40"
             >
-              폴더 선택…
+              {CM.selectFolderEllipsis}
             </button>
             {setupMode ? (
               <button
@@ -218,7 +221,7 @@ export default function DesktopWorkspaceSettingsPage() {
                 onClick={() => void handleContinue()}
                 className="h-10 px-4 text-[13px] font-bold rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-black disabled:opacity-50"
               >
-                계속
+                {CM.continueBtn}
               </button>
             ) : (
               <>
@@ -228,7 +231,7 @@ export default function DesktopWorkspaceSettingsPage() {
                   onClick={() => void handleSave()}
                   className="h-10 px-4 text-[13px] font-bold rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-black disabled:opacity-50"
                 >
-                  저장
+                  {CM.save}
                 </button>
                 {info?.isCustomWorkspace && (
                   <button
@@ -237,7 +240,7 @@ export default function DesktopWorkspaceSettingsPage() {
                     onClick={() => void handleReset()}
                     className="h-10 px-4 text-[13px] font-semibold rounded-xl text-slate-600 dark:text-slate-300"
                   >
-                    기본 위치
+                    {CM.defaultLocationBtn}
                   </button>
                 )}
               </>

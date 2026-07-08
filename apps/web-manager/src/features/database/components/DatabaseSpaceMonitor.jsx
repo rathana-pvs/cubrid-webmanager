@@ -101,7 +101,7 @@ const SummaryCards = memo(({ dbname, data, totals }) => {
     <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1">
       <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.usedLabel}</Typography>
       <Typography variant="p" className="text-base font-black text-slate-700 dark:text-slate-100 font-mono leading-none">{formatSize(totals?.used)}</Typography>
-      <Typography variant="label" className="text-[9px] text-slate-400">of {formatSize(totals?.total)}</Typography>
+      <Typography variant="label" className="text-[9px] text-slate-400">{CM.ofSizeLabel(formatSize(totals?.total))}</Typography>
     </div>
     <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/5 rounded-sm p-3.5 flex flex-col gap-1">
       <Typography variant="label" className="text-[9px] text-slate-400 font-bold uppercase tracking-widest">{CM.freeLabel}</Typography>
@@ -380,7 +380,7 @@ const Component = function DatabaseSpaceMonitor({ hostUid, dbname }) {
         setData(response);
         setError(null);
       } catch (err) {
-        setError(err.message || 'Failed to fetch space info');
+        setError(err.message || CM.spaceInfoFetchErrorMsg);
       }
     }
   });

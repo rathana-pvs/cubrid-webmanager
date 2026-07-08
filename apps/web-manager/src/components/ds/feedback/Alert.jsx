@@ -1,6 +1,7 @@
 import React from 'react';
 import { Icon } from '../foundation/Icon';
 import { Typography } from '../foundation/Typography';
+import { useCM } from '../../../constants/useCM';
 
 export const Alert = ({
   variant = 'info',
@@ -9,6 +10,7 @@ export const Alert = ({
   onClose,
   className = '',
 }) => {
+  const CM = useCM();
   const variants = {
     info: {
       bg: 'bg-blue-50 dark:bg-blue-900/30',
@@ -55,7 +57,7 @@ export const Alert = ({
         <button
           onClick={onClose}
           className={`shrink-0 ml-auto -mx-1.5 -my-1.5 p-1.5 rounded-lg focus:outline-hidden transition-colors ${style.iconColor} hover:bg-black/5 dark:hover:bg-white/10`}
-          aria-label="Dismiss"
+          aria-label={CM.dismiss}
         >
           <Icon name="close" size="sm"  weight={300} />
         </button>

@@ -51,7 +51,7 @@ export default function HaClusterStatusSection({ hostUid }) {
       </div>
       <div className="flex flex-wrap items-center gap-2">
         {nodes.map((node, i) => {
-          const nodeState = node.status || node.state || 'unknown';
+          const nodeState = node.status || node.state || CM.unknownFallback;
           const colors = getNodeStateColor(nodeState);
           return (
             <div key={i} className="flex items-center gap-2 px-2.5 py-1.5 bg-white dark:bg-bk-main rounded-lg border border-slate-200/60 dark:border-white/5 shadow-xs">

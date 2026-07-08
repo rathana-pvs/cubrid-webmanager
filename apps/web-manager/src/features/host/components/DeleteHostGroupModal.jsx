@@ -66,10 +66,10 @@ export default function DeleteHostGroupModal() {
             <Icon name="warning" size="lg" weight={300} className="text-rose-500" />
           </div>
           <Typography variant="p" className="text-[13px] text-slate-900 dark:text-white font-bold leading-relaxed">
-            Delete group <span className="text-rose-500">{groupToEditName || groupToEditId}</span>?
+            {CM.deleteGroupConfirmTitle(groupToEditName || groupToEditId)}
           </Typography>
           <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-1 max-w-[320px] leading-relaxed">
-            This will remove the group and all host connections inside it.
+            {CM.deleteGroupConfirmDesc}
           </Typography>
         </div>
       </div>
