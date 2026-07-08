@@ -285,10 +285,15 @@ apiClient.interceptors.response.use(
           return apiClient(originalRequest);
         } catch (refreshError) {
           refreshingHosts.delete(hostUid);
+          if (reconnectingHosts.has(hostUid)) {
+            return Promise.reject(error);
+          }
+          reconnectingHosts.add(hostUid);
           try {
             const { store } = await import('../app/store');
             store.dispatch(hostActions.openReconnectModal(hostUid));
           } catch (e) {
+            reconnectingHosts.delete(hostUid);
             console.error('Failed to dispatch openReconnectModal:', e);
           }
           return Promise.reject(error);
