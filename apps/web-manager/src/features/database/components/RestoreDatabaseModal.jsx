@@ -280,13 +280,21 @@ export default function RestoreDatabaseModal() {
         if (matchingBackup?.date) {
           backupDate = parseCmsDate(matchingBackup.date);
         } else {
-          const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+          const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => {
+            const tA = parseCmsDate(a.date)?.getTime() ?? 0;
+            const tB = parseCmsDate(b.date)?.getTime() ?? 0;
+            return tB - tA;
+          })[0];
           if (latestL0?.date) {
             backupDate = parseCmsDate(latestL0.date);
           }
         }
       } else {
-        const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => {
+          const tA = parseCmsDate(a.date)?.getTime() ?? 0;
+          const tB = parseCmsDate(b.date)?.getTime() ?? 0;
+          return tB - tA;
+        })[0];
         if (latestL0?.date) {
           backupDate = parseCmsDate(latestL0.date);
         }
@@ -389,7 +397,11 @@ export default function RestoreDatabaseModal() {
       if (matchingBackup?.date) {
         backupDate = parseCmsDate(matchingBackup.date);
       } else {
-        const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+        const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => {
+          const tA = parseCmsDate(a.date)?.getTime() ?? 0;
+          const tB = parseCmsDate(b.date)?.getTime() ?? 0;
+          return tB - tA;
+        })[0];
         if (latestL0?.date) {
           backupDate = parseCmsDate(latestL0.date);
         }
@@ -399,7 +411,11 @@ export default function RestoreDatabaseModal() {
       levelVal = '0';
       pathnameVal = 'none';
 
-      const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => new Date(b.date) - new Date(a.date))[0];
+      const latestL0 = allBackups.filter(b => b.level === 0).sort((a, b) => {
+        const tA = parseCmsDate(a.date)?.getTime() ?? 0;
+        const tB = parseCmsDate(b.date)?.getTime() ?? 0;
+        return tB - tA;
+      })[0];
       if (latestL0?.date) {
         backupDate = parseCmsDate(latestL0.date);
       }
@@ -604,14 +620,7 @@ export default function RestoreDatabaseModal() {
               <Checkbox
                 label={CM.selectBackupInfoLabel}
                 checked={formData.selectBackupFilePath}
-                onChange={(e) => {
-                  const checked = e.target.checked;
-                  setFormData(prev => ({
-                    ...prev,
-                    selectBackupFilePath: checked,
-                    selectRecoveryDateTime: checked ? false : prev.selectRecoveryDateTime
-                  }));
-                }}
+                onChange={(e) => handleInputChange('selectBackupFilePath', e.target.checked)}
               />
             </CaDialogField>
             
