@@ -38,12 +38,25 @@ export default function ReconnectHostModal() {
     // The existing UI data (databases, brokers, monitoring) stays intact.
     dispatch(loginToHost(reconnectHostUid))
       .unwrap()
-      .then(() => {
+      .then(async () => {
         // Clear the 401 guard so new requests go through again
         clearReconnectingHost(reconnectHostUid);
+        
+        try {
+          const { clearMonitoring } = await import('../../server/monitoringSlice');
+          dispatch(clearMonitoring(reconnectHostUid));
+        } catch (e) {
+          console.error(e);
+        }
+
+        try {
+          const { triggerRefreshActiveTab } = await import('../../layout/layoutSlice');
+          dispatch(triggerRefreshActiveTab());
+        } catch (e) {
+          console.error(e);
+        }
+
         dispatch(closeReconnectModal());
-        // No full refresh needed — existing state is still valid,
-        // pollers will naturally pick up on the next interval.
       })
       .catch((err) => {
         setIsReconnecting(false);
