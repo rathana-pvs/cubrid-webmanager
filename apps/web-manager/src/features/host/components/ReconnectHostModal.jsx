@@ -11,7 +11,9 @@ import { useCM } from '../../../constants/useCM';
 export default function ReconnectHostModal() {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { isReconnectModalOpen, reconnectHostUid, selectedHostUid, hosts, hostAuthErrors } = useSelector((state) => state.host, shallowEqual);
+  const { reconnectQueue, selectedHostUid, hosts, hostAuthErrors } = useSelector((state) => state.host, shallowEqual);
+  const reconnectHostUid = reconnectQueue?.[0] || null;
+  const isReconnectModalOpen = reconnectQueue?.length > 0;
 
   const [localError, setLocalError] = useState(null);
   const [isReconnecting, setIsReconnecting] = useState(false);
@@ -50,8 +52,30 @@ export default function ReconnectHostModal() {
         }
 
         try {
+          const { clearHostSummary } = await import('../../server/globalMonitoringSlice');
+          dispatch(clearHostSummary(reconnectHostUid));
+        } catch (e) {
+          console.error(e);
+        }
+
+        try {
           const { triggerRefreshActiveTab } = await import('../../layout/layoutSlice');
           dispatch(triggerRefreshActiveTab());
+        } catch (e) {
+          console.error(e);
+        }
+
+        // Fetch fresh monitoring metrics and host summaries immediately in background
+        try {
+          const { fetchMonitoringData } = await import('../../server/monitoringSlice');
+          dispatch(fetchMonitoringData(reconnectHostUid));
+        } catch (e) {
+          console.error(e);
+        }
+
+        try {
+          const { fetchHostSummary } = await import('../../server/globalMonitoringSlice');
+          dispatch(fetchHostSummary(reconnectHostUid));
         } catch (e) {
           console.error(e);
         }

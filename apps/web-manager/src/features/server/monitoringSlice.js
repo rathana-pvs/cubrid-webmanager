@@ -45,6 +45,7 @@ const monitoringSlice = createSlice({
           history: [],
           prevHostStat: null,
           error: null,
+          haHeartbeat: null,
           currentStatus: { cpu: 0, memory: 0, tps: 0, qps: 0, memUsed: 0, memTotal: 0 },
           averages: { cpu: 0, memory: 0, tps: 0, qps: 0 },
         };

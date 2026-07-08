@@ -464,8 +464,7 @@ const initialState = {
   isEditCmsUserModalOpen: false,
   cmsUserToEdit: null, // { hostUid, user }
   error: null,
-  isReconnectModalOpen: false,
-  reconnectHostUid: null,
+  reconnectQueue: [],
 };
 
 const hostSlice = createSlice({
@@ -642,12 +641,13 @@ const hostSlice = createSlice({
       state.cmsUserToEdit = null;
     },
     openReconnectModal: (state, action) => {
-      state.isReconnectModalOpen = true;
-      state.reconnectHostUid = action.payload;
+      const hostUid = action.payload;
+      if (hostUid && !state.reconnectQueue.includes(hostUid)) {
+        state.reconnectQueue.push(hostUid);
+      }
     },
     closeReconnectModal: (state) => {
-      state.isReconnectModalOpen = false;
-      state.reconnectHostUid = null;
+      state.reconnectQueue.shift();
     },
   },
   extraReducers: (builder) => {
