@@ -12,7 +12,7 @@ export const Radio = ({
 }) => {
   return (
     <label className={`group flex items-center gap-2 cursor-pointer ${disabled ? 'opacity-50 cursor-not-allowed' : ''} ${className}`}>
-      <div className="relative flex items-center justify-center pt-0.5">
+      <div className="relative flex items-center justify-center">
         <input
           type="radio"
           name={name}
