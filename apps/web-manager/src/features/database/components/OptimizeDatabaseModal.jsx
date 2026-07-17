@@ -13,16 +13,19 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
-import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
-import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { EmptyState } from '../../../components/ds/feedback/EmptyState';
 import { useCM } from '../../../constants/useCM';
-
-// view states
-const VIEW_FORM    = 'form';
-const VIEW_LOADING = 'loading';
-const VIEW_SUCCESS = 'success';
-const VIEW_ERROR   = 'error';
+import { useActionState } from '../../../infrastructure/hooks/useActionState';
+import {
+  ModalStatusLoading,
+  ModalStatusSuccess,
+  ModalStatusError,
+} from '../../../components/ds/feedback/ActionStatus';
+import {
+  CaDialogField,
+  CaDialogFieldGrid,
+  CaDialogGroup,
+} from '../../../components/ds/layout/CaDialogLayout';
 
 /**
  * Custom Dropdown for Class Selection
@@ -32,6 +35,7 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState('');
   const containerRef = useRef(null);
+  const dropdownRef = useRef(null);
   const buttonRef = useRef(null);
   const [dropdownStyle, setDropdownStyle] = useState({});
 
@@ -48,7 +52,7 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
       
       setDropdownStyle({
         position: 'fixed',
-        top: rect.bottom + 8,
+        top: rect.bottom + 4,
         left: rect.left,
         width: rect.width,
         maxHeight: maxHeight > 120 ? maxHeight : 360,
@@ -71,7 +75,9 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
 
   useEffect(() => {
     const handleClickOutside = (event) => {
-      if (containerRef.current && !containerRef.current.contains(event.target)) {
+      const clickedContainer = containerRef.current && containerRef.current.contains(event.target);
+      const clickedDropdown = dropdownRef.current && dropdownRef.current.contains(event.target);
+      if (!clickedContainer && !clickedDropdown) {
         setIsOpen(false);
       }
     };
@@ -92,31 +98,32 @@ const ClassSelect = ({ value, userClasses, onChange, disabled, isLoading }) => {
         type="button"
         disabled={disabled || isLoading}
         onClick={() => setIsOpen(!isOpen)}
-        className={`w-full h-11 px-3 flex items-center justify-between bg-white dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-2xl shadow-xs transition-all text-left outline-hidden ${
-          isOpen ? 'ring-2 ring-amber-500/20 border-amber-500/60' : 'hover:border-amber-500/40'
+        className={`w-full h-10 px-3.5 flex items-center justify-between bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-xl transition-all text-left outline-hidden ${
+          isOpen ? 'border-amber-500 ring-4 ring-amber-500/10' : 'hover:border-slate-300 dark:hover:border-white/20'
         } ${disabled ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
       >
-        <div className="flex items-center gap-2.5 overflow-hidden">
+        <div className="flex items-center gap-2 overflow-hidden">
           <Icon 
             name={value ? 'table_view' : 'database'} 
-            size="sm" 
+            size="md" 
             weight={300} 
             className={value ? 'text-amber-500' : 'text-slate-400'} 
           />
-        <span className={`text-[12px] font-medium truncate ${value ? 'text-slate-900 dark:text-white' : 'text-slate-400'}`}>
-          {value ? value : CM.allTables}
-        </span>
+          <span className={`text-[13px] font-medium truncate ${value ? 'text-slate-900 dark:text-slate-200' : 'text-slate-400'}`}>
+            {value ? value : CM.allTables}
+          </span>
         </div>
-        <div className="flex items-center gap-2 shrink-0">
+        <div className="flex items-center gap-1.5 shrink-0">
           {isLoading && <Spinner size="xs" />}
-          <Icon name="expand_more" size="sm" weight={300} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-500' : ''}`} />
+          <Icon name="expand_more" size="md" weight={300} className={`text-slate-400 transition-transform duration-200 ${isOpen ? 'rotate-180 text-amber-500' : ''}`} />
         </div>
       </button>
 
       {isOpen && createPortal(
         <div 
+          ref={dropdownRef}
           style={dropdownStyle}
-          className="bg-white dark:bg-bk-side border border-slate-200 dark:border-slate-800 rounded-2xl shadow-[0_20px_50px_rgba(0,0,0,0.3)] z-110 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col"
+          className="bg-white dark:bg-[#1A1C1E] border border-slate-200 dark:border-white/10 rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.35)] z-110 overflow-hidden animate-in fade-in zoom-in-95 duration-200 flex flex-col"
         >
           {/* Search Header */}
           <div className="p-2 border-b border-slate-100 dark:border-slate-800/60 bg-slate-50/50 dark:bg-white/2">
@@ -195,10 +202,18 @@ export default function OptimizeDatabaseModal() {
   const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   
+  const {
+    error,
+    startAction,
+    endSuccess,
+    endError,
+    resetAction,
+    isLoading,
+    isSuccess,
+    isError,
+  } = useActionState();
   const { runJob } = useCmsJob();
-  const [view, setView] = useState(VIEW_FORM);
   const [selectedClassName, setSelectedClassName] = useState('');
-  const [errorMsg, setErrorMsg] = useState('');
   const [jobStatus, setJobStatus] = useState(null);
 
   // Direct state for classes to follow user requirement for direct getClassInfo usage
@@ -228,20 +243,18 @@ export default function OptimizeDatabaseModal() {
 
   useEffect(() => {
     if (isOptimizeDatabaseModalOpen && selectedDatabase) {
-      setView(VIEW_FORM);
       setSelectedClassName('');
-      setErrorMsg('');
+      resetAction();
       fetchClasses();
     }
-  }, [isOptimizeDatabaseModalOpen, selectedDatabase, fetchClasses]);
+  }, [isOptimizeDatabaseModalOpen, selectedDatabase, fetchClasses, resetAction]);
 
   if (!isOptimizeDatabaseModalOpen) return null;
 
   const handleOptimize = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
     
-    setView(VIEW_LOADING);
-    setErrorMsg('');
+    startAction();
     try {
       const payload = selectedClassName ? { classname: selectedClassName } : {};
         
@@ -250,118 +263,55 @@ export default function OptimizeDatabaseModal() {
         { onProgress: (j) => setJobStatus(j.jobStatus ?? j.status) }
       );
 
-      setView(VIEW_SUCCESS);
+      endSuccess();
     } catch (err) {
-      setErrorMsg(typeof err === 'string' ? err : (err.message || 'The optimization sequence was interrupted. Please verify database connectivity and state.'));
-      setView(VIEW_ERROR);
+      endError(typeof err === 'string' ? err : (err.message || 'The optimization sequence was interrupted. Please verify database connectivity and state.'));
     }
   };
 
   const handleClose = () => {
     dispatch(closeOptimizeDatabaseModal());
+    resetAction();
   };
 
-  const totalTables = classesData.userclass.length;
-
   /* ─── LOADING view ─── */
-  if (view === VIEW_LOADING) {
+  if (isLoading) {
     return (
-      <Modal isOpen title={CM.executingHeuristics} icon="auto_fix_high" onClose={handleClose} maxWidth="460px">
-        <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
-          <div className="relative w-16 h-16">
-            <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
-            <div className="absolute inset-0 rounded-full border-2 border-transparent border-t-amber-500 animate-spin" style={{ animationDuration: '0.9s' }} />
-            <div className="absolute inset-[10px] rounded-full border-[1.5px] border-transparent border-b-amber-500/30 animate-spin" style={{ animationDuration: '1.7s', animationDirection: 'reverse' }} />
-            <div className="absolute inset-0 flex items-center justify-center text-amber-500">
-              <Icon name="auto_fix_high" size="md" weight={400} className="animate-pulse" />
-            </div>
-          </div>
-          <div className="text-center space-y-1.5 px-8">
-            <Typography variant="h4" className="text-[14px] font-black text-slate-800 dark:text-white tracking-tight">{CM.regeneratingStatistics}</Typography>
-            <Typography variant="p" className="text-[11px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-              {getCmsJobLoadingSubtitle(selectedClassName || selectedDatabase, jobStatus, CM)}
-            </Typography>
-          </div>
-          <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/4 rounded-full overflow-hidden">
-            <div className="h-full bg-amber-500 rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
-          </div>
-          <style>{`
-            @keyframes modalSlide {
-              0%   { transform: translateX(-100%); width: 50%; }
-              50%  { transform: translateX(100%);  width: 60%; }
-              100% { transform: translateX(200%);  width: 50%; }
-            }
-          `}</style>
-        </div>
+      <Modal isOpen title={CM.optimizeDatabase} icon="auto_fix_high" onClose={handleClose} maxWidth="480px">
+        <ModalStatusLoading
+          title={CM.regeneratingStatistics}
+          subtitle={getCmsJobLoadingSubtitle(selectedClassName || selectedDatabase, jobStatus, CM)}
+        />
       </Modal>
     );
   }
 
   /* ─── SUCCESS view ─── */
-  if (view === VIEW_SUCCESS) {
+  if (isSuccess) {
     return (
-      <Modal isOpen title={CM.optimizationComplete} icon="auto_fix_high" iconVariant="success" onClose={handleClose} maxWidth="460px">
-        <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-emerald-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
-              <Icon name="check" size="lg" weight={700} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-8">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              {CM.optimizationSuccess}
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed max-w-[280px] mx-auto">
-              <span className="font-bold text-slate-900 dark:text-white">{selectedClassName || selectedDatabase}</span>
-            </Typography>
-          </div>
-
-          <Button variant="secondary" onClick={handleClose} className="min-w-[140px]">{CM.close}</Button>
-        </div>
+      <Modal isOpen title={CM.optimizeDatabase} icon="auto_fix_high" iconVariant="success" onClose={handleClose} maxWidth="480px">
+        <ModalStatusSuccess
+          title={CM.optimizationSuccess}
+          message={selectedClassName || selectedDatabase}
+          onConfirm={handleClose}
+          confirmText={CM.close}
+        />
       </Modal>
     );
   }
 
   /* ─── ERROR view ─── */
-  if (view === VIEW_ERROR) {
+  if (isError) {
     return (
-      <Modal isOpen title={CM.executionInterrupted} icon="auto_fix_high" iconVariant="danger" onClose={handleClose} maxWidth="460px">
-        <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
-          <div className="relative">
-            <div className="absolute inset-0 bg-rose-500/10 rounded-full animate-ping" style={{ animationDuration: '2s' }} />
-            <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
-              <Icon name="error_outline" size="md" weight={300} className="text-white" />
-            </div>
-          </div>
-
-          <div className="space-y-2 px-6">
-            <Typography variant="h4" className="text-[15px] font-black text-slate-900 dark:text-white tracking-tight">
-              {CM.optimizationFailed}
-            </Typography>
-            <Typography variant="p" className="text-[11.5px] text-slate-500 font-medium leading-relaxed">
-              <span className="font-black text-slate-900 dark:text-white">{selectedDatabase}</span>
-            </Typography>
-          </div>
-
-          <div className="w-full max-w-[340px] bg-rose-500/5 border border-rose-500/15 rounded-xl px-4 py-3 text-left">
-            <div className="flex items-center gap-2 mb-1.5">
-              <Icon name="terminal" size="xs" weight={300} className="text-rose-400" />
-              <span className="text-[9px] font-black uppercase tracking-widest text-rose-400">{CM.error}</span>
-            </div>
-            <Typography variant="caption" className="text-rose-400/80 font-mono leading-relaxed break-words">
-              {errorMsg}
-            </Typography>
-          </div>
-
-          <div className="flex items-center gap-3">
-            <Button variant="secondary" onClick={handleClose}>{CM.dismiss}</Button>
-            <Button variant="primary" icon="refresh" onClick={() => { setView(VIEW_FORM); setErrorMsg(''); }}>
-              {CM.retryExecution}
-            </Button>
-          </div>
-        </div>
+      <Modal isOpen title={CM.optimizeDatabase} icon="auto_fix_high" iconVariant="danger" onClose={resetAction} maxWidth="480px">
+        <ModalStatusError
+          title={CM.optimizationFailed}
+          error={error}
+          onRetry={handleOptimize}
+          onCancel={resetAction}
+          retryText={CM.retryOptimization}
+          cancelText={CM.dismiss}
+        />
       </Modal>
     );
   }
@@ -371,14 +321,14 @@ export default function OptimizeDatabaseModal() {
     <Modal
       isOpen={isOptimizeDatabaseModalOpen}
       onClose={handleClose}
-      title={CM.performanceTuning}
-      subtitle={CM.performanceTuningSubtitle}
+      title={CM.optimizeDatabase}
+      subtitle={CM.msgOptimizeDbInformation}
       icon="auto_fix_high"
-      maxWidth="460px"
+      maxWidth="480px"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>
-            {CM.discard}
+          <Button variant="secondary" onClick={handleClose}>
+            {CM.cancel}
           </Button>
           <Button 
             variant="primary" 
@@ -387,49 +337,37 @@ export default function OptimizeDatabaseModal() {
             disabled={isLoadingClasses}
             className="min-w-[140px]"
           >
-            {CM.executeOptimization}
+            {CM.ok}
           </Button>
         </div>
       }
     >
-      <div className="space-y-6">
-        <div className="px-1.5">
-          <SectionHeader title={CM.targetInstanceSection} icon="database" />
-          <Input 
-            value={selectedDatabase}
-            disabled
-            icon="database"
-            className="mt-2"
-          />
-        </div>
+      <div className="space-y-4">
+        <CaDialogGroup>
+          <CaDialogFieldGrid labelWidth="130px">
+            <CaDialogField label={CM.lblOptimizeDbName}>
+              <Input 
+                value={selectedDatabase || ''}
+                disabled
+                icon="database"
+              />
+            </CaDialogField>
+            <CaDialogField label={CM.lblOptimizeClassName}>
+              <ClassSelect 
+                 value={selectedClassName}
+                 userClasses={classesData.userclass}
+                 onChange={setSelectedClassName}
+                 isLoading={isLoadingClasses}
+               />
+            </CaDialogField>
+          </CaDialogFieldGrid>
+        </CaDialogGroup>
 
-        <div className="space-y-5">
-          <InfoBanner title={CM.optimizerIntel} icon="insights">
-            {CM.optimizerHint}
-          </InfoBanner>
-
-          <div className="space-y-2 px-1.5">
-            <SectionHeader 
-              title={CM.optimizationScope} 
-              icon="tune" 
-              badge={isLoadingClasses ? CM.processing : `${totalTables.toLocaleString()}`}
-            />
-            
-            <ClassSelect 
-               value={selectedClassName}
-               userClasses={classesData.userclass}
-               onChange={setSelectedClassName}
-               isLoading={isLoadingClasses}
-            />
-
-            {!isLoadingClasses && totalTables > 0 && (
-              <p className="text-[9.5px] text-slate-400 font-medium px-3 flex items-center gap-2">
-                <Icon name="lock_clock" size="10px" weight={400} />
-                {CM.globalScanHint}
-              </p>
-            )}
-          </div>
-        </div>
+        <CaDialogGroup title={CM.grpOptimizeDesc}>
+          <Typography variant="p" className="text-[12px] leading-relaxed text-slate-600 dark:text-slate-400">
+            {CM.lblOptimizeDesc}
+          </Typography>
+        </CaDialogGroup>
       </div>
     </Modal>
   );

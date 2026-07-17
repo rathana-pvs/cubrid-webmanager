@@ -967,6 +967,11 @@ export const CM = {
   optimizationFailed: 'Optimization Failed',
   optimizerHint: 'Regenerating statistics allows the query optimizer to choose the most efficient execution paths.',
   globalScanHint: 'Global scans may briefly lock schema metadata during analysis.',
+  lblOptimizeDbName: 'Database name:',
+  lblOptimizeClassName: 'Table name:',
+  grpOptimizeDesc: 'Description',
+  lblOptimizeDesc: 'The query optimizer uses statistical information such as the number of objects in a table, the number of pages to access and the distribution of attribute values.',
+  msgOptimizeDbInformation: 'Please select a table to optimize.',
 
   // Copy database path labels
   primaryVolumePath: 'Database Volume Path',

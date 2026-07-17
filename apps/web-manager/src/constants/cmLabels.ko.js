@@ -945,6 +945,11 @@ export const CM_KO = {
   optimizationFailed: '최적화 실패',
   optimizerHint: '통계 갱신을 통해 쿼리 옵티마이저가 최적의 실행 경로를 선택할 수 있습니다.',
   globalScanHint: '전체 스캔 시 스키마 메타데이터가 일시적으로 잠길 수 있습니다.',
+  lblOptimizeDbName: '데이터베이스 이름:',
+  lblOptimizeClassName: '테이블 이름:',
+  grpOptimizeDesc: '설명',
+  lblOptimizeDesc: '데이터베이스에서 사용되는 비용 기반 질의 최적화의 통계 정보를 업데이트합니다.',
+  msgOptimizeDbInformation: '최적화할 테이블을 선택하십시오.',
 
   // Copy database path labels
   primaryVolumePath: '데이터베이스 볼륨 경로',
