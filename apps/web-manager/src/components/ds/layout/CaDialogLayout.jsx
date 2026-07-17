@@ -53,6 +53,7 @@ export const CaDialogTable = ({ columns, data, emptyMessage }) => (
       emptyMessage={emptyMessage}
       sortable={false}
       bordered
+      showEmptyStateAsRow
     />
   </div>
 );

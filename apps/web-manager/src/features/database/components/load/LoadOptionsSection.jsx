@@ -1,74 +1,133 @@
-import { Toggle } from '../../../../components/ds/forms/Toggle';
+import { Checkbox } from '../../../../components/ds/forms/Checkbox';
 import { Input } from '../../../../components/ds/forms/Input';
-import { Typography } from '../../../../components/ds/foundation/Typography';
-import { SectionHeader } from '../../../../components/ds/foundation/SectionHeader';
 import { useCM } from '../../../../constants/useCM';
-
-function OptionRow({ label, checked, onChange }) {
-  return (
-    <div
-      className="flex items-center justify-between p-3 border rounded-lg cursor-pointer"
-      onClick={() => onChange(!checked)}
-    >
-      <Typography variant="p" className="text-[12px]">{label}</Typography>
-      <div onClick={(e) => e.stopPropagation()}>
-        <Toggle checked={checked} onChange={onChange} size="sm" />
-      </div>
-    </div>
-  );
-}
+import {
+  CaDialogField,
+  CaDialogFieldGrid,
+  CaDialogGroup,
+} from '../../../../components/ds/layout/CaDialogLayout';
 
 export default function LoadOptionsSection({ formData, handleCheckBoxChange, handleValueChange }) {
   const CM = useCM();
-  const switches = [
-    { id: 'checkoption', label: CM.checkSyntaxAndLoad },
-    { id: 'nolog', label: 'No log' },
-    { id: 'oiduse', label: CM.dontUseOid },
-    { id: 'statisticsuse', label: CM.dontUpdateStatistics },
-  ];
-
-  const inputs = [
-    { id: 'period', label: CM.insertionCountPeriodicCommit, type: 'number', placeholder: '1000' },
-    { id: 'estimated', label: CM.estimatedInstances, type: 'number', placeholder: '0' },
-    { id: 'errorcontrolfile', label: CM.usingErrorControlFile, type: 'text' },
-    { id: 'ignoreclassfile', label: CM.ignoredTableFile, type: 'text' },
-  ];
 
   return (
-    <div className="space-y-4">
-      <SectionHeader title={CM.loadOption} icon="tune" />
-
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-        {switches.map((opt) => (
-          <OptionRow
-            key={opt.id}
-            label={opt.label}
-            checked={formData.checkBoxes[opt.id]}
-            onChange={(v) => handleCheckBoxChange(opt.id, v)}
+    <CaDialogGroup title={CM.loadOption}>
+      <CaDialogFieldGrid labelWidth="280px" className="pt-2 gap-y-4">
+        {/* Check syntax and load database */}
+        <CaDialogField fullWidth>
+          <Checkbox
+            checked={formData.checkBoxes.checkoption}
+            onChange={(e) => handleCheckBoxChange('checkoption', e.target.checked)}
+            label={CM.checkSyntaxAndLoad}
           />
-        ))}
-      </div>
+        </CaDialogField>
 
-      <div className="space-y-3 pt-2 border-t border-slate-100 dark:border-white/5">
-        {inputs.map((item) => (
-          <div key={item.id} className="flex items-center gap-3">
-            <Toggle
-              checked={formData.checkBoxes[item.id]}
-              onChange={(v) => handleCheckBoxChange(item.id, v)}
-              size="sm"
-            />
-            <Typography variant="caption" className="text-slate-500 w-56 shrink-0">{item.label}</Typography>
-            <Input
-              type={item.type}
-              value={formData.values[item.id]}
-              onChange={(e) => handleValueChange(item.id, e.target.value)}
-              disabled={!formData.checkBoxes[item.id]}
-              size="sm"
-              className="flex-1 font-mono text-[11px]"
-            />
-          </div>
-        ))}
-      </div>
-    </div>
+        {/* Estimated number of instances */}
+        <CaDialogField
+          label={
+            <div className="flex items-center gap-1.5 py-1">
+              <Checkbox
+                checked={formData.checkBoxes.estimated}
+                onChange={(e) => handleCheckBoxChange('estimated', e.target.checked)}
+                label={CM.estimatedInstances}
+              />
+            </div>
+          }
+        >
+          <Input
+            type="number"
+            value={formData.values.estimated}
+            onChange={(e) => handleValueChange('estimated', e.target.value)}
+            disabled={!formData.checkBoxes.estimated}
+            placeholder="5000"
+            className="font-mono text-[11px]"
+          />
+        </CaDialogField>
+
+        {/* Insertion count for periodic commit */}
+        <CaDialogField
+          label={
+            <div className="flex items-center gap-1.5 py-1">
+              <Checkbox
+                checked={formData.checkBoxes.period}
+                onChange={(e) => handleCheckBoxChange('period', e.target.checked)}
+                label={CM.insertionCountPeriodicCommit}
+              />
+            </div>
+          }
+        >
+          <Input
+            type="number"
+            value={formData.values.period}
+            onChange={(e) => handleValueChange('period', e.target.value)}
+            disabled={!formData.checkBoxes.period}
+            placeholder="10000"
+            className="font-mono text-[11px]"
+          />
+        </CaDialogField>
+
+        {/* Don't use OID */}
+        <CaDialogField fullWidth>
+          <Checkbox
+            checked={formData.checkBoxes.oiduse}
+            onChange={(e) => handleCheckBoxChange('oiduse', e.target.checked)}
+            label={CM.dontUseOid}
+          />
+        </CaDialogField>
+
+        {/* Don't update statistics */}
+        <CaDialogField fullWidth>
+          <Checkbox
+            checked={formData.checkBoxes.statisticsuse}
+            onChange={(e) => handleCheckBoxChange('statisticsuse', e.target.checked)}
+            label={CM.dontUpdateStatistics}
+          />
+        </CaDialogField>
+
+        {/* Using error control file */}
+        <CaDialogField
+          label={
+            <div className="flex items-center gap-1.5 py-1">
+              <Checkbox
+                checked={formData.checkBoxes.errorcontrolfile}
+                onChange={(e) => handleCheckBoxChange('errorcontrolfile', e.target.checked)}
+                label={CM.usingErrorControlFile}
+              />
+            </div>
+          }
+        >
+          <Input
+            type="text"
+            value={formData.values.errorcontrolfile}
+            onChange={(e) => handleValueChange('errorcontrolfile', e.target.value)}
+            disabled={!formData.checkBoxes.errorcontrolfile}
+            placeholder="e.g. /path/to/error.err"
+            className="font-mono text-[11px]"
+          />
+        </CaDialogField>
+
+        {/* Ignored table file */}
+        <CaDialogField
+          label={
+            <div className="flex items-center gap-1.5 py-1">
+              <Checkbox
+                checked={formData.checkBoxes.ignoreclassfile}
+                onChange={(e) => handleCheckBoxChange('ignoreclassfile', e.target.checked)}
+                label={CM.ignoredTableFile}
+              />
+            </div>
+          }
+        >
+          <Input
+            type="text"
+            value={formData.values.ignoreclassfile}
+            onChange={(e) => handleValueChange('ignoreclassfile', e.target.value)}
+            disabled={!formData.checkBoxes.ignoreclassfile}
+            placeholder="e.g. /path/to/ignore.txt"
+            className="font-mono text-[11px]"
+          />
+        </CaDialogField>
+      </CaDialogFieldGrid>
+    </CaDialogGroup>
   );
 }

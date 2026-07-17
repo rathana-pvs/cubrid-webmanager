@@ -14,6 +14,7 @@ import LoadOptionsSection from './load/LoadOptionsSection';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Typography } from '../../../components/ds/foundation/Typography';
+import { Icon } from '../../../components/ds/foundation/Icon';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import {
   ModalStatusLoading,
@@ -61,7 +62,7 @@ export default function LoadDatabaseModal() {
       object: false,
       index: false,
       trigger: false,
-      checkoption: false,
+      checkoption: true,
       nolog: false,
       oiduse: false,
       statisticsuse: false,
@@ -121,6 +122,35 @@ export default function LoadDatabaseModal() {
     setFormData((prev) => ({ ...prev, [name]: value }));
   };
 
+  const handleRadioChange = (newRadio) => {
+    const radioVal = Number(newRadio);
+    setRadio(radioVal);
+    if (radioVal === 0) {
+      // select from list: clear selectFromLocal states
+      setFormData((prev) => ({
+        ...prev,
+        checkBoxes: {
+          ...prev.checkBoxes,
+          schema: false,
+          object: false,
+          index: false,
+          trigger: false,
+        },
+        unloadFiles: {
+          schema: '',
+          object: '',
+          index: '',
+          trigger: '',
+        },
+      }));
+    } else {
+      // select from local system: clear table selection
+      setDataSource((prev) =>
+        prev.map((item) => ({ ...item, checked: false }))
+      );
+    }
+  };
+
   const handleUnloadSelectChange = (dbname) => {
     setSelectedUnload(dbname);
     const db = unloadList.find((d) => d.dbname === dbname);
@@ -128,16 +158,47 @@ export default function LoadDatabaseModal() {
   };
 
   const handleTableCheckboxChange = (checked, key) => {
-    setDataSource((prev) =>
-      prev.map((item) => (item.key === key ? { ...item, checked } : item)),
-    );
+    setDataSource((prev) => {
+      const targetRow = prev.find((item) => item.key === key);
+      if (!targetRow) return prev;
+
+      return prev.map((item) => {
+        if (item.key === key) {
+          return { ...item, checked };
+        }
+        if (checked && item.loadType === targetRow.loadType) {
+          return { ...item, checked: false };
+        }
+        return item;
+      });
+    });
   };
 
   const handleCheckBoxChange = (id, checked) => {
-    setFormData((prev) => ({
-      ...prev,
-      checkBoxes: { ...prev.checkBoxes, [id]: checked },
-    }));
+    setFormData((prev) => {
+      const newCheckBoxes = { ...prev.checkBoxes, [id]: checked };
+      const newValues = { ...prev.values };
+      const newUnloadFiles = { ...prev.unloadFiles };
+
+      if (id === 'estimated') {
+        newValues.estimated = checked ? (prev.values.estimated || '5000') : '';
+      } else if (id === 'period') {
+        newValues.period = checked ? (prev.values.period || '10000') : '';
+      } else if (id === 'errorcontrolfile' && !checked) {
+        newValues.errorcontrolfile = '';
+      } else if (id === 'ignoreclassfile' && !checked) {
+        newValues.ignoreclassfile = '';
+      } else if (['schema', 'object', 'index', 'trigger'].includes(id) && !checked) {
+        newUnloadFiles[id] = '';
+      }
+
+      return {
+        ...prev,
+        checkBoxes: newCheckBoxes,
+        values: newValues,
+        unloadFiles: newUnloadFiles,
+      };
+    });
   };
 
   const handleValueChange = (id, value) => {
@@ -207,6 +268,70 @@ export default function LoadDatabaseModal() {
     resetAction();
   };
 
+  const getValidationError = () => {
+    if (radio === 0) {
+      if (!selectedUnload) {
+        return CM.errLoadFileFromList || 'Please select the unloaded file from the list.';
+      }
+      const hasChecked = dataSource.some((row) => row.checked);
+      if (!hasChecked) {
+        return CM.errNoSelectedPath || 'Please check the unloaded files of the selected database from the following list.';
+      }
+    } else if (radio === 1) {
+      const { schema, object, index, trigger } = formData.checkBoxes;
+      if (!schema && !object && !index && !trigger) {
+        return CM.errLoadFileFromSys || 'Please select the unloaded file from the file system';
+      }
+      if (schema && !formData.unloadFiles.schema?.trim()) {
+        return CM.errLoadSchema || 'Loaded schema file is not valid.';
+      }
+      if (object && !formData.unloadFiles.object?.trim()) {
+        return CM.errLoadOjbects || 'Loaded objects file is not valid.';
+      }
+      if (index && !formData.unloadFiles.index?.trim()) {
+        return CM.errLoadIndex || 'Loaded index file is not valid.';
+      }
+      if (trigger && !formData.unloadFiles.trigger?.trim()) {
+        return CM.errLoadTrigger || 'Loaded trigger file is not valid.';
+      }
+    }
+
+    if (formData.checkBoxes.estimated) {
+      const val = formData.values.estimated;
+      if (!val || isNaN(val) || Number(val) <= 0) {
+        return CM.errNumOfInstances || 'The estimated number of instances is not valid. It can only be an integer greater than 0.';
+      }
+    }
+
+    if (formData.checkBoxes.period) {
+      const val = formData.values.period;
+      if (!val || isNaN(val) || Number(val) <= 0) {
+        return CM.errInsertCount || 'The value of insertion count for periodic commit is not valid. It can only be an integer value greater than 0.';
+      }
+    }
+
+    if (formData.checkBoxes.errorcontrolfile) {
+      if (!formData.values.errorcontrolfile?.trim()) {
+        return CM.errControlFile || 'The error control file is not valid.';
+      }
+    }
+
+    if (formData.checkBoxes.ignoreclassfile) {
+      if (!formData.values.ignoreclassfile?.trim()) {
+        return CM.errClassFile || 'The ignored table file is not valid.';
+      }
+    }
+
+    return null;
+  };
+
+  const validationError = getValidationError();
+
+  const isFormValid = () => {
+    if (!formData.dbUsername) return false;
+    return !validationError;
+  };
+
   if (isLoading) {
     return (
       <Modal isOpen title={CM.loadDatabase} icon="download" onClose={handleClose} maxWidth="720px">
@@ -250,27 +375,32 @@ export default function LoadDatabaseModal() {
       isOpen={isLoadDBModalOpen}
       onClose={handleClose}
       title={CM.loadDatabase}
-      subtitle={CM.loadDatabaseMsg}
+      subtitle={
+        validationError ? (
+          <span className="text-rose-600 dark:text-rose-400 flex items-center gap-1 font-semibold transition-colors duration-150">
+            <Icon name="error" size="12px" className="shrink-0" />
+            {validationError}
+          </span>
+        ) : (
+          CM.loadDatabaseMsg
+        )
+      }
       icon="download"
       maxWidth="720px"
       footer={
         <div className="flex justify-end gap-2 w-full">
           <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button onClick={handleLoadDatabase} icon="play_circle">
+          <Button onClick={handleLoadDatabase} icon="play_circle" disabled={!isFormValid()}>
             {CM.ok}
           </Button>
         </div>
       }
     >
       <div className="space-y-6">
-        <Typography variant="caption" className="text-slate-500 font-mono block">
-          {CM.databaseName}: {selectedDatabase}
-        </Typography>
-
         <LoadConfigSection formData={formData} handleInputChange={handleInputChange} />
         <LoadSourceSection
           radio={radio}
-          setRadio={setRadio}
+          setRadio={handleRadioChange}
           selectedUnload={selectedUnload}
           handleUnloadSelectChange={handleUnloadSelectChange}
           unloadList={unloadList}

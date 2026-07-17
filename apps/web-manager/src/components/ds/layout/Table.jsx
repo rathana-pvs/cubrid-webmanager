@@ -16,6 +16,7 @@ export const Table = ({
   zebra = false,
   bordered = false,
   className = '',
+  showEmptyStateAsRow = false,
 }) => {
   const CM = useCM();
   const resolvedEmptyMessage = emptyMessage ?? CM.noDataAvailableMsg;
@@ -69,7 +70,7 @@ export const Table = ({
     );
   }
 
-  if (!loading && data.length === 0) {
+  if (!loading && data.length === 0 && !showEmptyStateAsRow) {
     return <EmptyState title={resolvedEmptyMessage} icon="table_chart" />;
   }
 
@@ -123,50 +124,61 @@ export const Table = ({
 
         {/* ── Body ── */}
         <tbody className="divide-y divide-slate-100 dark:divide-white/4">
-          {sortedData.map((row, rowIdx) => {
-            const isEven = rowIdx % 2 === 0;
-            const rowKey =
-              row.rowKey ??
-              (row._type === 'host' ? row.uid : null) ??
-              row.uid ??
-              row.id ??
-              rowIdx;
-            return (
-              <tr
-                key={rowKey}
-                className={`group transition-colors duration-100
-                  ${zebra && isEven ? 'bg-slate-50/60 dark:bg-white/[0.012]' : ''}
-                  hover:bg-amber-500/4 dark:hover:bg-amber-500/5
-                  ${onRowClick ? 'cursor-pointer' : ''}`}
-                onClick={() => onRowClick && onRowClick(row)}
-                onContextMenu={(e) => {
-                  if (!onRowContextMenu) return;
-                  e.preventDefault();
-                  e.stopPropagation();
-                  onRowContextMenu(e, row);
-                }}
+          {data.length === 0 ? (
+            <tr>
+              <td
+                colSpan={columns.length}
+                className="px-4 py-8 text-center text-[12px] text-slate-400 dark:text-slate-500 font-medium"
               >
-                {columns.map((col, colIdx) => {
-                  const isFirst = colIdx === 0;
-                  const alignCls = col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : '';
-                  return (
-                    <td
-                      key={col.accessor || colIdx}
-                      className={`px-3 py-2 text-[12px] transition-colors leading-snug
-                        ${isFirst
-                          ? 'font-semibold text-slate-800 dark:text-slate-200 border-l-2 border-l-transparent group-hover:border-l-amber-500/60'
-                          : 'font-medium text-slate-600 dark:text-slate-400'}
-                        ${bordered ? 'border-r border-slate-100 dark:border-white/[0.04]' : ''}
-                        ${alignCls}
-                        ${col.cellClassName || ''}`}
-                    >
-                      {col.render ? col.render(row[col.accessor], row) : row[col.accessor]}
-                    </td>
-                  );
-                })}
-              </tr>
-            );
-          })}
+                {resolvedEmptyMessage}
+              </td>
+            </tr>
+          ) : (
+            sortedData.map((row, rowIdx) => {
+              const isEven = rowIdx % 2 === 0;
+              const rowKey =
+                row.rowKey ??
+                (row._type === 'host' ? row.uid : null) ??
+                row.uid ??
+                row.id ??
+                rowIdx;
+              return (
+                <tr
+                  key={rowKey}
+                  className={`group transition-colors duration-100
+                    ${zebra && isEven ? 'bg-slate-50/60 dark:bg-white/[0.012]' : ''}
+                    hover:bg-amber-500/4 dark:hover:bg-amber-500/5
+                    ${onRowClick ? 'cursor-pointer' : ''}`}
+                  onClick={() => onRowClick && onRowClick(row)}
+                  onContextMenu={(e) => {
+                    if (!onRowContextMenu) return;
+                    e.preventDefault();
+                    e.stopPropagation();
+                    onRowContextMenu(e, row);
+                  }}
+                >
+                  {columns.map((col, colIdx) => {
+                    const isFirst = colIdx === 0;
+                    const alignCls = col.align === 'right' ? 'text-right' : col.align === 'center' ? 'text-center' : '';
+                    return (
+                      <td
+                        key={col.accessor || colIdx}
+                        className={`px-3 py-2 text-[12px] transition-colors leading-snug
+                          ${isFirst
+                            ? 'font-semibold text-slate-800 dark:text-slate-200 border-l-2 border-l-transparent group-hover:border-l-amber-500/60'
+                            : 'font-medium text-slate-600 dark:text-slate-400'}
+                          ${bordered ? 'border-r border-slate-100 dark:border-white/[0.04]' : ''}
+                          ${alignCls}
+                          ${col.cellClassName || ''}`}
+                      >
+                        {col.render ? col.render(row[col.accessor], row) : row[col.accessor]}
+                      </td>
+                    );
+                  })}
+                </tr>
+              );
+            })
+          )}
         </tbody>
       </table>
     </div>

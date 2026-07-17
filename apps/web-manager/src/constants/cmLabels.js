@@ -1102,6 +1102,17 @@ export const CM = {
   errLevel1File: 'The level 1 file is not valid.',
   errLevel2File: 'The level 2 file is not valid.',
   errRecoveryPath: 'The user-defined recovery path is not valid.',
+  errLoadSchema: 'Loaded schema file is not valid.',
+  errLoadOjbects: 'Loaded objects file is not valid.',
+  errLoadIndex: 'Loaded index file is not valid.',
+  errLoadTrigger: 'Loaded trigger file is not valid.',
+  errLoadFileFromSys: 'Please select the unloaded file from the file system',
+  errLoadFileFromList: 'Please select the unloaded file from the list.',
+  errInsertCount: 'The value of insertion count for periodic commit is not valid. It can only be an integer value greater than 0.',
+  errControlFile: 'The error control file is not valid.',
+  errClassFile: 'The ignored table file is not valid.',
+  errNoSelectedPath: 'Please check the unloaded files of the selected database from the following list.',
+  errNumOfInstances: 'The estimated number of instances is not valid. It can only be an integer greater than 0.',
 
 
   // Auth
