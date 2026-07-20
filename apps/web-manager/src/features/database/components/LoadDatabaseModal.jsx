@@ -298,14 +298,14 @@ export default function LoadDatabaseModal() {
 
     if (formData.checkBoxes.estimated) {
       const val = formData.values.estimated;
-      if (!val || isNaN(val) || Number(val) <= 0) {
+      if (!val || isNaN(val) || !Number.isInteger(Number(val)) || Number(val) <= 0) {
         return CM.errNumOfInstances || 'The estimated number of instances is not valid. It can only be an integer greater than 0.';
       }
     }
 
     if (formData.checkBoxes.period) {
       const val = formData.values.period;
-      if (!val || isNaN(val) || Number(val) <= 0) {
+      if (!val || isNaN(val) || !Number.isInteger(Number(val)) || Number(val) <= 0) {
         return CM.errInsertCount || 'The value of insertion count for periodic commit is not valid. It can only be an integer value greater than 0.';
       }
     }
