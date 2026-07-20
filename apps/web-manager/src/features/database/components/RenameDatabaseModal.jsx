@@ -41,6 +41,15 @@ const validateDbName = (name) => {
   return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name);
 };
 
+const validateVolumeName = (name) => {
+  if (!name) return false;
+  if (name.includes(' ')) return false;
+  if (name.startsWith('#') || name.startsWith('-')) return false;
+  if (name === '.' || name === '..') return false;
+  if (name.length > 255) return false;
+  return /^[a-zA-Z0-9_-]+$/.test(name);
+};
+
 const validatePath = (path) => {
   if (!path) return false;
   if (!/^[\x20-\x7E]+$/.test(path)) return false;
@@ -264,7 +273,7 @@ export default function RenameDatabaseModal() {
   const isNameChanged = newDbName.trim() !== selectedDatabase;
   const isExvolpathValid = mode === 'exvolpath' ? validatePath(exvolpath) : true;
   const areVolumesValid = mode === 'advanced'
-    ? volumes.length > 0 && volumes.every(vol => validateDbName(vol.newVolumeName) && validatePath(vol.newLocation))
+    ? volumes.length > 0 && volumes.every(vol => validateVolumeName(vol.newVolumeName) && validatePath(vol.newLocation))
     : true;
 
   const isFormValid = isNameValid && isNameChanged && isExvolpathValid && areVolumesValid;
@@ -421,7 +430,7 @@ export default function RenameDatabaseModal() {
                   ) : (
                     volumes.map((vol, idx) => {
                       const isMainVolume = vol.spacename === selectedDatabase;
-                      const isVolNameValid = validateDbName(vol.newVolumeName);
+                      const isVolNameValid = validateVolumeName(vol.newVolumeName);
                       const isVolPathValid = validatePath(vol.newLocation);
                       return (
                         <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors">
