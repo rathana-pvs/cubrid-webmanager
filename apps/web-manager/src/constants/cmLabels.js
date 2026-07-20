@@ -1103,7 +1103,7 @@ export const CM = {
   errLevel2File: 'The level 2 file is not valid.',
   errRecoveryPath: 'The user-defined recovery path is not valid.',
   errLoadSchema: 'Loaded schema file is not valid.',
-  errLoadOjbects: 'Loaded objects file is not valid.',
+  errLoadObjects: 'Loaded objects file is not valid.'
   errLoadIndex: 'Loaded index file is not valid.',
   errLoadTrigger: 'Loaded trigger file is not valid.',
   errLoadFileFromSys: 'Please select the unloaded file from the file system',
