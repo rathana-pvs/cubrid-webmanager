@@ -22,6 +22,15 @@ export default function LoadOptionsSection({ formData, handleCheckBoxChange, han
           />
         </CaDialogField>
 
+        {/* No log */}
+        <CaDialogField fullWidth>
+          <Checkbox
+            checked={formData.checkBoxes.nolog}
+            onChange={(e) => handleCheckBoxChange('nolog', e.target.checked)}
+            label={CM.noLog}
+          />
+        </CaDialogField>
+
         {/* Estimated number of instances */}
         <CaDialogField
           label={
