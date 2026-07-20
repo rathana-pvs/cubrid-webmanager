@@ -32,7 +32,14 @@ const getParentDirectory = (path) => {
   return parts.slice(0, -1).join(separator);
 };
 
+const validateDbName = (name) => {
+  if (!name) return false;
+  if (name.includes(' ')) return false;
+  if (name.startsWith('#') || name.startsWith('-')) return false;
+  if (name === '.' || name === '..') return false;
+  if (name.length > 17) return false;
   return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name);
+};
 
 const validatePath = (path) => {
   if (!path) return false;
