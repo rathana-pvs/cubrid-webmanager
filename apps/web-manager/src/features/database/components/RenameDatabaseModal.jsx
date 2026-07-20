@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeRenameDatabaseModal, fetchDatabaseStartInfo } from '../databaseSlice';
 import { databaseJobApi } from '../databaseJobApi';
@@ -6,15 +6,11 @@ import { databaseApi } from '../databaseApi';
 import { useCmsJob } from '../../../infrastructure/hooks/useCmsJob';
 import { getCmsJobLoadingSubtitle } from '../../../infrastructure/cmsJob/cmsJobUi';
 
-import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
 import { Radio } from '../../../components/ds/forms/Radio';
-import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Checkbox } from '../../../components/ds/forms/Checkbox';
-import { Typography } from '../../../components/ds/foundation/Typography';
-import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -47,7 +43,7 @@ const validateDbName = (name) => {
 
 const validatePath = (path) => {
   if (!path) return false;
-  if (!/^[\x00-\x7F]*$/.test(path)) return false;
+  if (!/^[\x20-\x7E]+$/.test(path)) return false;
   if (path.includes(' ')) return false;
   if (path.startsWith('#') || path.startsWith('-')) return false;
   if (/[*&%$|^]/.test(path)) return false;
@@ -83,7 +79,10 @@ export default function RenameDatabaseModal() {
   const [volumes, setVolumes] = useState([]);
   const [volInfoLoading, setVolInfoLoading] = useState(false);
 
+  const editedVolumesRef = useRef({});
+
   useEffect(() => {
+    let cancelled = false;
     if (isRenameDatabaseModalOpen) {
       setNewDbName('');
       setForcedel(false);
@@ -91,11 +90,13 @@ export default function RenameDatabaseModal() {
       setExvolpath('');
       setVolumes([]);
       resetAction();
+      editedVolumesRef.current = {};
 
       if (selectedHostUid && selectedDatabase) {
         setVolInfoLoading(true);
         databaseApi.getVolumeInfo(selectedHostUid, selectedDatabase)
           .then((res) => {
+            if (cancelled) return;
             const validTypes = ['generic', 'data', 'index', 'temp'];
             const filteredSpaces = (res?.spaceinfo || []).filter(space =>
               space.type && validTypes.includes(space.type.toLowerCase())
@@ -109,14 +110,20 @@ export default function RenameDatabaseModal() {
             setVolumes(filteredSpaces);
           })
           .catch((err) => {
+            if (cancelled) return;
             console.error('Failed to fetch volume info:', err);
           })
           .finally(() => {
-            setVolInfoLoading(false);
+            if (!cancelled) {
+              setVolInfoLoading(false);
+            }
           });
       }
     }
-  }, [isRenameDatabaseModalOpen, selectedHostUid, selectedDatabase, resetAction]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isRenameDatabaseModalOpen, selectedHostUid, selectedDatabase, currentDb?.dbdir, resetAction]);
 
   useEffect(() => {
     const parentDir = getParentDirectory(currentDb?.dbdir || '');
@@ -128,36 +135,74 @@ export default function RenameDatabaseModal() {
 
       setVolumes(prevVolumes => {
         let count = 1;
-        return prevVolumes.map(vol => {
+        let changed = false;
+        const nextVolumes = prevVolumes.map((vol, idx) => {
           const isMainVolume = vol.spacename === selectedDatabase;
+          const isNameEdited = editedVolumesRef.current[idx]?.name;
+          const isLocationEdited = editedVolumesRef.current[idx]?.location;
+
           let newName = vol.newVolumeName;
           if (isMainVolume) {
             newName = newDbName;
-          } else {
+          } else if (mode === 'exvolpath' || !isNameEdited) {
             const countStr = String(count).padStart(3, '0');
             newName = `${newDbName}_x${countStr}`;
+          }
+
+          if (!isMainVolume) {
             count++;
           }
+
+          let newLoc = vol.newLocation;
+          if (mode === 'exvolpath' || !isLocationEdited) {
+            newLoc = computedPath;
+          }
+
+          if (newName !== vol.newVolumeName || newLoc !== vol.newLocation) {
+            changed = true;
+          }
+
           return {
             ...vol,
             newVolumeName: newName,
-            newLocation: computedPath
+            newLocation: newLoc
           };
         });
+        return changed ? nextVolumes : prevVolumes;
       });
     } else {
       setExvolpath(parentDir);
-      setVolumes(prevVolumes => prevVolumes.map(vol => ({
-        ...vol,
-        newVolumeName: vol.spacename,
-        newLocation: vol.location
-      })));
+      setVolumes(prevVolumes => {
+        let changed = false;
+        const nextVolumes = prevVolumes.map((vol, idx) => {
+          const isNameEdited = editedVolumesRef.current[idx]?.name;
+          const isLocationEdited = editedVolumesRef.current[idx]?.location;
+          
+          const newName = (mode === 'exvolpath' || !isNameEdited) ? vol.spacename : vol.newVolumeName;
+          const newLoc = (mode === 'exvolpath' || !isLocationEdited) ? vol.location : vol.newLocation;
+
+          if (newName !== vol.newVolumeName || newLoc !== vol.newLocation) {
+            changed = true;
+          }
+
+          return {
+            ...vol,
+            newVolumeName: newName,
+            newLocation: newLoc
+          };
+        });
+        return changed ? nextVolumes : prevVolumes;
+      });
     }
-  }, [newDbName, selectedDatabase, currentDb?.dbdir]);
+  }, [newDbName, selectedDatabase, currentDb?.dbdir, mode, volumes]);
 
   if (!isRenameDatabaseModalOpen) return null;
 
   const handleVolumeNameChange = (index, value) => {
+    editedVolumesRef.current[index] = {
+      ...editedVolumesRef.current[index],
+      name: true
+    };
     setVolumes(prev => prev.map((vol, idx) => {
       if (idx === index) {
         return { ...vol, newVolumeName: value };
@@ -167,6 +212,10 @@ export default function RenameDatabaseModal() {
   };
 
   const handleVolumeLocationChange = (index, value) => {
+    editedVolumesRef.current[index] = {
+      ...editedVolumesRef.current[index],
+      location: true
+    };
     setVolumes(prev => prev.map((vol, idx) => {
       if (idx === index) {
         return { ...vol, newLocation: value };
@@ -215,7 +264,7 @@ export default function RenameDatabaseModal() {
   const isNameChanged = newDbName.trim() !== selectedDatabase;
   const isExvolpathValid = mode === 'exvolpath' ? validatePath(exvolpath) : true;
   const areVolumesValid = mode === 'advanced'
-    ? volumes.every(vol => validateDbName(vol.newVolumeName) && validatePath(vol.newLocation))
+    ? volumes.length > 0 && volumes.every(vol => validateDbName(vol.newVolumeName) && validatePath(vol.newLocation))
     : true;
 
   const isFormValid = isNameValid && isNameChanged && isExvolpathValid && areVolumesValid;
