@@ -326,11 +326,7 @@ export default function LoadDatabaseModal() {
   };
 
   const validationError = getValidationError();
-
-  const isFormValid = () => {
-    if (!formData.dbUsername) return false;
-    return !validationError;
-  };
+  const isFormValid = !!formData.dbUsername && !validationError;
 
   if (isLoading) {
     return (
@@ -390,7 +386,7 @@ export default function LoadDatabaseModal() {
       footer={
         <div className="flex justify-end gap-2 w-full">
           <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button onClick={handleLoadDatabase} icon="play_circle" disabled={!isFormValid()}>
+          <Button onClick={handleLoadDatabase} icon="play_circle" disabled={!isFormValid}>
             {CM.ok}
           </Button>
         </div>
