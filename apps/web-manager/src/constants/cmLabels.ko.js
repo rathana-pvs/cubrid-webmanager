@@ -1082,7 +1082,7 @@ export const CM_KO = {
   errLevel2File: '2 레벨 파일이 유효하지 않습니다.',
   errRecoveryPath: '사용자가 지정한 복구 경로가 유효하지 않습니다.',
   errLoadSchema: '로드한 스키마 파일이 유효하지 않습니다.',
-  errLoadObjects: '로드한 데이터 파일이 유효하지 않습니다.'
+  errLoadObjects: '로드한 데이터 파일이 유효하지 않습니다.',
   errLoadIndex: '로드한 인덱스 파일이 유효하지 않습니다.',
   errLoadTrigger: '로드한 트리거 파일이 유효하지 않습니다.',
   errLoadFileFromSys: '시스템에서 언로드된 파일을 선택해 주십시오.',
