@@ -303,12 +303,12 @@ export default function OptimizeDatabaseModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title={CM.optimizeDatabase} icon="auto_fix_high" iconVariant="danger" onClose={resetAction} maxWidth="480px">
+      <Modal isOpen title={CM.optimizeDatabase} icon="auto_fix_high" iconVariant="danger" onClose={handleClose} maxWidth="480px">
         <ModalStatusError
           title={CM.optimizationFailed}
           error={error}
           onRetry={handleOptimize}
-          onCancel={resetAction}
+          onCancel={handleClose}
           retryText={CM.retryOptimization}
           cancelText={CM.dismiss}
         />
