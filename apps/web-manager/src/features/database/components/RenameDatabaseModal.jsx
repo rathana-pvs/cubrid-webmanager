@@ -1,18 +1,16 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeRenameDatabaseModal, fetchDatabaseStartInfo } from '../databaseSlice';
 import { databaseJobApi } from '../databaseJobApi';
+import { databaseApi } from '../databaseApi';
 import { useCmsJob } from '../../../infrastructure/hooks/useCmsJob';
 import { getCmsJobLoadingSubtitle } from '../../../infrastructure/cmsJob/cmsJobUi';
 
-import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
-import { Toggle } from '../../../components/ds/forms/Toggle';
-import { Typography } from '../../../components/ds/foundation/Typography';
-import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
-import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
+import { Radio } from '../../../components/ds/forms/Radio';
+import { Checkbox } from '../../../components/ds/forms/Checkbox';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
   ModalStatusLoading, 
@@ -21,18 +19,54 @@ import {
 } from '../../../components/ds/feedback/ActionStatus';
 import { useCM } from '../../../constants/useCM';
 
-// view states
-const VIEW_FORM    = 'form';
-const VIEW_LOADING = 'loading';
-const VIEW_SUCCESS = 'success';
-const VIEW_ERROR   = 'error';
+const getPathSeparator = (path) => {
+  if (path && path.includes('\\')) return '\\';
+  return '/';
+};
+
+const getParentDirectory = (path) => {
+  if (!path) return '';
+  const separator = getPathSeparator(path);
+  const parts = path.split(separator);
+  if (parts.length <= 1) return '';
+  return parts.slice(0, -1).join(separator);
+};
+
+const validateDbName = (name) => {
+  if (!name) return false;
+  if (name.includes(' ')) return false;
+  if (name.startsWith('#') || name.startsWith('-')) return false;
+  if (name === '.' || name === '..') return false;
+  if (name.length > 17) return false;
+  return /^[a-zA-Z][a-zA-Z0-9_-]*$/.test(name);
+};
+
+const validateVolumeName = (name) => {
+  if (!name) return false;
+  if (name.includes(' ')) return false;
+  if (name.startsWith('#') || name.startsWith('-')) return false;
+  if (name === '.' || name === '..') return false;
+  if (name.length > 255) return false;
+  return /^[a-zA-Z0-9_-]+$/.test(name);
+};
+
+const validatePath = (path) => {
+  if (!path) return false;
+  if (!/^[\x20-\x7E]+$/.test(path)) return false;
+  if (path.includes(' ')) return false;
+  if (path.startsWith('#') || path.startsWith('-')) return false;
+  if (/[*&%$|^]/.test(path)) return false;
+  if (path === '.' || path === '..') return false;
+  return true;
+};
 
 export default function RenameDatabaseModal() {
   const CM = useCM();
   const dispatch = useDispatch();
   const { isRenameDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
-  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedDatabase, databases } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
+  const currentDb = databases?.find((db) => db.dbname === selectedDatabase);
 
   const { 
     error, 
@@ -49,27 +83,173 @@ export default function RenameDatabaseModal() {
 
   const [newDbName, setNewDbName] = useState('');
   const [forcedel, setForcedel] = useState(false);
+  const [mode, setMode] = useState('exvolpath'); // 'exvolpath' | 'advanced'
+  const [exvolpath, setExvolpath] = useState('');
+  const [volumes, setVolumes] = useState([]);
+  const [volInfoLoading, setVolInfoLoading] = useState(false);
+
+  const editedVolumesRef = useRef({});
 
   useEffect(() => {
+    let cancelled = false;
     if (isRenameDatabaseModalOpen) {
       setNewDbName('');
       setForcedel(false);
+      setMode('exvolpath');
+      setExvolpath('');
+      setVolumes([]);
       resetAction();
+      editedVolumesRef.current = {};
+
+      if (selectedHostUid && selectedDatabase) {
+        setVolInfoLoading(true);
+        databaseApi.getVolumeInfo(selectedHostUid, selectedDatabase)
+          .then((res) => {
+            if (cancelled) return;
+            const validTypes = ['generic', 'data', 'index', 'temp'];
+            const filteredSpaces = (res?.spaceinfo || []).filter(space =>
+              space.type && validTypes.includes(space.type.toLowerCase())
+            ).map(space => ({
+              spacename: space.spacename,
+              type: space.type,
+              location: space.location,
+              newVolumeName: space.spacename,
+              newLocation: space.location
+            }));
+            setVolumes(filteredSpaces);
+          })
+          .catch((err) => {
+            if (cancelled) return;
+            console.error('Failed to fetch volume info:', err);
+          })
+          .finally(() => {
+            if (!cancelled) {
+              setVolInfoLoading(false);
+            }
+          });
+      }
     }
-  }, [isRenameDatabaseModalOpen, resetAction]);
+    return () => {
+      cancelled = true;
+    };
+  }, [isRenameDatabaseModalOpen, selectedHostUid, selectedDatabase, currentDb?.dbdir, resetAction]);
+
+  useEffect(() => {
+    const parentDir = getParentDirectory(currentDb?.dbdir || '');
+    const separator = getPathSeparator(currentDb?.dbdir || '');
+    
+    if (newDbName) {
+      const computedPath = parentDir ? `${parentDir}${separator}${newDbName}` : '';
+      setExvolpath(computedPath);
+
+      setVolumes(prevVolumes => {
+        let count = 1;
+        let changed = false;
+        const nextVolumes = prevVolumes.map((vol, idx) => {
+          const isMainVolume = vol.spacename === selectedDatabase;
+          const isNameEdited = editedVolumesRef.current[idx]?.name;
+          const isLocationEdited = editedVolumesRef.current[idx]?.location;
+
+          let newName = vol.newVolumeName;
+          if (isMainVolume) {
+            newName = newDbName;
+          } else if (mode === 'exvolpath' || !isNameEdited) {
+            const countStr = String(count).padStart(3, '0');
+            newName = `${newDbName}_x${countStr}`;
+          }
+
+          if (!isMainVolume) {
+            count++;
+          }
+
+          let newLoc = vol.newLocation;
+          if (mode === 'exvolpath' || !isLocationEdited) {
+            newLoc = computedPath;
+          }
+
+          if (newName !== vol.newVolumeName || newLoc !== vol.newLocation) {
+            changed = true;
+          }
+
+          return {
+            ...vol,
+            newVolumeName: newName,
+            newLocation: newLoc
+          };
+        });
+        return changed ? nextVolumes : prevVolumes;
+      });
+    } else {
+      setExvolpath(parentDir);
+      setVolumes(prevVolumes => {
+        let changed = false;
+        const nextVolumes = prevVolumes.map((vol, idx) => {
+          const isNameEdited = editedVolumesRef.current[idx]?.name;
+          const isLocationEdited = editedVolumesRef.current[idx]?.location;
+          
+          const newName = (mode === 'exvolpath' || !isNameEdited) ? vol.spacename : vol.newVolumeName;
+          const newLoc = (mode === 'exvolpath' || !isLocationEdited) ? vol.location : vol.newLocation;
+
+          if (newName !== vol.newVolumeName || newLoc !== vol.newLocation) {
+            changed = true;
+          }
+
+          return {
+            ...vol,
+            newVolumeName: newName,
+            newLocation: newLoc
+          };
+        });
+        return changed ? nextVolumes : prevVolumes;
+      });
+    }
+  }, [newDbName, selectedDatabase, currentDb?.dbdir, mode, volumes]);
 
   if (!isRenameDatabaseModalOpen) return null;
 
+  const handleVolumeNameChange = (index, value) => {
+    editedVolumesRef.current[index] = {
+      ...editedVolumesRef.current[index],
+      name: true
+    };
+    setVolumes(prev => prev.map((vol, idx) => {
+      if (idx === index) {
+        return { ...vol, newVolumeName: value };
+      }
+      return vol;
+    }));
+  };
+
+  const handleVolumeLocationChange = (index, value) => {
+    editedVolumesRef.current[index] = {
+      ...editedVolumesRef.current[index],
+      location: true
+    };
+    setVolumes(prev => prev.map((vol, idx) => {
+      if (idx === index) {
+        return { ...vol, newLocation: value };
+      }
+      return vol;
+    }));
+  };
+
   const handleRename = async () => {
-    if (!selectedHostUid || !selectedDatabase || !newDbName.trim()) return;
+    if (!selectedHostUid || !selectedDatabase || !isFormValid) return;
     startAction();
     try {
+      const separator = getPathSeparator(currentDb?.dbdir || '/');
       const payload = {
         rename: newDbName.trim(),
-        exvolpath: 'none',
-        advanced: 'off',
+        exvolpath: mode === 'exvolpath' ? exvolpath.trim() : 'none',
+        advanced: mode === 'advanced' ? 'on' : 'off',
         forcedel: forcedel ? 'y' : 'n',
       };
+      if (mode === 'advanced') {
+        payload.volume = volumes.map(vol => ({
+          oldPath: `${vol.location}${separator}${vol.spacename}`,
+          newPath: `${vol.newLocation}${separator}${vol.newVolumeName}`
+        }));
+      }
       await runJob(
         () => databaseJobApi.submitRename(selectedHostUid, selectedDatabase, payload),
         { onProgress: (j) => setJobStatus(j.jobStatus ?? j.status) }
@@ -89,13 +269,19 @@ export default function RenameDatabaseModal() {
     resetAction();
   };
 
-  const hasNewName = newDbName.trim().length > 0;
+  const isNameValid = validateDbName(newDbName);
   const isNameChanged = newDbName.trim() !== selectedDatabase;
+  const isExvolpathValid = mode === 'exvolpath' ? validatePath(exvolpath) : true;
+  const areVolumesValid = mode === 'advanced'
+    ? volumes.length > 0 && volumes.every(vol => validateVolumeName(vol.newVolumeName) && validatePath(vol.newLocation))
+    : true;
+
+  const isFormValid = isNameValid && isNameChanged && isExvolpathValid && areVolumesValid;
 
   /* ─── LOADING view ─── */
   if (isLoading) {
     return (
-      <Modal isOpen title={CM.renamingDatabase} icon="drive_file_rename_outline" onClose={handleClose} maxWidth="480px">
+      <Modal isOpen title={CM.renamingDatabase} icon="drive_file_rename_outline" onClose={handleClose} maxWidth="640px">
         <ModalStatusLoading
           title={CM.updatingIdentity}
           subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
@@ -107,7 +293,7 @@ export default function RenameDatabaseModal() {
   /* ─── SUCCESS view ─── */
   if (isSuccess) {
     return (
-      <Modal isOpen title={CM.renameComplete} icon="drive_file_rename_outline" iconVariant="success" onClose={handleClose} maxWidth="480px">
+      <Modal isOpen title={CM.renameComplete} icon="drive_file_rename_outline" iconVariant="success" onClose={handleClose} maxWidth="640px">
         <ModalStatusSuccess
           title={CM.renameSuccessful}
           message={CM.databaseRenamedMsg(selectedDatabase, newDbName.trim())}
@@ -121,7 +307,7 @@ export default function RenameDatabaseModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title={CM.renameFailed} icon="drive_file_rename_outline" iconVariant="danger" onClose={handleClose} maxWidth="480px">
+      <Modal isOpen title={CM.renameFailed} icon="drive_file_rename_outline" iconVariant="danger" onClose={handleClose} maxWidth="640px">
         <ModalStatusError 
           title={CM.operationFailed}
           error={error}
@@ -141,7 +327,7 @@ export default function RenameDatabaseModal() {
       onClose={handleClose}
       title={CM.renameDatabase}
       icon="drive_file_rename_outline"
-      maxWidth="480px"
+      maxWidth="640px"
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button variant="secondary" onClick={handleClose}>{CM.discard}</Button>
@@ -149,7 +335,7 @@ export default function RenameDatabaseModal() {
             variant="primary"
             onClick={handleRename}
             icon="drive_file_rename_outline"
-            disabled={!hasNewName || !isNameChanged}
+            disabled={!isFormValid || volInfoLoading}
             className="min-w-[140px]"
           >
             {CM.executeRename}
@@ -157,84 +343,140 @@ export default function RenameDatabaseModal() {
         </div>
       }
     >
-      <div className="space-y-6">
+      <div className="space-y-4 text-[13px] py-2">
 
-        {/* Source identity */}
-        <div className="space-y-3">
-          <SectionHeader title={CM.sourceDatabase} icon="database" />
-          <div className="flex items-center gap-4 p-4 bg-slate-50/50 dark:bg-white/3 border border-slate-200 dark:border-white/5 rounded-2xl">
-            <div className="w-10 h-10 rounded-xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
-              <Icon name="database" size="sm" weight={300} className="text-amber-500" />
-            </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium uppercase tracking-widest">{CM.currentIdentifier}</Typography>
-              <Typography variant="h4" className="text-slate-900 dark:text-white font-bold text-[14px] tracking-tight leading-none mt-0.5">{selectedDatabase}</Typography>
-            </div>
-            <span className="text-[9px] font-black uppercase tracking-widest text-slate-400 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 px-2.5 py-1 rounded-full shrink-0">
-              {CM.active}
-            </span>
-          </div>
+        {/* Downtime Warning */}
+        <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-amber-50 dark:bg-amber-500/10 border border-amber-200 dark:border-amber-500/20 text-[12px] text-amber-700 dark:text-amber-400">
+          <span className="material-symbols-outlined text-[16px] shrink-0 mt-0.5">warning</span>
+          <span>{CM.renameDowntimeHint}</span>
         </div>
 
-        {/* Arrow connector */}
-        <div className="flex items-center justify-center gap-3">
-          <div className="flex-1 h-px bg-linear-to-r from-transparent via-slate-200 dark:via-white/8 to-transparent" />
-          <div className="w-7 h-7 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center">
-            <Icon name="arrow_downward" size="xs" weight={300} className="text-amber-500" />
-          </div>
-          <div className="flex-1 h-px bg-linear-to-l from-transparent via-slate-200 dark:via-white/8 to-transparent" />
-        </div>
-
-        {/* Target identifier */}
-        <div className="space-y-3">
-          <SectionHeader title={CM.targetIdentifier} icon="label" />
+        {/* New Database Name Row */}
+        <div className="grid grid-cols-[170px_1fr] items-center gap-4">
+          <label className="font-medium text-slate-700 dark:text-slate-200">
+            {CM.newDatabaseName || 'New database name:'}
+          </label>
           <Input
-            label={CM.newDatabaseName}
             value={newDbName}
             onChange={(e) => setNewDbName(e.target.value)}
             placeholder={`${selectedDatabase}_v2`}
-            icon="edit"
+            className="w-full"
             autoFocus
+            error={newDbName && !validateDbName(newDbName) ? "Name must be 1-17 alphanumeric, underscore or hyphen characters" : undefined}
           />
         </div>
 
+        {/* Extended Volume Path Row */}
+        <div className="grid grid-cols-[170px_1fr] items-center gap-4">
+          <div className="flex items-center">
+            <Radio
+              name="rename-mode"
+              label={CM.extendedVolumePath}
+              value="exvolpath"
+              checked={mode === 'exvolpath'}
+              onChange={() => setMode('exvolpath')}
+            />
+          </div>
+          <Input
+            value={exvolpath}
+            onChange={(e) => setExvolpath(e.target.value)}
+            placeholder="/home/cubrid/databases/demodb"
+            disabled={mode !== 'exvolpath'}
+            className="w-full"
+            error={mode === 'exvolpath' && exvolpath && !validatePath(exvolpath) ? "Invalid path format" : undefined}
+          />
+        </div>
 
+        {/* Rename Individual Volumes Radio */}
+        <div className="pt-2">
+          <Radio
+            name="rename-mode"
+            label={CM.renameIndividualVolumes}
+            value="advanced"
+            checked={mode === 'advanced'}
+            onChange={() => setMode('advanced')}
+          />
+        </div>
 
-        {/* Overwrite option */}
-        <div className="space-y-3">
-          <SectionHeader title={CM.destructiveOptions} icon="warning" />
-
-          <div
-            className={`flex items-center gap-4 p-4 border rounded-2xl transition-all cursor-pointer select-none ${forcedel ? 'bg-rose-500/4 border-rose-500/20 shadow-[0_2px_16px_rgba(244,63,94,0.06)]' : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}
-            onClick={() => setForcedel(!forcedel)}
-          >
-            <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all shrink-0 ${forcedel ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400'}`}>
-              <Icon name="delete_forever" size="xs" weight={300} />
-            </div>
-            <div className="flex-1 min-w-0">
-              <Typography variant="p" className={`font-bold text-[11.5px] tracking-tight transition-colors ${forcedel ? 'text-rose-500' : 'text-slate-900 dark:text-white'}`}>
-                {CM.overwriteExistingTarget}
-              </Typography>
-              <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-0.5 leading-snug">
-                {CM.overwriteTargetDesc}
-              </Typography>
-            </div>
-            <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-              <Toggle checked={forcedel} onChange={setForcedel} variant="danger" />
+        {/* Volume mapping table */}
+        <div className={`transition-all duration-200 ${mode !== 'advanced' ? 'opacity-50 pointer-events-none' : ''}`}>
+          <div className="rounded-lg border border-slate-200 dark:border-white/10 overflow-hidden bg-white dark:bg-slate-900/50">
+            <div className="max-h-[220px] overflow-y-auto">
+              <table className="w-full text-left text-[12px] border-collapse">
+                <thead className="bg-slate-50 dark:bg-white/5 text-[11px] font-semibold text-slate-600 dark:text-slate-400 border-b border-slate-200 dark:border-white/10 sticky top-0 z-10">
+                  <tr>
+                    <th className="px-3 py-2">{CM.currentVolumeName}</th>
+                    <th className="px-3 py-2">{CM.newVolumeName}</th>
+                    <th className="px-3 py-2">{CM.currentDirectoryPath}</th>
+                    <th className="px-3 py-2">{CM.newDirectoryPath}</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                  {volInfoLoading ? (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-6 text-center text-slate-400 dark:text-slate-500">
+                        <div className="flex items-center justify-center gap-2">
+                          <span className="animate-spin w-4 h-4 border-2 border-amber-500 border-t-transparent rounded-full" />
+                          Loading...
+                        </div>
+                      </td>
+                    </tr>
+                  ) : volumes.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-6 text-center text-slate-400 dark:text-slate-500">
+                        No volumes found.
+                      </td>
+                    </tr>
+                  ) : (
+                    volumes.map((vol, idx) => {
+                      const isMainVolume = vol.spacename === selectedDatabase;
+                      const isVolNameValid = validateVolumeName(vol.newVolumeName);
+                      const isVolPathValid = validatePath(vol.newLocation);
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors">
+                          <td className="px-3 py-1.5 font-medium text-slate-600 dark:text-slate-400">{vol.spacename}</td>
+                          <td className="px-2 py-1">
+                            <input
+                              type="text"
+                              value={vol.newVolumeName}
+                              disabled={isMainVolume || mode !== 'advanced'}
+                              onChange={(e) => handleVolumeNameChange(idx, e.target.value)}
+                              className={`w-full px-2.5 py-1 bg-slate-50 dark:bg-white/3 border ${!isVolNameValid ? 'border-rose-500 focus:border-rose-500 bg-rose-500/5' : 'border-slate-200 dark:border-white/5 focus:border-amber-500 focus:bg-white dark:focus:bg-slate-900'} rounded-lg outline-none text-[12px] font-mono transition-all text-slate-700 dark:text-slate-200 disabled:opacity-50 disabled:cursor-not-allowed`}
+                            />
+                          </td>
+                          <td className="px-3 py-1.5 text-slate-500 dark:text-slate-500 truncate max-w-[120px]" title={vol.location}>{vol.location}</td>
+                          <td className="px-2 py-1">
+                            <input
+                              type="text"
+                              value={vol.newLocation}
+                              disabled={mode !== 'advanced'}
+                              onChange={(e) => handleVolumeLocationChange(idx, e.target.value)}
+                              className={`w-full px-2.5 py-1 bg-slate-50 dark:bg-white/3 border ${!isVolPathValid ? 'border-rose-500 focus:border-rose-500 bg-rose-500/5' : 'border-slate-200 dark:border-white/5 focus:border-amber-500 focus:bg-white dark:focus:bg-slate-900'} rounded-lg outline-none text-[12px] font-mono transition-all text-slate-700 dark:text-slate-200 disabled:opacity-50`}
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })
+                  )}
+                </tbody>
+              </table>
             </div>
           </div>
+        </div>
 
-          {forcedel ? (
-            <div className="flex items-start gap-2.5 px-3 py-2.5 bg-rose-500/5 border border-rose-500/15 rounded-xl animate-in fade-in duration-200">
-              <Icon name="warning" size="xs" weight={300} className="text-rose-400 shrink-0 mt-0.5" />
-              <Typography variant="caption" className="text-rose-400 font-medium leading-relaxed">
-                {CM.overwriteTargetWarning}
-              </Typography>
+        {/* Force Delete Checkbox */}
+        <div className="pt-2 flex flex-col gap-2">
+          <Checkbox
+            label={CM.forceDeleteBackupVolume}
+            description={CM.forceDeleteBackupVolumeDesc}
+            checked={forcedel}
+            onChange={(e) => setForcedel(e.target.checked)}
+          />
+          {forcedel && (
+            <div className="flex items-start gap-2 px-3 py-2.5 rounded-lg bg-rose-50 dark:bg-rose-500/10 border border-rose-200 dark:border-rose-500/20 text-[12px] text-rose-700 dark:text-rose-400">
+              <span className="material-symbols-outlined text-[16px] shrink-0 mt-0.5">delete_forever</span>
+              <span>{CM.forceDeleteBackupVolumeWarning}</span>
             </div>
-          ) : (
-            <InfoBanner title={CM.downtimeRequired}>
-              {CM.renameDowntimeHint}
-            </InfoBanner>
           )}
         </div>
       </div>

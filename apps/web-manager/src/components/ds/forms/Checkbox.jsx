@@ -30,8 +30,8 @@ export const Checkbox = forwardRef(({
 
   return (
     <div className={`flex flex-col gap-1 w-fit ${className}`}>
-      <label className={`flex items-start gap-2 cursor-pointer group ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
-        <div className="relative flex items-center justify-center pt-0.5">
+      <label className={`flex ${description ? 'items-start' : 'items-center'} gap-2 cursor-pointer group ${disabled ? 'opacity-50 cursor-not-allowed' : ''}`}>
+        <div className={`relative flex items-center justify-center ${description ? 'pt-0.5' : ''}`}>
           <input
             ref={internalRef}
             type="checkbox"

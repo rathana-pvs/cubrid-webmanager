@@ -1,34 +1,45 @@
 import { Input } from '../../../../components/ds/forms/Input';
-import { SectionHeader } from '../../../../components/ds/foundation/SectionHeader';
 import { useCM } from '../../../../constants/useCM';
+import {
+  CaDialogField,
+  CaDialogFieldGrid,
+  CaDialogGroup,
+} from '../../../../components/ds/layout/CaDialogLayout';
 
 export default function LoadConfigSection({ formData, handleInputChange }) {
   const CM = useCM();
   return (
-    <div className="space-y-4">
-      <SectionHeader title={CM.grpDbInfo} icon="account_circle" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <Input
-          label={CM.targetDbName}
-          name="targetDbName"
-          value={formData.targetDbName}
-          onChange={handleInputChange}
-          disabled
-        />
-        <Input
-          label={CM.userName}
-          name="dbUsername"
-          value={formData.dbUsername}
-          onChange={handleInputChange}
-        />
-        <Input
-          type="password"
-          label={CM.password}
-          name="dbPassword"
-          value={formData.dbPassword}
-          onChange={handleInputChange}
-        />
-      </div>
-    </div>
+    <CaDialogGroup title={CM.grpDbInfo}>
+      <CaDialogFieldGrid labelWidth="130px" className="pt-2 gap-y-3">
+        <CaDialogField label={CM.targetDbName}>
+          <Input
+            name="targetDbName"
+            value={formData.targetDbName}
+            onChange={handleInputChange}
+            disabled
+            icon="database"
+          />
+        </CaDialogField>
+        
+        <CaDialogField label={CM.userName}>
+          <Input
+            name="dbUsername"
+            value={formData.dbUsername}
+            onChange={handleInputChange}
+            icon="account_circle"
+          />
+        </CaDialogField>
+
+        <CaDialogField label={CM.password}>
+          <Input
+            type="password"
+            name="dbPassword"
+            value={formData.dbPassword}
+            onChange={handleInputChange}
+            icon="lock"
+          />
+        </CaDialogField>
+      </CaDialogFieldGrid>
+    </CaDialogGroup>
   );
 }
