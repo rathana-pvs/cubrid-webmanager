@@ -20,21 +20,14 @@ import {
   ModalStatusError,
 } from '../../../components/ds/feedback/ActionStatus';
 
-const VIEW_FORM = 'form';
-
 const INITIAL_FORM_DATA = {
   targetDbName: '',
   targetDirectory: '',
-  dbUsername: '',
+  dbUsername: 'dba',
   dbPassword: '',
-  tableScope: 'All',
-  includeSchema: true,
-  includeData: true,
+  schemaScope: 'all', // 'all' | 'selected' | 'none'
+  dataScope: 'selected', // 'selected' | 'none'
   selectedTables: [],
-  asDba: false,
-  splitSchema: false,
-  classOnly: false,
-  skipIndex: false,
   useDelimitedIdentifier: false,
   includeReferencedTables: false,
   usePrefixOutputFile: false,
@@ -81,12 +74,10 @@ export default function UnloadDatabaseModal() {
       const res = await databaseApi.getClassInfo(selectedHostUid, selectedDatabase, status);
       const userTables = res.userclass?.[0]?.class?.map((c) => c.classname) || [];
       setDynamicTables(userTables);
-      setFormData((prev) => {
-        if (prev.tableScope === 'All') {
-          return { ...prev, selectedTables: userTables };
-        }
-        return prev;
-      });
+      setFormData((prev) => ({
+        ...prev,
+        selectedTables: prev.schemaScope === 'all' ? userTables : prev.selectedTables,
+      }));
     } catch (err) {
       console.error('Failed to fetch tables:', err);
     } finally {
@@ -97,10 +88,6 @@ export default function UnloadDatabaseModal() {
   useEffect(() => {
     if (isUnloadDBModalOpen && selectedDatabase) {
       resetAction();
-      // databases can be stale/empty right after a host switch (resetDatabaseState
-      // clears it synchronously while the refetch is still in flight) — refetch
-      // so currentDb.dbdir resolves to the real path instead of falling through
-      // to a fabricated default that doesn't match this host's actual layout.
       if (selectedHostUid && !currentDb) {
         dispatch(fetchDatabaseStartInfo(selectedHostUid));
       }
@@ -111,6 +98,7 @@ export default function UnloadDatabaseModal() {
         dbUsername: 'dba',
         dbPassword: '',
         fileForHash: currentDb?.dbdir ? `${currentDb.dbdir}/hashfile` : '',
+        prefixOutputFile: selectedDatabase || '',
       });
       fetchTables();
     }
@@ -126,11 +114,19 @@ export default function UnloadDatabaseModal() {
     }));
   };
 
-  const handleTableScopeChange = (value) => {
+  const handleSchemaScopeChange = (val) => {
     setFormData((prev) => ({
       ...prev,
-      tableScope: value,
-      selectedTables: value === 'All' ? [...dynamicTables] : [],
+      schemaScope: val,
+      selectedTables: val === 'all' ? [...dynamicTables] : prev.selectedTables,
+      includeReferencedTables: val === 'selected' ? prev.includeReferencedTables : false,
+    }));
+  };
+
+  const handleDataScopeChange = (val) => {
+    setFormData((prev) => ({
+      ...prev,
+      dataScope: val,
     }));
   };
 
@@ -150,35 +146,33 @@ export default function UnloadDatabaseModal() {
     }));
   };
 
-  // Backend rejects the request when neither schema nor data is included
-  // (there would be nothing to unload) — block turning off the last one.
-  const handleIncludeToggle = (key) => {
-    setFormData((prev) => {
-      const next = { ...prev, [key]: !prev[key] };
-      if (!next.includeSchema && !next.includeData) return prev;
-      return next;
-    });
-  };
+  const isFormValid =
+    (formData.schemaScope !== 'none' || formData.dataScope !== 'none') &&
+    (formData.schemaScope === 'all' || formData.selectedTables.length > 0) &&
+    Boolean(formData.targetDirectory);
 
   const handleUnloadDatabase = async () => {
-    if (!selectedHostUid || !selectedDatabase) return;
+    if (!selectedHostUid || !selectedDatabase || !isFormValid) return;
 
     startAction();
     try {
+      const isSchemaIncluded = formData.schemaScope !== 'none';
+      const isDataIncluded = formData.dataScope !== 'none';
+      const classonly = formData.schemaScope !== 'all' ? 'yes' : 'no';
+
       const payload = {
         targetdir: formData.targetDirectory,
-        isSchemaIncluded: formData.includeSchema,
-        isDataIncluded: formData.includeData,
-        dbuser: formData.dbUsername,
-        dbpasswd: formData.dbPassword,
+        isSchemaIncluded,
+        isDataIncluded,
+        dbuser: formData.dbUsername || 'dba',
+        dbpasswd: formData.dbPassword || '',
         usehash: formData.useFileForHash ? 'yes' : 'no',
         hashdir: formData.useFileForHash ? formData.fileForHash : '',
-        class: formData.selectedTables.map((t) => ({ classname: t })),
-        ref: formData.includeReferencedTables ? 'yes' : 'no',
-        classonly: formData.classOnly ? 'yes' : 'no',
-        'as-dba': formData.asDba ? 'yes' : 'no',
-        'skip-index-detail': formData.skipIndex ? 'yes' : 'no',
-        'split-schema-files': formData.splitSchema ? 'yes' : 'no',
+        class: (formData.schemaScope === 'all' && formData.selectedTables.length === dynamicTables.length)
+          ? []
+          : formData.selectedTables.map((t) => ({ classname: t })),
+        ref: (formData.schemaScope === 'selected' && formData.includeReferencedTables) ? 'yes' : 'no',
+        classonly,
         delimit: formData.useDelimitedIdentifier ? 'yes' : 'no',
         estimate: formData.useEstimateInstances ? String(formData.estimateInstances) : '',
         prefix: formData.usePrefixOutputFile ? formData.prefixOutputFile : '',
@@ -241,22 +235,18 @@ export default function UnloadDatabaseModal() {
       footer={
         <div className="flex justify-end gap-2 w-full">
           <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button onClick={handleUnloadDatabase} icon="upload">
+          <Button onClick={handleUnloadDatabase} icon="upload" disabled={!isFormValid}>
             {CM.ok}
           </Button>
         </div>
       }
     >
       <div className="space-y-6 pb-2">
-        <Typography variant="caption" className="text-slate-500 font-mono block">
-          {CM.databaseName}: {selectedDatabase}
-        </Typography>
-
         <UnloadConfigSection formData={formData} handleInputChange={handleInputChange} />
         <UnloadContentSection
           formData={formData}
-          handleTableScopeChange={handleTableScopeChange}
-          handleIncludeToggle={handleIncludeToggle}
+          handleSchemaScopeChange={handleSchemaScopeChange}
+          handleDataScopeChange={handleDataScopeChange}
           handleTableToggle={handleTableToggle}
           handleSelectAllTables={handleSelectAllTables}
           dynamicTables={dynamicTables}
