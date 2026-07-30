@@ -180,6 +180,7 @@ export const CM = {
   numCachedPages: 'Number of cached pages',
   estimatedInstances: 'Estimated number of instances',
   loFileCountPerDir: 'Lo file count per a directory',
+  selectAtLeastOneScope: 'Please select at least one target scope (Schema or Data) to unload.',
   availableClasses: 'Available Classes',
 
   // Load Database (loaddb)

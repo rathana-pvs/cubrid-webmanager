@@ -146,9 +146,10 @@ export default function UnloadDatabaseModal() {
     }));
   };
 
+  const hasSelectedScope = formData.schemaScope === 'selected' || formData.dataScope === 'selected';
   const isFormValid =
     (formData.schemaScope !== 'none' || formData.dataScope !== 'none') &&
-    (formData.schemaScope === 'all' || formData.selectedTables.length > 0) &&
+    (!hasSelectedScope || formData.selectedTables.length > 0) &&
     Boolean(formData.targetDirectory);
 
   const handleUnloadDatabase = async () => {

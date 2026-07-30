@@ -175,6 +175,7 @@ export const CM_KO = {
   numCachedPages: '캐시 페이지 개수',
   estimatedInstances: '인스턴스의 대략적인 개수',
   loFileCountPerDir: '하나의 디렉터리에 저장할 LO(Large Object)파일 개수',
+  selectAtLeastOneScope: '스키마 또는 데이터 중 최소 하나 이상의 언로드 범위를 선택해야 합니다.',
   availableClasses: '사용 가능한 클래스',
 
   loadDatabaseMsg: '선택한 데이터베이스를 로드합니다.',

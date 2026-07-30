@@ -28,11 +28,19 @@ export default function UnloadContentSection({
     { label: CM.notInclude, value: 'none' },
   ], [CM]);
 
-  const isTableDisabled = formData.schemaScope === 'none' && formData.dataScope === 'none';
+  const isInvalidScope = formData.schemaScope === 'none' && formData.dataScope === 'none';
+  const isTableDisabled = formData.schemaScope !== 'selected' && formData.dataScope !== 'selected';
 
   return (
     <div className="space-y-6">
       <SectionHeader title={CM.unloadTarget} icon="unfold_more" />
+
+      {isInvalidScope && (
+        <div className="p-3 bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-700/30 rounded-lg text-amber-700 dark:text-amber-300 text-xs flex items-center gap-2">
+          <span className="material-symbols-outlined text-base">warning</span>
+          {CM.selectAtLeastOneScope}
+        </div>
+      )}
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         {/* Schema Group */}
@@ -72,7 +80,7 @@ export default function UnloadContentSection({
               checked={dynamicTables.length > 0 && formData.selectedTables.length === dynamicTables.length}
               indeterminate={formData.selectedTables.length > 0 && formData.selectedTables.length < dynamicTables.length}
               onChange={() => handleSelectAllTables(dynamicTables)}
-              disabled={formData.schemaScope === 'all'}
+              disabled={isTableDisabled}
             />
           )}
         </div>
@@ -91,7 +99,7 @@ export default function UnloadContentSection({
                   label={table}
                   checked={formData.selectedTables.includes(table)}
                   onChange={() => handleTableToggle(table)}
-                  disabled={formData.schemaScope === 'all'}
+                  disabled={isTableDisabled}
                 />
               </div>
             ))}
