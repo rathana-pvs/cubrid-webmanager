@@ -146,6 +146,7 @@
     "e2e:electron": "npx playwright test --config=local-e2e-electron/playwright.config.js",
     "e2e:electron:ui": "npx playwright test --config=local-e2e-electron/playwright.config.js --ui",
     "e2e:electron:report": "npx playwright show-report local-e2e-electron/playwright-report",
+    "e2e:all": "npm run e2e && npm run e2e:electron",
     "build:web-manager": "nx build web-manager",
     "build:api-server": "nx build api-server",
     "build:server": "npm run build:web-manager && npm run build:api-server && node scripts/copy-web-to-api.mjs",
