@@ -160,7 +160,7 @@ export default function DesktopWorkspaceSettingsPage() {
             {CM.signIn}
           </Link>
         )}
-        <h1 className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
+        <h1 data-testid="workspace-setup-title" className="text-2xl font-black text-slate-900 dark:text-white tracking-tight">
           {setupMode ? CM.selectWorkspaceTitle : CM.workspaceTitle}
         </h1>
         <p className="text-[13px] text-slate-500 dark:text-slate-400 mt-1">
@@ -178,6 +178,7 @@ export default function DesktopWorkspaceSettingsPage() {
       ) : (
         <div className="space-y-5">
           <Input
+            data-testid="workspace-root-input"
             label={CM.workspaceFolderLabel}
             value={workspaceRoot}
             onChange={(e) => setWorkspaceRoot(e.target.value)}
@@ -209,6 +210,7 @@ export default function DesktopWorkspaceSettingsPage() {
           <div className="flex flex-wrap gap-2">
             <button
               type="button"
+              data-testid="workspace-pick-btn"
               onClick={() => void handlePick()}
               className="h-10 px-4 text-[13px] font-semibold rounded-xl border border-slate-200 dark:border-white/10 hover:border-amber-500/40"
             >
@@ -217,6 +219,7 @@ export default function DesktopWorkspaceSettingsPage() {
             {setupMode ? (
               <button
                 type="button"
+                data-testid="workspace-continue-btn"
                 disabled={saving || !workspaceRoot.trim()}
                 onClick={() => void handleContinue()}
                 className="h-10 px-4 text-[13px] font-bold rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-black disabled:opacity-50"
@@ -227,6 +230,7 @@ export default function DesktopWorkspaceSettingsPage() {
               <>
                 <button
                   type="button"
+                  data-testid="workspace-save-btn"
                   disabled={saving || !workspaceRoot.trim()}
                   onClick={() => void handleSave()}
                   className="h-10 px-4 text-[13px] font-bold rounded-xl bg-slate-900 dark:bg-amber-500 text-white dark:text-black disabled:opacity-50"
@@ -236,6 +240,7 @@ export default function DesktopWorkspaceSettingsPage() {
                 {info?.isCustomWorkspace && (
                   <button
                     type="button"
+                    data-testid="workspace-reset-btn"
                     disabled={saving}
                     onClick={() => void handleReset()}
                     className="h-10 px-4 text-[13px] font-semibold rounded-xl text-slate-600 dark:text-slate-300"

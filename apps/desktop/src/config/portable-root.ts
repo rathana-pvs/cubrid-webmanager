@@ -29,6 +29,11 @@ export function getExecutableDir(): string {
  * `desktop-settings.json` and default `cwm-workspace/` live here — never inside the bundle.
  */
 export function getPortableAppRoot(): string {
+  const override = process.env.CWM_PORTABLE_APP_ROOT?.trim();
+  if (override) {
+    return override;
+  }
+
   if (!isPackagedRuntime()) {
     return getRepoRoot();
   }
