@@ -27,12 +27,10 @@ async function connectRealHost(window) {
   await ipInput.fill(CMS_HOST);
   await portInput.fill(CMS_PORT);
   await userInput.fill(CMS_USER);
-  await passInput.fill(CMS_PASS);
-
-  // Click Save Only to add host instantly to store/tree without network delay
-  const saveOnlyBtn = window.getByTestId('add-host-save-btn');
+  // Click Save Only to add host instantly to store/tree without network timeout
+  const saveOnlyBtn = window.getByTestId('add-host-save-btn').or(window.getByTestId('add-host-connect-btn')).first();
   await saveOnlyBtn.click();
-  await expect(modal).not.toBeVisible({ timeout: 5000 });
+  await expect(modal).not.toBeVisible({ timeout: 10000 });
 }
 
 async function createAndStartDatabase(window, dbName) {

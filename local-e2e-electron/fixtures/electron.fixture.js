@@ -39,42 +39,61 @@ const test = base.extend({
   // Default fixture: pre-configured workspace, skips setup wizard, boots embedded API
   electronApp: async ({}, use) => {
     const { tmpRoot, workspaceDir, cleanup } = createTempWorkspace();
-    writeSettingsFile(tmpRoot, workspaceDir, true);
+    let app;
+    try {
+      writeSettingsFile(tmpRoot, workspaceDir, true);
 
-    const app = await electron.launch({
-      args: ['apps/desktop', '--no-sandbox'],
-      cwd: REPO_ROOT,
-      env: {
-        ...process.env,
-        CWM_PORTABLE_APP_ROOT: tmpRoot,
-        NODE_ENV: 'test',
-      },
-      timeout: 45000,
-    });
+      app = await electron.launch({
+        args: ['apps/desktop', '--no-sandbox'],
+        cwd: REPO_ROOT,
+        env: {
+          ...process.env,
+          CWM_PORTABLE_APP_ROOT: tmpRoot,
+          NODE_ENV: 'test',
+        },
+        timeout: 45000,
+      });
 
-    await use(app);
-    await app.close();
-    cleanup();
+      await use(app);
+    } finally {
+      if (app) {
+        try {
+          await app.close();
+        } catch {
+          // Ignore close error on teardown
+        }
+      }
+      cleanup();
+    }
   },
 
   // First-time launch fixture: no settings file present, setup wizard required
   freshElectronApp: async ({}, use) => {
     const { tmpRoot, cleanup } = createTempWorkspace();
+    let app;
+    try {
+      app = await electron.launch({
+        args: ['apps/desktop', '--no-sandbox'],
+        cwd: REPO_ROOT,
+        env: {
+          ...process.env,
+          CWM_PORTABLE_APP_ROOT: tmpRoot,
+          NODE_ENV: 'test',
+        },
+        timeout: 45000,
+      });
 
-    const app = await electron.launch({
-      args: ['apps/desktop', '--no-sandbox'],
-      cwd: REPO_ROOT,
-      env: {
-        ...process.env,
-        CWM_PORTABLE_APP_ROOT: tmpRoot,
-        NODE_ENV: 'test',
-      },
-      timeout: 45000,
-    });
-
-    await use(app);
-    await app.close();
-    cleanup();
+      await use(app);
+    } finally {
+      if (app) {
+        try {
+          await app.close();
+        } catch {
+          // Ignore close error on teardown
+        }
+      }
+      cleanup();
+    }
   },
 
   window: async ({ electronApp }, use) => {
