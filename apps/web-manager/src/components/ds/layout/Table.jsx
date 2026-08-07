@@ -17,6 +17,7 @@ export const Table = ({
   bordered = false,
   className = '',
   showEmptyStateAsRow = false,
+  selectable = false,
 }) => {
   const CM = useCM();
   const resolvedEmptyMessage = emptyMessage ?? CM.noDataAvailableMsg;
@@ -75,7 +76,7 @@ export const Table = ({
   }
 
   return (
-    <div className={`w-full overflow-x-auto select-text ${className} ${bordered ? 'border-b border-slate-200 dark:border-white/[0.08]' : ''}`}>
+    <div className={`w-full overflow-x-auto ${selectable ? 'select-text' : 'select-none'} ${className} ${bordered ? 'border-b border-slate-200 dark:border-white/[0.08]' : ''}`}>
       <table className="w-full text-left border-collapse">
 
         {/* ── Header ── */}

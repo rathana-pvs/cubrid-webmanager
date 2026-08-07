@@ -181,6 +181,7 @@ const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
       collapsible
     >
       <Table
+        selectable
         columns={[
           {
             header: CM.type,
@@ -247,6 +248,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
       collapsible
     >
       <Table
+        selectable
         columns={[
           {
             header: CM.volumeLabel,
@@ -366,6 +368,7 @@ const FileSpaceUsage = memo(({ fileinfo }) => {
     bodyClassName="p-0"
   >
     <Table
+      selectable
       columns={[
         { header: CM.dataTypeLabel, accessor: 'data_type' },
         { header: CM.qtyLabel, accessor: 'file_count', className: 'text-center' },
