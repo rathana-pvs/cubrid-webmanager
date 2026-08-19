@@ -448,7 +448,7 @@ const Component = function ServiceDashboard() {
   }, [authorizedHosts, summaries, haInfo, hostMetaByUid, CM]);
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden font-sans">
+    <div data-testid="service-dashboard" className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden font-sans">
       <header className="px-6 py-2.5 border-b border-slate-100 dark:border-white/4 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-linear-to-r from-amber-500/[0.03] to-transparent bg-white dark:bg-background-dark font-sans shadow-[0_1px_2px_rgba(0,0,0,0.02)]">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0">
@@ -502,6 +502,7 @@ const Component = function ServiceDashboard() {
           </Typography>
 
           <button
+            data-testid="service-dashboard-refresh-btn"
             onClick={refreshAll}
             disabled={isManualRefreshing || authorizedHosts.length === 0}
             className={`w-9 h-9 flex items-center justify-center rounded-lg border transition-all active:scale-[0.98]
@@ -532,7 +533,7 @@ const Component = function ServiceDashboard() {
       </header>
 
       <div className="flex-1 overflow-y-auto p-6 space-y-4 relative">
-        <Card noPadding className="overflow-hidden border-slate-200 dark:border-white/10 shadow-sm rounded-xl bg-white dark:bg-white/1">
+        <Card testId="service-dashboard-table" noPadding className="overflow-hidden border-slate-200 dark:border-white/10 shadow-sm rounded-xl bg-white dark:bg-white/1">
           <Table
             columns={columns}
             data={sortedTableRows}

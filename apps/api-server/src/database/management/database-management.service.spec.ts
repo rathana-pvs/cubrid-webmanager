@@ -3,6 +3,7 @@ import { DatabaseManagementService } from './database-management.service';
 import { HostService } from '@host';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
 import { DatabaseInfoService } from '@database/info/database-info.service';
+import { DatabaseUserService } from '@database/user/database-user.service';
 import { DatabaseError } from '@error/database/database-error';
 import { HostError } from '@error/index';
 import { CmsError } from '@error/cms/cms-error';
@@ -63,6 +64,10 @@ describe('DatabaseManagementService', () => {
       startInfo: jest.fn().mockResolvedValue(mockStartInfoResponse),
     };
 
+    const mockDatabaseUserService = {
+      loginDatabase: jest.fn().mockResolvedValue(true),
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         DatabaseManagementService,
@@ -77,6 +82,10 @@ describe('DatabaseManagementService', () => {
         {
           provide: DatabaseInfoService,
           useValue: mockDatabaseInfoService,
+        },
+        {
+          provide: DatabaseUserService,
+          useValue: mockDatabaseUserService,
         },
       ],
     }).compile();

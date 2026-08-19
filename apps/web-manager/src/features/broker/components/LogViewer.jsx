@@ -216,7 +216,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden font-mono">
+    <div data-testid="log-viewer" className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden font-mono">
 
       {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-4 py-2.5 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3">
@@ -238,6 +238,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
             {MODE_KEYS.map(m => (
               <button
                 key={m.key}
+                data-testid={`log-viewer-mode-${m.key}`}
                 onClick={() => setViewMode(m.key)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-[11px] font-semibold transition-colors whitespace-nowrap ${
                   activeViewMode === m.key
@@ -292,6 +293,7 @@ ${data.map(d => `<Row ss:AutoFitHeight="1"><Cell><Data ss:Type="String">${d.id}<
 
           {/* Refresh */}
           <button
+            data-testid="log-viewer-refresh-btn"
             onClick={() => dispatch(fetchLogContent({ hostUid, path, start: String(startLine), end: String(endLine) }))}
             disabled={loading}
             title={CM.refresh}

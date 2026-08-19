@@ -4,7 +4,7 @@ import { Button } from '../foundation/Button';
 import { Typography } from '../foundation/Typography';
 import { useCM } from '../../../constants/useCM';
 
-export const ModalStatusLoading = ({ title, subtitle }) => {
+export const ModalStatusLoading = ({ title, subtitle, onBackground }) => {
   const CM = useCM();
   const displayTitle = title || CM.processing;
   const displaySubtitle = subtitle || CM.pleaseWait;
@@ -29,6 +29,15 @@ export const ModalStatusLoading = ({ title, subtitle }) => {
       <div className="w-32 h-[2px] bg-slate-100 dark:bg-white/5 rounded-full overflow-hidden">
         <div className="h-full bg-amber-500 rounded-full" style={{ animation: 'modalSlide 1.5s ease-in-out infinite' }} />
       </div>
+
+      {onBackground && (
+        <div className="flex flex-col items-center gap-3 pt-1">
+          <Typography variant="caption" className="text-[11px] text-slate-400 dark:text-slate-500">
+            {CM.continueInBackgroundHint}
+          </Typography>
+          <Button variant="secondary" onClick={onBackground} icon="check_circle">{CM.confirm}</Button>
+        </div>
+      )}
     </div>
   );
 };

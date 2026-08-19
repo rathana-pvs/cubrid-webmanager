@@ -19,6 +19,7 @@ export function JobResultModal({ result, onClose }) {
         onClose={onClose}
         maxWidth="480px"
         zIndexClass="z-[2100]"
+        testId="job-result"
       >
         <ModalStatusSuccess
           title={result.successMessage || CM.jobNotifySucceeded(op, db)}
@@ -40,6 +41,7 @@ export function JobResultModal({ result, onClose }) {
       onClose={onClose}
       maxWidth="480px"
       zIndexClass="z-[2100]"
+      testId="job-result"
     >
       <ModalStatusError
         title={CM.jobNotifyFailed(op, db)}

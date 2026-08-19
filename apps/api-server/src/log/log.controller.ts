@@ -5,10 +5,9 @@ import {
   GetDatabaseLogListClientResponse,
   LoadAccessLogClientResponse,
   ViewLogClientResponse,
-  ViewLogClientRequest,
   GetAdminLogInfoClientResponse,
 } from '@api-interfaces';
-import { validateRequiredFields } from '@util';
+import { ViewLogDto } from '@type/index';
 
 /**
  * Controller for handling log-related operations.
@@ -126,11 +125,9 @@ export class LogController {
   async viewLog(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: ViewLogClientRequest
+    @Body() body: ViewLogDto
   ): Promise<ViewLogClientResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(body, ['path', 'start', 'end'], 'log/view', this.logger);
 
     Logger.log(
       `Viewing log file: ${body.path} (${body.start}-${body.end}) on host: ${hostUid}`,

@@ -1,15 +1,12 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Request } from '@nestjs/common';
 import {
   AddDbmtUserClientResponse,
-  AddDbmtUserRequest,
   DeleteDbmtUserClientResponse,
   GetDbmtUserInfoClientResponse,
   SetDbmtPasswdClientResponse,
   UpdateDbmtUserClientResponse,
-  UpdateDbmtUserRequest,
-  SetDbmtPasswdRequest,
 } from '@api-interfaces';
-import { validateRequiredFields } from '@util';
+import { AddDbmtUserDto, UpdateDbmtUserDto, SetDbmtPasswdDto } from '@type/index';
 import { CmsUserService } from './cms-user.service';
 
 /**
@@ -35,15 +32,9 @@ export class CmsUserController {
   async addDbmtUser(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: AddDbmtUserRequest
+    @Body() body: AddDbmtUserDto
   ): Promise<AddDbmtUserClientResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(
-      body,
-      ['targetid', 'password', 'casauth', 'dbcreate', 'statusmonitorauth'],
-      'cms-user',
-      this.logger
-    );
     this.logger.log(`Adding DBMT user: ${body.targetid} on host: ${hostUid}`);
     return await this.cmsUserService.addDbmtUser(userId, hostUid, body);
   }
@@ -70,15 +61,9 @@ export class CmsUserController {
   async updateDbmtUser(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: UpdateDbmtUserRequest
+    @Body() body: UpdateDbmtUserDto
   ): Promise<UpdateDbmtUserClientResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(
-      body,
-      ['targetid', 'casauth', 'dbcreate', 'statusmonitorauth'],
-      'cms-user',
-      this.logger
-    );
     this.logger.log(`Updating DBMT user: ${body.targetid} on host: ${hostUid}`);
     return await this.cmsUserService.updateDbmtUser(userId, hostUid, body);
   }
@@ -106,10 +91,9 @@ export class CmsUserController {
   async setDbmtPasswd(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: SetDbmtPasswdRequest
+    @Body() body: SetDbmtPasswdDto
   ): Promise<SetDbmtPasswdClientResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(body, ['targetid', 'newpassword'], 'cms-user/set-password', this.logger);
     this.logger.log(`Setting DBMT password for: ${body.targetid} on host: ${hostUid}`);
     return await this.cmsUserService.setDbmtPasswd(
       userId,

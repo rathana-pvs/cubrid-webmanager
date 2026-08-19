@@ -14,6 +14,7 @@ export * from './auth/auth-error';
 export * from './cms/cms-error';
 export * from './cms/cms-error-code';
 export * from './validation/validation-error';
+export * from './validation/create-validation-pipe';
 export * from './monitoring/resource-monitoring-error';
 export * from './monitoring/resource-monitoring-error-code';
 export * from './config';

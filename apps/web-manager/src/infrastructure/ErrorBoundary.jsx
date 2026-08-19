@@ -30,7 +30,7 @@ export class ErrorBoundary extends Component {
           <EmptyState
             icon="error_outline"
             title="Something went wrong"
-            description={this.state.error?.message || "An unexpected error occurred. Please reload the panel or contact support."}
+            description={this.state.error?.message || "Try reloading the page."}
             action={
               <Button variant="outline" onClick={this.handleReload} icon="refresh">
                 Reload Application

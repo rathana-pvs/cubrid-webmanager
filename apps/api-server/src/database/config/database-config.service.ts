@@ -18,6 +18,9 @@ import {
   GetAutoAddVolLogResponse,
   AppendAutoExecQueryPlanRequest,
   RemoveAutoExecQueryPlanRequest,
+  UpdateAutoExecQueryPlanRequest,
+  QueryPlanClient,
+  QueryPlanClientResponse,
 } from '@api-interfaces';
 import { CmsConfigService } from '@cms-config/cms-config.service';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
@@ -67,6 +70,23 @@ export class DatabaseConfigService extends BaseService {
     private readonly cmsConfigService: CmsConfigService
   ) {
     super(hostService, cmsClient);
+  }
+
+  // CMS's getautoexecquery response never echoes back userpass (security), so
+  // pre-existing entries read back via getAutoExecQuery never carry a real
+  // password. setautoexecquery replaces the whole list, so resending those
+  // entries verbatim leaves them with no userpass and CMS silently corrupts
+  // them — breaking every later append/edit for the database. Sending the
+  // literal sentinel "unknown" instead tells CMS to keep the entry's stored
+  // credentials; this is the same convention CUBRID Manager's own client uses
+  // (see QueryPlanInfo's userpass default in the CA source).
+  private static readonly CMS_UNKNOWN_USERPASS = 'unknown';
+
+  private preserveExistingCredentials(plans: QueryPlanClientResponse[]): QueryPlanClient[] {
+    return plans.map((p) => ({
+      ...p,
+      userpass: p.userpass || DatabaseConfigService.CMS_UNKNOWN_USERPASS,
+    }));
   }
 
   /**
@@ -571,7 +591,49 @@ export class DatabaseConfigService extends BaseService {
       const cmsRequest: SetAutoExecQueryCmsRequest = {
         task: 'setautoexecquery',
         dbname,
-        planlist: [{ dbname, queryplan: [...existingPlans, newPlan] }],
+        planlist: [
+          { dbname, queryplan: [...this.preserveExistingCredentials(existingPlans), newPlan] },
+        ],
+      };
+      await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
+        userId,
+        hostUid,
+        cmsRequest
+      );
+      return { success: true };
+    });
+  }
+
+  /**
+   * Replace a single existing query plan (identified by query_id) in a
+   * database's auto-exec plan list, preserving every other entry's stored
+   * credentials. Serializes concurrent callers per (hostUid, dbname).
+   *
+   * @throws ConfigError.QueryPlanNotFound if no plan with the given query_id exists
+   */
+  @HandleCmsErrors()
+  async updateAutoExecQueryPlan(
+    userId: string,
+    hostUid: string,
+    request: UpdateAutoExecQueryPlanRequest
+  ): Promise<SetAutoExecQueryClientResponse> {
+    const { dbname, plan: updatedPlan } = request;
+    return this.withQueryPlanMutex(`${hostUid}:${dbname}`, async () => {
+      const existing = await this.getAutoExecQuery(userId, hostUid, dbname);
+      const existingPlans = existing.planlist.find((p) => p.dbname === dbname)?.queryplan ?? [];
+
+      if (!existingPlans.some((p) => p.query_id === updatedPlan.query_id)) {
+        throw ConfigError.QueryPlanNotFound(dbname, updatedPlan.query_id);
+      }
+
+      const otherPlans = this.preserveExistingCredentials(
+        existingPlans.filter((p) => p.query_id !== updatedPlan.query_id)
+      );
+
+      const cmsRequest: SetAutoExecQueryCmsRequest = {
+        task: 'setautoexecquery',
+        dbname,
+        planlist: [{ dbname, queryplan: [...otherPlans, updatedPlan] }],
       };
       await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
         userId,
@@ -607,7 +669,7 @@ export class DatabaseConfigService extends BaseService {
       const cmsRequest: SetAutoExecQueryCmsRequest = {
         task: 'setautoexecquery',
         dbname,
-        planlist: [{ dbname, queryplan: remaining }],
+        planlist: [{ dbname, queryplan: this.preserveExistingCredentials(remaining) }],
       };
       await this.executeCmsRequest<SetAutoExecQueryCmsRequest, SetAutoExecQueryCmsResponse>(
         userId,

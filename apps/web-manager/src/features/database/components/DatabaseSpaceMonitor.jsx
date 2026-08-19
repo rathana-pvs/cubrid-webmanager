@@ -128,6 +128,29 @@ const SummaryCards = memo(({ dbname, data, totals }) => {
 );
 });
 
+const getPurposeDisplay = (row) => {
+  if (row?.purpose) {
+    const p = row.purpose.toString().trim();
+    if (p.toUpperCase().includes('DATA') || p.toUpperCase().includes('ARCHIVE')) {
+      return p;
+    }
+    return `${p} DATA`;
+  }
+  const type = (row?.type || '').toString().toUpperCase();
+  if (type.includes('LOG') || type.includes('ACTIVE') || type.includes('ARCHIVE')) {
+    return 'ARCHIVE';
+  }
+  if (type) {
+    return `${type} DATA`;
+  }
+  return '-';
+};
+
+const isLogVolume = (row) => {
+  const t = (row?.type || '').toString().toUpperCase();
+  return t.includes('LOG') || t.includes('ACTIVE') || t.includes('ARCHIVE');
+};
+
 const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
   const CM = useCM();
   const dispatch = useDispatch();
@@ -158,11 +181,12 @@ const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
       collapsible
     >
       <Table
+        selectable
         columns={[
           {
             header: CM.type,
             accessor: 'type',
-            width: '140px',
+            width: '130px',
             render: (val) => (
               <button 
                 onClick={() => handleOpenCategory(val)}
@@ -170,6 +194,14 @@ const VolumeCategorization = memo(({ hostUid, dbname, dbinfo }) => {
               >
                 {val}
               </button>
+            )
+          },
+          {
+            header: CM.purpose,
+            accessor: 'purpose',
+            width: '130px',
+            render: (_, row) => (
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">{getPurposeDisplay(row)}</span>
             )
           },
           { header: CM.qtyLabel, accessor: 'volume_count', className: 'text-center', width: '60px' },
@@ -216,11 +248,12 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
       collapsible
     >
       <Table
+        selectable
         columns={[
           {
             header: CM.volumeLabel,
             accessor: 'spacename',
-            width: '150px',
+            width: '140px',
             render: (val) => {
               const name = val?.split(/[/\\]/).pop() || val;
               return (
@@ -237,9 +270,17 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
           {
             header: CM.type,
             accessor: 'type',
-            width: '110px',
+            width: '100px',
             render: (val) => (
               <span className={`px-1 py-0.5 rounded-sm text-[10px] font-bold uppercase border ${TYPE_BADGE(val)}`}>{val}</span>
+            )
+          },
+          {
+            header: CM.purpose,
+            accessor: 'purpose',
+            width: '120px',
+            render: (_, row) => (
+              <span className="text-[11px] font-semibold text-slate-600 dark:text-slate-300">{getPurposeDisplay(row)}</span>
             )
           },
           {
@@ -254,7 +295,7 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
               const isZero = totalPages === 0;
   
               return (
-                <div className="flex flex-col gap-0.5 min-w-[140px]">
+                <div className="flex flex-col gap-0.5 min-w-[130px]">
                   <div className="flex justify-between items-end">
                     <span className="text-[11px] font-mono text-slate-500 dark:text-slate-400">
                       <span className="text-slate-700 dark:text-slate-200 font-bold">{formatPages(usedPages)}</span> / {formatPages(totalPages)}
@@ -269,6 +310,33 @@ const VolumeTopology = memo(({ hostUid, dbname, spaceinfo }) => {
                 </div>
               );
             }
+          },
+          {
+            header: CM.freeLabel,
+            accessor: 'freepage',
+            render: (val, row) => {
+              if (val != null && typeof val === 'string' && val.trim() === '') {
+                return <span className="font-mono text-[11px] text-slate-400">{val}</span>;
+              }
+              if (isLogVolume(row)) {
+                return <span className="font-mono text-[11px] text-slate-400">-</span>;
+              }
+              const totalPages = cleanInt(row.totalpage);
+              const usedPages = cleanInt(row.usedpage);
+              const freePages = val != null && val !== '' ? cleanInt(val) : Math.max(0, totalPages - usedPages);
+              return <span className="font-mono text-[11px] text-slate-400">{formatPages(freePages)}</span>;
+            }
+          },
+          {
+            header: CM.totalLabel,
+            accessor: 'totalpage',
+            render: (val) => <span className="font-mono text-[11px] font-bold">{formatPages(val)}</span>
+          },
+          {
+            header: CM.date,
+            accessor: 'date',
+            width: '90px',
+            render: (val) => <span className="font-mono text-[10px] text-slate-500 dark:text-slate-400">{val || '-'}</span>
           },
           { 
             header: CM.path, 
@@ -300,6 +368,7 @@ const FileSpaceUsage = memo(({ fileinfo }) => {
     bodyClassName="p-0"
   >
     <Table
+      selectable
       columns={[
         { header: CM.dataTypeLabel, accessor: 'data_type' },
         { header: CM.qtyLabel, accessor: 'file_count', className: 'text-center' },
@@ -402,7 +471,7 @@ const Component = function DatabaseSpaceMonitor({ hostUid, dbname }) {
   }
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden select-none text-[12px]">
+    <div className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden select-text text-[12px]">
       <StatusHeader 
         dbname={dbname} 
         lastRefreshed={lastRefreshed} 

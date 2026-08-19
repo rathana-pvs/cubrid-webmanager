@@ -126,7 +126,15 @@ export default function CopyDatabaseModal() {
     return () => {
       cancelled = true;
     };
-  }, [isCopyDatabaseModalOpen, selectedHostUid, selectedDatabase, currentDb?.dbdir, resetAction, dispatch, currentDb]);
+    // currentDb?.dbdir (not currentDb) is the dependency deliberately — see
+    // RenameDatabaseModal.jsx for the same convention. handleCopy's success
+    // path dispatches fetchDatabaseStartInfo to refresh the tree with the new
+    // clone, which replaces the whole `databases` array and gives `currentDb`
+    // a new object reference with the same dbdir value. Depending on the
+    // object itself re-ran this effect on that refresh alone and called
+    // resetAction() right after endSuccess(), silently bouncing the modal
+    // from its success view back to the form.
+  }, [isCopyDatabaseModalOpen, selectedHostUid, selectedDatabase, currentDb?.dbdir, resetAction, dispatch]);
 
   // Desktop EditListener alignment: Auto-update target paths and volume mapping when destName changes
   useEffect(() => {
@@ -237,6 +245,7 @@ export default function CopyDatabaseModal() {
         <ModalStatusLoading
           title={CM.synchronizingVolumes}
           subtitle={getCmsJobLoadingSubtitle(formData.destName, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -280,6 +289,7 @@ export default function CopyDatabaseModal() {
       title={CM.copyDatabase || 'Copy Database'}
       subtitle={CM.msgCopyDbDialog || 'Please enter the database information.'}
       icon="content_copy"
+<<<<<<< HEAD
       maxWidth="820px"
       footer={
         <div className="flex justify-end gap-3 w-full">
@@ -287,6 +297,17 @@ export default function CopyDatabaseModal() {
           <Button 
             variant="primary" 
             onClick={handleCopy} 
+=======
+      maxWidth="580px"
+      testId="copy-database"
+      footer={
+        <div className="flex justify-end gap-3 w-full">
+          <Button data-testid="copy-database-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+          <Button
+            data-testid="copy-database-execute-btn"
+            variant="primary"
+            onClick={handleCopy}
+>>>>>>> develop
             icon="content_copy"
             className="min-w-[140px]"
             disabled={!formData.destName.trim()}
@@ -345,6 +366,7 @@ export default function CopyDatabaseModal() {
           </div>
         </div>
 
+<<<<<<< HEAD
         {/* Destination Database Group */}
         <div>
           <SectionHeader title={CM.grpDbDestName || 'Destination database'} icon="move_to_inbox" />
@@ -424,6 +446,19 @@ export default function CopyDatabaseModal() {
               checked={formData.copyIndividual}
               onChange={e => handleInputChange('copyIndividual', e.target.checked)}
               disabled={!formData.destName.trim()}
+=======
+          {/* Destination Column */}
+          <div className="flex-1">
+            <Input
+              data-testid="copy-database-dest-name-input"
+              label={CM.cloneIdentifier}
+              value={formData.destName}
+              onChange={e => handleInputChange('destName', e.target.value)}
+              placeholder="e.g. clone_db"
+              autoFocus
+              icon="content_copy"
+              inputClassName="h-[52px]! font-black!"
+>>>>>>> develop
             />
           </div>
 

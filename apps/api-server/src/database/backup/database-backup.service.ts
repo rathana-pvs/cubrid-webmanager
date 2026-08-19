@@ -307,7 +307,7 @@ export class DatabaseBackupService extends BaseService {
    * @param userId User ID from JWT
    * @param hostUid Host UID
    * @param dbname Database name
-   * @param request Client request (level, volname, backupdir, removelog?, check?, mt?, zip?, safereplication?)
+   * @param request Client request (level, backupdir, removelog?, check?, mt?, zip?, safereplication?)
    * @returns BackupDbClientResponse empty body on success (CMS envelope omitted)
    * @throws DatabaseError If request fails or CMS status is fail
    */
@@ -322,8 +322,16 @@ export class DatabaseBackupService extends BaseService {
       task: 'backupdb',
       dbname,
       level: request.level,
-      volname: request.volname,
       backupdir: request.backupdir,
+      // Fixed per dbname (not per level): CMS builds without CBRD-27065 always
+      // do `snprintf(path, "%s/%s", backupdir, volname)` with no null check,
+      // so an omitted volname renders as a literal "(null)" path segment on
+      // any CMS that hasn't picked up that fix yet (which is every currently
+      // deployed release — it only lands from 11.5). Sending the SAME
+      // volname for every level keeps backupdir/volname as one shared
+      // directory across levels (needed for restoredb's single -B argument)
+      // on both old and fixed CMS builds, without needing to detect which.
+      volname: `${dbname}_backup`,
       removelog: request.removelog ?? 'y',
       check: request.check ?? 'n',
       mt: request.mt ?? '0',

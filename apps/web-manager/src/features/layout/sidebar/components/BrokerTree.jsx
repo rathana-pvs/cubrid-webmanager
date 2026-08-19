@@ -90,6 +90,7 @@ export default function BrokerTree({ hostUid, onContextMenu, onSqlLogContextMenu
                 return (
                   <TreeNode
                     key={idx}
+                    id={log.path}
                     label={fileName}
                     icon="description"
                     isActive={isLogSelected}

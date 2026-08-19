@@ -29,7 +29,7 @@ const ErrorOverlay = ({ isVisible, error, title = "Operation Failed", onRetry, o
           
           <div className="max-h-[160px] overflow-y-auto custom-scrollbar px-2">
             <p className="text-[11px] text-slate-500 dark:text-slate-400 font-mono leading-relaxed break-words bg-slate-50 dark:bg-black/20 p-3 rounded-lg border border-slate-100 dark:border-white/5">
-              {typeof error === 'string' ? error : 'An unexpected error occurred while processing your request.'}
+              {typeof error === 'string' ? error : 'Something went wrong. Please try again.'}
             </p>
           </div>
         </div>

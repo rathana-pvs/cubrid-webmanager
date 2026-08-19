@@ -78,6 +78,7 @@ export default function CMSUserManagementModal() {
     return (
       <div
         key={username}
+        data-testid={`cms-user-${username}`}
         className={`group relative flex items-center gap-4 px-4 py-3.5 rounded-2xl border transition-all duration-200 cursor-default ${
           isAdmin
             ? 'bg-amber-500/4 border-amber-500/20 hover:border-amber-500/40'
@@ -138,6 +139,7 @@ export default function CMSUserManagementModal() {
         {/* Actions — appear on hover */}
         <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity duration-150 shrink-0">
           <button
+            data-testid={`cms-user-${username}-edit-btn`}
             onClick={() => handleEditUser(user)}
             className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-amber-500 hover:bg-amber-500/10 transition-all"
             title={CM.editUser}
@@ -146,6 +148,7 @@ export default function CMSUserManagementModal() {
           </button>
           {!isAdmin && (
             <button
+              data-testid={`cms-user-${username}-delete-btn`}
               onClick={() => handleDeleteUser(username)}
               className="w-8 h-8 rounded-lg flex items-center justify-center text-slate-400 hover:text-rose-500 hover:bg-rose-500/10 transition-all"
               title={CM.deleteUser}
@@ -166,6 +169,7 @@ export default function CMSUserManagementModal() {
       subtitle={selectedHost?.alias || selectedHostUid}
       icon="manage_accounts"
       maxWidth="680px"
+      testId="cms-user-management"
       footer={
         <div className="flex justify-between items-center w-full">
           <Typography variant="caption" className="text-slate-400 font-medium">
@@ -175,7 +179,7 @@ export default function CMSUserManagementModal() {
             <Button variant="ghost" onClick={() => dispatch(closeCmsUserManagementModal())}>
               {CM.close}
             </Button>
-            <Button icon="person_add" onClick={handleAddUser}>
+            <Button data-testid="cms-user-management-add-btn" icon="person_add" onClick={handleAddUser}>
               {CM.addUser}
             </Button>
           </div>

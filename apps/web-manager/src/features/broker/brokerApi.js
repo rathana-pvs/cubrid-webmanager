@@ -13,6 +13,12 @@ export const brokerApi = {
   stopBroker: (hostUid, brokerName) => {
     return apiClient.post(`/${hostUid}/broker/stop/${brokerName}`);
   },
+  startAllBrokers: (hostUid) => {
+    return apiClient.post(`/${hostUid}/broker/start-all`);
+  },
+  stopAllBrokers: (hostUid) => {
+    return apiClient.post(`/${hostUid}/broker/stop-all`);
+  },
   getBrokerLogs: (hostUid, brokerName) => {
     return apiClient.get(`/${hostUid}/log/broker/${brokerName}`);
   },
@@ -28,10 +34,10 @@ export const brokerApi = {
   getDatabaseLogs: (hostUid, dbname) => {
     return apiClient.get(`/${hostUid}/log/database/${dbname}`);
   },
-  getBrokerConfig: (hostUid, confname = 'cubrid_broker.conf') => {
-    return apiClient.get(`/${hostUid}/cms-config/all-sys-param`, { params: { confname } });
+  getBrokerConfig: (hostUid, confname = 'brokerconf') => {
+    return apiClient.get(`/${hostUid}/cms-config/broker-config/${confname}`);
   },
-  updateBrokerConfig: (hostUid, confname, confdata) => {
-    return apiClient.post(`/${hostUid}/cms-config/set-sys-param`, { confname, confdata });
+  updateBrokerConfig: (hostUid, confdata) => {
+    return apiClient.post(`/${hostUid}/cms-config/broker-set-param`, { confdata });
   },
 };

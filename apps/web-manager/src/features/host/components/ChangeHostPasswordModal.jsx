@@ -99,14 +99,17 @@ export default function ChangeHostPasswordModal() {
     <Modal
       isOpen={isChangePasswordModalOpen}
       onClose={handleClose}
+      onSubmit={!isSuccess ? handleSubmit : undefined}
       title={isSuccess ? CM.success : CM.changeManagerPasscode}
       icon={isSuccess ? "check_circle" : "lock"}
       loading={loading}
       maxWidth="max-w-[440px]"
+      testId="change-host-password"
       footer={
         isSuccess ? (
-          <Button 
-            variant="primary" 
+          <Button
+            data-testid="change-host-password-close-btn"
+            variant="primary"
             onClick={handleClose}
             className="w-full"
           >
@@ -114,15 +117,17 @@ export default function ChangeHostPasswordModal() {
           </Button>
         ) : (
           <>
-            <Button 
-              variant="secondary" 
+            <Button
+              data-testid="change-host-password-cancel-btn"
+              variant="secondary"
               onClick={handleClose}
               disabled={loading}
             >
-              {CM.discard}
+              {CM.cancel}
             </Button>
-            <Button 
-              variant="primary" 
+            <Button
+              data-testid="change-host-password-submit-btn"
+              variant="primary"
               onClick={handleSubmit}
               loading={loading}
               icon="verified_user"
@@ -172,6 +177,7 @@ export default function ChangeHostPasswordModal() {
 
             <div className="space-y-4">
               <Input
+                data-testid="change-host-password-new-input"
                 label={CM.newPasscode}
                 type="password"
                 name="password"
@@ -184,6 +190,7 @@ export default function ChangeHostPasswordModal() {
                 autoFocus
               />
               <Input
+                data-testid="change-host-password-confirm-input"
                 label={CM.verifyNewPasscode}
                 type="password"
                 name="confirmPassword"

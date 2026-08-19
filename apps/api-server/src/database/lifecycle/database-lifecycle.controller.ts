@@ -1,15 +1,11 @@
 import { Body, Controller, Delete, Get, Logger, Param, Post, Request, HttpCode, HttpStatus } from '@nestjs/common';
 import {
-  CreateDatabaseWithConfigRequest,
-  CreateDatabaseWithConfigResponse,
   CreateCmsJobResponse,
   DatabaseVolumeInfoClientResponse,
-  DeleteDatabaseRequest,
   GetCreatedbInfoClientResponse,
   StartInfoClientResponse,
-  SaveDatabaseProfileRequest,
 } from '@api-interfaces';
-import { validateRequiredFields } from '@util';
+import { SaveDatabaseProfileDto, DeleteDatabaseDto, CreateDatabaseWithConfigDto } from '@type/index';
 import { DatabaseLifecycleService } from './database-lifecycle.service';
 import { CmsJobService } from '@cms-job/cms-job.service';
 
@@ -171,11 +167,9 @@ export class DatabaseLifecycleController {
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: Omit<SaveDatabaseProfileRequest, 'hostUid' | 'dbname'>
+    @Body() body: SaveDatabaseProfileDto
   ): Promise<StartInfoClientResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(body, ['id'], 'database/register', this.logger);
 
     return await this.lifecycleService.saveDatabaseProfile(
       userId,
@@ -210,26 +204,9 @@ export class DatabaseLifecycleController {
   async createDatabase(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: CreateDatabaseWithConfigRequest
+    @Body() body: CreateDatabaseWithConfigDto
   ): Promise<CreateCmsJobResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(
-      body,
-      [
-        'dbname',
-        'numpage',
-        'pagesize',
-        'logsize',
-        'logpagesize',
-        'genvolpath',
-        'logvolpath',
-        'charset',
-        'overwrite_config_file',
-      ],
-      'database/create',
-      this.logger
-    );
 
     this.logger.log(`Enqueue create database job: ${body.dbname} on host: ${hostUid}`);
     return await this.cmsJobService.createJob(userId, hostUid, 'create', body.dbname, body);
@@ -282,11 +259,9 @@ export class DatabaseLifecycleController {
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: DeleteDatabaseRequest
+    @Body() body: DeleteDatabaseDto
   ): Promise<StartInfoClientResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(body, ['delbackup'], 'database/delete', this.logger);
 
     this.logger.log(`Deleting database: ${dbname} on host: ${hostUid}`);
     return await this.lifecycleService.deleteDatabase(userId, hostUid, dbname, body);

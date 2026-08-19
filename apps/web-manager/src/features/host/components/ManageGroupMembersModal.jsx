@@ -78,7 +78,7 @@ export default function ManageGroupMembersModal() {
       accessor: 'selected',
       width: '36px',
       render: (_, row) => (
-        <div onClick={(e) => e.stopPropagation()}>
+        <div onClick={(e) => e.stopPropagation()} data-testid={`manage-group-members-checkbox-${row.uid}`}>
           <Checkbox checked={selectedUids.has(row.uid)} onChange={() => toggleHost(row.uid)} />
         </div>
       ),
@@ -143,12 +143,14 @@ export default function ManageGroupMembersModal() {
       title={CM.manageGroupMembersTitle(groupToEditName)}
       icon="group_work"
       maxWidth="max-w-[620px]"
+      testId="manage-group-members"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose} disabled={isSaving}>
+          <Button data-testid="manage-group-members-cancel-btn" variant="secondary" onClick={handleClose} disabled={isSaving}>
             {CM.cancel}
           </Button>
           <Button
+            data-testid="manage-group-members-save-btn"
             variant="primary"
             onClick={handleSave}
             loading={isSaving}

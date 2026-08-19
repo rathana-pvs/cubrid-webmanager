@@ -1,16 +1,14 @@
 import { Body, Controller, Get, Logger, Param, Post, Put, Request } from '@nestjs/common';
 import {
   AddDbmtUserClientResponse,
-  AddDbmtUserRequest,
   BrokerListClientResponse,
   BrokerStartStopClientResponse,
   GetBrokerStatusClientResponse,
   StartAllBrokersClientResponse,
   StopAllBrokersClientResponse,
   UpdateDbmtUserClientResponse,
-  UpdateDbmtUserRequest,
 } from '@api-interfaces';
-import { validateRequiredFields } from '@util';
+import { AddDbmtUserDto, UpdateDbmtUserDto } from '@type/index';
 import { BrokerService } from './broker.service';
 
 /**
@@ -89,15 +87,9 @@ export class BrokerController {
   async addDbmtUser(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: AddDbmtUserRequest
+    @Body() body: AddDbmtUserDto
   ): Promise<AddDbmtUserClientResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(
-      body,
-      ['targetid', 'password', 'casauth', 'dbcreate', 'statusmonitorauth'],
-      'broker/dbmt-user',
-      this.logger
-    );
     this.logger.log(`Adding DBMT user: ${body.targetid} on host: ${hostUid}`);
     return await this.brokerService.addDbmtUser(userId, hostUid, body);
   }
@@ -119,15 +111,9 @@ export class BrokerController {
   async updateDbmtUser(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: UpdateDbmtUserRequest
+    @Body() body: UpdateDbmtUserDto
   ): Promise<UpdateDbmtUserClientResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(
-      body,
-      ['targetid', 'casauth', 'dbcreate', 'statusmonitorauth'],
-      'broker/dbmt-user',
-      this.logger
-    );
     this.logger.log(`Updating DBMT user: ${body.targetid} on host: ${hostUid}`);
     return await this.brokerService.updateDbmtUser(userId, hostUid, body);
   }

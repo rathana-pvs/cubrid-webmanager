@@ -91,27 +91,27 @@ const server = http.createServer((req, res) => {
 
 // Verify build directory
 if (!fs.existsSync(BUILD_DIR)) {
-  console.error(`❌ Build directory not found: ${BUILD_DIR}`);
+  console.error(`Build directory not found: ${BUILD_DIR}`);
   console.error('Build first with:');
   console.error('  nx build web-manager');
   process.exit(1);
 }
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log(`🚀 Web Manager server started`);
-  console.log(`📁 Serving directory: ${BUILD_DIR}`);
-  console.log(`🌐 URL: http://localhost:${PORT}`);
-  console.log(`   or: http://0.0.0.0:${PORT}`);
+  console.log(`Web Manager server started`);
+  console.log(`Serving directory: ${BUILD_DIR}`);
+  console.log(`URL: http://localhost:${PORT}`);
+  console.log(`  or: http://0.0.0.0:${PORT}`);
   console.log(`\nPress Ctrl+C to stop.`);
 });
 
 // Error handling
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`❌ Port ${PORT} is already in use.`);
+    console.error(`Port ${PORT} is already in use.`);
     console.error(`Use another port: node serve-web-manager.js [port]`);
   } else {
-    console.error('❌ Server error:', err);
+    console.error('Server error:', err);
   }
   process.exit(1);
 });

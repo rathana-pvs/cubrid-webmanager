@@ -46,6 +46,37 @@ export class CmsHttpsClientService {
   private readonly logger = new Logger(CmsHttpsClientService.name);
   private httpsAgent: CmsHttpsAgent | null = null;
 
+  // CMS (cm_server) cannot handle truly concurrent requests against the same
+  // host — confirmed live: firing several requests at one CMS instance at
+  // once made some of them (not all) stall for ~30s before resolving or
+  // failing, while the exact same requests sent sequentially never did.
+  // Serialize per host (keyed by url, unique per host) so the app's normal
+  // concurrent request patterns (parallel dashboard widgets, background
+  // monitoring polls overlapping with user actions) don't trigger it.
+  private readonly hostRequestQueue = new Map<string, Promise<void>>();
+
+  // Deliberately NOT paired with a retry-on-CMS-timeout: this codebase
+  // already tried that once (withCmsRetry, removed in #113 / 3abf005) and
+  // reverted it because a retry applied broadly to CMS calls also re-submits
+  // non-idempotent long-job requests on a hang-up/timeout, duplicating the
+  // actual server-side operation. Any future retry here would need to be
+  // scoped to known-idempotent read tasks only, not added blanket.
+  private async withHostQueue<T>(key: string, fn: () => Promise<T>): Promise<T> {
+    const pending = this.hostRequestQueue.get(key) ?? Promise.resolve();
+    let resolve!: () => void;
+    const next = new Promise<void>((r) => (resolve = r));
+    this.hostRequestQueue.set(key, next);
+    try {
+      await pending;
+      return await fn();
+    } finally {
+      resolve();
+      if (this.hostRequestQueue.get(key) === next) {
+        this.hostRequestQueue.delete(key);
+      }
+    }
+  }
+
   constructor(
     private readonly httpService: HttpService,
     private readonly hostService: HostService,
@@ -66,15 +97,17 @@ export class CmsHttpsClientService {
     url: string,
     data: T
   ): Promise<P> {
-    const config = {
-      headers: { 'Content-Type': 'application/json' },
-      httpsAgent: this.getHttpsAgent(),
-    };
-    const startedAt = Date.now();
-    this.logCmsRequest('public', url, data);
-    const response = await firstValueFrom(this.httpService.post<P>(url, data, config));
-    this.logCmsResponse('public', url, data, response.data, Date.now() - startedAt);
-    return response.data;
+    return this.withHostQueue(url, async () => {
+      const config = {
+        headers: { 'Content-Type': 'application/json' },
+        httpsAgent: this.getHttpsAgent(),
+      };
+      const startedAt = Date.now();
+      this.logCmsRequest('public', url, data);
+      const response = await firstValueFrom(this.httpService.post<P>(url, data, config));
+      this.logCmsResponse('public', url, data, response.data, Date.now() - startedAt);
+      return response.data;
+    });
   }
 
   /**
@@ -91,16 +124,18 @@ export class CmsHttpsClientService {
     data: T,
     options?: { timeoutMs?: number }
   ): Promise<P> {
-    const config = {
-      headers: { 'Content-Type': 'application/json' },
-      httpsAgent: this.getHttpsAgent(),
-      ...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
-    };
-    const startedAt = Date.now();
-    this.logCmsRequest('authenticated', url, data);
-    const response = await firstValueFrom(this.httpService.post<P>(url, data, config));
-    this.logCmsResponse('authenticated', url, data, response.data, Date.now() - startedAt);
-    return response.data;
+    return this.withHostQueue(url, async () => {
+      const config = {
+        headers: { 'Content-Type': 'application/json' },
+        httpsAgent: this.getHttpsAgent(),
+        ...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
+      };
+      const startedAt = Date.now();
+      this.logCmsRequest('authenticated', url, data);
+      const response = await firstValueFrom(this.httpService.post<P>(url, data, config));
+      this.logCmsResponse('authenticated', url, data, response.data, Date.now() - startedAt);
+      return response.data;
+    });
   }
 
   /**

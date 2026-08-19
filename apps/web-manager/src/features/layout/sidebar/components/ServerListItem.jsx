@@ -1,5 +1,8 @@
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { setSelectedHost } from '../../../host/hostSlice';
+import { fetchDatabaseStartInfo } from '../../../database/databaseSlice';
+import { fetchBrokerList } from '../../../broker/brokerSlice';
+import { setActiveMainTab } from '../../layoutSlice';
 import { Icon } from '../../../../components/ds/foundation/Icon';
 import { useCM } from '../../../../constants/useCM';
 
@@ -24,6 +27,7 @@ export default function ServerListItem({
 }) {
   const CM = useCM();
   const dispatch = useDispatch();
+  const { openTabs } = useSelector((state) => state.layout, shallowEqual);
 
   const getInferredHaInfo = () => {
     if (haInfo?.isHA) return haInfo;
@@ -48,6 +52,7 @@ export default function ServerListItem({
   return (
     <div
       title={`${host.address}:${host.port}`}
+      data-testid={`host-item-${host.uid}`}
       draggable={draggable}
       onDragStart={draggable ? onDragStart : undefined}
       onDragEnd={draggable ? onDragEnd : undefined}
@@ -61,6 +66,16 @@ export default function ServerListItem({
         }`}
       onClick={() => {
         dispatch(setSelectedHost(host.uid));
+        if (isAuthorized) {
+          dispatch(fetchDatabaseStartInfo(host.uid));
+          dispatch(fetchBrokerList(host.uid));
+        }
+        // Bring an already-open dashboard tab for this host to the front.
+        // Never opens/logs in on its own — that stays a double-click-only action.
+        const tabId = `host:${host.uid}`;
+        if (openTabs.includes(tabId)) {
+          dispatch(setActiveMainTab(tabId));
+        }
       }}
       onDoubleClick={() => {
         // Login (if needed) + open the dashboard — never on single click.

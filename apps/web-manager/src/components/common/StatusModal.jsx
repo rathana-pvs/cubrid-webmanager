@@ -62,7 +62,7 @@ export default function StatusModal() {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-[2100] flex items-center justify-center p-4 font-sans">
+    <div data-testid="status-modal" className="fixed inset-0 z-[2100] flex items-center justify-center p-4 font-sans">
       {/* Backdrop */}
       <div
         className="absolute inset-0 bg-bk-main/50 backdrop-blur-sm animate-in fade-in duration-150"
@@ -120,6 +120,7 @@ export default function StatusModal() {
           {/* CTA button */}
           <button
             ref={btnRef}
+            data-testid="status-modal-close-btn"
             onClick={() => dispatch(closeStatusModal())}
             className={`mt-6 w-full py-2.5 rounded-xl text-[12px] font-semibold tracking-wide transition-all active:scale-[0.98] ${t.btn}`}
           >

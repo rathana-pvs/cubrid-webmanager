@@ -84,6 +84,12 @@ export function getPublicClientErrorMessage(payload: PublicErrorPayload): string
         return 'Request is rejected due to invalid token. Please reconnect.';
       case CmsErrorCode.NO_RESPONSE:
         return 'No response was received from CMS.';
+      case CmsErrorCode.TLS_ERROR: {
+        const detail = typeof additionalData?.message === 'string' ? additionalData.message : undefined;
+        return detail
+          ? `Could not establish a trusted connection to CMS: ${detail}. Check the CMS server's TLS certificate, or set CMS_REJECT_UNAUTHORIZED=false in cwm.conf to bypass verification.`
+          : "Could not establish a trusted connection to CMS. Check the CMS server's TLS certificate.";
+      }
       case CmsErrorCode.REQUEST_FAILED:
       case CmsErrorCode.UNKNOWN:
       default:

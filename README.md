@@ -123,8 +123,28 @@ dist/executables/
 | `ENVIRONMENT` | `production` / `development` | `production` |
 | `STORAGE_PATH` | 데이터 저장 경로 | `./data` |
 | `ALLOWED_ORIGINS` | CORS 허용 도메인 (쉼표 구분, 없으면 전체 허용) | — |
-| `SSL_CERT_PATH` | 공인 인증서 경로 (없으면 자동 생성) | — |
-| `SSL_KEY_PATH` | 공인 인증서 키 경로 | — |
+| `LISTEN_HOST` | 바인드할 네트워크 인터페이스 (예: `127.0.0.1`로 로컬 전용 제한) | 전체 인터페이스 |
+| `SSL_CERT_PATH` | 공인 인증서 경로 (없으면 자체 서명 인증서 자동 생성) | — |
+| `SSL_KEY_PATH` | 공인 인증서 키 경로 (`SSL_CERT_PATH`와 함께 설정 필요) | — |
+| `AUTH_REGISTRATION_ENABLED` | 신규 계정 가입 허용 여부 (`false`로 초기 설정 후 잠그기) | `true` |
+| `CMS_REJECT_UNAUTHORIZED` | CMS 접속 시 TLS 인증서 검증 여부 | `production`일 때 `true` |
+| `CMS_CA_CERT_PATH` | CMS가 자체 서명 인증서를 쓸 때 신뢰할 CA 인증서 경로 | — |
+| `CMS_JOB_RETENTION_HOURS` | 완료된 백그라운드 작업(job) 기록 보관 시간 | `24` |
+| `CMS_JOB_STALE_RUNNING_HOURS` | 응답 없는 job을 정지로 간주하는 시간 | `CMS_JOB_LONG_TIMEOUT_HOURS + 1` |
+| `CMS_JOB_LONG_TIMEOUT_HOURS` | unload/load 등 장시간 job의 최대 대기 시간 | `12` |
+| `CMS_JOB_RECOVER_ON_STARTUP` | 서버 재시작 시 진행 중이던 job 추적 재개 여부 | `true` |
+| `SERVER_IP` | 자체 서명 인증서에 포함할 서버 IP (외부 접속 시 브라우저 경고 방지) | 네트워크 인터페이스 자동 감지 |
+| `CWM_SSL_DIR` | 자체 서명 인증서를 저장/조회할 디렉토리 | 실행파일 옆 `ssl/` |
+| `LOG_TO_FILE` | 콘솔 외에 파일에도 로그를 남길지 여부 | `true` |
+| `LOG_DIR` | 로그 파일 디렉토리 | 실행파일 옆 `logs/` |
+| `LOG_LEVEL` | 기록할 최소 레벨 (`error`/`warn`/`log`/`debug`/`verbose`, NestJS와 동일한 용어) | production `log`, 그 외 `debug` |
+| `LOG_MAX_SIZE` | 이 크기를 넘으면 새 파일로 회전 (예: `20m`, `500k`) | `20m` |
+| `LOG_MAX_FILES` | 회전된 파일 보관 기간(`14d` 같은 기간) 또는 개수(`20` 같은 숫자) | `14d` |
+| `LOG_APPEND_ON_RESTART` | 재시작 시 기존 로그 파일에 이어 쓸지(`true`) 새로 시작할지(`false`) | `true` |
+
+> `SEED`/`SALT`는 `cwm.conf`에 넣어도 무시됩니다 (안전장치) — 최초 실행 시 자동 생성되어 `cwm-vault/secrets.json`에 저장되며, 이 방식이 기본값입니다.
+
+전체 키와 예시 값은 [`cwm.conf.reference.md`](cwm.conf.reference.md) 참고 (패키징된 실행파일에도 `conf/` 폴더에 함께 포함됩니다).
 
 #### cwm-vault (자동 관리 — 편집 금지)
 

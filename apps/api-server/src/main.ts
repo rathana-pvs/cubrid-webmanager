@@ -5,17 +5,29 @@ import 'module-alias/register';
 import * as path from 'path';
 import * as fs from 'fs';
 import * as express from 'express';
-import { getHttpsOptions } from '@util';
+import { getHttpsOptions, logStartupBanner, createWinstonLogger, startLogConfigWatcher } from '@util';
 import { GlobalExceptionFilter } from '@error/global-filter';
+import { createValidationPipe } from '@error/validation/create-validation-pipe';
 import { ConfigService } from '@config/config.service';
 import { SuccessResponseInterceptor, LoggingInterceptor } from '@common'; // Updated import
 
 async function bootstrap() {
   loadRuntimeEnv();
   const httpsOptions = getHttpsOptions();
+  // A standalone instance (not DI-managed) since this runs before Nest's DI
+  // container exists — app.get(ConfigService) below constructs its own,
+  // functionally identical instance from the same env for everything else.
+  const bootConfig = new ConfigService();
+  // Kept as a variable (not inlined) so logStartupBanner can log through the
+  // same instance below — otherwise the banner would only reach the console
+  // (via a raw console.log) and never make it into the log file.
+  const appLogger = createWinstonLogger(bootConfig);
   const app = await NestFactory.create(AppModule, {
     httpsOptions,
-    logger: ['error', 'warn'],
+    // Includes 'log' — LoggingInterceptor's incoming/outgoing request audit
+    // trail is emitted at that level. Without it, only errors and warnings
+    // would be recorded, silently dropping ordinary traffic.
+    logger: appLogger,
   });
   app.getHttpAdapter().getInstance().set('trust proxy', true);
   const configService = app.get(ConfigService);
@@ -23,7 +35,6 @@ async function bootstrap() {
   const listenHost = configService.getListenHost();
   const allowedOrigins = configService.getAllowedOrigins();
   const desktopMode = (process.env.CWM_DESKTOP ?? '').trim() === '1';
-  console.log('[main.ts] Allowed Origins from ConfigService:', allowedOrigins);
 
   if (allowedOrigins.includes('*')) {
     // Development mode: allow all origins.
@@ -66,6 +77,12 @@ async function bootstrap() {
   }
   app.useGlobalFilters(new GlobalExceptionFilter());
   app.useGlobalInterceptors(new LoggingInterceptor(), new SuccessResponseInterceptor());
+  // Only affects @Body()/@Param()/@Query() parameters typed as an actual
+  // class with class-validator decorators (currently just UserDTO) — every
+  // other endpoint still uses plain interface types and passes through
+  // untouched. See create-validation-pipe.ts for why this is safe to enable
+  // globally before the rest of the API surface is migrated.
+  app.useGlobalPipes(createValidationPipe());
 
   // Serve web-manager static files.
   // Both pkg (snapshot filesystem) and node use __dirname/public.
@@ -107,18 +124,22 @@ async function bootstrap() {
   if (unixSocket) {
     removeStaleUnixSocket(unixSocket);
     await app.listen(unixSocket);
-    console.log('\t@ server running on unix socket:', unixSocket);
+    logStartupBanner(configService, { kind: 'unixSocket', socketPath: unixSocket }, appLogger);
+    // bootConfig (not configService) — winston-logger.ts tracks the
+    // instance it was actually built from, so reloads must go through that
+    // same object.
+    startLogConfigWatcher(bootConfig, appLogger);
     return;
   }
 
+  const boundHost = listenHost ?? '0.0.0.0';
   if (listenHost) {
     await app.listen(port, listenHost);
-    console.log('\t@ server running on', `${listenHost}:${port}`);
-    return;
+  } else {
+    await app.listen(port);
   }
-
-  await app.listen(port);
-  console.log('\t@ server running port :', port);
+  logStartupBanner(configService, { kind: 'tcp', host: boundHost, port }, appLogger);
+  startLogConfigWatcher(bootConfig, appLogger);
 }
 bootstrap();
 

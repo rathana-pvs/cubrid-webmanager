@@ -20,13 +20,13 @@ import {
   GetBrokerStatusCmsResponse,
   GetBrokersInfoCmsResponse,
   HandleBrokerCmsRequest,
-  StartBrokerCmsRequest,
+  StartAllBrokersCmsRequest,
   StopAllBrokersCmsRequest,
   UpdateDbmtUserCmsRequest,
 } from '@type';
 import {
   AddDbmtUserCmsResponse,
-  StartBrokerCmsResponse,
+  StartAllBrokersCmsResponse,
   StopAllBrokersCmsResponse,
   UpdateDbmtUserCmsResponse,
 } from '@type/cms-response';
@@ -211,12 +211,12 @@ export class BrokerService extends BaseService {
     userId: string,
     hostUid: string
   ): Promise<StartAllBrokersClientResponse> {
-    const cmsRequest: StartBrokerCmsRequest = {
+    const cmsRequest: StartAllBrokersCmsRequest = {
       task: 'startbroker',
     };
     await this.executeCmsRequest<
-      StartBrokerCmsRequest,
-      StartBrokerCmsResponse
+      StartAllBrokersCmsRequest,
+      StartAllBrokersCmsResponse
     >(userId, hostUid, cmsRequest);
 
     return { success: true };

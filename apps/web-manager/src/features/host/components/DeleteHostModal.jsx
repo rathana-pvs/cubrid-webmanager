@@ -55,17 +55,20 @@ export default function DeleteHostModal() {
       iconVariant="danger"
       loading={loading}
       maxWidth="420px"
+      testId="delete-host"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button 
-            variant="secondary" 
+          <Button
+            data-testid="delete-host-cancel-btn"
+            variant="secondary"
             onClick={handleClose}
             disabled={loading}
           >
             {CM.keepHost}
           </Button>
-          <Button 
-            variant="danger" 
+          <Button
+            data-testid="delete-host-confirm-btn"
+            variant="danger"
             onClick={handleDelete}
             loading={loading}
             icon="delete_forever"

@@ -18,6 +18,7 @@ export const Select = ({
   onChange,
   placeholder = null,
   icon,
+  testId,
 }) => {
   const CM = useCM();
   const resolvedPlaceholder = placeholder ?? CM.selectOptionPlaceholder;
@@ -75,6 +76,7 @@ export const Select = ({
 
   const dropdown = isOpen ? createPortal(
     <div
+      data-testid={testId && `${testId}-options`}
       style={dropdownStyle}
       className="bg-white dark:bg-[#1A1C1E] border border-slate-200 dark:border-white/10 rounded-lg shadow-[0_12px_40px_rgba(0,0,0,0.35)] overflow-hidden animate-in fade-in slide-in-from-top-1 duration-150"
     >
@@ -85,6 +87,7 @@ export const Select = ({
           options.map((opt) => (
             <div
               key={opt.value}
+              data-testid={testId && `${testId}-option-${opt.value}`}
               onMouseDown={(e) => { e.preventDefault(); handleSelect(opt); }}
               className={`flex items-center justify-between px-3 h-9 rounded-lg text-[13px] font-medium transition-all cursor-pointer group relative overflow-hidden ${opt.value === value
                   ? 'bg-amber-500/8 text-amber-500'
@@ -109,6 +112,7 @@ export const Select = ({
       <div className="relative group" ref={containerRef}>
         <button
           type="button"
+          data-testid={testId}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           disabled={disabled}
           className={`relative w-full ${icon ? 'pl-11' : 'pl-3.5'} pr-10 ${isSm ? 'h-8 text-[12px]' : 'h-10 text-[13px]'} font-medium text-left bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-xl transition-all outline-hidden

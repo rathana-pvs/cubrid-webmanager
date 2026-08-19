@@ -14,6 +14,8 @@
     "antd": "^5.28.0",
     "axios": "^1.14.0",
     "bcryptjs": "^3.0.2",
+    "class-transformer": "^0.5.1",
+    "class-validator": "^0.14.4",
     "dotenv": "^16.6.1",
     "express": "^4.22.1",
     "framer-motion": "^12.23.24",
@@ -32,7 +34,9 @@
     "rxjs": "^7.8.0",
     "selfsigned": "^3.0.1",
     "tailwindcss": "^4.2.2",
-    "uuid": "^11.1.0"
+    "uuid": "^11.1.0",
+    "winston": "^3.19.0",
+    "winston-daily-rotate-file": "^5.0.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3.2.0",
@@ -131,34 +135,31 @@
   "scripts": {
     "nx": "nx",
     "graph": "nx graph",
-
     "dev": "nx dev web-manager",
     "dev:web-manager": "nx dev web-manager",
     "dev:api-server": "nx serve api-server",
     "dev:stack": "node tools/run-web-manager-https-stack.js",
     "dev:electron": "nx run desktop:serve",
-
     "e2e": "cd local-e2e && npx playwright test",
     "e2e:ui": "cd local-e2e && npx playwright test --ui",
     "e2e:report": "cd local-e2e && npx playwright show-report",
-
+    "e2e:electron": "npx playwright test --config=local-e2e-electron/playwright.config.js",
+    "e2e:electron:ui": "npx playwright test --config=local-e2e-electron/playwright.config.js --ui",
+    "e2e:electron:report": "npx playwright show-report local-e2e-electron/playwright-report",
+    "e2e:all": "npm run e2e && npm run e2e:electron",
     "build:web-manager": "nx build web-manager",
     "build:api-server": "nx build api-server",
     "build:server": "npm run build:web-manager && npm run build:api-server && node scripts/copy-web-to-api.mjs",
     "build": "nx run-many -t build --all",
-
     "start": "node dist/apps/api-server/main.js",
-
     "package:server": "npm run build:web-manager && nx run api-server:build:exe:all && node scripts/assemble-package.mjs all",
     "package:server:linux": "npm run build:web-manager && nx run api-server:build:exe:linux && node scripts/assemble-package.mjs linux",
     "package:server:win": "npm run build:web-manager && nx run api-server:build:exe:windows && node scripts/assemble-package.mjs win",
     "package:server:mac": "npm run build:web-manager && nx run api-server:build:exe:macos && node scripts/assemble-package.mjs mac",
-
     "package:electron": "nx run desktop:package",
     "package:electron:mac": "nx run desktop:package -- --mac",
     "package:electron:win": "nx run desktop:package -- --win",
     "package:electron:linux": "nx run desktop:package -- --linux",
-
     "lint": "nx run-many -t lint --all",
     "lint:web-manager": "nx lint web-manager",
     "lint:api-server": "nx lint api-server",
@@ -167,13 +168,10 @@
     "test:api-server": "nx test api-server",
     "typecheck:api-server": "npx tsc -p apps/api-server/tsconfig.app.json --noEmit",
     "ci": "npm run typecheck:api-server && npm run build",
-
     "ssl:local-prod": "bash scripts/generate-local-production-ssl.sh",
     "migrate-storage-master-key": "node scripts/migrate-storage-master-key.mjs",
-
     "preview:web-manager": "nx preview web-manager",
     "serve:web-manager:dist": "node tools/serve-web-manager.js",
-
     "pkg:api-server": "nx run api-server:build:exe",
     "pkg:api-server:linux": "nx run api-server:build:exe:linux",
     "pkg:api-server:windows": "nx run api-server:build:exe:windows",

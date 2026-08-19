@@ -73,9 +73,9 @@ const LogSection = ({ hostUid, path, isExpanded, onToggleExpanded, isDb }) => {
   const bgAccent = isDb ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-amber-50 dark:bg-amber-900/20';
 
   return (
-    <div className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-bk-side overflow-hidden shadow-xs transition-all">
+    <div data-testid={`log-section-${fileName}`} className="border border-slate-200 dark:border-slate-800 rounded-xl bg-white dark:bg-bk-side overflow-hidden shadow-xs transition-all">
       {/* Card Header */}
-      <div 
+      <div
         className="flex items-center justify-between px-4 py-3 bg-slate-50 dark:bg-white/2 cursor-pointer select-none border-b border-slate-200 dark:border-slate-800 hover:bg-slate-100 dark:hover:bg-white/4 transition-colors"
         onClick={onToggleExpanded}
       >
@@ -272,7 +272,7 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden">
+    <div data-testid="all-logs-viewer" className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden">
       {/* Top Toolbar */}
       <div className="shrink-0 px-5 py-3 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-4 shadow-xs z-10">
         <div className="flex items-center gap-3 min-w-0">
@@ -292,12 +292,14 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
         <div className="flex items-center gap-2 shrink-0">
           <div className="flex border border-slate-200 dark:border-white/10 rounded-lg overflow-hidden">
             <button
+              data-testid="all-logs-expand-all-btn"
               onClick={handleExpandAll}
               className="px-3 py-1.5 text-[11px] font-bold bg-white dark:bg-white/2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 border-r border-slate-200 dark:border-white/10 transition-colors"
             >
               {CM.expandAllBtn}
             </button>
             <button
+              data-testid="all-logs-collapse-all-btn"
               onClick={handleCollapseAll}
               className="px-3 py-1.5 text-[11px] font-bold bg-white dark:bg-white/2 hover:bg-slate-50 dark:hover:bg-white/5 text-slate-600 dark:text-slate-400 transition-colors"
             >
@@ -306,6 +308,7 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
           </div>
 
           <button
+            data-testid="all-logs-refresh-all-btn"
             onClick={handleRefreshAll}
             disabled={logsLoading}
             className={`flex items-center gap-1.5 h-8 px-3 rounded-lg border bg-transparent transition-all active:scale-[0.98] text-[11px] font-bold shadow-xs ${config.borderAccent}`}
@@ -315,6 +318,7 @@ function AllLogsViewer({ type = 'broker', hostUid, targetName }) {
           </button>
 
           <button
+            data-testid="all-logs-download-all-btn"
             onClick={handleDownloadAll}
             disabled={targetLogs.length === 0}
             className={`flex items-center gap-1.5 h-8 px-3 rounded-lg border bg-transparent transition-all active:scale-[0.98] text-[11px] font-bold shadow-xs ml-1 ${config.borderAccent}`}

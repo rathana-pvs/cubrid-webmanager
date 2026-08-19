@@ -21,21 +21,16 @@ const BASE_URL = process.env.BASE_URL || 'https://localhost:8080';
 
 module.exports = defineConfig({
   testDir: './tests',
-  fullyParallel: true,
+  // fullyParallel: false — 테스트를 직렬 실행해 CMS 동시 접속 충돌을 방지한다.
+  // 실제 CMS 서버는 동시 세션 수가 제한적이어서 병렬 실행 시 opacity-100 timeout이 발생한다.
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  // workers: 1 — 로컬에서도 직렬 실행. CI도 동일.
+  workers: 1,
   reporter: 'html',
-  webServer: {
-    // build:server must run before e2e so that dist/apps/api-server/main.js exists.
-    // reuseExistingServer:true reuses a running server so repeated runs skip the build.
-    command: 'npm run build:server && npm run start',
-    cwd: path.join(__dirname, '..'),
-    url: BASE_URL,
-    reuseExistingServer: true,
-    timeout: 180_000,
-    ignoreHTTPSErrors: true,
-  },
+  timeout: 60000,
+  // webServer 블록 없음 — npm run stack (또는 npm run dev:stack)을 먼저 실행한 뒤 playwright를 시작하세요.
   use: {
     baseURL: BASE_URL,
     trace: 'on-first-retry',
@@ -44,13 +39,14 @@ module.exports = defineConfig({
     ignoreHTTPSErrors: true,
   },
   projects: [
+    // Firefox는 npx playwright install firefox 로 바이너리 설치 후 아래 주석 해제
     {
       name: 'chromium',
       use: { ...devices['Desktop Chrome'] },
     },
-    {
-      name: 'firefox',
-      use: { ...devices['Desktop Firefox'] },
-    },
+    // {
+    //   name: 'firefox',
+    //   use: { ...devices['Desktop Firefox'] },
+    // },
   ],
 });

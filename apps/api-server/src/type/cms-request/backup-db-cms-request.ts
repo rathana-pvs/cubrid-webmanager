@@ -10,8 +10,8 @@ export type BackupDbCmsRequest = BaseCmsRequest & {
   task: 'backupdb';
   dbname: string;
   level: '0' | '1' | '2';
-  volname: string;
   backupdir: string;
+  volname: string;
   removelog: 'y' | 'n';
   check: 'y' | 'n';
   mt: string;

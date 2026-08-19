@@ -38,7 +38,7 @@ export const FormField = ({
       {children}
       
       {error && (
-        <Typography variant="p" className="mt-1 text-[9px] text-rose-500 font-medium tracking-tight ml-0.5">
+        <Typography variant="p" className="mt-1 text-[11px] text-rose-500! dark:text-rose-400! font-semibold tracking-tight ml-0.5">
           {error}
         </Typography>
       )}

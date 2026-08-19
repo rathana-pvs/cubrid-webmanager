@@ -55,7 +55,7 @@ const resolveApiBaseUrl = () => {
 
 const apiClient = axios.create({
   baseURL: resolveApiBaseUrl(),
-  timeout: 15000,
+  timeout: 60000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -235,7 +235,20 @@ apiClient.interceptors.response.use(
       const isAuthLoginRequest = requestUrl.includes('/auth/login');
       const isAuthLogoutRequest = requestUrl.includes('/auth/logout');
 
-      if (hostUid) {
+      // Both our own app-session JWT errors (JwtAuthGuard, AppError kind "AUTH")
+      // and CMS host-token errors (kind "CMS") use the same `code:
+      // "INVALID_TOKEN"` string, so `code` alone can't tell them apart. Every
+      // host-scoped route (including /:hostUid/cms-auth/login) also happens to
+      // carry a `hostUid` parsed from its URL, so without this check an expired
+      // APP session on a host-scoped page would be mistaken for a CMS
+      // host-token problem below — triggering a Reconnect-host prompt that can
+      // never succeed, since it itself needs a valid app JWT to even make the
+      // request. `kind` itself isn't sent to the client (see AppError.toProblemDetails),
+      // but it's embedded as the first path segment of `type`, e.g. "/errors/auth/invalid_token".
+      const errorType = apiData?.data?.type || apiData?.type || '';
+      const isAppSessionError = errorType.startsWith('/errors/auth/');
+
+      if (hostUid && !isAppSessionError) {
         if (isHostLoginRequest) {
           return Promise.reject(error);
         }

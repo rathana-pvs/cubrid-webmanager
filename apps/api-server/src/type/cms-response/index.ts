@@ -9,7 +9,7 @@ export * from './set-dbmt-passwd-cms-response';
 export * from './get-brokers-info-cms-response';
 export * from './get-broker-status-cms-response';
 export * from './get-add-broker-info-cms-response';
-export * from './start-broker-cms-response';
+export * from './start-all-brokers-cms-response';
 export * from './stop-all-brokers-cms-response';
 export * from './get-env-cms-response';
 export * from './start-info-cms-response';

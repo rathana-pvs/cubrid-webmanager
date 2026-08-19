@@ -10,7 +10,8 @@ export type CmsJobType =
   | 'copy'
   | 'addvol'
   | 'rename'
-  | 'backupdb';
+  | 'backupdb'
+  | 'restore';
 
 /**
  * Returned when a long-running CMS operation is accepted (HTTP 202).

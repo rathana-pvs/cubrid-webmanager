@@ -205,7 +205,7 @@ const Component = function DatabaseDashboard({ hostUid: propHostUid, dbname }) {
   };
 
   return (
-    <div className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden font-sans">
+    <div data-testid="database-dashboard" className="flex-1 flex flex-col h-full bg-white dark:bg-background-dark overflow-hidden font-sans">
       <header className="px-6 py-2.5 border-b border-slate-100 dark:border-white/4 flex items-center justify-between shrink-0 sticky top-0 z-20 bg-white dark:bg-background-dark">
         <div className="flex items-center gap-3">
           <div className="w-9 h-9 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center shrink-0 shadow-sm">
@@ -239,6 +239,7 @@ const Component = function DatabaseDashboard({ hostUid: propHostUid, dbname }) {
           </Typography>
 
           <button
+            data-testid="database-dashboard-refresh-btn"
             onClick={handleRefresh}
             disabled={isLoading || isManualRefreshing}
             className={`w-9 h-9 flex items-center justify-center rounded-xl border transition-all active:scale-[0.98]

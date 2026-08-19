@@ -72,12 +72,13 @@ export default function HostGroupNameModal() {
       icon={isRename ? 'edit' : 'create_new_folder'}
       loading={loading}
       maxWidth="max-w-[480px]"
+      testId="group-name"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose} disabled={loading}>
+          <Button data-testid="group-name-cancel-btn" variant="secondary" onClick={handleClose} disabled={loading}>
             {CM.cancel}
           </Button>
-          <Button variant="primary" onClick={handleSubmit} loading={loading} icon={isRename ? 'check' : 'add'}>
+          <Button data-testid="group-name-submit-btn" variant="primary" onClick={handleSubmit} loading={loading} icon={isRename ? 'check' : 'add'}>
             {isRename ? CM.save : CM.createGroup}
           </Button>
         </div>

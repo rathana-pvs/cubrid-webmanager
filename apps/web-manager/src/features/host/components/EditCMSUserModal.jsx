@@ -153,8 +153,8 @@ export default function EditCMSUserModal() {
   );
 
   if (isSuccess) return (
-    <Modal isOpen title={CM.success} icon="check_circle" iconVariant="success" onClose={handleClose} maxWidth="500px">
-      <ModalStatusSuccess title={CM.synchronizedStatus} onConfirm={handleClose} />
+    <Modal isOpen title={CM.success} icon="check_circle" iconVariant="success" onClose={handleClose} maxWidth="500px" testId="edit-cms-user">
+      <ModalStatusSuccess title={CM.operationComplete} onConfirm={handleClose} />
     </Modal>
   );
 
@@ -168,14 +168,16 @@ export default function EditCMSUserModal() {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
+      onSubmit={handleSave}
       title={isEditMode ? CM.editUser : CM.addUser}
       subtitle={isEditMode ? CM.editingUser(username) : CM.createManagementAccount}
       icon={isEditMode ? 'manage_accounts' : 'person_add'}
       maxWidth="540px"
+      testId="edit-cms-user"
       footer={
         <div className="flex justify-end gap-2 w-full">
-          <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button onClick={handleSave} disabled={!canSave}>
+          <Button data-testid="edit-cms-user-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+          <Button data-testid="edit-cms-user-save-btn" onClick={handleSave} disabled={!canSave}>
             {isEditMode ? CM.saveChanges : CM.addUser}
           </Button>
         </div>
@@ -195,6 +197,7 @@ export default function EditCMSUserModal() {
           <SectionHeader title={CM.accountInformation} icon="person" />
           <div className="space-y-4 px-1">
             <Input
+              data-testid="edit-cms-user-targetid-input"
               label={CM.loginIdLabel}
               value={formData.targetid}
               onChange={(e) => setFormData(p => ({ ...p, targetid: e.target.value }))}
@@ -204,6 +207,7 @@ export default function EditCMSUserModal() {
             />
             <div className="grid grid-cols-2 gap-4">
               <Input
+                data-testid="edit-cms-user-password-input"
                 label={CM.password}
                 type="password"
                 value={formData.password}
@@ -214,6 +218,7 @@ export default function EditCMSUserModal() {
                 error={passwordMismatch && formData.confirmPassword ? CM.passwordsDoNotMatch : null}
               />
               <Input
+                data-testid="edit-cms-user-confirm-password-input"
                 label={CM.passwordConfirm}
                 type="password"
                 value={formData.confirmPassword}
@@ -235,6 +240,7 @@ export default function EditCMSUserModal() {
               <div className="rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/70 dark:bg-white/2 p-4">
                 <div className="grid grid-cols-1 gap-4">
                   <Select
+                    testId="edit-cms-user-dbcreate-select"
                     label={CM.dbCreatePermission}
                     options={DB_CREATE_OPTIONS}
                     value={formData.dbcreate}

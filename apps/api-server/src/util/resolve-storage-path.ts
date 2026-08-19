@@ -10,19 +10,22 @@ import * as path from 'path';
  * @since 1.0.0
  */
 export function getStoragePath() {
+  const isPkg = !!(process as any).pkg;
+  // Packaged executables are meant to be launchable from any working
+  // directory (e.g. `nohup ./cwm-linux &` from $HOME) — resolving a relative
+  // STORAGE_PATH against process.cwd() would then silently pick a different
+  // directory every time depending on where it was started from, making
+  // previously-stored users/hosts disappear. Anchor relative paths to the
+  // executable's own directory instead, matching the no-override default
+  // below; only a genuinely absolute STORAGE_PATH is taken as-is.
+  const baseDir = isPkg ? path.dirname(process.execPath) : path.resolve(__dirname, '..', '..');
+
   const configuredPath = process.env.STORAGE_PATH?.trim();
   if (configuredPath) {
-    return path.resolve(configuredPath);
+    return path.isAbsolute(configuredPath) ? configuredPath : path.resolve(baseDir, configuredPath);
   }
 
-  const isPkg = !!(process as any).pkg;
-
-  if (isPkg) {
-    const executableDir = path.dirname(process.execPath);
-    return path.join(executableDir, 'storage');
-  } else {
-    return path.resolve(__dirname, '..', '..', 'storage');
-  }
+  return path.join(baseDir, 'storage');
 }
 
 /**

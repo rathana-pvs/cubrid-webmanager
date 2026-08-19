@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useSelector, useDispatch, shallowEqual } from 'react-redux';
 import { createDatabaseUser, updateDatabaseUser, fetchDatabaseUsers } from '../userSlice';
 import { fetchDatabaseClasses } from '../../database/databaseSlice';
@@ -88,6 +88,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
     groups: [],
     members: [],
   });
+  const [errors, setErrors] = useState({});
 
   const [draggedItem, setDraggedItem] = useState(null);
   const [searchTerm, setSearchTerm] = useState('')
@@ -98,59 +99,101 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
   const [objectSearchTerm, setObjectSearchTerm] = useState('');
   const [objectAuths, setObjectAuths] = useState({});
 
+  // Runs once per modal opening — NOT on every databaseUsers change. A prior
+  // version depended on databaseUsers.length here, so the post-save
+  // dispatch(fetchDatabaseUsers(...)) below (which changes that length) kept
+  // re-triggering this effect and calling resetAction(), silently reverting
+  // the just-shown success screen back to a blank form.
+  const hasInitializedRef = useRef(false);
   useEffect(() => {
-    if (isOpen && dbname && selectedHostUid) {
+    if (!isOpen) {
+      hasInitializedRef.current = false;
+      return;
+    }
+    if (hasInitializedRef.current) return;
+    hasInitializedRef.current = true;
+    setErrors({});
+
+    if (dbname && selectedHostUid) {
       resetAction();
       dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname }));
       const dbstatus = activeDatabases.includes(dbname) ? 'on' : 'off';
       dispatch(fetchDatabaseClasses({ hostUid: selectedHostUid, dbname, dbstatus }));
     }
-    
-    if (isOpen && databaseUsers.length > 0) {
-      const publicGroup = databaseUsers.find(u => u.name === 'PUBLIC');
-      if (publicGroup && !formData.groups.some(g => g.name === 'PUBLIC')) {
-        setFormData(prev => ({
-          ...prev,
-          groups: [...prev.groups, publicGroup]
-        }));
-      }
-    }
 
-    if (isOpen && isEditMode && databaseUsers.length > 0) {
-      const userToEdit = databaseUsers.find(u => (u.name || u) === editingUser);
-      if (userToEdit) {
-        const mappedGroups = (userToEdit.groups || []).map(g => 
-          typeof g === 'string' ? { name: g } : { ...g, name: g.name || g['@name'] }
-        );
-        const mappedMembers = (userToEdit.members || []).map(m => 
-          typeof m === 'string' ? { name: m } : { ...m, name: m.name || m['@name'] }
-        );
-
-        setFormData({
-          name: userToEdit.name || userToEdit,
-          password: '',
-          confirmPassword: '',
-          memo: userToEdit.comment || '',
-          groups: mappedGroups,
-          members: mappedMembers,
-        });
-        
-        if (userToEdit.authorization && userToEdit.authorization[0]) {
-          const authData = userToEdit.authorization[0];
-          const newObjectAuths = {};
-          Object.keys(authData).forEach(className => {
-            if (className !== 'id' && className !== 'name') {
-              newObjectAuths[className] = decodeCUBRIDAuth(authData[className]);
-            }
-          });
-          setObjectAuths(newObjectAuths);
-        }
-      }
-    } else if (isOpen && !isEditMode) {
+    if (!isEditMode) {
       setFormData({ name: '', password: '', confirmPassword: '', memo: '', groups: [], members: [] });
       setActiveTab('general');
     }
-  }, [isOpen, dbname, selectedHostUid, databaseUsers.length, isEditMode, editingUser, resetAction]);
+  }, [isOpen, dbname, selectedHostUid, isEditMode, activeDatabases, resetAction]);
+
+  // Reacts to the user list arriving (it may still be loading when the modal
+  // opens) — auto-assigns PUBLIC and, in edit mode, prefills the form. Uses
+  // functional updates / a guard ref instead of depending on databaseUsers.length
+  // directly, so it doesn't clobber in-progress edits on later refetches.
+  const prefilledEditUserRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen || databaseUsers.length === 0) return;
+
+    if (!isEditMode) {
+      const publicGroup = databaseUsers.find(u => u.name === 'PUBLIC');
+      if (publicGroup) {
+        setFormData(prev =>
+          prev.groups.some(g => g.name === 'PUBLIC')
+            ? prev
+            : { ...prev, groups: [...prev.groups, publicGroup] }
+        );
+      }
+      return;
+    }
+
+    if (prefilledEditUserRef.current === editingUser) return;
+    const userToEdit = databaseUsers.find(u => (u.name || u) === editingUser);
+    if (!userToEdit) return;
+    prefilledEditUserRef.current = editingUser;
+
+    // CMS's userinfo response wraps a user's groups/members as
+    // [{ group: ["PUBLIC", ...] }] / [{ member: [...] }] (an XML-to-JSON
+    // artifact) rather than a flat list — unwrap that shape first, on top
+    // of the plain-string / {name} shapes already handled below.
+    const unwrapCmsList = (list, wrapperKey) => {
+      if (!Array.isArray(list)) return [];
+      if (list.length === 1 && list[0] && Array.isArray(list[0][wrapperKey])) {
+        return list[0][wrapperKey];
+      }
+      return list;
+    };
+    const mappedGroups = unwrapCmsList(userToEdit.groups, 'group').map(g =>
+      typeof g === 'string' ? { name: g } : { ...g, name: g.name || g['@name'] }
+    );
+    const mappedMembers = unwrapCmsList(userToEdit.members, 'member').map(m =>
+      typeof m === 'string' ? { name: m } : { ...m, name: m.name || m['@name'] }
+    );
+
+    setFormData({
+      name: userToEdit.name || userToEdit,
+      password: '',
+      confirmPassword: '',
+      memo: userToEdit.comment || '',
+      groups: mappedGroups,
+      members: mappedMembers,
+    });
+
+    if (userToEdit.authorization && userToEdit.authorization[0]) {
+      const authData = userToEdit.authorization[0];
+      const newObjectAuths = {};
+      Object.keys(authData).forEach(className => {
+        if (className !== 'id' && className !== 'name') {
+          newObjectAuths[className] = decodeCUBRIDAuth(authData[className]);
+        }
+      });
+      setObjectAuths(newObjectAuths);
+    }
+  }, [isOpen, databaseUsers, isEditMode, editingUser]);
+
+  useEffect(() => {
+    if (!isOpen) prefilledEditUserRef.current = null;
+  }, [isOpen]);
 
   useEffect(() => {
     if (currentDbClasses && !selectedObjectId) {
@@ -166,6 +209,19 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
+  };
+
+  // Password is required when creating a new user; when editing, blank means
+  // "leave unchanged" (see the leaveBlankToKeep hint), so it's optional there.
+  const validate = () => {
+    const errs = {};
+    if (!formData.name.trim()) errs.name = CM.usernameRequired;
+    if (!isEditMode && !formData.password) errs.password = CM.passwordRequired;
+    if (formData.password && formData.password !== formData.confirmPassword) {
+      errs.confirmPassword = CM.passwordsDoNotMatch;
+    }
+    return errs;
   };
 
   const togglePermission = (objId, perm) => {
@@ -228,7 +284,11 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
   };
 
   const handleSave = async () => {
-    if (!formData.name) return;
+    const errs = validate();
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs);
+      return;
+    }
     startAction();
     const authList = Object.keys(objectAuths).map(objId => ({ classname: objId, auth: encodeCUBRIDAuth(objectAuths[objId]) }));
     try {
@@ -260,7 +320,7 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
 
   if (isSuccess) {
     return (
-      <Modal isOpen title={CM.success} icon="check_circle" iconVariant="success" onClose={onClose} maxWidth="max-w-[860px]">
+      <Modal isOpen title={CM.success} icon="check_circle" iconVariant="success" onClose={onClose} maxWidth="max-w-[860px]" testId="create-user">
         <ModalStatusSuccess
           title={isEditMode ? CM.userUpdated : CM.userCreated}
           message={`@${isEditMode ? editingUser : formData.name}`}
@@ -286,10 +346,12 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
     <Modal
       isOpen={isOpen}
       onClose={onClose}
+      onSubmit={handleSave}
       title={isEditMode ? CM.editUser : CM.createUser}
       subtitle={dbname}
       icon={isEditMode ? 'manage_accounts' : 'person_add'}
       maxWidth="max-w-[860px]"
+      testId="create-user"
       footer={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2 text-[11px] text-slate-400 font-medium">
@@ -297,8 +359,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
             <span className="opacity-60 font-mono">{dbname}</span>
           </div>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={onClose}>{CM.discard}</Button>
-            <Button onClick={handleSave} icon={isEditMode ? 'save' : 'person_add'} disabled={!formData.name} className="min-w-[140px]">
+            <Button data-testid="create-user-cancel-btn" variant="ghost" onClick={onClose}>{CM.cancel}</Button>
+            <Button data-testid="create-user-save-btn" onClick={handleSave} icon={isEditMode ? 'save' : 'person_add'} disabled={!formData.name} className="min-w-[140px]">
               {isEditMode ? CM.saveChanges : CM.createUser}
             </Button>
           </div>
@@ -346,10 +408,12 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <Input
+                    data-testid="create-user-username-input"
                     label={CM.username}
                     name="name"
                     value={formData.name}
                     onChange={handleInputChange}
+                    error={errors.name}
                     placeholder={CM.usernamePlaceholderHint}
                     disabled={isEditMode}
                     required
@@ -378,8 +442,8 @@ export default function CreateUserModal({ isOpen, onClose, dbname, editingUser }
                   )}
                 </div>
                 <div className="grid grid-cols-2 gap-4">
-                  <Input label={CM.newPassword} type="password" name="password" value={formData.password} onChange={handleInputChange} placeholder="••••••••" />
-                  <Input label={CM.passwordConfirm} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} placeholder="••••••••" />
+                  <Input data-testid="create-user-password-input" label={CM.newPassword} type="password" name="password" value={formData.password} onChange={handleInputChange} error={errors.password} placeholder="••••••••" required={!isEditMode} />
+                  <Input data-testid="create-user-confirm-password-input" label={CM.passwordConfirm} type="password" name="confirmPassword" value={formData.confirmPassword} onChange={handleInputChange} error={errors.confirmPassword} placeholder="••••••••" required={!isEditMode} />
                 </div>
                 {formData.password && formData.confirmPassword && formData.password !== formData.confirmPassword && (
                   <div className="flex items-center gap-2 text-[11px] text-rose-500 font-bold px-1">

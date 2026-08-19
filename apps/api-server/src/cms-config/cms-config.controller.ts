@@ -1,8 +1,7 @@
 import { Body, Controller, Get, Logger, Param, Post, Request } from '@nestjs/common';
-import { validateRequiredFields } from '@util';
 import { CmsConfigService } from './cms-config.service';
+import { BrokerSetParamDto } from '@type/index';
 import {
-  BrokerSetParamClientRequest,
   GetAddBrokerInfoClientResponse,
   GetEnvClientResponse,
   GetAllSysParamClientResponse,
@@ -222,10 +221,9 @@ export class CmsConfigController {
   async setBrokerParam(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: BrokerSetParamClientRequest
+    @Body() body: BrokerSetParamDto
   ): Promise<SetSysParamClientResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(body, ['confdata'], 'cms-config/broker-set-param', this.logger);
 
     this.logger.log(
       `Setting broker param for host: ${hostUid}`,

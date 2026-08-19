@@ -52,6 +52,7 @@ export default function DBSpaceInfoSection({ spaceInfo, pollingProps }) {
 
   return (
     <Card
+      testId="db-dashboard-space-info"
       title={
         <div className="flex items-center gap-2">
           <Icon name="file_present" size="sm" weight={300} className="text-amber-500" />

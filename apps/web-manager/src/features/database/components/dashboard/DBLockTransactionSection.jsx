@@ -110,6 +110,7 @@ export default function DBLockTransactionSection({ locks, pollingProps }) {
   return (
     <>
       <Card
+        testId="db-dashboard-lock-transaction"
         title={
           <div className="flex items-center gap-2">
             <Icon name="lock" size="sm" weight={300} className="text-amber-500" />

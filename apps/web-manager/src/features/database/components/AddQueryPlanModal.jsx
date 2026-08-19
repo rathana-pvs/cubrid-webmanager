@@ -201,10 +201,12 @@ export default function AddQueryPlanModal() {
       subtitle={CM.addQueryPlanSubtitle(selectedDatabase)}
       icon="bolt"
       maxWidth="max-w-[720px]"
+      testId="add-query-plan"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
+          <Button data-testid="add-query-plan-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
           <Button
+            data-testid="add-query-plan-save-btn"
             variant="primary"
             onClick={handleSave}
             icon="play_circle"

@@ -130,6 +130,33 @@ function resolveCwmConfDir(baseDir: string): string | null {
   return path.join(baseDir, CWM_CONF_SUBDIR);
 }
 
+/**
+ * Resolves the same cwm.conf path `loadRuntimeEnv()` reads at boot, so a
+ * hot-reload watcher can watch the exact file that was actually loaded
+ * rather than re-deriving (and potentially drifting from) the logic.
+ */
+export function resolveCwmConfPath(): string {
+  const isPkg = !!(process as any).pkg;
+  const baseDir = isPkg ? path.dirname(process.execPath) : process.cwd();
+  const confDir = resolveCwmConfDir(baseDir);
+  return path.join(confDir, CWM_CONF_FILENAME);
+}
+
+/**
+ * Re-reads cwm.conf and returns its raw key/value map, or `null` if the file
+ * is missing or fails to parse. Unlike `loadRuntimeEnv()`'s boot-time
+ * `readCwmConf`, this never throws — a malformed edit to a running server's
+ * config should be reported and ignored, not crash the process.
+ */
+export function readCwmConfSafe(confPath: string): CwmConf | null {
+  try {
+    if (!fs.existsSync(confPath)) return null;
+    return JSON.parse(fs.readFileSync(confPath, 'utf8')) as CwmConf;
+  } catch {
+    return null;
+  }
+}
+
 // ── entry point ──────────────────────────────────────────────────────────────
 
 /**

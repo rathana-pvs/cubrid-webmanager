@@ -1,13 +1,7 @@
-import { Body, Controller, Delete, Get, Logger, Post, Put, Request } from '@nestjs/common';
-import { validateRequiredFields } from '@util';
+import { Body, Controller, Delete, Get, Post, Put, Request } from '@nestjs/common';
 import { UserService } from './user.service';
-import { UserPreference, UserPreferenceDto } from '@type/index';
-import {
-  ChangePasswordRequest,
-  DeleteUserRequest,
-  UpdateUserInfoRequest,
-  UserResponse,
-} from '@api-interfaces';
+import { UserPreference, UserPreferenceDto, ChangePasswordDto, DeleteUserDto } from '@type/index';
+import { UpdateUserInfoRequest, UserResponse } from '@api-interfaces';
 
 /**
  * Controller for handling user-related operations.
@@ -21,8 +15,6 @@ import {
  */
 @Controller('user')
 export class UserController {
-  private readonly logger = new Logger(UserController.name);
-
   constructor(private readonly userService: UserService) {}
 
   /**
@@ -84,7 +76,7 @@ export class UserController {
    * ```
    */
   @Post('credential')
-  async changePassword(@Body() dto: ChangePasswordRequest, @Request() req): Promise<void> {
+  async changePassword(@Body() dto: ChangePasswordDto, @Request() req): Promise<void> {
     const userId = req.user.sub;
     await this.userService.changePassword(userId, dto);
   }
@@ -107,9 +99,7 @@ export class UserController {
    * ```
    */
   @Delete('account')
-  async deleteUser(@Request() req, @Body() body: DeleteUserRequest): Promise<boolean> {
-    validateRequiredFields(body, ['password'], 'user/account', this.logger);
-
+  async deleteUser(@Request() req, @Body() body: DeleteUserDto): Promise<boolean> {
     await this.userService.deleteUser(req.user.sub, body);
     return true;
   }

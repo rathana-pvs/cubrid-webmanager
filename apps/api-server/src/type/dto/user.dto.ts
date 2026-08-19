@@ -1,3 +1,5 @@
+import { IsNotEmpty, IsString } from 'class-validator';
+
 /**
  * Data Transfer Object for user authentication.
  *
@@ -8,6 +10,11 @@
  * @since 1.0.0
  */
 export class UserDTO {
+  @IsString()
+  @IsNotEmpty()
   id: string;
+
+  @IsString()
+  @IsNotEmpty()
   password: string;
 }

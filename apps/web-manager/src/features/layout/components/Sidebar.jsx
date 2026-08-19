@@ -27,7 +27,7 @@ import {
 
 import {
   createDatabase, copyDatabase, deleteDatabase, renameDatabase, fetchCreateDatabaseInfo,
-  addVolume, restoreDatabase, fetchBackupSchedule, addBackupSchedule,
+  addVolume, fetchBackupSchedule, addBackupSchedule,
   editBackupSchedule, deleteBackupSchedule, fetchBackupList, fetchBackupDbInfo,
   fetchAutoBackupLog, checkDatabase, compactDatabase, optimizeDatabase, loadDatabase,
   unloadDatabase, fetchQueryPlan, setAutoExecQuery, fetchQueryPlanLog, fetchLockInfo,
@@ -60,6 +60,8 @@ import {
   fetchDatabaseLogs,
   startBroker,
   stopBroker,
+  startAllBrokers,
+  stopAllBrokers,
   openBrokerPropertyModal,
   resetBrokerState
 } from '../../broker/brokerSlice';
@@ -90,12 +92,6 @@ import DatabaseTree from '../sidebar/components/DatabaseTree';
 import BrokerTree from '../sidebar/components/BrokerTree';
 import LogTree from '../sidebar/components/LogTree';
 import SidebarEmptyState from '../sidebar/components/SidebarEmptyState';
-import AddQueryPlanModal from '../../database/components/AddQueryPlanModal';
-import AutoQueryLogModal from '../../database/components/AutoQueryLogModal';
-import SetAutomationVolumeModal from '../../database/components/SetAutomationVolumeModal';
-import EditQueryPlanModal from '../../database/components/EditQueryPlanModal';
-import DeleteQueryPlanModal from '../../database/components/DeleteQueryPlanModal';
-import AutoVolumeLogModal from '../../database/components/AutoVolumeLogModal';
 import CMSUserManagementModal from '../../host/components/CMSUserManagementModal';
 import EditCMSUserModal from '../../host/components/EditCMSUserModal';
 import { openCreateGroupModal, openDeleteGroupModal, openRenameGroupModal, openAddHostModal, openManageGroupMembersModal } from '../../host/hostSlice';
@@ -509,6 +505,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                 )}
                 {!isServerListCollapsed && (
                   <button
+                    data-testid="add-host-toolbar-btn"
                     onClick={(e) => { e.stopPropagation(); onAddHost(); }}
                     className="flex items-center gap-1 h-6 px-2 rounded-sm border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-400 hover:text-amber-500 hover:border-amber-400/50 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 transition-all active:scale-95 shadow-xs"
                     title={CM.addHost}
@@ -519,6 +516,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                 )}
                 {!isServerListCollapsed && (
                   <button
+                    data-testid="new-group-toolbar-btn"
                     onClick={(e) => { e.stopPropagation(); dispatch(openCreateGroupModal()); }}
                     className="flex items-center gap-1 h-6 px-2 rounded-sm border border-slate-200 dark:border-white/10 bg-white dark:bg-white/4 text-slate-400 hover:text-amber-500 hover:border-amber-400/50 hover:bg-amber-500/5 dark:hover:bg-amber-500/10 transition-all active:scale-95 shadow-xs"
                     title={CM.newGroup}
@@ -676,7 +674,19 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                       onLogTabContextMenu={handleLogTabContextMenu}
                     />
 
-                    <div className="flex-1 overflow-y-auto px-4 pb-4 relative min-h-[200px]">
+                    <div
+                      className="flex-1 overflow-y-auto px-4 pb-4 relative min-h-[200px]"
+                      onContextMenu={(e) => {
+                        // Tree rows stopPropagation() on their own context menu (see
+                        // TreeNode.jsx), so this only ever fires for genuinely blank
+                        // space — including below a short list, which the per-tree
+                        // root handlers (wrapped tightly around their own content)
+                        // never covered.
+                        if (activeTab === 'db') handleDbRootContextMenu(e);
+                        else if (activeTab === 'broker') handleBrokerRootContextMenu(e);
+                        else if (activeTab === 'log') handleLogTabContextMenu(e);
+                      }}
+                    >
                       {/* States Overlay - Full screen fixed overlay directly handled by component */}
                       {sidebarActionLoading && (
                         <RefreshingOverlay 
@@ -706,9 +716,14 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                   )}
 
 
-                  <div className={`mt-2 ${(!authorizedHosts.includes(selectedHostUid) || isLoggingIntoHost) ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`} id="db-tree-container">
+                  <div
+                    className={`mt-2 ${(!authorizedHosts.includes(selectedHostUid) || isLoggingIntoHost) ? 'opacity-20 blur-[1px] pointer-events-none' : 'opacity-100'}`}
+                    id="db-tree-container"
+                    data-authorized={authorizedHosts.includes(selectedHostUid) && !isLoggingIntoHost}
+                  >
                     <div className={activeTab !== 'db' ? 'hidden' : ''}>
                       <DatabaseTree
+                        key={selectedHostUid}
                         onContextMenu={handleDbContextMenu}
                         onRootContextMenu={handleDbRootContextMenu}
                         onUsersContextMenu={handleUsersContextMenu}
@@ -720,7 +735,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
                         onQueryItemContextMenu={handleQueryItemContextMenu}
                       />
                     </div>
-                    <div className={activeTab !== 'broker' ? 'hidden' : ''}>
+                    <div id="broker-tree-container" className={activeTab !== 'broker' ? 'hidden' : ''}>
                       <BrokerTree
                         key={selectedHostUid}
                         hostUid={selectedHostUid}
@@ -993,11 +1008,11 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
           <MenuDivider />
           <SubMenu icon="settings" label={CM.manageDatabase}>
             <MenuItem icon="upload" label={CM.manageDatabaseMenu.unload} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openUnloadDatabaseModal(dbContextMenu.db)); setDbContextMenu(null); }} />
-            <MenuItem icon="download" label={CM.manageDatabaseMenu.load} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openLoadDatabaseModal(dbContextMenu.db)); setDbContextMenu(null); }} />
+            <MenuItem icon="download" label={CM.manageDatabaseMenu.load} disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openLoadDatabaseModal(dbContextMenu.db)); setDbContextMenu(null); }} />
             <MenuItem icon="check_circle" label={CM.manageDatabaseMenu.check} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCheckDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="compress" label={CM.manageDatabaseMenu.compact} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCompactDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="auto_fix_high" label={CM.manageDatabaseMenu.optimize} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openOptimizeDatabaseModal()); setDbContextMenu(null); }} />
-            <MenuItem icon="content_copy" label={CM.manageDatabaseMenu.copy} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCopyDatabaseModal()); setDbContextMenu(null); }} />
+            <MenuItem icon="content_copy" label={CM.manageDatabaseMenu.copy} disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openCopyDatabaseModal()); setDbContextMenu(null); }} />
             <MenuDivider />
             <MenuItem icon="drive_file_rename_outline" label={CM.manageDatabaseMenu.rename} disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRenameDatabaseModal()); setDbContextMenu(null); }} />
             <MenuItem icon="restore" label={CM.manageDatabaseMenu.restore} disabled={dbContextMenu.isActive} onClick={() => { dispatch(setSelectedDatabase(dbContextMenu.db)); dispatch(openRestoreDatabaseModal()); setDbContextMenu(null); }} />
@@ -1145,12 +1160,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               setLoadingText(CM.startingAllBrokersMsg);
               startAction();
               try {
-                for (const broker of brokers) {
-                  if (broker.state !== 'ON') {
-                    await dispatch(startBroker({ hostUid: selectedHostUid, brokerName: broker.name })).unwrap();
-                  }
-                }
-                dispatch(fetchBrokerList(selectedHostUid));
+                await dispatch(startAllBrokers(selectedHostUid)).unwrap();
                 resetAction();
               } catch (err) {
                 endError(err);
@@ -1165,12 +1175,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               setLoadingText(CM.stoppingAllBrokersMsg);
               startAction();
               try {
-                for (const broker of brokers) {
-                  if (broker.state === 'ON') {
-                    await dispatch(stopBroker({ hostUid: selectedHostUid, brokerName: broker.name })).unwrap();
-                  }
-                }
-                dispatch(fetchBrokerList(selectedHostUid));
+                await dispatch(stopAllBrokers(selectedHostUid)).unwrap();
                 resetAction();
               } catch (err) {
                 endError(err);
@@ -1185,14 +1190,8 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
               setLoadingText(CM.restartingAllBrokersMsg);
               startAction();
               try {
-                const currentActive = brokers.filter(b => b.state === 'ON').map(b => b.name);
-                for (const name of currentActive) {
-                  await dispatch(stopBroker({ hostUid: selectedHostUid, brokerName: name })).unwrap();
-                }
-                for (const name of currentActive) {
-                  await dispatch(startBroker({ hostUid: selectedHostUid, brokerName: name })).unwrap();
-                }
-                dispatch(fetchBrokerList(selectedHostUid));
+                await dispatch(stopAllBrokers(selectedHostUid)).unwrap();
+                await dispatch(startAllBrokers(selectedHostUid)).unwrap();
                 resetAction();
               } catch (err) {
                 endError(err);
@@ -1611,6 +1610,7 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
             icon="refresh"
             label={CM.refresh}
             onClick={() => {
+              dispatch(fetchDatabaseSpaceInfo({ hostUid: selectedHostUid, dbname: spaceContextMenu.db }));
               setSpaceContextMenu(null);
             }}
           />
@@ -1732,12 +1732,6 @@ export default function Sidebar({ isCollapsed, onAddHost }) {
         </ContextMenuWrapper>
       )}
 
-      <AutoQueryLogModal />
-      <AddQueryPlanModal />
-      <SetAutomationVolumeModal />
-      <EditQueryPlanModal />
-      <DeleteQueryPlanModal />
-      <AutoVolumeLogModal />
       <CMSUserManagementModal />
       <EditCMSUserModal />
       <ConfirmDialog

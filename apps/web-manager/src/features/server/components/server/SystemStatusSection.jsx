@@ -163,6 +163,7 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
 
   return (
     <Card
+      testId="server-dashboard-system-status"
       title={
         <div className="flex items-center justify-between w-full">
           <div className="flex items-center gap-2">

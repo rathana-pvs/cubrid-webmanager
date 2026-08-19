@@ -3,6 +3,7 @@ import { Injectable } from '@nestjs/common';
 import { parseCliArgs } from './parse-cli-args';
 import { parseBooleanEnv } from './parse-boolean-env';
 import { deriveSecretKeyHexFromSeedSalt } from './master-key';
+import { getLogPath } from '../util/resolve-log-path';
 
 /**
  * Application configuration from env (after `loadRuntimeEnv`) with optional CLI overrides.
@@ -23,6 +24,12 @@ export class ConfigService {
   public listenHost?: string;
   private readonly listenUnixSocket?: string;
   private readonly cmsCaCert?: string;
+  private logToFile!: boolean;
+  private logDir!: string;
+  private logLevel!: string;
+  private logMaxSize!: string;
+  private logMaxFiles!: string;
+  private logAppendOnRestart!: boolean;
 
   constructor() {
     const args = parseCliArgs(process.argv.slice(2));
@@ -48,6 +55,8 @@ export class ConfigService {
     this.cmsForwardEnabled = this.resolveCmsForwardEnabled(args);
     this.authRegistrationEnabled = this.resolveAuthRegistrationEnabled(args);
     this.cmsCaCert = this.resolveCmsCaCert(args);
+
+    this.resolveLogSettings(args);
 
     if (args.PORT) {
       const portNumber = parseInt(args.PORT, 10);
@@ -131,6 +140,52 @@ export class ConfigService {
     return this.authRegistrationEnabled;
   }
 
+  isLogToFileEnabled(): boolean {
+    return this.logToFile;
+  }
+
+  getLogDir(): string {
+    return this.logDir;
+  }
+
+  getLogLevel(): string {
+    return this.logLevel;
+  }
+
+  getLogMaxSize(): string {
+    return this.logMaxSize;
+  }
+
+  getLogMaxFiles(): string {
+    return this.logMaxFiles;
+  }
+
+  isLogAppendOnRestart(): boolean {
+    return this.logAppendOnRestart;
+  }
+
+  /**
+   * Re-resolves LOG_* fields from the current `process.env` (CLI args are
+   * intentionally not re-read — they can't change at runtime anyway). Called
+   * by the cwm.conf hot-reload watcher after it force-updates `process.env`
+   * with the file's latest values, so a running server picks up new log
+   * settings without a restart. See watch-log-config.ts.
+   */
+  reloadLogSettingsFromEnv(): void {
+    this.resolveLogSettings({});
+  }
+
+  private resolveLogSettings(args: Record<string, string>): void {
+    this.logToFile = this.resolveLogToFile(args);
+    this.logDir = args.LOG_DIR?.trim() || getLogPath();
+    // Vocabulary matches NestJS's own levels (log/error/warn/debug/verbose),
+    // not winston's npm defaults — see winston-logger.ts's NEST_LEVELS.
+    this.logLevel = (args.LOG_LEVEL ?? process.env.LOG_LEVEL ?? (this.isProduction() ? 'log' : 'debug')).toLowerCase();
+    this.logMaxSize = args.LOG_MAX_SIZE ?? process.env.LOG_MAX_SIZE ?? '20m';
+    this.logMaxFiles = args.LOG_MAX_FILES ?? process.env.LOG_MAX_FILES ?? '14d';
+    this.logAppendOnRestart = this.resolveLogAppendOnRestart(args);
+  }
+
   private resolveCmsRejectUnauthorized(args: Record<string, string>): boolean {
     const raw = args.CMS_REJECT_UNAUTHORIZED ?? process.env.CMS_REJECT_UNAUTHORIZED;
     if (raw != null && raw !== '') {
@@ -173,6 +228,27 @@ export class ConfigService {
     }
 
     return fs.readFileSync(certPath, 'utf8');
+  }
+
+  private resolveLogToFile(args: Record<string, string>): boolean {
+    const raw = args.LOG_TO_FILE ?? process.env.LOG_TO_FILE;
+    if (raw != null && raw !== '') {
+      return parseBooleanEnv(raw);
+    }
+
+    // On by default — this is the whole point of the feature. Operators who
+    // only want console/journald output can set LOG_TO_FILE=false.
+    return true;
+  }
+
+  private resolveLogAppendOnRestart(args: Record<string, string>): boolean {
+    const raw = args.LOG_APPEND_ON_RESTART ?? process.env.LOG_APPEND_ON_RESTART;
+    if (raw != null && raw !== '') {
+      return parseBooleanEnv(raw);
+    }
+
+    // Default: keep logs across restarts (safer for post-incident analysis).
+    return true;
   }
 
   private setAllowedOrigins(allowedOrigins: string | undefined, desktopMode: boolean): void {

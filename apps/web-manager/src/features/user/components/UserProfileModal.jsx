@@ -90,7 +90,7 @@ export default function UserProfileModal({ isOpen, onClose }) {
   const footer = editMode ? (
     <>
       <Button variant="ghost" onClick={handleCancel} disabled={loading || globalLoading}>
-        {CM.discard}
+        {CM.cancel}
       </Button>
       <Button
         onClick={handleSave}

@@ -84,6 +84,7 @@ export default function DBBrokersCASSection({ brokersCAS, pollingProps, onViewSQ
 
   return (
     <Card
+      testId="db-dashboard-cas"
       title={
         <div className="flex items-center gap-3">
           <Icon name="dns" size="sm" weight={300} className="text-amber-500" />

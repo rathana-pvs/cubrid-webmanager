@@ -110,7 +110,7 @@ export default function SuggestedHaNodesModal() {
       footer={
         <>
           <Button variant="secondary" onClick={() => dispatch(clearSuggestedHaNodes())}>
-            {CM.discard}
+            {CM.cancel}
           </Button>
           <Button 
             variant="primary" 

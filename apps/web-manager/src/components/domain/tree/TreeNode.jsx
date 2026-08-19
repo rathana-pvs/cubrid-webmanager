@@ -91,6 +91,7 @@ export const TreeNode = React.memo(({
   if (!hasChildren && !children && !isLoading) {
     return (
       <button
+        data-testid={id != null ? `tree-node-${id}` : undefined}
         className={summaryClasses}
         onClick={handleSelect}
         onContextMenu={handleContextMenu}
@@ -110,6 +111,7 @@ export const TreeNode = React.memo(({
         />
         <Typography
           variant="span"
+          title={typeof label === 'string' ? label : undefined}
           className={`text-[13px] font-mono truncate flex-1 ${
             isActive ? 'font-semibold' : 'font-medium'
           }`}
@@ -123,6 +125,8 @@ export const TreeNode = React.memo(({
 
   return (
     <details
+      id={id}
+      data-testid={id != null ? `tree-node-${id}` : undefined}
       className="group/details block"
       onToggle={isControlled ? undefined : handleToggle}
       open={displayOpen}
@@ -163,6 +167,7 @@ export const TreeNode = React.memo(({
 
         <Typography
           variant="span"
+          title={typeof label === 'string' ? label : undefined}
           className={`text-[13px] font-mono truncate flex-1 ${
             isActive ? 'font-semibold' : 'font-medium'
           }`}

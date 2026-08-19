@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { closeEditQueryPlanModal, setAutoExecQuery, fetchQueryPlan } from '../databaseSlice';
+import { closeEditQueryPlanModal, updateAutoExecQueryPlan, fetchQueryPlan } from '../databaseSlice';
 import Editor from '@monaco-editor/react';
 import { useCM } from '../../../constants/useCM';
 
@@ -174,10 +174,6 @@ export default function EditQueryPlanModal() {
       detail = `${dayNums} ${formData.backupTime}`;
     }
 
-    // IMPORTANT: CUBRID API usually requires sending the full list for a database.
-    const currentPlans = queryPlans[selectedDatabase] || [];
-    const otherPlans = currentPlans.filter(p => p.query_id !== selectedQueryPlanId);
-    
     const updatedPlan = {
       query_id: formData.queryId.trim(),
       username: formData.username,
@@ -187,25 +183,8 @@ export default function EditQueryPlanModal() {
       query_string: queryString
     };
 
-    const payload = {
-      dbname: selectedDatabase,
-      planlist: [{
-        queryplan: [
-            ...otherPlans.map(p => ({
-                query_id: p.query_id,
-                username: p.username,
-                userpass: p.userpass || '',
-                period: p.period,
-                detail: p.detail,
-                query_string: p.query_string
-            })),
-            updatedPlan
-        ]
-      }]
-    };
-
     try {
-      await dispatch(setAutoExecQuery({ hostUid: selectedHostUid, dbname: selectedDatabase, payload })).unwrap();
+      await dispatch(updateAutoExecQueryPlan({ hostUid: selectedHostUid, dbname: selectedDatabase, plan: updatedPlan })).unwrap();
       endSuccess(CM.planUpdatedMsg(formData.queryId));
       dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: selectedDatabase }));
     } catch (err) {
@@ -266,10 +245,11 @@ export default function EditQueryPlanModal() {
       subtitle={CM.editQueryPlanSubtitle(selectedDatabase)}
       icon="edit"
       maxWidth="max-w-[720px]"
+      testId="edit-query-plan"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
-          <Button variant="primary" onClick={handleSave} icon="save" className="min-w-[140px]">{CM.saveChanges}</Button>
+          <Button data-testid="edit-query-plan-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+          <Button data-testid="edit-query-plan-save-btn" variant="primary" onClick={handleSave} icon="save" className="min-w-[140px]">{CM.saveChanges}</Button>
         </div>
       }
     >

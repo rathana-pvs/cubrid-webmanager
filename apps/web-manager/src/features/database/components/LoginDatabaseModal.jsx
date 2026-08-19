@@ -133,10 +133,11 @@ export default function LoginDatabaseModal() {
       subtitle={CM.loginDatabaseMsg}
       icon="lock"
       maxWidth="440px"
+      testId="login-database"
       footer={
         <div className="flex justify-end gap-2 w-full">
-          <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button variant="primary" onClick={handleLogin} icon="login">{CM.ok}</Button>
+          <Button data-testid="login-database-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+          <Button data-testid="login-database-submit-btn" variant="primary" onClick={handleLogin} icon="login">{CM.ok}</Button>
         </div>
       }
     >

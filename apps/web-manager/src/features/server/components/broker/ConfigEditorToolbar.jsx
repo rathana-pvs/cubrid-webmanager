@@ -32,6 +32,7 @@ export default function ConfigEditorToolbar({
 
         {/* Undo — bordered icon */}
         <button
+          data-testid="broker-config-undo-btn"
           onClick={handleUndo}
           disabled={!hasChanges || loading || saving}
           title={CM.undoAllChanges}
@@ -42,6 +43,7 @@ export default function ConfigEditorToolbar({
 
         {/* Refresh — bordered icon */}
         <button
+          data-testid="broker-config-refresh-btn"
           onClick={fetchConfig}
           disabled={loading || saving}
           title={CM.reloadConfig}
@@ -62,6 +64,7 @@ export default function ConfigEditorToolbar({
 
         {/* Save */}
         <button
+          data-testid="broker-config-save-btn"
           onClick={handleSave}
           disabled={!hasChanges || saving || loading}
           title={CM.saveChanges}

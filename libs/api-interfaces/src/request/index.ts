@@ -35,6 +35,7 @@ export * from './set-auto-exec-query-client-request';
 export * from './get-auto-exec-query-client-request';
 export * from './append-auto-exec-query-plan-request';
 export * from './remove-auto-exec-query-plan-request';
+export * from './update-auto-exec-query-plan-request';
 export * from './create-database-client-request';
 export * from './sava-database-profile';
 export * from './add-dbname-to-server-client-request';

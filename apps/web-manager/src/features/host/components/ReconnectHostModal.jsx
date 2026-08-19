@@ -141,17 +141,20 @@ export default function ReconnectHostModal() {
       iconVariant="warning"
       loading={isReconnecting}
       maxWidth="max-w-[440px]"
+      testId="reconnect-host"
       footer={
         <>
-          <Button 
-            variant="secondary" 
+          <Button
+            data-testid="reconnect-host-disconnect-btn"
+            variant="secondary"
             onClick={handleDisconnect}
             disabled={isReconnecting}
           >
             {CM.disconnect || 'Disconnect'}
           </Button>
-          <Button 
-            variant="primary" 
+          <Button
+            data-testid="reconnect-host-reconnect-btn"
+            variant="primary"
             onClick={handleReconnect}
             loading={isReconnecting}
             icon="sync"

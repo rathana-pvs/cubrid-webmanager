@@ -117,6 +117,7 @@ export default function DBPerformanceSection({ dbStats, pollingProps }) {
 
   return (
     <Card
+      testId="db-dashboard-performance"
       title={
         <div className="flex items-center gap-2">
           <Icon name="monitoring" size="sm" weight={300} className="text-amber-500" />

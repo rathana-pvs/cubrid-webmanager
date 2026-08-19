@@ -7,8 +7,6 @@
 export type BackupDbClientRequest = {
   /** Backup level: 0, 1, or 2 */
   level: '0' | '1' | '2';
-  /** Volume name for backup (e.g. demodb_backup_lv0) */
-  volname: string;
   /** Backup directory path */
   backupdir: string;
   /** Remove log after backup: 'y' | 'n' */

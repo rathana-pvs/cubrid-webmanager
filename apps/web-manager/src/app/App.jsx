@@ -180,16 +180,6 @@ function DashboardLayout() {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [dispatch]);
 
-  useEffect(() => {
-    if (theme === 'dark') {
-      document.documentElement.classList.add('dark');
-      document.documentElement.classList.remove('light');
-    } else {
-      document.documentElement.classList.add('light');
-      document.documentElement.classList.remove('dark');
-    }
-  }, [theme]);
-
   // Construct dynamic loading message
   const getLoadingSubtitle = () => {
     if (isServiceOperating) {
@@ -498,6 +488,8 @@ function RootRedirect() {
 }
 
 function App() {
+  const { theme } = useSelector((state) => state.layout, shallowEqual);
+
   useEffect(() => {
     if (window.desktopBridge?.onCloseActiveTab) {
       const unsubscribe = window.desktopBridge.onCloseActiveTab(() => {
@@ -510,6 +502,18 @@ function App() {
       return unsubscribe;
     }
   }, []);
+
+  // Applied here (not inside DashboardLayout) so it runs on every route,
+  // including pre-auth pages like /login that DashboardLayout never renders.
+  useEffect(() => {
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
+  }, [theme]);
 
   return (
     <Routes>

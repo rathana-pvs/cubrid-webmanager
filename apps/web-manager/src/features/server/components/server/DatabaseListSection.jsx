@@ -62,6 +62,7 @@ export default function DatabaseListSection({ dbListDisplay, handleAutoStartTogg
 
   return (
     <Card
+      testId="server-dashboard-database-list"
       title={
         <div className="flex items-center gap-2">
           <Icon name="database" size="sm" weight={300} className="text-amber-500" />

@@ -10,7 +10,7 @@ import { Icon } from '../foundation/Icon';
  * @param {string} className - Optional extra wrapper classes
  * @param {boolean} fullWidth - Stretch to fit container
  */
-export function TabGroup({ tabs = [], active, onChange, className = '', fullWidth = true }) {
+export function TabGroup({ tabs = [], active, onChange, className = '', fullWidth = true, testId }) {
   return (
     <div className={`flex gap-1 p-1 bg-slate-100 dark:bg-white/4 rounded-xl ${fullWidth ? 'w-full' : 'w-fit'} ${className}`}>
       {tabs.map(tab => {
@@ -18,6 +18,7 @@ export function TabGroup({ tabs = [], active, onChange, className = '', fullWidt
         return (
           <button
             key={tab.id}
+            data-testid={testId ? `${testId}-${tab.id}` : undefined}
             onClick={() => onChange(tab.id)}
             className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all duration-200
               ${isActive

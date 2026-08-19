@@ -109,7 +109,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
   const lineCount = content.split('\n').length;
 
   return (
-    <div className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden font-sans transition-colors">
+    <div data-testid="cubrid-config-editor" className="flex-1 flex flex-col bg-slate-50 dark:bg-bk-main overflow-hidden font-sans transition-colors">
 
       {/* ── Toolbar ─────────────────────────────────────────────────────────── */}
       <div className="shrink-0 px-4 py-2.5 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800 flex items-center justify-between gap-3 z-10">
@@ -129,6 +129,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
         <div className="flex items-center gap-1.5 shrink-0">
           {/* Undo */}
           <button
+            data-testid="cubrid-config-undo-btn"
             onClick={handleUndo}
             disabled={!hasChanges || loading || saving}
             title={CM.undoAllChanges}
@@ -139,6 +140,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
 
           {/* Refresh */}
           <button
+            data-testid="cubrid-config-refresh-btn"
             onClick={fetchConfig}
             disabled={loading || saving}
             title={CM.reloadConfig}
@@ -156,6 +158,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
 
           {/* Save */}
           <button
+            data-testid="cubrid-config-save-btn"
             onClick={handleSave}
             disabled={!hasChanges || saving || loading}
             title={CM.saveChanges}
@@ -213,6 +216,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
 
               {/* Edit layer */}
               <textarea
+                data-testid="cubrid-config-textarea"
                 ref={textareaRef}
                 value={content}
                 onChange={handleSourceChange}

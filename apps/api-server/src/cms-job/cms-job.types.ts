@@ -10,6 +10,7 @@ import {
   LoadDatabaseRequest,
   OptimizeDatabaseRequest,
   RenameDatabaseRequest,
+  RestoreDbClientRequest,
   UnloadDatabaseRequest,
 } from '@api-interfaces';
 
@@ -23,7 +24,8 @@ export type CmsJobPayload =
   | CopyDbRequest
   | AddVolDbRequest
   | RenameDatabaseRequest
-  | BackupDbClientRequest;
+  | BackupDbClientRequest
+  | RestoreDbClientRequest;
 
 export type CmsJobRecord = {
   jobId: string;
@@ -40,8 +42,17 @@ export type CmsJobRecord = {
   error?: { message: string; code?: string; cmsStatus?: string };
 };
 
-export function buildOperationKey(userId: string, hostUid: string, dbname: string): string {
-  return JSON.stringify([userId, hostUid, dbname]);
+// Deliberately NOT keyed by userId or hostUid — both are per-account values
+// (each user registers "the same" physical CMS host under their own hostUid),
+// so a userId/hostUid-scoped key can't stop two different users from running
+// conflicting jobs (e.g. loaddb twice) against the same physical database at
+// once. CUBRID's engine has no notion of "web-manager operation locks" and
+// will happily run both loaddb processes concurrently, racing on the same
+// catalog/heap pages — this is what actually corrupts the database, not just
+// what our lock was supposed to prevent. Keyed by the physical host address
+// instead, so the lock is shared across every user who points at that host.
+export function buildOperationKey(hostKey: string, dbname: string): string {
+  return JSON.stringify([hostKey, dbname]);
 }
 
 export function resolveJobDbname(type: CmsJobType, dbname: string, payload: CmsJobPayload): string {

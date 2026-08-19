@@ -95,17 +95,19 @@ export default function DatabasePlanDumpModal() {
       subtitle={CM.displayQueryPlan}
       icon="schema"
       maxWidth={step === 'results' ? 'max-w-[780px]' : 'max-w-[460px]'}
+      testId="plan-dump"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button data-testid="plan-dump-close-btn" variant="secondary" onClick={handleClose}>
             {step === 'setup' ? CM.cancel : CM.close}
           </Button>
           {step === 'setup' ? (
-            <Button variant="primary" onClick={handleRunDump} loading={planDumpLoading} icon="play_circle">
+            <Button data-testid="plan-dump-run-btn" variant="primary" onClick={handleRunDump} loading={planDumpLoading} icon="play_circle">
               {CM.runDumpBtn}
             </Button>
           ) : (
             <Button
+              data-testid="plan-dump-back-btn"
               variant="secondary"
               onClick={() => setStep('setup')}
               icon="arrow_back"

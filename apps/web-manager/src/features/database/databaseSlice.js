@@ -22,10 +22,10 @@ export {
 
 export {
   createDatabase, copyDatabase, deleteDatabase, renameDatabase, fetchCreateDatabaseInfo,
-  addVolume, restoreDatabase, fetchBackupSchedule, addBackupSchedule,
+  addVolume, fetchBackupSchedule, addBackupSchedule,
   editBackupSchedule, deleteBackupSchedule, fetchBackupList, fetchBackupDbInfo,
   fetchAutoBackupLog, checkDatabase, compactDatabase, optimizeDatabase, loadDatabase,
-  unloadDatabase, fetchQueryPlan, setAutoExecQuery, appendAutoExecQueryPlan, removeAutoExecQueryPlan, fetchQueryPlanLog, fetchLockInfo,
+  unloadDatabase, fetchQueryPlan, setAutoExecQuery, appendAutoExecQueryPlan, updateAutoExecQueryPlan, removeAutoExecQueryPlan, fetchQueryPlanLog, fetchLockInfo,
   fetchTransactionInfo, killTransaction, clearError
 } from './databaseOperationSlice';
 

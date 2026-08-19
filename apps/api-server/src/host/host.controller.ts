@@ -1,41 +1,31 @@
-import { Body, Controller, Delete, Get, Logger, Param, Post, Put, Request } from '@nestjs/common';
+import { Body, Controller, Delete, Get, Param, Post, Put, Request } from '@nestjs/common';
+import { GetHostsResponse, HostResponse } from '@api-interfaces';
+import { HostService } from './host.service';
 import {
-  AddHostRequest,
-  CreateHostGroupRequest,
-  GetHostsResponse,
-  HostResponse,
-  UpdateHostGroupRequest,
-  UpdateHostClientRequest,
-  MoveHostRequest,
-} from '@api-interfaces';
-import { HostService, AddHostPayload } from './host.service';
-import { validateRequiredFields } from '@util';
+  AddHostDto,
+  CreateHostGroupDto,
+  UpdateHostGroupDto,
+  MoveHostDto,
+  UpdateHostClientDto,
+  MarkHaDto,
+} from '@type/index';
 
 @Controller('host')
 export class HostController {
-  private readonly logger = new Logger(HostController.name);
-
   constructor(private readonly hostService: HostService) {}
 
   @Post()
-  async addHost(@Request() request, @Body() hostInfo: AddHostPayload): Promise<GetHostsResponse> {
+  async addHost(@Request() request, @Body() hostInfo: AddHostDto): Promise<GetHostsResponse> {
     const userId = request.user.sub;
-    validateRequiredFields(
-      hostInfo,
-      ['address', 'port', 'id', 'password', 'alias'],
-      'host/add',
-      this.logger
-    );
     return { host_groups: await this.hostService.addHost(userId, hostInfo) };
   }
 
   @Post('group')
   async createGroup(
     @Request() request,
-    @Body() body: CreateHostGroupRequest
+    @Body() body: CreateHostGroupDto
   ): Promise<GetHostsResponse> {
     const userId = request.user.sub;
-    validateRequiredFields(body, ['name'], 'host/group/create', this.logger);
     return { host_groups: await this.hostService.createHostGroup(userId, body.name) };
   }
 
@@ -43,7 +33,7 @@ export class HostController {
   async updateGroup(
     @Request() request,
     @Param('groupId') groupId: string,
-    @Body() body: UpdateHostGroupRequest
+    @Body() body: UpdateHostGroupDto
   ): Promise<GetHostsResponse> {
     const userId = request.user.sub;
     return { host_groups: await this.hostService.updateHostGroup(userId, groupId, body) };
@@ -74,7 +64,7 @@ export class HostController {
   async updateHost(
     @Request() request,
     @Param('hostUid') hostUid: string,
-    @Body() hostInfo: Omit<UpdateHostClientRequest, 'hostUid'>
+    @Body() hostInfo: UpdateHostClientDto
   ): Promise<GetHostsResponse> {
     const userId = request.user.sub;
     return { host_groups: await this.hostService.updateHost(userId, hostUid, hostInfo) };
@@ -84,10 +74,9 @@ export class HostController {
   async moveHost(
     @Request() request,
     @Param('hostUid') hostUid: string,
-    @Body() body: MoveHostRequest
+    @Body() body: MoveHostDto
   ): Promise<GetHostsResponse> {
     const userId = request.user.sub;
-    validateRequiredFields(body, ['targetGroupId'], 'host/move', this.logger);
     return {
       host_groups: await this.hostService.moveHost(userId, hostUid, body.targetGroupId),
     };
@@ -106,7 +95,7 @@ export class HostController {
   async markHa(
     @Request() request,
     @Param('hostUid') hostUid: string,
-    @Body() body: { groupName?: string }
+    @Body() body: MarkHaDto
   ): Promise<GetHostsResponse> {
     const userId = request.user.sub;
     return { host_groups: await this.hostService.markGroupHa(userId, hostUid, body?.groupName) };

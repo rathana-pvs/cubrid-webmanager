@@ -96,6 +96,9 @@ export const databaseApi = {
   appendAutoExecQueryPlan: (hostUid, dbname, plan) => {
     return apiClient.post(`/${hostUid}/database/auto-exec-query/${encodeURIComponent(dbname)}/append`, { plan });
   },
+  updateAutoExecQueryPlan: (hostUid, dbname, plan) => {
+    return apiClient.post(`/${hostUid}/database/auto-exec-query/${encodeURIComponent(dbname)}/update`, { plan });
+  },
   removeAutoExecQueryPlan: (hostUid, dbname, queryId) => {
     return apiClient.post(`/${hostUid}/database/auto-exec-query/${encodeURIComponent(dbname)}/remove`, { query_id: queryId });
   },
@@ -134,8 +137,5 @@ export const databaseApi = {
   },
   getBackupList: (hostUid, dbname) => {
     return apiClient.get(`/${hostUid}/database/backup-db-list/${encodeURIComponent(dbname)}`);
-  },
-  restoreDatabase: (hostUid, dbname, payload) => {
-    return apiClient.post(`/${hostUid}/database/restore-db/${encodeURIComponent(dbname)}`, payload);
   },
 };

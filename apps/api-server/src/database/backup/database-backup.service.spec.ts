@@ -354,7 +354,6 @@ describe('DatabaseBackupService', () => {
   describe('backupDb', () => {
     const mockRequest = {
       level: '0' as const,
-      volname: 'demodb_backup_lv0',
       backupdir: '/home/cubrid/databases/demodb/backup',
       removelog: 'y' as const,
       check: 'y' as const,
@@ -386,7 +385,6 @@ describe('DatabaseBackupService', () => {
           task: 'backupdb',
           dbname: mockDbname,
           level: '0',
-          volname: mockRequest.volname,
           backupdir: mockRequest.backupdir,
           removelog: 'y',
           check: 'y',
@@ -401,7 +399,6 @@ describe('DatabaseBackupService', () => {
     it('should use default options when optional fields omitted', async () => {
       const minimalRequest = {
         level: '1' as const,
-        volname: 'test_backup_lv1',
         backupdir: '/path/to/backup',
       };
       const mockResponse = {

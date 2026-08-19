@@ -16,7 +16,14 @@ export type QueryPlanClient = {
   username: string;
 
   /**
-   * User password (optional, can be empty)
+   * User password. CMS's getautoexecquery response never echoes this back, so
+   * when resending a pre-existing entry that isn't being changed, use the
+   * literal sentinel "unknown" instead of the real password — CMS treats that
+   * as "preserve the stored credentials for this entry" (the same convention
+   * CUBRID Manager's own client uses). Only omit/leave empty for an entry
+   * whose password is genuinely being cleared, which CMS does not support:
+   * an empty value here corrupts the entry so every later
+   * append/edit for the database fails.
    */
   userpass?: string;
 

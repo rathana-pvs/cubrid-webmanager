@@ -26,6 +26,9 @@ export default function EditHostModal() {
   const [errors, setErrors] = useState({});
 
   useEffect(() => {
+    // Only re-populate when the modal opens (or targets a different host) —
+    // NOT whenever `hosts` changes. A background hosts refresh while this
+    // modal is open must not silently overwrite in-progress edits.
     if (isEditHostModalOpen && hostToEditUid) {
       const hostToEdit = hosts.find((h) => h.uid === hostToEditUid);
       if (hostToEdit) {
@@ -39,7 +42,8 @@ export default function EditHostModal() {
       }
       setErrors({});
     }
-  }, [isEditHostModalOpen, hostToEditUid, hosts]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isEditHostModalOpen, hostToEditUid]);
 
   if (!isEditHostModalOpen) return null;
 
@@ -134,16 +138,19 @@ export default function EditHostModal() {
     <Modal
       isOpen={isEditHostModalOpen}
       onClose={handleClose}
+      onSubmit={handleSave}
       title={CM.modifyHost}
       icon="settings_input_component"
       loading={loading}
       maxWidth="max-w-[500px]"
+      testId="edit-host"
       footer={
         <>
-          <Button variant="secondary" onClick={handleClose} disabled={loading}>
-            {CM.discard}
+          <Button data-testid="edit-host-cancel-btn" variant="secondary" onClick={handleClose} disabled={loading}>
+            {CM.cancel}
           </Button>
           <Button
+            data-testid="edit-host-save-btn"
             variant="secondary"
             onClick={handleSave}
             loading={loading}
@@ -153,6 +160,7 @@ export default function EditHostModal() {
             {CM.saveChanges}
           </Button>
           <Button
+            data-testid="edit-host-connect-save-btn"
             variant="primary"
             onClick={handleTestConnectionAndSave}
             loading={loading}
@@ -192,13 +200,14 @@ export default function EditHostModal() {
             placeholder={CM.friendlyNamePlaceholder}
             icon="label"
             disabled={loading}
+            required
           />
         </div>
 
         {/* Section 2: Host Connection */}
-        <SectionHeader 
-          title={CM.host} 
-          icon="lan" 
+        <SectionHeader
+          title={CM.host}
+          icon="lan"
           className="mt-8"
         />
         <div className="px-1">
@@ -213,6 +222,7 @@ export default function EditHostModal() {
                 placeholder={CM.hostAddressPlaceholder}
                 icon="dns"
                 disabled={loading}
+                required
               />
             </div>
             <div className="col-span-1">
@@ -225,6 +235,7 @@ export default function EditHostModal() {
                 error={errors.port}
                 placeholder={CM.hostPortPlaceholder}
                 disabled={loading}
+                required
               />
             </div>
           </div>
@@ -243,6 +254,7 @@ export default function EditHostModal() {
               placeholder={CM.hostUsernamePlaceholder}
               icon="person"
               disabled={loading}
+              required
             />
             <Input
               label={CM.newPassword}

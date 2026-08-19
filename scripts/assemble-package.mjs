@@ -6,7 +6,8 @@
  * Output: dist/executables/
  *   ├── cubrid-web-manager-linux | cubrid-web-manager.exe | cubrid-web-manager-macos   (public/ embedded)
  *   └── conf/
- *       └── cwm.conf.sample   (rename to cwm.conf before first run)
+ *       ├── cwm.conf.sample        (rename to cwm.conf before first run)
+ *       └── cwm.conf.reference.md  (full list of supported keys)
  *
  * Usage: node scripts/assemble-package.mjs <linux|win|mac|all>
  */
@@ -20,6 +21,7 @@ const ROOT = path.join(__dirname, '..');
 
 const EXECUTABLES_DIR = path.join(ROOT, 'dist', 'executables');
 const CONF_SAMPLE = path.join(ROOT, 'cwm.conf.sample');
+const CONF_REFERENCE = path.join(ROOT, 'cwm.conf.reference.md');
 
 const PLATFORM_MAP = {
   linux: { src: 'cubrid-web-manager-linux',  dest: 'cubrid-web-manager-linux'  },
@@ -48,14 +50,17 @@ function assemble(platform) {
     fs.chmodSync(exeSrc, 0o755);
   }
 
-  // conf/cwm.conf.sample — shared across all platforms
+  // conf/cwm.conf.sample + reference doc — shared across all platforms
   const confDir = path.join(EXECUTABLES_DIR, 'conf');
   fs.mkdirSync(confDir, { recursive: true });
   if (fs.existsSync(CONF_SAMPLE)) {
     fs.copyFileSync(CONF_SAMPLE, path.join(confDir, 'cwm.conf.sample'));
   }
+  if (fs.existsSync(CONF_REFERENCE)) {
+    fs.copyFileSync(CONF_REFERENCE, path.join(confDir, 'cwm.conf.reference.md'));
+  }
 
-  console.log(`\n✅ dist/executables/${info.dest}  (public/ embedded inside binary)`);
+  console.log(`\ndist/executables/${info.dest}  (public/ embedded inside binary)`);
 }
 
 const arg = process.argv[2];

@@ -215,6 +215,8 @@ export default function OptimizeDatabaseModal() {
   const { runJob } = useCmsJob();
   const [selectedClassName, setSelectedClassName] = useState('');
   const [jobStatus, setJobStatus] = useState(null);
+  const [dbuser, setDbuser] = useState('dba');
+  const [dbpasswd, setDbpasswd] = useState('');
 
   // Direct state for classes to follow user requirement for direct getClassInfo usage
   const [classesData, setClassesData] = useState({ userclass: [] });
@@ -244,6 +246,8 @@ export default function OptimizeDatabaseModal() {
   useEffect(() => {
     if (isOptimizeDatabaseModalOpen && selectedDatabase) {
       setSelectedClassName('');
+      setDbuser('dba');
+      setDbpasswd('');
       resetAction();
       fetchClasses();
     }
@@ -253,11 +257,22 @@ export default function OptimizeDatabaseModal() {
 
   const handleOptimize = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
-    
+
+    // CMS authorizes optimizedb against a per-connection credential cache
+    // populated by dbmtuserlogin — required whenever the database is
+    // online (see database-management.service.ts's loginIfCredentialsProvided).
+    if (isActive && !dbuser.trim()) {
+      endError(CM.dbUserRequiredWhileOnlineMsg);
+      return;
+    }
+
     startAction();
     try {
-      const payload = selectedClassName ? { classname: selectedClassName } : {};
-        
+      const payload = {
+        ...(selectedClassName && { classname: selectedClassName }),
+        ...(isActive && { dbuser: dbuser.trim(), dbpasswd }),
+      };
+
       await runJob(
         () => databaseJobApi.submitOptimize(selectedHostUid, selectedDatabase, payload),
         { onProgress: (j) => setJobStatus(j.jobStatus ?? j.status) }
@@ -265,7 +280,7 @@ export default function OptimizeDatabaseModal() {
 
       endSuccess();
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || 'The optimization sequence was interrupted. Please verify database connectivity and state.'));
+      endError(typeof err === 'string' ? err : (err.message || 'Optimization was interrupted. Check the database connection and try again.'));
     }
   };
 
@@ -281,6 +296,7 @@ export default function OptimizeDatabaseModal() {
         <ModalStatusLoading
           title={CM.regeneratingStatistics}
           subtitle={getCmsJobLoadingSubtitle(selectedClassName || selectedDatabase, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -325,14 +341,16 @@ export default function OptimizeDatabaseModal() {
       subtitle={CM.msgOptimizeDbInformation}
       icon="auto_fix_high"
       maxWidth="480px"
+      testId="optimize-database"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button data-testid="optimize-database-cancel-btn" variant="secondary" onClick={handleClose}>
             {CM.cancel}
           </Button>
-          <Button 
-            variant="primary" 
-            onClick={handleOptimize} 
+          <Button
+            data-testid="optimize-database-run-btn"
+            variant="primary"
+            onClick={handleOptimize}
             icon="play_circle"
             disabled={isLoadingClasses}
             className="min-w-[140px]"
@@ -353,13 +371,23 @@ export default function OptimizeDatabaseModal() {
               />
             </CaDialogField>
             <CaDialogField label={CM.lblOptimizeClassName}>
-              <ClassSelect 
+              <ClassSelect
                  value={selectedClassName}
                  userClasses={classesData.userclass}
                  onChange={setSelectedClassName}
                  isLoading={isLoadingClasses}
                />
             </CaDialogField>
+            {isActive && (
+              <>
+                <CaDialogField label={CM.userName}>
+                  <Input data-testid="optimize-database-dbuser-input" value={dbuser} onChange={(e) => setDbuser(e.target.value)} icon="account_circle" />
+                </CaDialogField>
+                <CaDialogField label={CM.password}>
+                  <Input data-testid="optimize-database-dbpasswd-input" type="password" value={dbpasswd} onChange={(e) => setDbpasswd(e.target.value)} icon="password" placeholder={CM.emptyAllowedPlaceholder} />
+                </CaDialogField>
+              </>
+            )}
           </CaDialogFieldGrid>
         </CaDialogGroup>
 

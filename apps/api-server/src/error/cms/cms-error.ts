@@ -33,6 +33,15 @@ export class CmsError extends AppError {
   }
 
   /**
+   * Creates an error indicating a TLS/certificate problem connecting to CMS
+   * (e.g. an expired or untrusted certificate) — distinct from NoResponse so
+   * this doesn't get misread as a transient network/timeout issue.
+   */
+  static TlsError(additionalData?: Record<string, any>, originalError?: Error) {
+    return new CmsError('CMS', CmsErrorCode.TLS_ERROR, additionalData, originalError);
+  }
+
+  /**
    * Creates an error for an unknown CMS issue.
    */
   static Unknown(additionalData?: Record<string, any>, originalError?: Error) {

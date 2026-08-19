@@ -4,20 +4,22 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 /**
  * A single tab item in the Breadcrumb bar.
  */
-export default function TabItem({ 
-  isActive, 
-  isDirty, 
-  label, 
-  icon, 
-  onClick, 
-  onClose, 
-  onContextMenu 
+export default function TabItem({
+  tabId,
+  isActive,
+  isDirty,
+  label,
+  icon,
+  onClick,
+  onClose,
+  onContextMenu
 }) {
   return (
-    <div 
+    <div
+      data-testid={`tab-${tabId}`}
       className={`group flex items-center gap-2 px-3 h-full border-r cursor-pointer min-w-[120px] max-w-[220px] transition-colors whitespace-nowrap relative select-none ${
-        isActive 
-          ? 'bg-white dark:bg-bk-main border-r-slate-200 dark:border-r-white/6 z-10' 
+        isActive
+          ? 'bg-white dark:bg-bk-main border-r-slate-200 dark:border-r-white/6 z-10'
           : 'bg-slate-100/80 dark:bg-bk-side border-r-slate-200 dark:border-r-white/4 text-slate-500 hover:bg-white/70 dark:hover:bg-white/3'
       }`}
       onClick={onClick}
@@ -50,7 +52,8 @@ export default function TabItem({
       </Typography>
 
       {/* Close button */}
-      <div 
+      <div
+        data-testid={`tab-${tabId}-close`}
         className={`flex items-center justify-center w-5 h-5 rounded-sm hover:bg-slate-200 dark:hover:bg-white/10 transition-all shrink-0 ${isActive ? 'opacity-60 hover:opacity-100' : 'opacity-0 group-hover:opacity-60 hover:opacity-100!'}`}
         onClick={(e) => {
           e.stopPropagation();

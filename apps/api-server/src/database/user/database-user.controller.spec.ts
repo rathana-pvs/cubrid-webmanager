@@ -208,14 +208,11 @@ describe('DatabaseUserController', () => {
       expect(result).toBe(true);
     });
 
-    it('should throw ValidationError when id/password are missing', async () => {
-      const body = {};
-
-      await expect(
-        controller.loginDatabase(mockReq, 'host-uid-1', 'demodb', body)
-      ).rejects.toThrow(ValidationError);
-      expect(service.loginDatabase).not.toHaveBeenCalled();
-    });
+    // id/password validation is enforced by the global ValidationPipe
+    // against DatabaseLoginBodyDto's class-validator decorators — that only
+    // runs on real HTTP requests, not on a direct controller method call
+    // (see createValidationPipe()), so it isn't unit-testable here the way
+    // getDatabaseUsers's inline validateRequiredFields() call is above.
   });
 
   describe('loginDatabaseWithProfile', () => {

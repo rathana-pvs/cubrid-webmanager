@@ -179,6 +179,7 @@ export default function DeleteDatabaseModal() {
       icon="delete_forever"
       iconVariant="danger"
       maxWidth={step === 1 ? '600px' : '440px'}
+      testId="delete-database"
       footer={
         <div className="flex w-full items-center justify-between">
           <div className="flex-1">
@@ -189,14 +190,15 @@ export default function DeleteDatabaseModal() {
             )}
           </div>
           <div className="flex items-center gap-2.5">
-            <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+            <Button data-testid="delete-database-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
             <Button
+              data-testid="delete-database-confirm-btn"
               variant="danger"
               onClick={handleConfirm}
               icon={step === 1 ? 'arrow_forward' : 'delete_forever'}
               className="whitespace-nowrap"
             >
-              {step === 1 ? CM.proceedBtn : CM.executeDiscard}
+              {step === 1 ? CM.proceedBtn : CM.confirmDelete}
             </Button>
           </div>
         </div>
@@ -301,6 +303,7 @@ export default function DeleteDatabaseModal() {
 
           <div className="space-y-3">
             <Input
+              data-testid="delete-database-dba-id-input"
               label={CM.userName}
               value={dbId}
               onChange={e => setDbId(e.target.value)}
@@ -309,6 +312,7 @@ export default function DeleteDatabaseModal() {
               autoFocus
             />
             <Input
+              data-testid="delete-database-dba-password-input"
               type="password"
               label={CM.password}
               value={password}

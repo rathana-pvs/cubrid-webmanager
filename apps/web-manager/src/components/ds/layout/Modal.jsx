@@ -17,6 +17,12 @@ export const Modal = ({
   showCloseButton = true,
   /** Tailwind z-index class for overlay (StatusModal uses z-[2100]). */
   zIndexClass = 'z-2000',
+  /** Stable e2e hook — renders data-testid="{testId}-modal" on the panel and "{testId}-modal-close" on the X button. */
+  testId,
+  /** Optional: pressing Enter in a text input inside the modal calls this
+      (mirrors clicking the form's primary button). Skipped for textareas
+      (Enter should insert a newline there) and non-text form controls. */
+  onSubmit,
 }) => {
   const CM = useCM();
   const modalRef = useRef(null);
@@ -29,6 +35,21 @@ export const Modal = ({
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose, showCloseButton]);
+
+  useEffect(() => {
+    if (!onSubmit || !isOpen) return undefined;
+    const handleEnter = (e) => {
+      if (e.key !== 'Enter') return;
+      const tag = e.target?.tagName;
+      if (tag !== 'INPUT') return;
+      const type = (e.target.type || 'text').toLowerCase();
+      if (['button', 'submit', 'checkbox', 'radio', 'file'].includes(type)) return;
+      e.preventDefault();
+      onSubmit();
+    };
+    document.addEventListener('keydown', handleEnter);
+    return () => document.removeEventListener('keydown', handleEnter);
+  }, [isOpen, onSubmit]);
 
   useEffect(() => {
     if (isOpen) {
@@ -61,6 +82,7 @@ export const Modal = ({
       {/* Modal panel */}
       <div
         ref={modalRef}
+        data-testid={testId ? `${testId}-modal` : undefined}
         className={`relative w-full ${maxWidth.startsWith('max-w-') ? maxWidth : ''} bg-white dark:bg-bk-side rounded-xl shadow-[0_10px_40px_rgba(0,0,0,0.2)] border border-slate-200 dark:border-slate-800 transform transition-all flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden text-left`}
         style={!maxWidth.startsWith('max-w-') ? { maxWidth } : {}}
         role="dialog"
@@ -72,6 +94,7 @@ export const Modal = ({
         {showCloseButton && (
           <button
             type="button"
+            data-testid={testId ? `${testId}-modal-close` : undefined}
             className="absolute right-4 top-4 text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 w-7 h-7 rounded-md transition-all flex items-center justify-center hover:bg-slate-100 dark:hover:bg-white/5 z-10"
             onClick={onClose}
           >

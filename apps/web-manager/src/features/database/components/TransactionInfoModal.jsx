@@ -80,7 +80,7 @@ export default function TransactionInfoModal() {
 
   if (view === VIEW_ERROR) {
     return (
-      <Modal isOpen title={CM.transactionInformation} icon="error" iconVariant="danger" onClose={handleClose} maxWidth="540px">
+      <Modal isOpen title={CM.transactionInformation} icon="error" iconVariant="danger" onClose={handleClose} maxWidth="540px" testId="transaction-info">
         <div className="py-8 space-y-4 text-center">
           <Typography variant="p" className="text-[13px] text-slate-600 dark:text-slate-300">
             {CM.error}
@@ -89,8 +89,8 @@ export default function TransactionInfoModal() {
             {errorMsg}
           </Typography>
           <div className="flex justify-center gap-3">
-            <Button variant="ghost" onClick={handleClose}>{CM.close}</Button>
-            <Button variant="primary" icon="refresh" onClick={fetchTransactionInfo}>{CM.refresh}</Button>
+            <Button data-testid="transaction-info-close-btn" variant="ghost" onClick={handleClose}>{CM.close}</Button>
+            <Button data-testid="transaction-info-retry-btn" variant="primary" icon="refresh" onClick={fetchTransactionInfo}>{CM.refresh}</Button>
           </div>
         </div>
       </Modal>
@@ -105,22 +105,23 @@ export default function TransactionInfoModal() {
       subtitle={`${CM.activeTransactionsOf} ${selectedDatabase}`}
       icon="swap_horiz"
       maxWidth="1100px"
+      testId="transaction-info"
       footer={
         <div className="flex items-center justify-between w-full">
-          <Button variant="danger" disabled={!selectedTranIndex} onClick={handleKill} icon="cancel">
+          <Button data-testid="transaction-info-kill-btn" variant="danger" disabled={!selectedTranIndex} onClick={handleKill} icon="cancel">
             {CM.killTransaction}
           </Button>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={handleClose}>{CM.close}</Button>
-            <Button onClick={fetchTransactionInfo} icon="refresh">{CM.refresh}</Button>
+            <Button data-testid="transaction-info-close-btn" variant="ghost" onClick={handleClose}>{CM.close}</Button>
+            <Button data-testid="transaction-info-refresh-btn" onClick={fetchTransactionInfo} icon="refresh">{CM.refresh}</Button>
           </div>
         </div>
       }
     >
       <div className="flex flex-col h-[540px] animate-in fade-in slide-in-from-bottom-4 duration-400">
         <div className="mb-4 grid grid-cols-2 gap-3 shrink-0">
-          <Input label={CM.userName} value={dbuser} onChange={(e) => setDbuser(e.target.value)} icon="account_circle" size="sm" />
-          <Input type="password" label={CM.password} value={dbpasswd} onChange={(e) => setDbpasswd(e.target.value)} icon="password" size="sm" placeholder={CM.emptyAllowedPlaceholder} />
+          <Input data-testid="transaction-info-dbuser-input" label={CM.userName} value={dbuser} onChange={(e) => setDbuser(e.target.value)} icon="account_circle" size="sm" />
+          <Input data-testid="transaction-info-dbpasswd-input" type="password" label={CM.password} value={dbpasswd} onChange={(e) => setDbpasswd(e.target.value)} icon="password" size="sm" placeholder={CM.emptyAllowedPlaceholder} />
         </div>
         <div className="mb-4 flex items-center justify-between bg-slate-50/80 dark:bg-black/20 border border-slate-200 dark:border-white/8 rounded-xl px-4 py-3 shrink-0">
           <div className="flex items-center gap-3">

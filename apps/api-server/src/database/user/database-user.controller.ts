@@ -12,16 +12,18 @@ import {
 } from '@nestjs/common';
 import { DatabaseUserService } from './database-user.service';
 import {
-  CreateDbUserRequest,
-  DatabaseLoginClientRequest,
-  UpdateDbUserRequest,
   UpdateDbUserResponse,
   UserInfoClientResponse,
   CreateDbUserResponse,
   DeleteDbUserResponse,
-  UserVerifyRequest,
   UserVerifyResponse,
 } from '@api-interfaces';
+import {
+  UserVerifyDto,
+  CreateDbUserDto,
+  UpdateDbUserBodyDto,
+  DatabaseLoginBodyDto,
+} from '@type/index';
 import { validateRequiredFields } from '@util';
 
 /**
@@ -64,10 +66,9 @@ export class DatabaseUserController {
   async userVerify(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: UserVerifyRequest
+    @Body() body: UserVerifyDto
   ): Promise<UserVerifyResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(body, ['dbname', 'dbuser', 'dbpasswd'], 'database/users/verify', this.logger);
     this.logger.log(`Verifying user ${body.dbuser} for database: ${body.dbname} on host: ${hostUid}`);
     return await this.databaseUserService.userVerify(
       userId,
@@ -87,15 +88,9 @@ export class DatabaseUserController {
   async createUser(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: CreateDbUserRequest
+    @Body() body: CreateDbUserDto
   ): Promise<CreateDbUserResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(
-      body,
-      ['dbname', 'username', 'userpass', 'groups', 'authorization'],
-      'database/users/create',
-      this.logger
-    );
     this.logger.log(`Creating user: ${body.username} in database: ${body.dbname} on host: ${hostUid}`);
     return await this.databaseUserService.createUser(
       userId,
@@ -163,10 +158,9 @@ export class DatabaseUserController {
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: Omit<DatabaseLoginClientRequest, 'hostUid' | 'dbname'>
+    @Body() body: DatabaseLoginBodyDto
   ): Promise<boolean> {
     const userId = req.user.sub;
-    validateRequiredFields(body, ['id', 'password'], `database/users/login/${dbname}`, this.logger);
     this.logger.log(`Logging in to database: ${dbname} on host: ${hostUid}`);
     return await this.databaseUserService.loginDatabase(
       userId,
@@ -221,16 +215,9 @@ export class DatabaseUserController {
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
     @Param('username') username: string,
-    @Body() body: Omit<UpdateDbUserRequest, 'dbname' | 'username'>
+    @Body() body: UpdateDbUserBodyDto
   ): Promise<UpdateDbUserResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(
-      body,
-      ['userpass', 'groups', 'authorization'],
-      'database/users/update',
-      this.logger
-    );
 
     this.logger.log(
       `Updating user: ${username} in database: ${dbname} on host: ${hostUid}`

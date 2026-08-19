@@ -1,8 +1,8 @@
 import { Body, Controller, Logger, Param, Post, Request } from '@nestjs/common';
-import { HeartbeatListClientRequest, HeartbeatListClientResponse } from '@api-interfaces';
+import { HeartbeatListClientResponse } from '@api-interfaces';
 import { HaReloadCmsResponse } from '@type/cms-response';
+import { HeartbeatListDto } from '@type/index';
 import { HaService } from './ha.service';
-import { validateRequiredFields } from '@util';
 
 @Controller(':hostUid/ha')
 export class HaController {
@@ -20,11 +20,10 @@ export class HaController {
   async heartbeatList(
     @Request() req,
     @Param('hostUid') hostUid: string,
-    @Body() body: HeartbeatListClientRequest
+    @Body() body: HeartbeatListDto
   ): Promise<HeartbeatListClientResponse> {
     const userId = req.user.sub;
     this.logger.log(`Getting HA heartbeat list on host: ${hostUid}`);
-    validateRequiredFields(body, ['dbmodeall'], '/ha/heartbeatlist')
     return await this.haService.heartbeatList(userId, hostUid, body);
   }
 

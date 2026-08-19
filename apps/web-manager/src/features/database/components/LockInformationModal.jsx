@@ -102,15 +102,16 @@ export default function LockInformationModal() {
       error={error}
       onErrorClose={() => setError(null)}
       onErrorRetry={fetchLockInfo}
+      testId="lock-information"
       footer={
         <div className="flex justify-end gap-2 w-full">
-          <Button variant="ghost" onClick={handleClose} disabled={loading}>{CM.close}</Button>
-          <Button variant="primary" onClick={fetchLockInfo} loading={loading} icon="refresh">{CM.refresh}</Button>
+          <Button data-testid="lock-information-close-btn" variant="ghost" onClick={handleClose} disabled={loading}>{CM.close}</Button>
+          <Button data-testid="lock-information-refresh-btn" variant="primary" onClick={fetchLockInfo} loading={loading} icon="refresh">{CM.refresh}</Button>
         </div>
       }
     >
       <div className="space-y-4">
-        <TabGroup tabs={TABS} active={activeTab} onChange={setActiveTab} />
+        <TabGroup tabs={TABS} active={activeTab} onChange={setActiveTab} testId="lock-information-tab" />
 
         <div className="min-h-[300px]">
           {activeTab === 'sessions' && (

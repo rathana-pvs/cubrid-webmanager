@@ -9,7 +9,18 @@
  * @returns {string}
  */
 export const formatSize = (bytes, decimals = 2) => {
-  if (!bytes || bytes === 0) return '0 B';
+  if (bytes === null || bytes === undefined) return '0 B';
+  if (typeof bytes === 'string') {
+    const trimmed = bytes.trim();
+    if (trimmed === '') return bytes;
+    if (trimmed === '0') return '0 B';
+    const num = Number(trimmed);
+    if (isNaN(num)) {
+      return bytes;
+    }
+    bytes = num;
+  }
+  if (!bytes || bytes <= 0 || isNaN(bytes)) return '0 B';
   const k = 1024;
   const dm = decimals < 0 ? 0 : decimals;
   const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB', 'EB', 'ZB', 'YB'];

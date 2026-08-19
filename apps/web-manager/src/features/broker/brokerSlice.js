@@ -98,6 +98,32 @@ export const stopBroker = createAsyncThunk(
   }
 );
 
+export const startAllBrokers = createAsyncThunk(
+  'broker/startAllBrokers',
+  async (hostUid, { dispatch, rejectWithValue }) => {
+    try {
+      await brokerApi.startAllBrokers(hostUid);
+      dispatch(fetchBrokerList(hostUid));
+      return { success: true };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to start all brokers');
+    }
+  }
+);
+
+export const stopAllBrokers = createAsyncThunk(
+  'broker/stopAllBrokers',
+  async (hostUid, { dispatch, rejectWithValue }) => {
+    try {
+      await brokerApi.stopAllBrokers(hostUid);
+      dispatch(fetchBrokerList(hostUid));
+      return { success: true };
+    } catch (err) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to stop all brokers');
+    }
+  }
+);
+
 export const fetchBrokerLogs = createAsyncThunk(
   'broker/fetchBrokerLogs',
   async ({ hostUid, brokerName }, { rejectWithValue }) => {
@@ -175,7 +201,7 @@ export const updateBrokerConfig = createAsyncThunk(
   'broker/updateBrokerConfig',
   async ({ hostUid, confdata }, { dispatch, rejectWithValue }) => {
     try {
-      await brokerApi.updateBrokerConfig(hostUid, 'cubrid_broker.conf', confdata);
+      await brokerApi.updateBrokerConfig(hostUid, confdata);
       dispatch(fetchBrokerConfig({ hostUid }));
       return { success: true };
     } catch (err) {
@@ -312,6 +338,36 @@ const brokerSlice = createSlice({
         state.lastActionType = null;
       })
       .addCase(stopBroker.rejected, (state) => {
+        state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
+      })
+      .addCase(startAllBrokers.pending, (state) => {
+        state.actionLoading = true;
+        state.lastActionTarget = null;
+        state.lastActionType = 'start-all';
+      })
+      .addCase(startAllBrokers.fulfilled, (state) => {
+        state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
+      })
+      .addCase(startAllBrokers.rejected, (state) => {
+        state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
+      })
+      .addCase(stopAllBrokers.pending, (state) => {
+        state.actionLoading = true;
+        state.lastActionTarget = null;
+        state.lastActionType = 'stop-all';
+      })
+      .addCase(stopAllBrokers.fulfilled, (state) => {
+        state.actionLoading = false;
+        state.lastActionTarget = null;
+        state.lastActionType = null;
+      })
+      .addCase(stopAllBrokers.rejected, (state) => {
         state.actionLoading = false;
         state.lastActionTarget = null;
         state.lastActionType = null;

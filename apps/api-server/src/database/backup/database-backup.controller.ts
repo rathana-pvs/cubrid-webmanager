@@ -1,23 +1,17 @@
 import { Body, Controller, Delete, Get, HttpCode, HttpStatus, Logger, Param, Post, Put, Request } from '@nestjs/common';
 import {
-  AddBackupInfoClientRequest,
   AddBackupInfoClientResponse,
-  DeleteBackupInfoClientRequest,
   DeleteBackupInfoClientResponse,
   GetBackupInfoClientResponse,
-  SetBackupInfoClientRequest,
   SetBackupInfoClientResponse,
   GetAutoBackupDbErrLogRequest,
   GetAutoBackupDbErrLogResponse,
   BackupDbInfoClientResponse,
   BackupDbListClientRequest,
   BackupDbListClientResponse,
-  BackupDbClientRequest,
   CreateCmsJobResponse,
-  RestoreDbClientRequest,
-  RestoreDbClientResponse,
 } from '@api-interfaces';
-import { validateRequiredFields } from '@util';
+import { BackupScheduleDto, DeleteBackupScheduleDto, BackupDbDto, RestoreDbDto } from '@type/index';
 import { CmsJobService } from '@cms-job/cms-job.service';
 import { DatabaseBackupService } from './database-backup.service';
 
@@ -59,21 +53,14 @@ export class DatabaseBackupController {
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: AddBackupInfoClientRequest
+    @Body() body: BackupScheduleDto
   ): Promise<AddBackupInfoClientResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(
-      body,
-      ['backupid', 'path', 'period_type', 'period_date', 'time', 'level'],
-      'database/backup-schedule',
-      this.logger
-    );
 
     this.logger.log(
       `Adding backup schedule for database: ${dbname} on host: ${hostUid}`
     );
-    return await this.backupService.addBackupSchedule(userId, hostUid, dbname, body);
+    return await this.backupService.addBackupSchedule(userId, hostUid, dbname, { ...body, dbname });
   }
 
   /**
@@ -95,21 +82,14 @@ export class DatabaseBackupController {
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: SetBackupInfoClientRequest
+    @Body() body: BackupScheduleDto
   ): Promise<SetBackupInfoClientResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(
-      body,
-      ['backupid', 'path', 'period_type', 'period_date', 'time', 'level'],
-      'database/backup-schedule',
-      this.logger
-    );
 
     this.logger.log(
       `Setting backup schedule for database: ${dbname} on host: ${hostUid}`
     );
-    return await this.backupService.setBackupSchedule(userId, hostUid, dbname, body);
+    return await this.backupService.setBackupSchedule(userId, hostUid, dbname, { ...body, dbname });
   }
 
   /**
@@ -131,16 +111,14 @@ export class DatabaseBackupController {
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: DeleteBackupInfoClientRequest
+    @Body() body: DeleteBackupScheduleDto
   ): Promise<DeleteBackupInfoClientResponse> {
     const userId = req.user.sub;
-
-    validateRequiredFields(body, ['backupid'], 'database/backup-schedule', this.logger);
 
     this.logger.log(
       `Deleting backup schedule for database: ${dbname} on host: ${hostUid}`
     );
-    return await this.backupService.deleteBackupSchedule(userId, hostUid, dbname, body);
+    return await this.backupService.deleteBackupSchedule(userId, hostUid, dbname, { ...body, dbname });
   }
 
   /**
@@ -216,11 +194,11 @@ export class DatabaseBackupController {
    * @param req Express request (contains authenticated user)
    * @param hostUid Host unique identifier from path parameter
    * @param dbname Database name from path parameter
-   * @param body Request body: level, volname, backupdir, removelog?, check?, mt?, zip?, safereplication?
+   * @param body Request body: level, backupdir, removelog?, check?, mt?, zip?, safereplication?
    * @returns BackupDbClientResponse empty body on success (CMS envelope omitted)
    * @example
    * // POST /host-uid/database/backup-db/demodb
-   * // Body: { "level": "0", "volname": "demodb_backup_lv0", "backupdir": "/path/to/backup", "removelog": "y", "check": "y", "mt": "2", "zip": "y", "safereplication": "n" }
+   * // Body: { "level": "0", "backupdir": "/path/to/backup", "removelog": "y", "check": "y", "mt": "2", "zip": "y", "safereplication": "n" }
    */
   @Post('backup-db/:dbname')
   @HttpCode(HttpStatus.ACCEPTED)
@@ -228,43 +206,32 @@ export class DatabaseBackupController {
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: BackupDbClientRequest
+    @Body() body: BackupDbDto
   ): Promise<CreateCmsJobResponse> {
     const userId = req.user.sub;
-    validateRequiredFields(
-      body,
-      ['level', 'volname', 'backupdir'],
-      'database/backup-db',
-      this.logger
-    );
     this.logger.log(`Enqueue backup job: ${dbname} level: ${body.level} on host: ${hostUid}`);
     return await this.cmsJobService.createJob(userId, hostUid, 'backupdb', dbname, body);
   }
 
   /**
-   * Restore database from backup.
-   * CMS task: restoredb.
+   * Restore database from backup. CMS task: restoredb.
+   * Long-running — enqueued as a CMS job (202 + jobId), polled via
+   * GET /:hostUid/jobs/:jobId like backup/unload/load/etc.
    *
    * @route POST /:hostUid/database/restore-db/:dbname
    */
   @Post('restore-db/:dbname')
+  @HttpCode(HttpStatus.ACCEPTED)
   async restoreDb(
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
-    @Body() body: RestoreDbClientRequest
-  ): Promise<RestoreDbClientResponse> {
+    @Body() body: RestoreDbDto
+  ): Promise<CreateCmsJobResponse> {
     const userId = req.user.sub;
 
-    validateRequiredFields(
-      body,
-      ['date', 'level', 'partial', 'pathname', 'recoverypath'],
-      'database/restore-db',
-      this.logger
-    );
-
-    this.logger.log(`Restoring database: ${dbname} on host: ${hostUid}`);
-    return await this.backupService.restoreDb(userId, hostUid, dbname, body);
+    this.logger.log(`Enqueue restore job: ${dbname} on host: ${hostUid}`);
+    return await this.cmsJobService.createJob(userId, hostUid, 'restore', dbname, body);
   }
 
   /**

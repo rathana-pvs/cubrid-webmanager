@@ -68,7 +68,7 @@ export default function DeleteBackupPlanModal() {
         dispatch(closeDeleteBackupPlanModal());
       }, 1500);
     } catch (err) {
-      endError(typeof err === 'string' ? err : (err.message || CM.deletionSignalRejectedMsg));
+      endError(typeof err === 'string' ? err : (err.message || CM.deleteBackupPlanRejectedMsg));
     }
   };
 
@@ -77,11 +77,12 @@ export default function DeleteBackupPlanModal() {
   /* ─── LOADING view ─── */
   if (isLoading) {
     return (
-      <Modal isOpen title={CM.deletingBackupPlan} icon="delete_forever" onClose={handleClose} maxWidth="440px" iconVariant="danger" showCloseButton={false}>
+      <Modal isOpen title={CM.deletingBackupPlan} icon="delete_forever" onClose={handleClose} maxWidth="440px" iconVariant="danger">
         <ModalStatusLoading
-          title={CM.removingRegistry}
+          title={CM.deletingLabel}
           subtitle={`"${selectedBackupId}"`}
           variant="danger"
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -122,14 +123,15 @@ export default function DeleteBackupPlanModal() {
     <Modal
       isOpen={isDeleteBackupPlanModalOpen}
       onClose={handleClose}
-      title={CM.dangerousDiscardBackupPlan}
+      title={CM.deleteBackupPlan}
       subtitle={CM.permanentRemovalBackup}
       icon="delete_forever"
       maxWidth="440px"
+      testId="delete-backup-plan"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
-          <Button variant="danger" onClick={handleDelete} icon="delete" className="min-w-[140px]">{CM.executeDiscard}</Button>
+          <Button data-testid="delete-backup-plan-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+          <Button data-testid="delete-backup-plan-confirm-btn" variant="danger" onClick={handleDelete} icon="delete" className="min-w-[140px]">{CM.confirmDelete}</Button>
         </div>
       }
     >
@@ -139,7 +141,7 @@ export default function DeleteBackupPlanModal() {
         </div>
 
         <div className="space-y-2">
-          <Typography variant="h4" className="text-[16px] font-black text-slate-900 dark:text-white tracking-tight">{CM.discardBackupStrategy}</Typography>
+          <Typography variant="h4" className="text-[16px] font-black text-slate-900 dark:text-white tracking-tight">{CM.deleteBackupPlanPrompt}</Typography>
           <Typography variant="p" className="text-[11.5px] text-slate-500 dark:text-slate-400 leading-relaxed max-w-[320px] mx-auto">
             <span className="text-rose-500 font-black">"{selectedBackupId}"</span> — <span className="font-bold text-slate-900 dark:text-white">{selectedDatabase}</span>
           </Typography>

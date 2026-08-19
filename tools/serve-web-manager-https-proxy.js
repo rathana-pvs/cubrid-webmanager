@@ -68,7 +68,7 @@ function loadHttpsCerts() {
 }
 
 if (!useDevProxy && !fs.existsSync(BUILD_DIR)) {
-  console.error(`❌ build directory not found: ${BUILD_DIR}`);
+  console.error(`build directory not found: ${BUILD_DIR}`);
   console.error('Run `npm run build:web-manager` first.');
   process.exit(1);
 }
@@ -94,7 +94,7 @@ if (!useDevProxy) {
     res.sendFile(path.join(BUILD_DIR, 'index.html'));
   });
 } else {
-  console.log(`➡️  /* (dev assets) -> proxying to Vite Dev Server at ${WEB_DEV_TARGET}`);
+  console.log(`/* (dev assets) -> proxying to Vite Dev Server at ${WEB_DEV_TARGET}`);
   devProxy = createProxyMiddleware({
     target: WEB_DEV_TARGET,
     changeOrigin: true,
@@ -107,7 +107,7 @@ let certs;
 try {
   certs = loadHttpsCerts();
 } catch (error) {
-  console.error(`❌ ${error.message}`);
+  console.error(error.message);
   process.exit(1);
 }
 
@@ -121,23 +121,23 @@ if (useDevProxy && devProxy) {
 
 server.on('error', (err) => {
   if (err.code === 'EADDRINUSE') {
-    console.error(`❌ port ${PORT} is already in use.`);
+    console.error(`port ${PORT} is already in use.`);
   } else if (err.code === 'EACCES') {
     console.error(
-      `❌ insufficient privileges to bind port ${PORT}. Port 443 requires root or cap_net_bind_service.`
+      `insufficient privileges to bind port ${PORT}. Port 443 requires root or cap_net_bind_service.`
     );
   } else {
-    console.error('❌ HTTPS proxy server error:', err);
+    console.error('HTTPS proxy server error:', err);
   }
   process.exit(1);
 });
 
 server.listen(PORT, '0.0.0.0', () => {
-  console.log('🚀 web-manager HTTPS + /api reverse proxy');
-  console.log(`🌐 https://0.0.0.0:${PORT}`);
-  console.log(`📁 BUILD_DIR: ${BUILD_DIR}`);
-  console.log(`🔐 CERT: ${certs.certPath}`);
-  console.log(`🔐 KEY : ${certs.keyPath}`);
-  console.log(`➡️  /api/* -> ${API_TARGET}/*`);
-  console.log(`🔓 PROXY_INSECURE_TLS: ${proxyInsecureTls ? '1' : '0'}`);
+  console.log('web-manager HTTPS + /api reverse proxy');
+  console.log(`https://0.0.0.0:${PORT}`);
+  console.log(`BUILD_DIR: ${BUILD_DIR}`);
+  console.log(`CERT: ${certs.certPath}`);
+  console.log(`KEY : ${certs.keyPath}`);
+  console.log(`/api/* -> ${API_TARGET}/*`);
+  console.log(`PROXY_INSECURE_TLS: ${proxyInsecureTls ? '1' : '0'}`);
 });

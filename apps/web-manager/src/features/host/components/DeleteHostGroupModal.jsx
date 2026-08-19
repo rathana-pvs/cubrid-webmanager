@@ -42,13 +42,14 @@ export default function DeleteHostGroupModal() {
       iconVariant="danger"
       loading={loading}
       maxWidth="420px"
+      testId="delete-group"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose} disabled={loading}>
+          <Button data-testid="delete-group-cancel-btn" variant="secondary" onClick={handleClose} disabled={loading}>
             {CM.cancel}
           </Button>
-          <Button variant="danger" onClick={handleDelete} loading={loading} icon="delete_forever">
-            {CM.executeDiscard}
+          <Button data-testid="delete-group-confirm-btn" variant="danger" onClick={handleDelete} loading={loading} icon="delete_forever">
+            {CM.confirmDelete}
           </Button>
         </div>
       }

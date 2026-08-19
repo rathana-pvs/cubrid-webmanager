@@ -27,13 +27,14 @@ export default function CompactDatabaseModal() {
   const CM = useCM();
   const dispatch = useDispatch();
   const { isCompactDatabaseModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
-  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedDatabase, activeDatabases } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
-  const { 
-    error, 
-    startAction, 
-    endSuccess, 
-    endError, 
+  const isActive = selectedDatabase && activeDatabases.includes(selectedDatabase);
+  const {
+    error,
+    startAction,
+    endSuccess,
+    endError,
     resetAction,
     isLoading,
     isSuccess,
@@ -43,10 +44,14 @@ export default function CompactDatabaseModal() {
   const [jobStatus, setJobStatus] = useState(null);
 
   const [verbose, setVerbose] = useState(false);
+  const [dbuser, setDbuser] = useState('dba');
+  const [dbpasswd, setDbpasswd] = useState('');
 
   useEffect(() => {
     if (isCompactDatabaseModalOpen) {
       setVerbose(false);
+      setDbuser('dba');
+      setDbpasswd('');
       resetAction();
     }
   }, [isCompactDatabaseModalOpen, resetAction]);
@@ -55,11 +60,20 @@ export default function CompactDatabaseModal() {
 
   const handleCompact = async () => {
     if (!selectedHostUid || !selectedDatabase) return;
-    
+
+    // CMS authorizes compactdb against a per-connection credential cache
+    // populated by dbmtuserlogin — required whenever the database is
+    // online (see database-management.service.ts's loginIfCredentialsProvided).
+    if (isActive && !dbuser.trim()) {
+      endError(CM.dbUserRequiredWhileOnlineMsg);
+      return;
+    }
+
     startAction();
     try {
       const payload = {
-        verbose: verbose ? 'y' : 'n'
+        verbose: verbose ? 'y' : 'n',
+        ...(isActive && { dbuser: dbuser.trim(), dbpasswd }),
       };
       const job = await runJob(
         () => databaseJobApi.submitCompact(selectedHostUid, selectedDatabase, payload),
@@ -83,6 +97,7 @@ export default function CompactDatabaseModal() {
         <ModalStatusLoading
           title={CM.consolidatingBlocks}
           subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -124,12 +139,13 @@ export default function CompactDatabaseModal() {
       subtitle={CM.compactDatabaseMessage}
       icon="compress"
       maxWidth="480px"
+      testId="compact-database"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose}>
+          <Button data-testid="compact-database-cancel-btn" variant="secondary" onClick={handleClose}>
             {CM.cancel}
           </Button>
-          <Button variant="primary" onClick={handleCompact} icon="play_circle" className="min-w-[140px]">
+          <Button data-testid="compact-database-run-btn" variant="primary" onClick={handleCompact} icon="play_circle" className="min-w-[140px]">
             {CM.ok}
           </Button>
         </div>
@@ -153,6 +169,16 @@ export default function CompactDatabaseModal() {
                 label={CM.verboseMonitoring}
               />
             </CaDialogField>
+            {isActive && (
+              <>
+                <CaDialogField label={CM.userName}>
+                  <Input data-testid="compact-database-dbuser-input" value={dbuser} onChange={(e) => setDbuser(e.target.value)} icon="account_circle" size="sm" />
+                </CaDialogField>
+                <CaDialogField label={CM.password}>
+                  <Input data-testid="compact-database-dbpasswd-input" type="password" value={dbpasswd} onChange={(e) => setDbpasswd(e.target.value)} icon="password" size="sm" placeholder={CM.emptyAllowedPlaceholder} />
+                </CaDialogField>
+              </>
+            )}
           </CaDialogFieldGrid>
         </CaDialogGroup>
 

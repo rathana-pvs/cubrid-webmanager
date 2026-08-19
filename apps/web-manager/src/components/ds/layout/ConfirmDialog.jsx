@@ -13,6 +13,7 @@ export const ConfirmDialog = ({
   variant = 'primary',
   onConfirm,
   onCancel,
+  testId,
 }) => {
   const CM = useCM();
   const isDanger = variant === 'danger';
@@ -21,10 +22,10 @@ export const ConfirmDialog = ({
 
   const footer = (
     <>
-      <Button variant="outline" onClick={onCancel}>
+      <Button data-testid={testId && `${testId}-cancel-btn`} variant="outline" onClick={onCancel}>
         {resolvedCancelLabel}
       </Button>
-      <Button variant={isDanger ? 'danger' : 'primary'} onClick={onConfirm}>
+      <Button data-testid={testId && `${testId}-confirm-btn`} variant={isDanger ? 'danger' : 'primary'} onClick={onConfirm}>
         {resolvedConfirmLabel}
       </Button>
     </>
@@ -39,6 +40,7 @@ export const ConfirmDialog = ({
       iconVariant={isDanger ? 'danger' : 'primary'}
       footer={footer}
       maxWidth="max-w-md"
+      testId={testId}
     >
       <Typography variant="p" className="text-sm text-slate-600 dark:text-slate-400">
         {description}

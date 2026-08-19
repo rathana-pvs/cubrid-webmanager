@@ -12,7 +12,6 @@
 const { spawn } = require('child_process');
 const net = require('net');
 const path = require('path');
-const fs = require('fs');
 const treeKill = require('tree-kill');
 const { loadWorkspaceEnv } = require('./load-workspace-env');
 
@@ -98,13 +97,14 @@ function startWebDev() {
   });
 }
 
-const WEB_MANAGER_BUILD_DIR = path.join(REPO_ROOT, 'dist', 'apps', 'web-manager');
-
-function buildWebManagerIfMissing() {
-  if (fs.existsSync(WEB_MANAGER_BUILD_DIR)) {
-    return Promise.resolve();
-  }
-  console.log(`[stack] ${WEB_MANAGER_BUILD_DIR} not found -> running npm run build:web-manager`);
+function buildWebManager() {
+  // Always rebuild rather than skipping when a prior dist/apps/web-manager
+  // already exists — in production mode this dir is served as-is with no
+  // dev-server watching it, so a stale build from an earlier run silently
+  // kept serving old pages no matter what source changes were made. Nx's own
+  // build cache already makes a no-op rebuild fast when nothing actually
+  // changed, so there's no upside to this script also skipping it.
+  console.log(`[stack] building web-manager -> npm run build:web-manager`);
   const npmBin = process.platform === 'win32' ? 'npm.cmd' : 'npm';
   return new Promise((resolve, reject) => {
     const buildChild = spawn(npmBin, ['run', 'build:web-manager'], {
@@ -153,7 +153,7 @@ if (!isProduction) {
 }
 
 Promise.all(waitPromises)
-  .then(() => (isProduction ? buildWebManagerIfMissing() : Promise.resolve()))
+  .then(() => (isProduction ? buildWebManager() : Promise.resolve()))
   .then(() => {
     console.log(`[stack] Services are ready -> starting HTTPS proxy (:${WEB_HTTPS_PORT})`);
     startWebProxy();

@@ -46,8 +46,7 @@ export class GlobalExceptionFilter extends BaseExceptionFilter {
       }
 
       this.logger.error(
-        'HttpException',
-        `HTTP Exception: ${exception.message}`,
+        `HTTP Exception [${status}]: ${exception.message}`,
         exception.stack,
         `${req.method} ${req.url}`
       );
@@ -69,7 +68,6 @@ export class GlobalExceptionFilter extends BaseExceptionFilter {
 
       const logDetails = exception.toLogDetails(req.url);
       this.logger.error(
-        'App Error',
         `App Error [${exception.kind}:${exception.code}]: ${exception.message}`,
         JSON.stringify(logDetails, null, 2),
         `${req.method} ${req.url}`
@@ -80,8 +78,7 @@ export class GlobalExceptionFilter extends BaseExceptionFilter {
       note = 'An internal server error occurred.';
 
       this.logger.error(
-        'Other Errors',
-        `Unknown Error: ${exception?.message || 'No message'}`,
+        `Unhandled Error: ${exception?.message || 'No message'}`,
         exception?.stack || 'No stack trace',
         `${req.method} ${req.url}`
       );

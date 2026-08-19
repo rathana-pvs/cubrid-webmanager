@@ -62,18 +62,18 @@ export default function LoadDatabaseModal() {
       object: false,
       index: false,
       trigger: false,
-      checkoption: true,
+      checkoption: false,
       nolog: false,
       oiduse: false,
       statisticsuse: false,
       estimated: false,
-      period: false,
+      period: true,
       errorcontrolfile: false,
       ignoreclassfile: false,
     },
     values: {
       estimated: '',
-      period: '',
+      period: '10000',
       errorcontrolfile: '',
       ignoreclassfile: '',
     },
@@ -334,6 +334,7 @@ export default function LoadDatabaseModal() {
         <ModalStatusLoading
           title={CM.loadDatabase}
           subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -383,10 +384,11 @@ export default function LoadDatabaseModal() {
       }
       icon="download"
       maxWidth="720px"
+      testId="load-database"
       footer={
         <div className="flex justify-end gap-2 w-full">
-          <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button onClick={handleLoadDatabase} icon="play_circle" disabled={!isFormValid}>
+          <Button data-testid="load-database-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+          <Button data-testid="load-database-run-btn" onClick={handleLoadDatabase} icon="play_circle" disabled={!isFormValid}>
             {CM.ok}
           </Button>
         </div>

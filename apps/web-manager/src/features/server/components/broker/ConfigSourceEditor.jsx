@@ -78,6 +78,7 @@ export default function ConfigSourceEditor({ rawContent, handleSourceChange }) {
 
         {/* Transparent textarea */}
         <textarea
+          data-testid="broker-config-textarea"
           ref={textareaRef}
           value={rawContent}
           onChange={handleSourceChange}
