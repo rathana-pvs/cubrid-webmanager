@@ -217,7 +217,14 @@ npm run test:api-server        # API 서버만
 npm run lint                   # 전체 린트
 npm run typecheck:api-server   # 타입 체크
 npm run ci                     # 타입 체크 + 빌드 (CI용)
+npm run e2e:web                # 공유 UI 시나리오 — Chromium
+npm run e2e:shared:electron    # 동일한 공유 UI 시나리오 — Electron
+npm run e2e:electron:platform  # Electron 전용 workspace/protocol/IPC 테스트
+npm run e2e:electron:packaged  # 패키징된 실행파일과 내장 리소스 테스트
+npm run e2e:electron           # 공유 UI + Electron 전용 전체 테스트
 ```
+
+E2E 환경과 실제 CMS 테스트 규칙은 [`e2e/README.md`](e2e/README.md)를 참고하세요.
 
 ---
 

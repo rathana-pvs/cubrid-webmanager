@@ -1,0 +1,93 @@
+name: Real cross-platform E2E
+
+on:
+  workflow_dispatch:
+    inputs:
+      run_packaged:
+        description: Build and test the packaged Electron executable
+        required: false
+        default: false
+        type: boolean
+
+concurrency:
+  group: real-cms-e2e
+  cancel-in-progress: false
+
+jobs:
+  real-cms:
+    name: Web and Electron against real CMS
+    runs-on: [self-hosted, linux]
+    timeout-minutes: 180
+    env:
+      CI: true
+      BASE_URL: https://localhost:8443
+      WEB_HTTPS_PORT: 8443
+      NODE_TLS_REJECT_UNAUTHORIZED: 0
+      SEED: ${{ secrets.E2E_SEED }}
+      SALT: ${{ secrets.E2E_SALT }}
+      E2E_USERNAME: ${{ secrets.E2E_USERNAME }}
+      E2E_PASSWORD: ${{ secrets.E2E_PASSWORD }}
+      E2E_HOST_ADDRESS: ${{ secrets.E2E_HOST_ADDRESS }}
+      E2E_HOST_PORT: ${{ secrets.E2E_HOST_PORT }}
+      E2E_HOST_USER: ${{ secrets.E2E_HOST_USER }}
+      E2E_HOST_PASSWORD: ${{ secrets.E2E_HOST_PASSWORD }}
+      E2E_DB: ${{ secrets.E2E_DB }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: npm
+
+      - name: Install dependencies and browsers
+        run: |
+          npm ci
+          npx playwright install --with-deps chromium
+
+      - name: Start web stack
+        run: |
+          npm run dev:stack > e2e-stack.log 2>&1 &
+          echo $! > e2e-stack.pid
+          for attempt in $(seq 1 120); do
+            if curl --insecure --silent --fail "$BASE_URL/login" > /dev/null; then
+              exit 0
+            fi
+            sleep 1
+          done
+          tail -200 e2e-stack.log
+          exit 1
+
+      - name: Seed real web test account and host
+        run: npm run e2e:seed:web
+
+      - name: Run shared scenarios in Chromium
+        run: npm run e2e:web
+
+      - name: Run shared and platform scenarios in Electron
+        run: xvfb-run --auto-servernum npm run e2e:electron
+
+      - name: Run packaged Electron release test
+        if: inputs.run_packaged
+        run: xvfb-run --auto-servernum npm run e2e:electron:packaged
+
+      - name: Stop web stack
+        if: always()
+        run: |
+          if test -f e2e-stack.pid; then
+            kill "$(cat e2e-stack.pid)" || true
+          fi
+
+      - name: Upload E2E artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: real-cross-platform-e2e
+          path: |
+            e2e/artifacts/
+            e2e-stack.log
+          if-no-files-found: warn
+          retention-days: 14
