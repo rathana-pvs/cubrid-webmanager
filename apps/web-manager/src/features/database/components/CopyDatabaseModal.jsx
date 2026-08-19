@@ -289,25 +289,15 @@ export default function CopyDatabaseModal() {
       title={CM.copyDatabase || 'Copy Database'}
       subtitle={CM.msgCopyDbDialog || 'Please enter the database information.'}
       icon="content_copy"
-<<<<<<< HEAD
       maxWidth="820px"
-      footer={
-        <div className="flex justify-end gap-3 w-full">
-          <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button 
-            variant="primary" 
-            onClick={handleCopy} 
-=======
-      maxWidth="580px"
       testId="copy-database"
       footer={
         <div className="flex justify-end gap-3 w-full">
           <Button data-testid="copy-database-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
-          <Button
+          <Button 
             data-testid="copy-database-execute-btn"
-            variant="primary"
-            onClick={handleCopy}
->>>>>>> develop
+            variant="primary" 
+            onClick={handleCopy} 
             icon="content_copy"
             className="min-w-[140px]"
             disabled={!formData.destName.trim()}
@@ -366,7 +356,6 @@ export default function CopyDatabaseModal() {
           </div>
         </div>
 
-<<<<<<< HEAD
         {/* Destination Database Group */}
         <div>
           <SectionHeader title={CM.grpDbDestName || 'Destination database'} icon="move_to_inbox" />
@@ -377,6 +366,7 @@ export default function CopyDatabaseModal() {
               </label>
               <div className="col-span-2">
                 <Input
+                  data-testid="copy-database-dest-name-input"
                   value={formData.destName}
                   onChange={e => handleInputChange('destName', e.target.value)}
                   placeholder="e.g. demodb_copy"
@@ -446,19 +436,6 @@ export default function CopyDatabaseModal() {
               checked={formData.copyIndividual}
               onChange={e => handleInputChange('copyIndividual', e.target.checked)}
               disabled={!formData.destName.trim()}
-=======
-          {/* Destination Column */}
-          <div className="flex-1">
-            <Input
-              data-testid="copy-database-dest-name-input"
-              label={CM.cloneIdentifier}
-              value={formData.destName}
-              onChange={e => handleInputChange('destName', e.target.value)}
-              placeholder="e.g. clone_db"
-              autoFocus
-              icon="content_copy"
-              inputClassName="h-[52px]! font-black!"
->>>>>>> develop
             />
           </div>
 
