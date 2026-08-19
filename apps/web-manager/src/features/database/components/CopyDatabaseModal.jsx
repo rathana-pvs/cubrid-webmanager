@@ -61,7 +61,11 @@ export default function CopyDatabaseModal() {
     copyIndividual: false,
   });
 
-  const [isPathManuallyEdited, setIsPathManuallyEdited] = useState(false);
+  const [manuallyEditedPaths, setManuallyEditedPaths] = useState({
+    destPath: false,
+    extPath: false,
+    logPath: false,
+  });
   const [srcLogDir, setSrcLogDir] = useState('');
   const [diskInfo, setDiskInfo] = useState({ freeSpace: '-', dbSize: '-' });
   const [volumes, setVolumes] = useState([]);
@@ -84,7 +88,11 @@ export default function CopyDatabaseModal() {
         deleteSource: false,
         copyIndividual: false,
       });
-      setIsPathManuallyEdited(false);
+      setManuallyEditedPaths({
+        destPath: false,
+        extPath: false,
+        logPath: false,
+      });
       setSrcLogDir('');
       setDiskInfo({ freeSpace: '-', dbSize: '-' });
       setVolumes([]);
@@ -112,6 +120,8 @@ export default function CopyDatabaseModal() {
               location: space.location,
               newVolumeName: space.spacename,
               newLocation: space.location || defaultPath,
+              isNameEdited: false,
+              isLocationEdited: false,
             }));
             setVolumes(filteredSpaces);
           })
@@ -144,36 +154,53 @@ export default function CopyDatabaseModal() {
     const separator = getPathSeparator(currentDb?.dbdir || '');
     const targetPath = parentDir ? `${parentDir}${separator}${formData.destName}` : (currentDb?.dbdir || '');
 
-    if (!isPathManuallyEdited && targetPath) {
-      setFormData(prev => ({
-        ...prev,
-        destPath: targetPath,
-        extPath: targetPath,
-        logPath: targetPath,
-      }));
-    }
+    setFormData(prev => {
+      let changed = false;
+      const next = { ...prev };
+      if (!manuallyEditedPaths.destPath && targetPath && prev.destPath !== targetPath) {
+        next.destPath = targetPath;
+        changed = true;
+      }
+      if (!manuallyEditedPaths.extPath && targetPath && prev.extPath !== targetPath) {
+        next.extPath = targetPath;
+        changed = true;
+      }
+      if (!manuallyEditedPaths.logPath && targetPath && prev.logPath !== targetPath) {
+        next.logPath = targetPath;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
 
     setVolumes(prev => prev.map((vol, idx) => {
       let newName = vol.newVolumeName;
-      if (idx === 0) {
-        newName = formData.destName;
-      } else {
-        const numStr = String(idx).padStart(3, '0');
-        newName = `${formData.destName}_x${numStr}`;
+      if (!vol.isNameEdited) {
+        if (idx === 0) {
+          newName = formData.destName;
+        } else {
+          const numStr = String(idx).padStart(3, '0');
+          newName = `${formData.destName}_x${numStr}`;
+        }
       }
+
+      const newLoc = !vol.isLocationEdited && targetPath ? targetPath : vol.newLocation;
+      if (newName === vol.newVolumeName && newLoc === vol.newLocation) {
+        return vol;
+      }
+
       return {
         ...vol,
         newVolumeName: newName,
-        newLocation: targetPath || vol.newLocation
+        newLocation: newLoc,
       };
     }));
-  }, [formData.destName, selectedDatabase, currentDb?.dbdir, isPathManuallyEdited]);
+  }, [formData.destName, selectedDatabase, currentDb?.dbdir, manuallyEditedPaths]);
 
   if (!isCopyDatabaseModalOpen) return null;
 
   const handleInputChange = (field, value) => {
     if (['destPath', 'extPath', 'logPath'].includes(field)) {
-      setIsPathManuallyEdited(true);
+      setManuallyEditedPaths(prev => ({ ...prev, [field]: true }));
     }
     setFormData(prev => ({ ...prev, [field]: value }));
   };
@@ -181,7 +208,13 @@ export default function CopyDatabaseModal() {
   const handleVolumeChange = (index, field, value) => {
     setVolumes(prev => {
       const next = [...prev];
-      next[index] = { ...next[index], [field]: value };
+      const item = { ...next[index], [field]: value };
+      if (field === 'newVolumeName') {
+        item.isNameEdited = true;
+      } else if (field === 'newLocation') {
+        item.isLocationEdited = true;
+      }
+      next[index] = item;
       return next;
     });
   };
