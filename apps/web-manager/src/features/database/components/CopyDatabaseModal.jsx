@@ -192,33 +192,39 @@ export default function CopyDatabaseModal() {
     startAction();
 
     let advanced = 'off';
-    let openParam;
-    let closeParam;
+    let volumeList;
 
     if (formData.copyIndividual) {
       advanced = 'on';
-      closeParam = 'volume';
-      const openLines = ['volume'];
+      const volumeMap = {};
       volumes.forEach((vol) => {
-        const oldVolDir = (vol.location || '').replace(/:/g, '|');
-        const oldVolName = vol.spacename;
-        const newVolDir = (vol.newLocation || formData.destPath).replace(/:/g, '|');
+        const separator = getPathSeparator(vol.location || formData.destPath || '/');
+        const oldLoc = vol.location || '';
+        const oldPath = oldLoc
+          ? (oldLoc.endsWith('/') || oldLoc.endsWith('\\') ? `${oldLoc}${vol.spacename}` : `${oldLoc}${separator}${vol.spacename}`)
+          : vol.spacename;
+        const newLoc = vol.newLocation || formData.destPath;
         const newVolName = vol.newVolumeName || vol.spacename;
-        openLines.push(`${oldVolDir}/${oldVolName}:${newVolDir}/${newVolName}`);
+        const newPath = newLoc
+          ? (newLoc.endsWith('/') || newLoc.endsWith('\\') ? `${newLoc}${newVolName}` : `${newLoc}${separator}${newVolName}`)
+          : newVolName;
+        volumeMap[oldPath] = newPath;
       });
-      openParam = openLines.join('\n');
+      if (Object.keys(volumeMap).length > 0) {
+        volumeList = [volumeMap];
+      }
     }
 
     const payload = {
       srcdbname: selectedDatabase,
       destdbname: formData.destName.trim(),
-      destdbpath: formData.copyIndividual ? '' : formData.destPath,
-      exvolpath: formData.copyIndividual ? '' : formData.extPath,
+      destdbpath: formData.destPath,
+      exvolpath: formData.extPath,
       logpath: formData.logPath,
       overwrite: formData.replaceExisting ? 'y' : 'n',
       move: formData.deleteSource ? 'y' : 'n',
       advanced,
-      ...(formData.copyIndividual && { open: openParam, close: closeParam }),
+      ...(volumeList && { volume: volumeList }),
     };
 
     try {
