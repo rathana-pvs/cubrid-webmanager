@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { closeCopyDatabaseModal, fetchDatabaseStartInfo } from '../databaseSlice';
 import { databaseJobApi } from '../databaseJobApi';
+import { databaseApi } from '../databaseApi';
 import { useCmsJob } from '../../../infrastructure/hooks/useCmsJob';
 import { getCmsJobLoadingSubtitle } from '../../../infrastructure/cmsJob/cmsJobUi';
 
@@ -9,8 +10,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { Input } from '../../../components/ds/forms/Input';
-import { Toggle } from '../../../components/ds/forms/Toggle';
-import { Typography } from '../../../components/ds/foundation/Typography';
+import { Checkbox } from '../../../components/ds/forms/Checkbox';
 import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
 import { 
@@ -20,45 +20,15 @@ import {
 } from '../../../components/ds/feedback/ActionStatus';
 import { useCM } from '../../../constants/useCM';
 
-// view states
-const VIEW_FORM    = 'form';
-const VIEW_LOADING = 'loading';
-const VIEW_SUCCESS = 'success';
-const VIEW_ERROR   = 'error';
+const getPathSeparator = (path) => (path && path.includes('\\') ? '\\' : '/');
 
-function FlagCard({ icon, label, description, checked, onChange, variant = 'primary' }) {
-  return (
-    <div 
-      className={`flex items-center gap-4 p-4 border rounded-2xl transition-all duration-200 cursor-pointer select-none
-        ${checked
-          ? variant === 'danger' ? 'bg-rose-500/5 border-rose-500/25 shadow-[0_2px_16px_rgba(244,63,94,0.04)]' : 'bg-amber-500/5 border-amber-500/25 shadow-[0_2px_16px_rgba(245,158,11,0.04)]'
-          : 'bg-white dark:bg-white/2 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'}`}
-      onClick={() => onChange(!checked)}
-    >
-      <div className={`w-9 h-9 rounded-xl flex items-center justify-center border transition-all shrink-0
-        ${checked 
-          ? variant === 'danger' ? 'bg-rose-500/10 border-rose-500/20 text-rose-500' : 'bg-amber-500/10 border-amber-500/20 text-amber-500' 
-          : 'bg-slate-100 dark:bg-white/5 border-slate-200 dark:border-white/5 text-slate-400'}`}>
-        <Icon name={icon} size="xs" weight={300} />
-      </div>
-      <div className="flex-1 min-w-0">
-        <Typography variant="p" className={`font-bold text-[11.5px] tracking-tight transition-colors ${checked ? (variant === 'danger' ? 'text-rose-500' : 'text-amber-500') : 'text-slate-900 dark:text-white'}`}>
-          {label}
-        </Typography>
-        <Typography variant="caption" className="text-slate-400 dark:text-slate-500 font-medium mt-0.5 leading-snug">
-          {description}
-        </Typography>
-      </div>
-      <div className="shrink-0" onClick={(e) => e.stopPropagation()}>
-        <Toggle 
-          variant={variant}
-          checked={checked}
-          onChange={onChange}
-        />
-      </div>
-    </div>
-  );
-}
+const getParentDirectory = (path) => {
+  if (!path) return '';
+  const separator = getPathSeparator(path);
+  const parts = path.split(separator);
+  if (parts.length <= 1) return '';
+  return parts.slice(0, -1).join(separator);
+};
 
 export default function CopyDatabaseModal() {
   const CM = useCM();
@@ -69,7 +39,6 @@ export default function CopyDatabaseModal() {
   const currentDb = databases?.find((db) => db.dbname === selectedDatabase);
 
   const { 
-    state, 
     error, 
     startAction, 
     endSuccess, 
@@ -89,15 +58,23 @@ export default function CopyDatabaseModal() {
     logPath: '',
     replaceExisting: false,
     deleteSource: false,
+    copyIndividual: false,
   });
 
+  const [manuallyEditedPaths, setManuallyEditedPaths] = useState({
+    destPath: false,
+    extPath: false,
+    logPath: false,
+  });
+  const [srcLogDir, setSrcLogDir] = useState('');
+  const [diskInfo, setDiskInfo] = useState({ freeSpace: '-', dbSize: '-' });
+  const [volumes, setVolumes] = useState([]);
+  const [volInfoLoading, setVolInfoLoading] = useState(false);
+
   useEffect(() => {
+    let cancelled = false;
     if (isCopyDatabaseModalOpen) {
       resetAction();
-      // databases can be stale/empty right after a host switch (resetDatabaseState
-      // clears it synchronously while the refetch is still in flight) — refetch
-      // so currentDb.dbdir resolves to the real path instead of falling through
-      // to a fabricated default that doesn't match this host's actual layout.
       if (selectedHostUid && !currentDb) {
         dispatch(fetchDatabaseStartInfo(selectedHostUid));
       }
@@ -109,20 +86,167 @@ export default function CopyDatabaseModal() {
         logPath: defaultPath,
         replaceExisting: false,
         deleteSource: false,
+        copyIndividual: false,
       });
+      setManuallyEditedPaths({
+        destPath: false,
+        extPath: false,
+        logPath: false,
+      });
+      setSrcLogDir('');
+      setDiskInfo({ freeSpace: '-', dbSize: '-' });
+      setVolumes([]);
+
+      if (selectedHostUid && selectedDatabase) {
+        setVolInfoLoading(true);
+        databaseApi.getVolumeInfo(selectedHostUid, selectedDatabase)
+          .then((res) => {
+            if (cancelled) return;
+            const freeMB = res?.freespace != null ? `${res.freespace} (MB)` : '-';
+            const sizeMB = res?.dbsize != null ? `${Math.round(res.dbsize / (1024 * 1024))} (MB)` : '-';
+            setDiskInfo({ freeSpace: freeMB, dbSize: sizeMB });
+
+            const validTypes = ['generic', 'data', 'index', 'temp', 'permanent'];
+            const logVol = (res?.spaceinfo || []).find(s => s?.type?.toLowerCase() === 'active_log');
+            if (logVol?.location) {
+              setSrcLogDir(logVol.location);
+            }
+
+            const filteredSpaces = (res?.spaceinfo || []).filter(space =>
+              space.type && validTypes.includes(space.type.toLowerCase())
+            ).map(space => ({
+              spacename: space.spacename,
+              type: space.type,
+              location: space.location,
+              newVolumeName: space.spacename,
+              newLocation: space.location || defaultPath,
+              isNameEdited: false,
+              isLocationEdited: false,
+            }));
+            setVolumes(filteredSpaces);
+          })
+          .catch((err) => {
+            if (!cancelled) console.error('Failed to fetch volume info for copy:', err);
+          })
+          .finally(() => {
+            if (!cancelled) setVolInfoLoading(false);
+          });
+      }
     }
-  }, [isCopyDatabaseModalOpen, resetAction, currentDb, selectedHostUid, dispatch]);
+    return () => {
+      cancelled = true;
+    };
+    // currentDb?.dbdir (not currentDb) is the dependency deliberately — see
+    // RenameDatabaseModal.jsx for the same convention. handleCopy's success
+    // path dispatches fetchDatabaseStartInfo to refresh the tree with the new
+    // clone, which replaces the whole `databases` array and gives `currentDb`
+    // a new object reference with the same dbdir value. Depending on the
+    // object itself re-ran this effect on that refresh alone and called
+    // resetAction() right after endSuccess(), silently bouncing the modal
+    // from its success view back to the form.
+  }, [isCopyDatabaseModalOpen, selectedHostUid, selectedDatabase, currentDb?.dbdir, resetAction, dispatch]);
+
+  // Desktop EditListener alignment: Auto-update target paths and volume mapping when destName changes
+  useEffect(() => {
+    if (!formData.destName) return;
+
+    const parentDir = getParentDirectory(currentDb?.dbdir || '');
+    const separator = getPathSeparator(currentDb?.dbdir || '');
+    const targetPath = parentDir ? `${parentDir}${separator}${formData.destName}` : (currentDb?.dbdir || '');
+
+    setFormData(prev => {
+      let changed = false;
+      const next = { ...prev };
+      if (!manuallyEditedPaths.destPath && targetPath && prev.destPath !== targetPath) {
+        next.destPath = targetPath;
+        changed = true;
+      }
+      if (!manuallyEditedPaths.extPath && targetPath && prev.extPath !== targetPath) {
+        next.extPath = targetPath;
+        changed = true;
+      }
+      if (!manuallyEditedPaths.logPath && targetPath && prev.logPath !== targetPath) {
+        next.logPath = targetPath;
+        changed = true;
+      }
+      return changed ? next : prev;
+    });
+
+    setVolumes(prev => prev.map((vol, idx) => {
+      let newName = vol.newVolumeName;
+      if (!vol.isNameEdited) {
+        if (idx === 0) {
+          newName = formData.destName;
+        } else {
+          const numStr = String(idx).padStart(3, '0');
+          newName = `${formData.destName}_x${numStr}`;
+        }
+      }
+
+      const newLoc = !vol.isLocationEdited && targetPath ? targetPath : vol.newLocation;
+      if (newName === vol.newVolumeName && newLoc === vol.newLocation) {
+        return vol;
+      }
+
+      return {
+        ...vol,
+        newVolumeName: newName,
+        newLocation: newLoc,
+      };
+    }));
+  }, [formData.destName, selectedDatabase, currentDb?.dbdir, manuallyEditedPaths]);
 
   if (!isCopyDatabaseModalOpen) return null;
 
   const handleInputChange = (field, value) => {
+    if (['destPath', 'extPath', 'logPath'].includes(field)) {
+      setManuallyEditedPaths(prev => ({ ...prev, [field]: true }));
+    }
     setFormData(prev => ({ ...prev, [field]: value }));
+  };
+
+  const handleVolumeChange = (index, field, value) => {
+    setVolumes(prev => {
+      const next = [...prev];
+      const item = { ...next[index], [field]: value };
+      if (field === 'newVolumeName') {
+        item.isNameEdited = true;
+      } else if (field === 'newLocation') {
+        item.isLocationEdited = true;
+      }
+      next[index] = item;
+      return next;
+    });
   };
 
   const handleCopy = async () => {
     if (!formData.destName.trim()) return;
-    
+
     startAction();
+
+    let advanced = 'off';
+    let volumeList;
+
+    if (formData.copyIndividual) {
+      advanced = 'on';
+      const volumeMap = {};
+      volumes.forEach((vol) => {
+        const separator = getPathSeparator(vol.location || formData.destPath || '/');
+        const oldLoc = vol.location || '';
+        const oldPath = oldLoc
+          ? (oldLoc.endsWith('/') || oldLoc.endsWith('\\') ? `${oldLoc}${vol.spacename}` : `${oldLoc}${separator}${vol.spacename}`)
+          : vol.spacename;
+        const newLoc = vol.newLocation || formData.destPath;
+        const newVolName = vol.newVolumeName || vol.spacename;
+        const newPath = newLoc
+          ? (newLoc.endsWith('/') || newLoc.endsWith('\\') ? `${newLoc}${newVolName}` : `${newLoc}${separator}${newVolName}`)
+          : newVolName;
+        volumeMap[oldPath] = newPath;
+      });
+      if (Object.keys(volumeMap).length > 0) {
+        volumeList = [volumeMap];
+      }
+    }
 
     const payload = {
       srcdbname: selectedDatabase,
@@ -132,7 +256,8 @@ export default function CopyDatabaseModal() {
       logpath: formData.logPath,
       overwrite: formData.replaceExisting ? 'y' : 'n',
       move: formData.deleteSource ? 'y' : 'n',
-      advanced: 'off',
+      advanced,
+      ...(volumeList && { volume: volumeList }),
     };
 
     try {
@@ -155,10 +280,11 @@ export default function CopyDatabaseModal() {
   /* ─── LOADING view ─── */
   if (isLoading) {
     return (
-      <Modal isOpen title={CM.copyDatabase} icon="content_copy" onClose={handleClose} maxWidth="580px">
+      <Modal isOpen title={CM.copyDatabase || CM.cloneDatabase} icon="content_copy" onClose={handleClose} maxWidth="640px">
         <ModalStatusLoading
           title={CM.synchronizingVolumes}
           subtitle={getCmsJobLoadingSubtitle(formData.destName, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -167,7 +293,7 @@ export default function CopyDatabaseModal() {
   /* ─── SUCCESS view ─── */
   if (isSuccess) {
     return (
-      <Modal isOpen title={CM.cloningComplete} icon="content_copy" iconVariant="success" onClose={handleClose} maxWidth="580px">
+      <Modal isOpen title={CM.cloningComplete} icon="content_copy" iconVariant="success" onClose={handleClose} maxWidth="640px">
         <ModalStatusSuccess
           title={CM.copyCompleted}
           message={`${CM.copyCompleted}: ${formData.destName}`}
@@ -181,7 +307,7 @@ export default function CopyDatabaseModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title={CM.cloningFailed} icon="content_copy" iconVariant="danger" onClose={resetAction} maxWidth="580px">
+      <Modal isOpen title={CM.cloningFailed} icon="content_copy" iconVariant="danger" onClose={resetAction} maxWidth="640px">
         <ModalStatusError 
           title={CM.operationInterrupted}
           error={error}
@@ -199,105 +325,226 @@ export default function CopyDatabaseModal() {
     <Modal
       isOpen={isCopyDatabaseModalOpen}
       onClose={handleClose}
-      title={CM.cloneDatabase}
-      subtitle={CM.cloneSubtitle}
+      title={CM.copyDatabase || 'Copy Database'}
+      subtitle={CM.msgCopyDbDialog || 'Please enter the database information.'}
       icon="content_copy"
-      maxWidth="580px"
+      maxWidth="820px"
       testId="copy-database"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button data-testid="copy-database-discard-btn" variant="ghost" onClick={handleClose}>{CM.discard}</Button>
-          <Button
+          <Button data-testid="copy-database-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
+          <Button 
             data-testid="copy-database-execute-btn"
-            variant="primary"
-            onClick={handleCopy}
+            variant="primary" 
+            onClick={handleCopy} 
             icon="content_copy"
             className="min-w-[140px]"
+            disabled={!formData.destName.trim()}
           >
-            {CM.initiateCopy}
+            {CM.ok}
           </Button>
         </div>
       }
     >
-      <div className="space-y-6">
-        {/* Source -> Destination */}
+      <div className="space-y-5">
+        {/* Source Database Group */}
         <div>
-          <SectionHeader title={CM.cloningContext} icon="swap_horiz" />
-          <div className="flex items-end gap-2">
-            <div className="flex items-center gap-3 px-4 h-[52px] bg-slate-50 dark:bg-white/4 border border-slate-100 dark:border-white/8 rounded-2xl">
-              <div className="w-8 h-8 rounded-xl bg-slate-200 dark:bg-white/8 flex items-center justify-center shrink-0">
-                <Icon name="database" size="sm" weight={300} className="text-slate-500 dark:text-slate-400" />
+          <SectionHeader title={CM.grpDbSourceName || 'Source database'} icon="database" />
+          <div className="bg-slate-50 dark:bg-white/4 border border-slate-200 dark:border-white/8 rounded-xl p-3.5 space-y-3">
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <label className="text-[12px] font-medium text-slate-600 dark:text-slate-400">
+                {CM.lblSrcDbName || 'Database name:'}
+              </label>
+              <div className="col-span-2">
+                <Input
+                  value={selectedDatabase}
+                  disabled
+                  size="md"
+                  className="font-bold text-[13px]"
+                />
               </div>
-              <p className="text-[12.5px] font-black text-slate-700 dark:text-slate-200 truncate">{selectedDatabase}</p>
             </div>
 
-          {/* Center Indicator Pillar */}
-          <div className="flex flex-col h-[52px] justify-center shrink-0 px-1">
-            <div className="w-9 h-9 rounded-full bg-amber-500/5 dark:bg-amber-500/10 border border-amber-500/10 flex items-center justify-center relative shadow-[0_0_15px_rgba(245,158,11,0.05)]">
-              <Icon name="chevron_right" size="sm" weight={700} className="text-amber-500 text-[11px]!" />
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <label className="text-[12px] font-medium text-slate-600 dark:text-slate-400">
+                {CM.lblSrcDbPathName || 'Database path:'}
+              </label>
+              <div className="col-span-2">
+                <Input
+                  value={currentDb?.dbdir || '-'}
+                  disabled
+                  size="md"
+                  className="font-mono text-[12.5px]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <label className="text-[12px] font-medium text-slate-600 dark:text-slate-400">
+                {CM.lblSrcLogPathName || 'Log file path:'}
+              </label>
+              <div className="col-span-2">
+                <Input
+                  value={srcLogDir || currentDb?.dbdir || '-'}
+                  disabled
+                  size="md"
+                  className="font-mono text-[12.5px]"
+                />
+              </div>
             </div>
           </div>
+        </div>
 
-          {/* Destination Column */}
-          <div className="flex-1">
-            <Input
-              data-testid="copy-database-dest-name-input"
-              label={CM.cloneIdentifier}
-              value={formData.destName}
-              onChange={e => handleInputChange('destName', e.target.value)}
-              placeholder="e.g. clone_db"
-              autoFocus
-              icon="content_copy"
-              inputClassName="h-[52px]! font-black!"
+        {/* Destination Database Group */}
+        <div>
+          <SectionHeader title={CM.grpDbDestName || 'Destination database'} icon="move_to_inbox" />
+          <div className="bg-white dark:bg-white/2 border border-slate-200 dark:border-white/8 rounded-xl p-3.5 space-y-3">
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <label className="text-[12px] font-medium text-slate-600 dark:text-slate-400">
+                {CM.lblDescDbName || 'Database name:'}
+              </label>
+              <div className="col-span-2">
+                <Input
+                  data-testid="copy-database-dest-name-input"
+                  value={formData.destName}
+                  onChange={e => handleInputChange('destName', e.target.value)}
+                  placeholder="e.g. demodb_copy"
+                  autoFocus
+                  size="md"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <label className="text-[12px] font-medium text-slate-600 dark:text-slate-400">
+                {CM.lblDescDbPathName || 'Database path:'}
+              </label>
+              <div className="col-span-2">
+                <Input
+                  value={formData.destPath}
+                  onChange={e => handleInputChange('destPath', e.target.value)}
+                  disabled={formData.copyIndividual}
+                  size="md"
+                  className="font-mono text-[12.5px]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <label className="text-[12px] font-medium text-slate-600 dark:text-slate-400">
+                {CM.lblVolumePathName || 'Extend volume path:'}
+              </label>
+              <div className="col-span-2">
+                <Input
+                  value={formData.extPath}
+                  onChange={e => handleInputChange('extPath', e.target.value)}
+                  disabled={formData.copyIndividual}
+                  size="md"
+                  className="font-mono text-[12.5px]"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-3 items-center">
+              <label className="text-[12px] font-medium text-slate-600 dark:text-slate-400">
+                {CM.lblDescLogPathName || 'Log file path:'}
+              </label>
+              <div className="col-span-2">
+                <Input
+                  value={formData.logPath}
+                  onChange={e => handleInputChange('logPath', e.target.value)}
+                  size="md"
+                  className="font-mono text-[12.5px]"
+                />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        {/* Disk Space Indicator */}
+        <div className="flex items-center gap-1.5 px-3.5 py-2.5 bg-slate-100 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-xl text-[11.5px] text-slate-600 dark:text-slate-300">
+          <Icon name="sd_card" size="xs" className="text-amber-500" />
+          <span>{typeof CM.lblCopyFreeDiskSize === 'function' ? CM.lblCopyFreeDiskSize(diskInfo.freeSpace) : `Free disk space: ${diskInfo.freeSpace}`}</span>
+        </div>
+
+        {/* Copy Individual Volumes Section */}
+        <div>
+          <div className="flex items-center justify-between mb-2">
+            <Checkbox
+              label={CM.btnCopyVolume || 'Copy individual volumes'}
+              checked={formData.copyIndividual}
+              onChange={e => handleInputChange('copyIndividual', e.target.checked)}
+              disabled={!formData.destName.trim()}
             />
           </div>
+
+          <div className={`border border-slate-200 dark:border-white/10 rounded-xl overflow-hidden mt-2 bg-white dark:bg-white/2 transition-all ${
+            !formData.copyIndividual ? 'opacity-50 pointer-events-none select-none bg-slate-50/50 dark:bg-white/[0.01]' : ''
+          }`}>
+            {volInfoLoading ? (
+              <div className="p-4 text-center text-slate-400 text-[12px]">Loading volumes...</div>
+            ) : volumes.length === 0 ? (
+              <div className="p-4 text-center text-slate-400 text-[12px]">No volume information available</div>
+            ) : (
+              <div className="max-h-[180px] overflow-y-auto">
+                <table className="w-full text-[11px] text-left">
+                  <thead className="bg-slate-100 dark:bg-white/5 text-slate-600 dark:text-slate-300 uppercase sticky top-0 border-b border-slate-200 dark:border-white/10">
+                    <tr>
+                      <th className="px-3 py-2 font-semibold w-2/5">{CM.tblColumnCurrentVolName || 'Current volume name'}</th>
+                      <th className="px-3 py-2 font-semibold w-3/10">{CM.tblColumnCopyNewVolName || 'New volume name'}</th>
+                      <th className="px-3 py-2 font-semibold w-3/10">{CM.tblColumnCopyNewDirPath || 'New directory path'}</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                    {volumes.map((vol, idx) => {
+                      const fullVolPath = vol.location 
+                        ? `${vol.location.endsWith('/') || vol.location.endsWith('\\') ? vol.location : vol.location + '/'}${vol.spacename}`
+                        : vol.spacename;
+                      return (
+                        <tr key={idx} className="hover:bg-slate-50 dark:hover:bg-white/4">
+                          <td className="px-3 py-1.5 font-medium font-mono text-[11.5px] text-slate-700 dark:text-slate-300 truncate max-w-[200px]" title={fullVolPath}>
+                            {fullVolPath}
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <input
+                              type="text"
+                              disabled={!formData.copyIndividual}
+                              value={vol.newVolumeName}
+                              onChange={e => handleVolumeChange(idx, 'newVolumeName', e.target.value)}
+                              className="w-full h-8 px-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg text-[12px] font-medium text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-500 disabled:bg-slate-100 dark:disabled:bg-white/2"
+                            />
+                          </td>
+                          <td className="px-2 py-1.5">
+                            <input
+                              type="text"
+                              disabled={!formData.copyIndividual}
+                              value={vol.newLocation}
+                              onChange={e => handleVolumeChange(idx, 'newLocation', e.target.value)}
+                              className="w-full h-8 px-2.5 bg-slate-50 dark:bg-white/5 border border-slate-200 dark:border-white/10 rounded-lg font-mono text-[12px] text-slate-800 dark:text-slate-200 focus:outline-none focus:border-amber-500 disabled:bg-slate-100 dark:disabled:bg-white/2"
+                            />
+                          </td>
+                        </tr>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* Path configuration */}
-        <div>
-          <SectionHeader title={CM.targetEnvironment} icon="folder_open" />
-          <div className="bg-white dark:bg-white/2 border border-slate-100 dark:border-white/5 rounded-2xl p-4">
-          <div className="grid grid-cols-1 gap-3">
-            {[
-              { label: CM.primaryVolumePath, field: 'destPath', icon: 'folder' },
-              { label: CM.extVolumePath, field: 'extPath', icon: 'folder_copy' },
-              { label: CM.logVolumePath, field: 'logPath', icon: 'description' },
-            ].map(({ label, field, icon }) => (
-              <Input
-                key={field}
-                label={label}
-                value={formData[field]}
-                onChange={e => handleInputChange(field, e.target.value)}
-                icon={icon}
-                size="sm"
-                className="font-mono! text-[11px]!"
-              />
-            ))}
-          </div>
-        </div>
-      </div>
-
-        {/* Action Flags */}
-        <div>
-          <SectionHeader title={CM.executionStrategy} icon="tune" />
-          <div className="space-y-3">
-          <FlagCard
-            icon="sync"
-            label={CM.overwriteExistingEnvironment}
-            description={CM.replaceExistingDesc}
+        {/* Options */}
+        <div className="space-y-2 pt-1 border-t border-slate-100 dark:border-white/5">
+          <Checkbox
+            label={CM.btnReplaceDb || 'Replace an existing database'}
             checked={formData.replaceExisting}
-            onChange={v => handleInputChange('replaceExisting', v)}
+            onChange={e => handleInputChange('replaceExisting', e.target.checked)}
           />
-          <FlagCard
-            icon="move_up"
-            label={CM.transformToMove}
-            description={CM.moveSourceDesc}
+          <Checkbox
+            label={CM.btnDeleteSrcDb || 'Delete a source database'}
             checked={formData.deleteSource}
-            onChange={v => handleInputChange('deleteSource', v)}
-            variant="danger"
+            onChange={e => handleInputChange('deleteSource', e.target.checked)}
           />
-          </div>
         </div>
       </div>
     </Modal>

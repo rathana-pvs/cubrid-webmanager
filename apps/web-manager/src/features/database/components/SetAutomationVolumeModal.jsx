@@ -255,7 +255,7 @@ export default function SetAutomationVolumeModal() {
             {CM.pageSize16kLabel}
           </Typography>
           <div className="flex gap-2">
-            <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
+            <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
             <Button
               variant="primary"
               onClick={handleSave}

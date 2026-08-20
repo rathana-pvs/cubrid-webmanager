@@ -9,6 +9,25 @@ export type HandleCmsErrorsOptions = {
   mapHttpErrors?: boolean;
 };
 
+// Node/OpenSSL TLS validation failures (expired/self-signed/untrusted cert,
+// hostname mismatch, etc.) surface as a connection error with `e.request` set
+// and no `e.response` — the same shape as a genuine "CMS never responded"
+// timeout. Left unchecked, both get reported as NO_RESPONSE, which reads as
+// a transient network issue when it's actually a certificate problem that
+// will never resolve on its own. Node's TLS error codes are stable strings
+// (CERT_HAS_EXPIRED, DEPTH_ZERO_SELF_SIGNED_CERT, UNABLE_TO_VERIFY_LEAF_SIGNATURE,
+// ...); as a fallback also check the message text since not every TLS error
+// path preserves `code` through Axios's wrapping.
+const TLS_ERROR_CODE_PREFIXES = ['CERT_', 'DEPTH_', 'UNABLE_TO_', 'SELF_SIGNED_', 'ERR_TLS_'];
+
+function isTlsError(error: unknown): boolean {
+  const e = error as { code?: string; message?: string };
+  if (e.code && TLS_ERROR_CODE_PREFIXES.some((prefix) => e.code!.startsWith(prefix))) {
+    return true;
+  }
+  return /certificate/i.test(e.message ?? '');
+}
+
 function mapAxiosToCmsError(error: unknown): CmsError | null {
   if (!error || typeof error !== 'object') {
     return null;
@@ -31,6 +50,20 @@ function mapAxiosToCmsError(error: unknown): CmsError | null {
 
   if (e.request) {
     const request = e.request as { method?: string; host?: string; path?: string };
+
+    if (isTlsError(e)) {
+      Logger.warn(
+        buildLogLine({
+          event: 'cms_tls_error',
+          method: request.method,
+          host: request.host,
+          path: request.path,
+          message: e.message,
+        })
+      );
+      return CmsError.TlsError({ message: e.message }, error as Error);
+    }
+
     Logger.warn(
       buildLogLine({
         event: 'cms_no_response',

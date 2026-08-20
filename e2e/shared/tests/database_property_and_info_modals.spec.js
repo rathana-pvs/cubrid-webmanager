@@ -43,8 +43,8 @@ test.describe('Feature: Database Properties & Diagnostic Info', () => {
       await expect(modal.getByText(E2E_DB).first()).toBeVisible();
     });
 
-    await Then('clicking Discard closes the modal without applying changes', async () => {
-      await page.getByTestId('database-property-discard-btn').click();
+    await Then('clicking Cancel closes the modal without applying changes', async () => {
+      await page.getByTestId('database-property-cancel-btn').click();
       await expect(modal).not.toBeVisible();
     });
   });

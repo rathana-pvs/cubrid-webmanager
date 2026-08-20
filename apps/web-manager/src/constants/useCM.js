@@ -12,12 +12,13 @@ const PACKS = {
 
 /** @returns {'en'|'ko'} */
 export function getStoredLocale() {
-  if (typeof window === 'undefined') return 'en';
+  if (typeof window === 'undefined') return 'ko';
   try {
     const v = localStorage.getItem(LOCALE_STORAGE_KEY);
-    return v === 'ko' ? 'ko' : 'en';
+    // Default to Korean unless the user has explicitly picked English.
+    return v === 'en' ? 'en' : 'ko';
   } catch {
-    return 'en';
+    return 'ko';
   }
 }
 

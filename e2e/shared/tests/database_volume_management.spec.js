@@ -57,8 +57,8 @@ test.describe('Feature: Database Volume Management', () => {
       await expect(saveBtn).toBeDisabled();
     });
 
-    await And('clicking Discard closes the modal cleanly', async () => {
-      await page.getByTestId('add-volume-discard-btn').click();
+    await And('clicking Cancel closes the modal cleanly', async () => {
+      await page.getByTestId('add-volume-cancel-btn').click();
       await expect(modal).not.toBeVisible();
     });
   });

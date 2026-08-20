@@ -9,17 +9,18 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Modal } from '../../../components/ds/layout/Modal';
 import { Button } from '../../../components/ds/foundation/Button';
 import { TabGroup } from '../../../components/ds/layout/TabGroup';
+import { Table } from '../../../components/ds/layout/Table';
 import { Input } from '../../../components/ds/forms/Input';
 import { Select } from '../../../components/ds/forms/Select';
-import { Typography } from '../../../components/ds/foundation/Typography';
+import { Radio } from '../../../components/ds/forms/Radio';
 import { SectionHeader } from '../../../components/ds/foundation/SectionHeader';
 import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
 import { useActionState } from '../../../infrastructure/hooks/useActionState';
-import { 
-  ModalStatusLoading, 
-  ModalStatusSuccess, 
-  ModalStatusError 
+import {
+  ModalStatusLoading,
+  ModalStatusSuccess,
+  ModalStatusError
 } from '../../../components/ds/feedback/ActionStatus';
 
 // View states
@@ -75,13 +76,10 @@ const ADVANCED_PARAMS_SCHEMA = [
   { key: 'volume_extension_path', type: 'string', default: '', scope: 'SERVER' }
 ];
 
+// General params table schema — excludes the six buffer pages/size keys,
+// which get their own CUBRID Admin-style radio (pages vs size) groups above
+// the table instead of flat rows (see BUFFER_GROUPS / BufferChoiceGroup).
 const GENERAL_PARAMS_SCHEMA = {
-  data_buffer_pages: '25000',
-  data_buffer_size: '512MB',
-  sort_buffer_pages: '16',
-  sort_buffer_size: '2MB',
-  log_buffer_pages: '50',
-  log_buffer_size: '4MB',
   lock_escalation: '100000',
   lock_timeout_in_secs: '-1',
   deadlock_detection_interval_in_secs: '1',
@@ -95,182 +93,120 @@ const GENERAL_PARAMS_SCHEMA = {
 
 const GENERAL_PARAMS_KEYS = Object.keys(GENERAL_PARAMS_SCHEMA);
 
-/* ─── BufferCard ─── */
-function BufferCard({ type, label, pagesKey, sizeKey, params, bufferSettings, units, setParams, setBufferSettings, setUnits }) {
+// Mirrors CA's PageSizeChoiceComposite: one radio picks pages, the other
+// picks size (+ unit); default page-count/size defaults from dbBaseParameters.
+const BUFFER_GROUPS = [
+  { type: 'data', groupLabel: CM => CM.dataBufferAllocLabel, pagesKey: 'data_buffer_pages', sizeKey: 'data_buffer_size', pagesDefault: '25000', sizeDefault: '512' },
+  { type: 'sort', groupLabel: CM => CM.sortBufferAllocLabel, pagesKey: 'sort_buffer_pages', sizeKey: 'sort_buffer_size', pagesDefault: '16', sizeDefault: '2' },
+  { type: 'log',  groupLabel: CM => CM.logBufferAllocLabel,  pagesKey: 'log_buffer_pages',  sizeKey: 'log_buffer_size',  pagesDefault: '50', sizeDefault: '4' },
+];
+const BUFFER_UNITS = ['KB', 'MB', 'GB', 'TB'];
+const BUFFER_UNIT_LETTER = { KB: 'K', MB: 'M', GB: 'G', TB: 'T' };
+
+const ISOLATION_LEVEL_OPTIONS = ['TRAN_SERIALIZABLE', 'TRAN_REP_CLASS_REP_INSTANCE', 'TRAN_REP_CLASS_COMMIT_INSTANCE', 'TRAN_REP_CLASS_UNCOMMIT_INSTANCE', 'TRAN_COMMIT_CLASS_COMMIT_INSTANCE', 'TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE'];
+const YES_NO_OPTIONS = ['yes', 'no'];
+
+// Keys whose value is picked from a fixed option list rather than free text.
+const SELECT_OPTIONS_BY_KEY = {
+  isolation_level: ISOLATION_LEVEL_OPTIONS,
+  auto_restart_server: YES_NO_OPTIONS,
+  replication: YES_NO_OPTIONS,
+};
+
+/* ─── ParamNameCell — shared "modified" dot + mono key label ─── */
+function ParamNameCell({ label, isModified }) {
+  return (
+    <div className="flex items-center gap-1.5">
+      {isModified && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />}
+      <span className={`text-[11px] font-mono truncate ${isModified ? 'text-amber-500 font-bold' : 'text-slate-600 dark:text-slate-400'}`}>
+        {label}
+      </span>
+    </div>
+  );
+}
+
+/* ─── ParamValueCell — select for fixed-option keys, else free-text input ─── */
+function ParamValueCell({ paramKey, value, defaultValue, onChange }) {
+  const options = SELECT_OPTIONS_BY_KEY[paramKey];
+  if (options) {
+    return (
+      <Select
+        size="sm"
+        value={value ?? defaultValue}
+        options={options.map(o => ({ value: o, label: o }))}
+        onChange={e => onChange(e.target.value)}
+        className="w-full max-w-[260px]"
+      />
+    );
+  }
+  return (
+    <Input
+      size="sm"
+      value={value ?? ''}
+      onChange={e => onChange(e.target.value)}
+      placeholder={defaultValue || '—'}
+      className="w-full max-w-[260px]"
+    />
+  );
+}
+
+/* ─── BufferChoiceGroup — CA's PageSizeChoiceComposite: radio(pages)/radio(size+unit) ─── */
+function BufferChoiceGroup({ group, mode, unit, pagesValue, sizeValue, onModeChange, onUnitChange, onPagesChange, onSizeChange }) {
   const CM = useCM();
-  const isPages = bufferSettings[type] === 'pages';
-  const isSize = bufferSettings[type] === 'size';
-  const hasPages = params[pagesKey] !== undefined;
-  const hasSize = params[sizeKey] !== undefined;
-
-  const BUFFER_ICONS = { data: 'memory', sort: 'sort', log: 'history' };
-
   return (
-    <div className="space-y-2">
-      {/* Section Header */}
-      <SectionHeader title={label} icon={BUFFER_ICONS[type]} />
-
-      {/* Two Option Cards side by side */}
-      <div className="grid grid-cols-2 gap-2">
-        {/* Pages Count card */}
-        <button
-          type="button"
-          onClick={() => setBufferSettings(s => ({ ...s, [type]: 'pages' }))}
-          className={`relative text-left p-3 rounded-xl border transition-all duration-150 group ${
-            isPages
-              ? 'bg-amber-500/[0.02] border-amber-500/40'
-              : 'bg-slate-50/60 dark:bg-white/2 border-slate-100 dark:border-white/6 hover:border-slate-200 dark:hover:border-white/10'
-          }`}
-        >
-          {isPages && <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-40" />}
-          <div className="flex items-center justify-between mb-2">
-            <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isPages ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
-              <Icon name="tag" size="10px" weight={700} />
-              {CM.pagesCountTitle}
-            </div>
-            <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isPages ? 'border-amber-500' : 'border-slate-300 dark:border-slate-700'}`}>
-              {isPages && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
-            </div>
-          </div>
-          <p className="text-[9px] font-mono text-slate-400 dark:text-slate-600 mb-2.5 truncate">{pagesKey}</p>
+    <div className="rounded-xl border border-slate-100 dark:border-white/6 p-4">
+      <p className="text-[9px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-500 mb-3">{group.groupLabel(CM)}</p>
+      <div className="space-y-2.5">
+        <div className="flex items-center gap-3">
+          <Radio
+            name={`${group.type}-buffer-mode`}
+            value="pages"
+            checked={mode === 'pages'}
+            onChange={() => onModeChange('pages')}
+            label={<span className="text-[10.5px] font-mono w-[140px] shrink-0 inline-block">{group.pagesKey}</span>}
+          />
           <Input
+            size="sm"
             type="number"
-            size="sm"
-            value={hasPages ? params[pagesKey] : (GENERAL_PARAMS_SCHEMA[pagesKey] || '')}
-            onChange={e => setParams({ ...params, [pagesKey]: e.target.value })}
-            disabled={!isPages}
-            placeholder={CM.defaultValuePlaceholder}
-            className={isPages ? '' : 'opacity-40'}
-            onClick={e => e.stopPropagation()}
+            value={pagesValue ?? ''}
+            onChange={e => onPagesChange(e.target.value)}
+            placeholder={group.pagesDefault}
+            disabled={mode !== 'pages'}
+            className={`flex-1 max-w-[200px] ${mode !== 'pages' ? 'opacity-40' : ''}`}
           />
-        </button>
-
-        {/* Physical Size card */}
-        <button
-          type="button"
-          onClick={() => setBufferSettings(s => ({ ...s, [type]: 'size' }))}
-          className={`relative text-left p-3 rounded-xl border transition-all duration-150 group ${
-            isSize
-              ? 'bg-amber-500/[0.02] border-amber-500/40'
-              : 'bg-slate-50/60 dark:bg-white/2 border-slate-100 dark:border-white/6 hover:border-slate-200 dark:hover:border-white/10'
-          }`}
-        >
-          {isSize && <div className="absolute top-0 left-0 right-0 h-[1px] bg-gradient-to-r from-transparent via-amber-500 to-transparent opacity-40" />}
-          <div className="flex items-center justify-between mb-2">
-            <div className={`flex items-center gap-1.5 text-[9px] font-black uppercase tracking-widest ${isSize ? 'text-amber-500' : 'text-slate-400 dark:text-slate-500'}`}>
-              <Icon name="straighten" size="10px" weight={700} />
-              {CM.physicalSizeLabel}
-            </div>
-            <div className={`w-3.5 h-3.5 rounded-full border-2 flex items-center justify-center transition-all ${isSize ? 'border-amber-500' : 'border-slate-300 dark:border-slate-700'}`}>
-              {isSize && <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />}
-            </div>
-          </div>
-          <p className="text-[9px] font-mono text-slate-400 dark:text-slate-600 mb-2.5 truncate">{sizeKey}</p>
-          <div className="flex gap-1.5" onClick={e => e.stopPropagation()}>
-            <Input
-              type="number"
+        </div>
+        <div className="flex items-center gap-3">
+          <Radio
+            name={`${group.type}-buffer-mode`}
+            value="size"
+            checked={mode === 'size'}
+            onChange={() => onModeChange('size')}
+            label={<span className="text-[10.5px] font-mono w-[140px] shrink-0 inline-block">{group.sizeKey}</span>}
+          />
+          <Input
+            size="sm"
+            type="number"
+            value={sizeValue ?? ''}
+            onChange={e => onSizeChange(e.target.value)}
+            placeholder={group.sizeDefault}
+            disabled={mode !== 'size'}
+            className={`flex-1 ${mode !== 'size' ? 'opacity-40' : ''}`}
+          />
+          {/* FormField (shared by Input/Select) always includes a base
+              "w-full" class, which beats a plain width class passed in from
+              here — constrain via an outer sized wrapper instead, same as
+              the rest of this modal's other Select usages. */}
+          <div className={`w-[92px] shrink-0 ${mode !== 'size' ? 'opacity-40' : ''}`}>
+            <Select
               size="sm"
-              value={hasSize ? params[sizeKey] : (GENERAL_PARAMS_SCHEMA[sizeKey]?.replace(/[A-Z]/g, '') || '')}
-              onChange={e => setParams({ ...params, [sizeKey]: e.target.value })}
-              disabled={!isSize}
-              placeholder={CM.defaultValuePlaceholder}
-              className="flex-1 min-w-0"
+              value={unit}
+              options={BUFFER_UNITS.map(u => ({ value: u, label: u }))}
+              onChange={e => onUnitChange(e.target.value)}
+              disabled={mode !== 'size'}
+              className="w-full"
             />
-            <div className="w-[86px] shrink-0" onClick={e => e.stopPropagation()}>
-              <Select
-                size="sm"
-                disabled={!isSize}
-                value={units[type]}
-                options={['KB', 'MB', 'GB', 'TB'].map(u => ({ value: u, label: u }))}
-                onChange={e => setUnits(u => ({ ...u, [type]: e.target.value }))}
-                className="w-full"
-              />
-            </div>
           </div>
-        </button>
-      </div>
-    </div>
-  );
-}
-
-/* ─── ParamRow ─── */
-function ParamRow({ label, value, defaultValue, onChange, children }) {
-  const isModified = value !== undefined && value !== null;
-
-  return (
-    <div className="flex items-center gap-4 h-9 group hover:bg-slate-50/50 dark:hover:bg-white/2 rounded-lg px-2 -mx-2 transition-colors">
-      <div className="w-[320px] shrink-0 flex items-center gap-1.5">
-        {isModified && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0" />}
-        <span className={`text-[10.5px] font-mono truncate transition-colors ${isModified ? 'text-amber-500 font-bold' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-300'}`}>
-          {label}
-        </span>
-      </div>
-      <div className="w-[280px] shrink-0 ml-auto flex items-center">
-        {children || (
-          <Input
-            type={label.includes('level') || label.includes('restart') || label.includes('replication') ? 'text' : 'number'}
-            size="sm"
-            value={isModified ? value : (defaultValue || '')}
-            onChange={onChange}
-            placeholder={defaultValue || '—'}
-            className="w-full"
-            error={isModified && !value && !defaultValue}
-          />
-        )}
-      </div>
-    </div>
-  );
-}
-
-/* ─── AdvancedRow ─── */
-function AdvancedRow({ param, value, isModified, onValueChange }) {
-  const scopeColors = {
-    SERVER: 'text-sky-400 bg-sky-500/8 border-sky-500/15',
-    CLIENT: 'text-violet-400 bg-violet-500/8 border-violet-500/15',
-    BOTH: 'text-emerald-400 bg-emerald-500/8 border-emerald-500/15',
-  };
-
-  const hasBoolOptions = param.type.includes('yes|no') || param.type.includes('on|off');
-  const boolOptions = param.type.includes('on|off') && param.type.includes('yes|no')
-    ? (param.type.includes('replica') ? ['on', 'off', 'yes', 'no', 'replica'] : ['on', 'off', 'yes', 'no'])
-    : param.type.includes('on|off') ? ['on', 'off'] : ['yes', 'no'];
-
-  return (
-    <div className={`flex items-center gap-3 h-10 px-4 border-b border-slate-100 dark:border-white/4 last:border-b-0 hover:bg-slate-50/50 dark:hover:bg-white/2 transition-colors group ${isModified ? 'bg-amber-500/3' : ''}`}>
-      <div className="w-[320px] shrink-0 flex items-center gap-3">
-        <div className="flex items-center gap-2 min-w-0 flex-1">
-          {isModified && <div className="w-1.5 h-1.5 rounded-full bg-amber-500 shrink-0 animate-pulse" />}
-          <span className={`text-[10px] font-mono truncate ${isModified ? 'text-amber-500 font-bold' : 'text-slate-500 dark:text-slate-400 group-hover:text-slate-700 dark:group-hover:text-slate-200'}`}>
-            {param.key}
-          </span>
         </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <span className={`text-[8px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${scopeColors[param.scope]}`}>
-            {param.scope}
-          </span>
-          <span className="text-[8.5px] text-slate-400 dark:text-slate-500 font-mono opacity-60">
-            {param.type.split('(')[0]}
-          </span>
-        </div>
-      </div>
-      <div className="w-[280px] shrink-0 ml-auto">
-        {hasBoolOptions ? (
-          <Select
-            value={value}
-            size="sm"
-            options={boolOptions.map(o => ({ value: o, label: o.toUpperCase() }))}
-            onChange={e => onValueChange(param.key, e.target.value)}
-            className="w-full"
-          />
-        ) : (
-          <Input
-            type={['int', 'short', 'numeric', 'float', 'double'].some(t => param.type.toLowerCase().startsWith(t)) ? 'number' : 'text'}
-            size="sm"
-            value={value}
-            onChange={e => onValueChange(param.key, e.target.value)}
-            className="w-full"
-          />
-        )}
       </div>
     </div>
   );
@@ -283,11 +219,11 @@ export default function DatabasePropertyModal() {
   const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid, authorizedHosts } = useSelector((state) => state.host, shallowEqual);
   const isAuthorized = selectedHostUid && authorizedHosts.includes(selectedHostUid);
-  const { 
-    error: actionError, 
-    startAction, 
-    endSuccess, 
-    endError, 
+  const {
+    error: actionError,
+    startAction,
+    endSuccess,
+    endError,
     resetAction,
     isLoading,
     isSuccess,
@@ -299,8 +235,8 @@ export default function DatabasePropertyModal() {
   const [fetching, setFetching] = useState(false);
   const [params, setParams] = useState({});
   const [rawLines, setRawLines] = useState([]);
-  const [units, setUnits] = useState({ data: 'KB', sort: 'KB', log: 'KB' });
-  const [bufferSettings, setBufferSettings] = useState({ data: 'size', sort: 'size', log: 'size' });
+  const [bufferMode, setBufferMode] = useState({ data: 'size', sort: 'size', log: 'size' });
+  const [bufferUnit, setBufferUnit] = useState({ data: 'MB', sort: 'MB', log: 'MB' });
   const [brokers, setBrokers] = useState([]);
   const [connectionInfo, setConnectionInfo] = useState({ brokerIp: 'localhost', brokerPort: '', charset: 'UTF-8' });
 
@@ -348,23 +284,34 @@ export default function DatabasePropertyModal() {
             if (currentSection === 'common' || (selectedDatabase && currentSection === target)) {
               const [key, ...valueParts] = trimmed.split('=');
               const k = key?.trim();
-              let v = valueParts.join('=').trim();
-              if (k) {
-                if (k.endsWith('_buffer_size')) {
-                  const unit = v.slice(-1).toUpperCase();
-                  if (['K', 'M', 'G', 'T'].includes(unit)) {
-                    const unitMap = { 'K': 'KB', 'M': 'MB', 'G': 'GB', 'T': 'TB' };
-                    setUnits(prev => ({ ...prev, [k.split('_')[0]]: unitMap[unit] || 'MB' }));
-                    v = v.slice(0, -1);
-                  }
-                  setBufferSettings(prev => ({ ...prev, [k.split('_')[0]]: 'size' }));
-                } else if (k.endsWith('_buffer_pages')) {
-                  setBufferSettings(prev => ({ ...prev, [k.split('_')[0]]: 'pages' }));
-                }
-                newParams[k] = v;
-              }
+              const v = valueParts.join('=').trim();
+              if (k) newParams[k] = v;
             }
           }
+
+          // Mirrors CA's PageSizeChoiceComposite#initBtnState: prefer the
+          // pages key if it has a value, else fall back to size (+ unit
+          // parsed off the trailing letter, e.g. "512M" -> 512 / MB).
+          const nextMode = {}, nextUnit = {};
+          BUFFER_GROUPS.forEach(({ type, pagesKey, sizeKey }) => {
+            const pagesVal = newParams[pagesKey];
+            const sizeVal = newParams[sizeKey];
+            if (pagesVal && pagesVal.trim() !== '') {
+              nextMode[type] = 'pages';
+            } else if (sizeVal && sizeVal.trim() !== '') {
+              nextMode[type] = 'size';
+              const letter = sizeVal.slice(-1).toUpperCase();
+              const unitEntry = Object.entries(BUFFER_UNIT_LETTER).find(([, l]) => l === letter);
+              if (unitEntry) {
+                nextUnit[type] = unitEntry[0];
+                newParams[sizeKey] = sizeVal.slice(0, -1);
+              }
+            } else {
+              nextMode[type] = 'size';
+            }
+          });
+          setBufferMode(prev => ({ ...prev, ...nextMode }));
+          setBufferUnit(prev => ({ ...prev, ...nextUnit }));
           setParams(newParams);
         } catch (err) { console.error('Failed to fetch config:', err); }
         finally { setFetching(false); }
@@ -377,18 +324,20 @@ export default function DatabasePropertyModal() {
     if (activeSidebar === 'Connection Information') { dispatch(closeDatabasePropertyModal()); return; }
     startAction();
     try {
+      // Reconcile the pages/size radio choice per buffer group: only the
+      // selected side is written, and the size value gets its unit letter
+      // suffixed back on (e.g. 512 + MB -> "512M"), matching cubrid.conf.
       const saveParams = { ...params };
-      ['data', 'sort', 'log'].forEach(prefix => {
-        const setting = bufferSettings[prefix];
-        const pagesKey = `${prefix}_buffer_pages`;
-        const sizeKey = `${prefix}_buffer_size`;
-        if (setting === 'size') {
+      BUFFER_GROUPS.forEach(({ type, pagesKey, sizeKey }) => {
+        if (bufferMode[type] === 'pages') {
+          delete saveParams[sizeKey];
+        } else {
           const val = params[sizeKey];
-          const unit = units[prefix].charAt(0);
-          if (val) saveParams[sizeKey] = `${val}${unit}`;
+          if (val) saveParams[sizeKey] = `${val}${BUFFER_UNIT_LETTER[bufferUnit[type]]}`;
           delete saveParams[pagesKey];
-        } else { delete saveParams[sizeKey]; }
+        }
       });
+
       const sectionName = selectedDatabase ? `[@${selectedDatabase.toLowerCase()}]` : '[common]';
       let lines = [...rawLines];
       let sectionStartIndex = -1, sectionEndIndex = -1;
@@ -417,7 +366,7 @@ export default function DatabasePropertyModal() {
         if (!found) updatedSection.push(`${key}=${value}`);
       });
       await hostApi.setHostConfig(selectedHostUid, { confname: 'cubridconf', confdata: [...otherBefore, ...updatedSection, ...otherAfter] });
-      endSuccess(`Changes to the ${selectedDatabase || 'kernel'} configuration have been committed and synchronized.`);
+      endSuccess(CM.configurationAppliedMsg(selectedDatabase));
     } catch (err) {
       endError(typeof err === 'string' ? err : (err.message || CM.configPatchRejectedMsg));
     }
@@ -434,9 +383,20 @@ export default function DatabasePropertyModal() {
     setParams({});
   };
 
-  const advancedData = useMemo(() => ADVANCED_PARAMS_SCHEMA
+  const handleReset = () => {
+    setParams({});
+  };
+
+  const generalRows = useMemo(() => GENERAL_PARAMS_KEYS.map(key => ({
+    key,
+    default: GENERAL_PARAMS_SCHEMA[key],
+    value: params[key],
+    isModified: params[key] !== undefined,
+  })), [params]);
+
+  const advancedRows = useMemo(() => ADVANCED_PARAMS_SCHEMA
     .filter(p => !GENERAL_PARAMS_KEYS.includes(p.key))
-    .map(p => ({ ...p, currentValue: params[p.key] !== undefined ? params[p.key] : p.default, isModified: params[p.key] !== undefined }))
+    .map(p => ({ ...p, value: params[p.key] !== undefined ? params[p.key] : p.default, isModified: params[p.key] !== undefined }))
   , [params]);
 
   const navItems = selectedDatabase
@@ -452,10 +412,10 @@ export default function DatabasePropertyModal() {
 
   /* ─── LOADING VIEW ─── */
   if (isLoading) return (
-    <Modal isOpen title={CM.syncingConfiguration} icon="settings" onClose={handleClose} maxWidth="900px" showCloseButton={false}>
-      <ModalStatusLoading 
-        title={CM.updatingRegistry} 
-        subtitle={CM.syncingRegistrySubtitle} 
+    <Modal isOpen title={CM.applyingConfigTitle} icon="settings" onClose={handleClose} maxWidth="900px" showCloseButton={false}>
+      <ModalStatusLoading
+        title={CM.updatingConfigTitle}
+        subtitle={CM.updatingConfigSubtitle}
       />
     </Modal>
   );
@@ -463,9 +423,9 @@ export default function DatabasePropertyModal() {
   /* ─── SUCCESS VIEW ─── */
   if (isSuccess) return (
     <Modal isOpen title={CM.updateSuccessful} icon="check_circle" iconVariant="success" onClose={handleClose} maxWidth="900px">
-      <ModalStatusSuccess 
+      <ModalStatusSuccess
         title={CM.configurationReIndexed}
-        message={`Changes to the ${selectedDatabase || 'kernel'} configuration have been committed and synchronized.`}
+        message={CM.configurationAppliedMsg(selectedDatabase)}
         onConfirm={handleClose}
         confirmText={CM.confirmReturn}
       />
@@ -475,20 +435,81 @@ export default function DatabasePropertyModal() {
   /* ─── ERROR VIEW ─── */
   if (isError) return (
     <Modal isOpen title={CM.updateRejected} icon="error" iconVariant="danger" onClose={resetAction} maxWidth="900px">
-      <ModalStatusError 
-        title={CM.synchronizationHalted}
+      <ModalStatusError
+        title={CM.applyFailedTitle}
         error={actionError}
         onRetry={handleApply}
         onCancel={resetAction}
         retryText={CM.retryPatch}
-        cancelText={CM.discardChanges}
+        cancelText={CM.cancel}
       />
     </Modal>
   );
 
-  const handleReset = () => {
-    setParams({});
-  };
+  // No separate Default column here either — same convention as the
+  // Advanced table (and CA itself): the value cell shows the current value,
+  // falling back to the default as a placeholder.
+  const generalColumns = [
+    { header: CM.parameter, accessor: 'key', width: '45%', render: (_, row) => <ParamNameCell label={row.key} isModified={row.isModified} /> },
+    {
+      header: CM.value, accessor: 'value', width: '55%', sortable: false,
+      render: (_, row) => (
+        <ParamValueCell
+          paramKey={row.key}
+          value={row.value}
+          defaultValue={row.default}
+          onChange={(val) => setParams({ ...params, [row.key]: val })}
+        />
+      ),
+    },
+  ];
+
+  // Column set/order mirrors CUBRID Admin's own advanced-parameter table
+  // (DatabaseConfigPropertyPage.java): Parameter Name, Parameter Type (the
+  // SERVER/CLIENT/BOTH scope), Value Type (the bool/int/string descriptor),
+  // Parameter Value. CA has no separate "Default" column — the value cell
+  // itself shows the current value, falling back to the default.
+  const advancedColumns = [
+    { header: CM.parameter, accessor: 'key', width: '30%', render: (_, row) => <ParamNameCell label={row.key} isModified={row.isModified} /> },
+    {
+      header: CM.parameterTypeLabel, accessor: 'scope', width: '16%',
+      render: (val) => {
+        const scopeColors = {
+          SERVER: 'text-sky-500 bg-sky-500/8 border-sky-500/20',
+          CLIENT: 'text-violet-500 bg-violet-500/8 border-violet-500/20',
+          BOTH: 'text-emerald-500 bg-emerald-500/8 border-emerald-500/20',
+        };
+        return <span className={`text-[9px] font-black uppercase tracking-widest px-1.5 py-0.5 rounded border ${scopeColors[val]}`}>{val}</span>;
+      },
+    },
+    { header: CM.valueTypeLabel, accessor: 'type', width: '18%', render: (val) => <span className="text-[10px] font-mono text-slate-400 dark:text-slate-500">{val}</span> },
+    {
+      header: CM.parameterValueLabel, accessor: 'value', width: '36%', sortable: false,
+      render: (_, row) => {
+        const hasBoolOptions = row.type.includes('yes|no') || row.type.includes('on|off');
+        const boolOptions = row.type.includes('on|off') && row.type.includes('yes|no')
+          ? (row.type.includes('replica') ? ['on', 'off', 'yes', 'no', 'replica'] : ['on', 'off', 'yes', 'no'])
+          : row.type.includes('on|off') ? ['on', 'off'] : ['yes', 'no'];
+        return hasBoolOptions ? (
+          <Select
+            size="sm"
+            value={row.value}
+            options={boolOptions.map(o => ({ value: o, label: o.toUpperCase() }))}
+            onChange={e => setParams({ ...params, [row.key]: e.target.value })}
+            className="w-full max-w-[220px]"
+          />
+        ) : (
+          <Input
+            type={['int', 'short', 'numeric', 'float', 'double'].some(t => row.type.toLowerCase().startsWith(t)) ? 'number' : 'text'}
+            size="sm"
+            value={row.value}
+            onChange={e => setParams({ ...params, [row.key]: e.target.value })}
+            className="w-full max-w-[220px]"
+          />
+        );
+      },
+    },
+  ];
 
   /* ─── FORM VIEW ─── */
   return (
@@ -502,7 +523,7 @@ export default function DatabasePropertyModal() {
         ? CM.brokerCharsetConfigDesc
         : CM.deepSystemConfigDesc}
       icon={activeSidebar === 'Connection Information' ? 'cable' : 'tune'}
-      maxWidth="900px"
+      maxWidth="960px"
       testId="database-property"
       footer={
         <div className="flex justify-between items-center w-full">
@@ -519,7 +540,7 @@ export default function DatabasePropertyModal() {
             )}
           </div>
           <div className="flex gap-2.5">
-            <Button data-testid="database-property-discard-btn" variant="ghost" onClick={handleClose}>{CM.discard}</Button>
+            <Button data-testid="database-property-cancel-btn" variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
             <Button data-testid="database-property-apply-btn" variant="primary" onClick={handleApply} icon="save" className="min-w-[140px]">{CM.applyChanges}</Button>
           </div>
         </div>
@@ -571,10 +592,10 @@ export default function DatabasePropertyModal() {
           {/* Tab bar — only for Server Parameter */}
           {activeSidebar === 'Server Parameter' && (
             <div className="p-4 border-b border-slate-100 dark:border-white/6 flex items-center justify-between">
-              <TabGroup 
-                tabs={SERVER_TABS} 
-                active={activeTab} 
-                onChange={setActiveTab} 
+              <TabGroup
+                tabs={SERVER_TABS}
+                active={activeTab}
+                onChange={setActiveTab}
                 fullWidth={false}
               />
               {/* Modified indicator */}
@@ -656,95 +677,41 @@ export default function DatabasePropertyModal() {
               </div>
 
             ) : activeTab === 'General' ? (
-              /* ─── GENERAL REGISTRY ─── */
-              <div className="p-6 space-y-8 pb-10">
+              /* ─── GENERAL PARAMETERS ─── */
+              <div className="p-6 space-y-6">
+                <div className="flex flex-col gap-3">
+                  {BUFFER_GROUPS.map(group => (
+                    <BufferChoiceGroup
+                      key={group.type}
+                      group={group}
+                      mode={bufferMode[group.type]}
+                      unit={bufferUnit[group.type]}
+                      pagesValue={params[group.pagesKey]}
+                      sizeValue={params[group.sizeKey]}
+                      onModeChange={(m) => setBufferMode(prev => ({ ...prev, [group.type]: m }))}
+                      onUnitChange={(u) => setBufferUnit(prev => ({ ...prev, [group.type]: u }))}
+                      onPagesChange={(v) => setParams({ ...params, [group.pagesKey]: v })}
+                      onSizeChange={(v) => setParams({ ...params, [group.sizeKey]: v })}
+                    />
+                  ))}
+                </div>
 
-                {/* Buffer Allocation Cards */}
-                {[
-                  { type: 'data', label: CM.dataBufferAllocLabel, pagesKey: 'data_buffer_pages', sizeKey: 'data_buffer_size' },
-                  { type: 'sort', label: CM.sortBufferAllocLabel, pagesKey: 'sort_buffer_pages', sizeKey: 'sort_buffer_size' },
-                  { type: 'log',  label: CM.logBufferAllocLabel,  pagesKey: 'log_buffer_pages',  sizeKey: 'log_buffer_size'  },
-                ].map(cfg => (
-                  <BufferCard
-                    key={cfg.type}
-                    {...cfg}
-                    params={params}
-                    bufferSettings={bufferSettings}
-                    units={units}
-                    setParams={setParams}
-                    setBufferSettings={setBufferSettings}
-                    setUnits={setUnits}
-                  />
-                ))}
-
-                {/* Standard Parameters */}
-                <div className="space-y-2">
+                <div className="space-y-3">
                   <SectionHeader title={CM.standardParameters} icon="settings" />
-
-                  <div className="rounded-xl border border-slate-100 dark:border-white/6 overflow-hidden">
-                    {/* Lock params */}
-                    <div className="px-4 py-1 bg-slate-50/60 dark:bg-white/2 border-b border-slate-100 dark:border-white/5">
-                      <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">{CM.lockingSection}</p>
-                    </div>
-                    <div className="px-4 py-1.5 divide-y divide-slate-50 dark:divide-white/4">
-                      <ParamRow label="lock_escalation" value={params.lock_escalation} defaultValue={GENERAL_PARAMS_SCHEMA.lock_escalation} onChange={e => setParams({ ...params, lock_escalation: e.target.value })} />
-                      <ParamRow label="lock_timeout_in_secs" value={params.lock_timeout_in_secs} defaultValue={GENERAL_PARAMS_SCHEMA.lock_timeout_in_secs} onChange={e => setParams({ ...params, lock_timeout_in_secs: e.target.value })} />
-                      <ParamRow label="deadlock_detection_interval_in_secs" value={params.deadlock_detection_interval_in_secs} defaultValue={GENERAL_PARAMS_SCHEMA.deadlock_detection_interval_in_secs} onChange={e => setParams({ ...params, deadlock_detection_interval_in_secs: e.target.value })} />
-                    </div>
-
-                    {/* Checkpoint + isolation */}
-                    <div className="px-4 py-1 bg-slate-50/60 dark:bg-white/2 border-y border-slate-100 dark:border-white/5">
-                      <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">{CM.transactionSection}</p>
-                    </div>
-                    <div className="px-4 py-1.5 divide-y divide-slate-50 dark:divide-white/4">
-                      <ParamRow label="checkpoint_interval_in_mins" value={params.checkpoint_interval_in_mins} defaultValue={GENERAL_PARAMS_SCHEMA.checkpoint_interval_in_mins} onChange={e => setParams({ ...params, checkpoint_interval_in_mins: e.target.value })} />
-                      <ParamRow label="isolation_level" value={params.isolation_level} defaultValue={GENERAL_PARAMS_SCHEMA.isolation_level}>
-                        <Select
-                          value={params.isolation_level || GENERAL_PARAMS_SCHEMA.isolation_level}
-                          options={['TRAN_SERIALIZABLE', 'TRAN_REP_CLASS_REP_INSTANCE', 'TRAN_REP_CLASS_COMMIT_INSTANCE', 'TRAN_REP_CLASS_UNCOMMIT_INSTANCE', 'TRAN_COMMIT_CLASS_COMMIT_INSTANCE', 'TRAN_COMMIT_CLASS_UNCOMMIT_INSTANCE'].map(o => ({ value: o, label: o }))}
-                          onChange={e => setParams({ ...params, isolation_level: e.target.value })}
-                          size="sm"
-                          className={params.isolation_level !== undefined ? 'font-black!' : ''}
-                        />
-                      </ParamRow>
-                    </div>
-
-                    {/* System */}
-                    <div className="px-4 py-1 bg-slate-50/60 dark:bg-white/2 border-y border-slate-100 dark:border-white/5">
-                      <p className="text-[8.5px] font-black uppercase tracking-widest text-slate-400 dark:text-slate-600">{CM.systemSection}</p>
-                    </div>
-                    <div className="px-4 py-1.5 divide-y divide-slate-50 dark:divide-white/4">
-                      <ParamRow label="max_clients" value={params.max_clients} defaultValue={GENERAL_PARAMS_SCHEMA.max_clients} onChange={e => setParams({ ...params, max_clients: e.target.value })} />
-                      <ParamRow label="cubrid_port_id" value={params.cubrid_port_id} defaultValue={GENERAL_PARAMS_SCHEMA.cubrid_port_id} onChange={e => setParams({ ...params, cubrid_port_id: e.target.value })} />
-                      <ParamRow label="auto_restart_server" value={params.auto_restart_server} defaultValue={GENERAL_PARAMS_SCHEMA.auto_restart_server}>
-                        <Select value={params.auto_restart_server || GENERAL_PARAMS_SCHEMA.auto_restart_server} options={['yes','no'].map(o => ({ value: o, label: o.toUpperCase() }))} onChange={e => setParams({ ...params, auto_restart_server: e.target.value })} size="sm" className={params.auto_restart_server !== undefined ? 'font-black!' : ''} />
-                      </ParamRow>
-                      <ParamRow label="replication" value={params.replication} defaultValue={GENERAL_PARAMS_SCHEMA.replication}>
-                        <Select value={params.replication || GENERAL_PARAMS_SCHEMA.replication} options={['yes','no'].map(o => ({ value: o, label: o.toUpperCase() }))} onChange={e => setParams({ ...params, replication: e.target.value })} size="sm" className={params.replication !== undefined ? 'font-black!' : ''} />
-                      </ParamRow>
-                    </div>
-                  </div>
+                  <Table columns={generalColumns} data={generalRows} zebra bordered />
                 </div>
               </div>
 
             ) : (
-              /* ─── ADVANCED REGISTRY ─── */
+              /* ─── ADVANCED PARAMETERS TABLE ─── */
               <div>
                 <div className="px-6 py-6">
-                  <InfoBanner title={CM.advancedHeuristics}>
+                  <InfoBanner>
                     {CM.advancedParamsWarning}
                   </InfoBanner>
                 </div>
-                <div className="border-b border-slate-100 dark:border-white/6">
-                  {advancedData.map(p => (
-                    <AdvancedRow
-                      key={p.key}
-                      param={p}
-                      value={p.currentValue}
-                      isModified={p.isModified}
-                      onValueChange={(key, val) => setParams({ ...params, [key]: val })}
-                    />
-                  ))}
+                <div className="px-6 pb-6">
+                  <Table columns={advancedColumns} data={advancedRows} zebra bordered />
                 </div>
               </div>
             )}

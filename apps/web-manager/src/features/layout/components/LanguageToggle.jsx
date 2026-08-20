@@ -1,6 +1,6 @@
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { setUiLocale } from '../../user/userSlice';
-import { useCM } from '../../../constants/useCM';
+import { useCM, getStoredLocale } from '../../../constants/useCM';
 
 const btn =
   'px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors rounded-sm';
@@ -9,7 +9,7 @@ export default function LanguageToggle() {
   const CM = useCM();
   const dispatch = useDispatch();
   const locale = useSelector(
-    (state) => state.user?.preferences?.uiLocale ?? 'en',
+    (state) => state.user?.preferences?.uiLocale ?? getStoredLocale(),
     shallowEqual
   );
 

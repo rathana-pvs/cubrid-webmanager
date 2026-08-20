@@ -27,6 +27,44 @@ export class CmsJobStore {
     return path.join(this.jobsRoot(), 'operations', `${userKey}.json`);
   }
 
+  // Separate from the per-user operations file above: this one is shared by
+  // every user, keyed by physical host + dbname (see buildOperationKey), so
+  // it can actually stop two different accounts from running conflicting
+  // jobs against the same physical database at the same time.
+  private globalOperationsPath(): string {
+    return path.join(this.jobsRoot(), 'operations', '_global.json');
+  }
+
+  async readGlobalOperations(): Promise<Record<string, { jobId: string; userKey: string }>> {
+    try {
+      const raw = await fs.readFile(this.globalOperationsPath(), 'utf8');
+      return JSON.parse(raw) as Record<string, { jobId: string; userKey: string }>;
+    } catch (err: any) {
+      if (err?.code === 'ENOENT') return {};
+      throw err;
+    }
+  }
+
+  async writeGlobalOperations(ops: Record<string, { jobId: string; userKey: string }>): Promise<void> {
+    const file = this.globalOperationsPath();
+    await fs.mkdir(path.dirname(file), { recursive: true });
+    await fs.writeFile(file, JSON.stringify(ops), 'utf8');
+  }
+
+  private async removeJobIdFromGlobalOperations(jobId: string): Promise<void> {
+    const ops = await this.readGlobalOperations();
+    let changed = false;
+    for (const [key, entry] of Object.entries(ops)) {
+      if (entry.jobId === jobId) {
+        delete ops[key];
+        changed = true;
+      }
+    }
+    if (changed) {
+      await this.writeGlobalOperations(ops);
+    }
+  }
+
   async saveJob(userKey: string, record: CmsJobRecord): Promise<void> {
     const dir = this.userJobsDir(userKey);
     await fs.mkdir(dir, { recursive: true });
@@ -145,6 +183,7 @@ export class CmsJobStore {
         job.finishedAt = finishedAt;
         await this.saveJob(userKey, job);
         await this.removeJobIdFromOperations(userKey, job.jobId);
+        await this.removeJobIdFromGlobalOperations(job.jobId);
         failed += 1;
       }
     }
@@ -237,6 +276,7 @@ export class CmsJobStore {
 
         await fs.unlink(filePath);
         await this.removeJobIdFromOperations(userKey, jobId);
+        await this.removeJobIdFromGlobalOperations(jobId);
         removed += 1;
       }
     }

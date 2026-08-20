@@ -193,16 +193,40 @@ export class OptimizeDatabaseDto {
   @IsOptional()
   @IsString()
   classname?: string;
+
+  @IsOptional()
+  @IsString()
+  dbuser?: string;
+
+  @IsOptional()
+  @IsString()
+  dbpasswd?: string;
 }
 
 export class CheckDatabaseDto {
   @IsIn(['y', 'n'])
   repairdb: 'y' | 'n';
+
+  @IsOptional()
+  @IsString()
+  dbuser?: string;
+
+  @IsOptional()
+  @IsString()
+  dbpasswd?: string;
 }
 
 export class CompactDatabaseDto {
   @IsIn(['y', 'n'])
   verbose: 'y' | 'n';
+
+  @IsOptional()
+  @IsString()
+  dbuser?: string;
+
+  @IsOptional()
+  @IsString()
+  dbpasswd?: string;
 }
 
 export class RenameDatabaseDto {

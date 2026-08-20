@@ -64,7 +64,7 @@ export default function VolumeInfoMonitor({ tabId }) {
         <EmptyState
           icon="inventory_2"
           title={CM.volumeNotFound}
-          subtitle={`"${volname}" could not be resolved in the ${dbname} space catalog.`}
+          subtitle={`"${volname}" was not found in ${dbname}.`}
         />
       </div>
     );

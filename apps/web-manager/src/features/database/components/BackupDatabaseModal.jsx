@@ -4,6 +4,7 @@ import { closeBackupDatabaseModal, fetchBackupDbInfo, setPendingBackupJob, clear
 import { databaseJobApi } from '../databaseJobApi';
 import { useCmsJobs } from '../../../infrastructure/context/CmsJobContext';
 import { getCmsJobLoadingSubtitle } from '../../../infrastructure/cmsJob/cmsJobUi';
+import { deriveBackupDir } from '../backupPathUtils';
 
 import { Modal } from '../../../components/ds/layout/Modal';
 import {
@@ -42,13 +43,6 @@ const formatBackupSize = (value) => {
   const size = Number(value);
   if (!Number.isFinite(size)) return '-';
   return (size / 1024 / 1024).toLocaleString(undefined, { maximumFractionDigits: 2 });
-};
-
-// Strip all trailing /backup segments then re-append one canonical /backup.
-// Handles cases like /home/db/backup/backup or /home/db/backup/ from CMS.
-const deriveBackupDir = (dbdir) => {
-  if (!dbdir) return '';
-  return `${dbdir.replace(/(?:\/backup)+\/?$/, '')}/backup`;
 };
 
 export default function BackupDatabaseModal() {
@@ -118,19 +112,26 @@ export default function BackupDatabaseModal() {
     availableLevels.map((level) => ({ value: level, label: CM.levelNumberLabel(level) }))
   ), [availableLevels, CM]);
 
+  // CMS has no "delete existing backup" API, so a same-level backup to the
+  // same directory just overwrites in place — warn instead of silently
+  // proceeding (PM report: backing up to a previous location at the same
+  // level ran with no notice that it would replace an existing backup).
+  const existingBackupAtLevel = useMemo(() => {
+    const dir = (formData.backupDir || '').replace(/\/+$/, '');
+    if (!dir) return null;
+    return backupHistory.find((entry) => (
+      entry.levelNum === Number(formData.backupLevel) &&
+      typeof entry.path === 'string' &&
+      entry.path.startsWith(dir)
+    )) || null;
+  }, [backupHistory, formData.backupDir, formData.backupLevel]);
+
   const backupHistoryColumns = useMemo(() => [
     { header: CM.backupLevel, accessor: 'level', width: '100px' },
     { header: CM.backupDate, accessor: 'date', width: '150px' },
     { header: CM.backupSizeColumn, accessor: 'size', width: '110px' },
     { header: CM.backupPath, accessor: 'path', cellClassName: 'font-mono break-all' },
   ], [CM]);
-
-  // backupDir alone is the shared directory for every level (CMS's cub_server
-  // names the actual backup file itself: dbname_bk{level}v{unit}). This is
-  // required for restoredb's single -B argument to find all levels of a
-  // multi-level restore chain in one place. volname (a subdirectory under
-  // backupdir) used to be required for this; CMS now allows omitting it, in
-  // which case backupdir itself becomes that shared directory — simpler.
 
   // When backupInfo loads (fetch completes after modal open), fill backupDir only if still empty.
   // Uses functional updater so prev.backupDir is always current — no stale-closure race.
@@ -204,7 +205,7 @@ export default function BackupDatabaseModal() {
       } else {
         const created = await databaseJobApi.submitBackup(selectedHostUid, selectedDatabase, payload);
         jobId = created?.jobId;
-        if (!jobId) throw new Error('Server did not return a job id');
+        if (!jobId) throw new Error('Backup could not be started. Please try again.');
         // Replace only after confirmed acceptance — preserves the previous pending job if submit fails
         dispatch(setPendingBackupJob({ jobId, hostUid: selectedHostUid, dbname: selectedDatabase, payload }));
       }
@@ -243,6 +244,7 @@ export default function BackupDatabaseModal() {
 
       <CaDialogField label={CM.backupLevel}>
         <Select
+          testId="backup-database-level-select"
           value={formData.backupLevel}
           onChange={(e) => handleLevelChange(e.target.value)}
           options={backupLevelOptions}
@@ -251,6 +253,7 @@ export default function BackupDatabaseModal() {
 
       <CaDialogField label={CM.backupDirectory}>
         <Input
+          data-testid="backup-database-dir-input"
           value={formData.backupDir}
           onChange={(e) => handleInputChange('backupDir', e.target.value)}
         />
@@ -260,6 +263,14 @@ export default function BackupDatabaseModal() {
         <CaDialogField fullWidth>
           <InfoBanner variant="warning" title={CM.warning} icon="warning">
             {CM.backupDirFetchError}
+          </InfoBanner>
+        </CaDialogField>
+      )}
+
+      {existingBackupAtLevel && (
+        <CaDialogField fullWidth>
+          <InfoBanner variant="warning" title={CM.warning} icon="warning">
+            {CM.existingBackupWarningMsg(formData.backupLevel)}
           </InfoBanner>
         </CaDialogField>
       )}
@@ -307,10 +318,11 @@ export default function BackupDatabaseModal() {
 
   if (isLoading) {
     return (
-      <Modal isOpen title={CM.backupDatabase} icon="backup" onClose={handleClose} maxWidth="720px" showCloseButton={false}>
+      <Modal isOpen title={CM.backupDatabase} icon="backup" onClose={handleClose} maxWidth="720px">
         <ModalStatusLoading
           title={CM.snapshotInProgress}
           subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -351,10 +363,11 @@ export default function BackupDatabaseModal() {
       title={CM.backupDatabase}
       icon="backup"
       maxWidth="720px"
+      testId="backup-database"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button variant="secondary" onClick={handleClose}>{CM.cancel}</Button>
-          <Button variant="primary" onClick={handleBackup} icon="play_circle" className="min-w-[140px]">
+          <Button data-testid="backup-database-cancel-btn" variant="secondary" onClick={handleClose}>{CM.cancel}</Button>
+          <Button data-testid="backup-database-run-btn" variant="primary" onClick={handleBackup} icon="play_circle" className="min-w-[140px]">
             {CM.ok}
           </Button>
         </div>

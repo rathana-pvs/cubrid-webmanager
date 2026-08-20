@@ -38,7 +38,7 @@ test.describe('Feature: Add Host', () => {
     });
 
     await And('the user discards and closes the modal', async () => {
-      await page.getByTestId('add-host-discard-btn').click();
+      await page.getByTestId('add-host-cancel-btn').click();
       await expect(modal).not.toBeVisible();
     });
   });

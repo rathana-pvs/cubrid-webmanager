@@ -75,7 +75,7 @@ export const Checkbox = forwardRef(({
         )}
       </label>
       {error && (
-        <Typography variant="p" className="ml-6.5 mt-0.5 text-[9px] text-rose-500 font-medium tracking-tight">
+        <Typography variant="p" className="ml-6.5 mt-0.5 text-[11px] text-rose-500! dark:text-rose-400! font-semibold tracking-tight">
           {error}
         </Typography>
       )}

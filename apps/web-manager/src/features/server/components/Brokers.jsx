@@ -1,5 +1,5 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
-import React from 'react';
+import React, { useState } from 'react';
 import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { fetchBrokerList } from '../../broker/brokerSlice';
 import { openTab } from '../../layout/layoutSlice';
@@ -14,14 +14,26 @@ import { useCM } from '../../../constants/useCM';
 const Component = function Brokers({ hostUid, isSection = false }) {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { brokers, loading } = useSelector((state) => state.broker, shallowEqual);
+  // Broker list is fetched into this component's own state (not the shared
+  // `state.broker.brokers` slice) so that multiple simultaneously-open
+  // dashboard/broker tabs for different hosts don't clobber each other.
+  const [brokers, setBrokers] = useState([]);
+  const [loading, setLoading] = useState(false);
   const { authorizedHosts } = useSelector((state) => state.host, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { isManualRefreshing, lastRefreshed, handleRefresh } = usePollingRefresh({
     hostUid,
     tabId: `brokers_status:${hostUid}`,
     pollingIntervalSeconds: preferences.brokerStatusInterval,
-    onFetch: () => (dispatch) => dispatch(fetchBrokerList(hostUid))
+    onFetch: () => async (dispatch) => {
+      setLoading(true);
+      try {
+        const result = await dispatch(fetchBrokerList(hostUid)).unwrap();
+        setBrokers(result);
+      } finally {
+        setLoading(false);
+      }
+    }
   });
 
   const columns = React.useMemo(() => [

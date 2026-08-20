@@ -111,6 +111,7 @@ export const TreeNode = React.memo(({
         />
         <Typography
           variant="span"
+          title={typeof label === 'string' ? label : undefined}
           className={`text-[13px] font-mono truncate flex-1 ${
             isActive ? 'font-semibold' : 'font-medium'
           }`}
@@ -166,6 +167,7 @@ export const TreeNode = React.memo(({
 
         <Typography
           variant="span"
+          title={typeof label === 'string' ? label : undefined}
           className={`text-[13px] font-mono truncate flex-1 ${
             isActive ? 'font-semibold' : 'font-medium'
           }`}

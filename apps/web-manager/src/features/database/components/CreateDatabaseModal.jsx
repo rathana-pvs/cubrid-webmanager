@@ -66,7 +66,11 @@ const INITIAL_FORM_DATA = {
   autoAddVol: {
     permanent: 'ON',
     warn: '0.15',
-    extPage: '32768',
+    // User enters a size (extSize/extUnit); the actual CMS field
+    // (data_ext_page/index_ext_page) is a page count, computed from this
+    // and formData.pageSize right before submit — see handleFinish.
+    extSize: '512',
+    extUnit: 'MB',
   },
   baseDir: '',
   dbaPassword: '',
@@ -144,9 +148,14 @@ export default function CreateDatabaseModal() {
   // this effect and called setFormData(INITIAL_FORM_DATA) again, silently
   // wiping out whatever the user had already typed (e.g. the db name).
   const hasInitializedRef = useRef(false);
+  // Set once the user directly edits genericVolPath/logVolPath — after that,
+  // the dbName-driven effect below stops overwriting them with the
+  // auto-derived baseDir/dbName path.
+  const pathManuallyEditedRef = useRef(false);
   useEffect(() => {
     if (!isCreateDatabaseModalOpen) {
       hasInitializedRef.current = false;
+      pathManuallyEditedRef.current = false;
       return;
     }
     if (!selectedHostUid || hasInitializedRef.current) return;
@@ -196,11 +205,11 @@ export default function CreateDatabaseModal() {
 
   useEffect(() => {
     const { dbName, baseDir } = formData;
-    if (baseDir) {
-      const fullPath = dbName 
+    if (baseDir && !pathManuallyEditedRef.current) {
+      const fullPath = dbName
         ? (baseDir.endsWith('/') ? `${baseDir}${dbName}` : `${baseDir}/${dbName}`)
         : baseDir;
-      
+
       setFormData(prev => {
         const renamed = renameVolumesSequentially(prev.volumes, dbName);
         return {
@@ -217,7 +226,12 @@ export default function CreateDatabaseModal() {
 
   const handleNext = () => setStep(prev => prev + 1);
   const handleBack = () => setStep(prev => prev - 1);
-  const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field, value) => {
+    if (field === 'genericVolPath' || field === 'logVolPath') {
+      pathManuallyEditedRef.current = true;
+    }
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
   const handleVolumeChange = (index, field, value) => {
     let newVolumes = [...formData.volumes];
     newVolumes[index] = { ...newVolumes[index], [field]: value };
@@ -264,6 +278,9 @@ export default function CreateDatabaseModal() {
         }
       }));
 
+      const extSizeBytes = Number(formData.autoAddVol.extSize) * (formData.autoAddVol.extUnit === 'GB' ? 1024 * 1024 * 1024 : 1024 * 1024);
+      const extPage = String(Math.floor(extSizeBytes / formData.pageSize));
+
       const payload = {
         dbname: formData.dbName,
         pagesize: formData.pageSize,
@@ -280,10 +297,10 @@ export default function CreateDatabaseModal() {
         setAutoAddVol: {
           data: formData.autoAddVol.permanent,
           data_warn_outofspace: formData.autoAddVol.warn,
-          data_ext_page: formData.autoAddVol.extPage,
+          data_ext_page: extPage,
           index: formData.autoAddVol.permanent,
           index_warn_outofspace: formData.autoAddVol.warn,
-          index_ext_page: formData.autoAddVol.extPage,
+          index_ext_page: extPage,
         },
         username: "dba",
         updateUser: {
@@ -339,6 +356,7 @@ export default function CreateDatabaseModal() {
         <ModalStatusLoading
           title={CM.createDatabase}
           subtitle={getCmsJobLoadingSubtitle(formData.dbName, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -536,7 +554,7 @@ export default function CreateDatabaseModal() {
                     </span>
                     <span className="text-[9px] font-black uppercase bg-amber-500/10 text-amber-600 dark:text-amber-400 px-1.5 py-0.5 rounded-sm border border-amber-500/20">{CM.systemBadge}</span>
                   </div>
-                  <Input data-testid="create-database-generic-path-input" label={CM.genericVolPath} value={formData.genericVolPath} disabled size="sm" />
+                  <Input data-testid="create-database-generic-path-input" label={CM.genericVolPath} value={formData.genericVolPath} onChange={(e) => handleInputChange('genericVolPath', e.target.value)} size="sm" />
                   <Input data-testid="create-database-generic-size-input" label={CM.volumeSize} type="number" value={formData.genericVolSize} onChange={(e) => handleInputChange('genericVolSize', Number(e.target.value))} size="sm" />
                 </div>
 
@@ -548,7 +566,7 @@ export default function CreateDatabaseModal() {
                     </span>
                     <span className="text-[9px] font-black uppercase bg-rose-500/10 text-rose-600 dark:text-rose-400 px-1.5 py-0.5 rounded-sm border border-rose-500/20">{CM.criticalBadge}</span>
                   </div>
-                  <Input label={CM.logVolPath} value={formData.logVolPath} disabled size="sm" />
+                  <Input label={CM.logVolPath} value={formData.logVolPath} onChange={(e) => handleInputChange('logVolPath', e.target.value)} size="sm" />
                   <div className="grid grid-cols-2 gap-2">
                     <Input data-testid="create-database-log-size-input" label={CM.volumeSize} type="number" value={formData.logVolSize} onChange={(e) => handleInputChange('logVolSize', Number(e.target.value))} size="sm" />
                     <Select label={CM.logPageSize} value={formData.logPageSize} onChange={(e) => handleInputChange('logPageSize', parseInt(e.target.value))} options={PAGE_SIZES.map(s => ({ value: s, label: `${s / 1024}K` }))} size="sm" />
@@ -736,12 +754,25 @@ export default function CreateDatabaseModal() {
                     <label className="text-[10px] font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider block">
                       {CM.extensionSizeLabel}
                     </label>
-                    <Input
-                      value={formData.autoAddVol.extPage}
-                      onChange={(e) => handleAutoAddVolChange('extPage', e.target.value)}
-                      size="sm"
-                      placeholder="e.g. 32768"
-                    />
+                    <div className="flex gap-1.5">
+                      <Input
+                        type="number"
+                        value={formData.autoAddVol.extSize}
+                        onChange={(e) => handleAutoAddVolChange('extSize', e.target.value)}
+                        size="sm"
+                        placeholder="e.g. 512"
+                        className="flex-1"
+                      />
+                      <div className="w-[80px] shrink-0">
+                        <Select
+                          size="sm"
+                          value={formData.autoAddVol.extUnit}
+                          options={['MB', 'GB'].map(u => ({ value: u, label: u }))}
+                          onChange={(e) => handleAutoAddVolChange('extUnit', e.target.value)}
+                          className="w-full"
+                        />
+                      </div>
+                    </div>
                     <p className="text-[9px] text-slate-400">{CM.pagesPerExtensionDesc}</p>
                   </div>
                 </div>
@@ -812,6 +843,15 @@ export default function CreateDatabaseModal() {
                   <SummaryRow label={CM.totalVolumes} value={`${formData.volumes.length + 2}`} />
                   <SummaryRow label={CM.genericVolume} value={`${formData.genericVolSize} MB`} />
                   <SummaryRow label={CM.logVolume} value={`${formData.logVolSize} MB`} />
+                  <div className="py-2 border-b border-slate-100 dark:border-white/4">
+                    <span className="text-[11px] text-slate-500 dark:text-slate-400 font-medium block mb-1">{CM.genericVolPath}</span>
+                    <span
+                      title={formData.genericVolPath}
+                      className="text-[10.5px] font-bold font-mono text-slate-700 dark:text-slate-200 break-all"
+                    >
+                      {formData.genericVolPath}
+                    </span>
+                  </div>
                   <div className="flex items-center justify-between pt-3 mt-1.5 border-t border-slate-100 dark:border-white/4">
                     <span className="text-[11px] font-black text-slate-500 uppercase tracking-widest">{CM.totalLabel}</span>
                     <span className="text-[16px] font-black font-mono text-emerald-500 tracking-tight">{totalStorage} MB</span>
@@ -846,8 +886,7 @@ export default function CreateDatabaseModal() {
                   </div>
                   <div className="px-4 py-3">
                     <p className="text-[9px] font-semibold uppercase tracking-wider text-slate-400 mb-1">{CM.extensionSizeLabel}</p>
-                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.extPage}</p>
-                    <p className="text-[9px] text-slate-400 mt-0.5">{CM.pagesPerExtensionSuffix}</p>
+                    <p className="text-[13px] font-black font-mono text-slate-700 dark:text-slate-200">{formData.autoAddVol.extSize} {formData.autoAddVol.extUnit}</p>
                   </div>
                 </div>
               </div>

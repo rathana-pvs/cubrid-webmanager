@@ -323,6 +323,15 @@ export class DatabaseBackupService extends BaseService {
       dbname,
       level: request.level,
       backupdir: request.backupdir,
+      // Fixed per dbname (not per level): CMS builds without CBRD-27065 always
+      // do `snprintf(path, "%s/%s", backupdir, volname)` with no null check,
+      // so an omitted volname renders as a literal "(null)" path segment on
+      // any CMS that hasn't picked up that fix yet (which is every currently
+      // deployed release — it only lands from 11.5). Sending the SAME
+      // volname for every level keeps backupdir/volname as one shared
+      // directory across levels (needed for restoredb's single -B argument)
+      // on both old and fixed CMS builds, without needing to detect which.
+      volname: `${dbname}_backup`,
       removelog: request.removelog ?? 'y',
       check: request.check ?? 'n',
       mt: request.mt ?? '0',

@@ -42,7 +42,7 @@ test.describe('Feature: Edit Host', () => {
     });
 
     await And('the user can discard changes and close modal', async () => {
-      await page.getByTestId('edit-host-discard-btn').click();
+      await page.getByTestId('edit-host-cancel-btn').click();
       await expect(modal).not.toBeVisible();
     });
   });

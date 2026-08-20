@@ -233,13 +233,10 @@ export const startService = createAsyncThunk(
 
       // 1. Start all Brokers
       dispatch(hostSlice.actions.setServiceProgressMessage('Starting brokers...'));
-      const brokerResponse = await brokerApi.getBrokerList(hostUid);
-      const brokerList = brokerResponse.result || (Array.isArray(brokerResponse) ? brokerResponse[0]?.broker : []);
-      if (brokerList) {
-        failures.push(...await collectServiceFailures(
-          brokerList.map(b => ({ name: b.name })),
-          broker => brokerApi.startBroker(hostUid, broker.name)
-        ));
+      try {
+        await brokerApi.startAllBrokers(hostUid);
+      } catch (err) {
+        failures.push({ name: 'brokers', error: getServiceOperationError(err) });
       }
 
       // 2. Fetch cubrid.conf to find auto-start databases
@@ -295,13 +292,10 @@ export const stopService = createAsyncThunk(
 
       // 1. Stop all Brokers
       dispatch(hostSlice.actions.setServiceProgressMessage('Stopping brokers...'));
-      const brokerResponse = await brokerApi.getBrokerList(hostUid);
-      const brokerList = brokerResponse.result || (Array.isArray(brokerResponse) ? brokerResponse[0]?.broker : []);
-      if (brokerList) {
-        failures.push(...await collectServiceFailures(
-          brokerList.map(b => ({ name: b.name })),
-          broker => brokerApi.stopBroker(hostUid, broker.name)
-        ));
+      try {
+        await brokerApi.stopAllBrokers(hostUid);
+      } catch (err) {
+        failures.push({ name: 'brokers', error: getServiceOperationError(err) });
       }
 
       // 2. Stop all Databases

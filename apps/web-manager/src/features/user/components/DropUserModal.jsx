@@ -102,7 +102,7 @@ export default function DropUserModal() {
       testId="drop-user"
       footer={
         <div className="flex gap-3 w-full">
-          <Button data-testid="drop-user-discard-btn" variant="ghost" onClick={handleClose} className="flex-1">{CM.discard}</Button>
+          <Button data-testid="drop-user-cancel-btn" variant="ghost" onClick={handleClose} className="flex-1">{CM.cancel}</Button>
           <Button data-testid="drop-user-confirm-btn" variant="danger" onClick={handleDrop} icon="delete_forever" className="flex-1">{CM.dropUserBtn}</Button>
         </div>
       }

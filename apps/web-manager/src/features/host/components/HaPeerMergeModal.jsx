@@ -51,7 +51,7 @@ export default function HaPeerMergeModal() {
       footer={
         <>
           <Button variant="secondary" onClick={() => dispatch(clearPendingHaMerge())} disabled={isMerging}>
-            {CM.discard}
+            {CM.cancel}
           </Button>
           <Button
             variant="primary"

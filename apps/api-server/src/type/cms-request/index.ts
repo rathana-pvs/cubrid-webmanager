@@ -10,7 +10,7 @@ export * from './login-db-cms-request';
 export * from './base-cms-forward-request';
 export * from './cms-forward-request-without-token';
 export * from './handle-broker-cms-request';
-export * from './start-broker-cms-request';
+export * from './start-all-brokers-cms-request';
 export * from './stop-all-brokers-cms-request';
 export * from './get-broker-status-cms-request';
 export * from './get-add-broker-info-cms-request';

@@ -23,7 +23,12 @@ import { useCM } from '../../../constants/useCM';
 const Component = function ServerContent({ hostUid }) {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { databases, activeDatabases } = useSelector((state) => state.database, shallowEqual);
+  // Database list/active list are fetched into this component's own state
+  // (not the shared `state.database.databases/activeDatabases` slice) so that
+  // multiple simultaneously-open dashboard tabs for different hosts, and the
+  // navigator, don't clobber each other's displayed data.
+  const [databases, setDatabases] = useState([]);
+  const [activeDatabases, setActiveDatabases] = useState([]);
   const { hosts, authorizedHosts, haInfo } = useSelector((state) => state.host, shallowEqual);
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { refreshCounter } = useSelector((state) => state.layout, shallowEqual);
@@ -39,17 +44,19 @@ const Component = function ServerContent({ hostUid }) {
     hostUid,
     tabId: `host:${hostUid}`,
     pollingIntervalSeconds: preferences.dashboardInterval,
-    onFetch: (silent) => async (dispatch, getState) => {
+    onFetch: (silent) => async (dispatch) => {
       // 1. First fetch database status to get the current active list
-      await dispatch(fetchDatabaseStartInfo(silent ? { hostUid, isBackground: true } : hostUid));
-      
-      // 2. Then fetch other data, ensuring we use the updated active databases list
-      const { activeDatabases } = getState().database;
-      
+      const dbInfo = await dispatch(fetchDatabaseStartInfo(silent ? { hostUid, isBackground: true } : hostUid)).unwrap();
+      const newDatabases = dbInfo.dblist?.dbs || [];
+      const newActiveDatabases = (dbInfo.activelist?.active || []).map((d) => d.dbname);
+      setDatabases(newDatabases);
+      setActiveDatabases(newActiveDatabases);
+
+      // 2. Then fetch other data, using the just-fetched active databases list
       await Promise.all([
         dispatch(fetchBrokerList(silent ? { hostUid, isBackground: true } : hostUid)),
         dispatch(fetchHostEnv(hostUid)),
-        dispatch(fetchDatabaseVolumes({ hostUid, activeDatabases })),
+        dispatch(fetchDatabaseVolumes({ hostUid, activeDatabases: newActiveDatabases })),
         fetchAutoStartInfo(),
         isHA ? dispatch(fetchMonitoringData(hostUid)) : Promise.resolve()
       ]);
@@ -203,7 +210,7 @@ const Component = function ServerContent({ hostUid }) {
       {/* ── Scrollable Body ── */}
       <div className="flex-1 overflow-y-auto p-6 space-y-4">
         <HaClusterStatusSection hostUid={hostUid} />
-        <DatabaseVolumes hostUid={hostUid} />
+        <DatabaseVolumes hostUid={hostUid} activeDatabases={activeDatabases} />
         <Brokers hostUid={hostUid} isSection={true} />
         <SystemStatusSection hostUid={hostUid} isTabActive={isTabActive} />
         <DatabaseListSection dbListDisplay={dbListDisplay} handleAutoStartToggle={handleAutoStartToggle} isHA={isHA} />

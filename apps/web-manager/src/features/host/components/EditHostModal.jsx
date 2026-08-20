@@ -138,6 +138,7 @@ export default function EditHostModal() {
     <Modal
       isOpen={isEditHostModalOpen}
       onClose={handleClose}
+      onSubmit={handleSave}
       title={CM.modifyHost}
       icon="settings_input_component"
       loading={loading}
@@ -145,8 +146,8 @@ export default function EditHostModal() {
       testId="edit-host"
       footer={
         <>
-          <Button data-testid="edit-host-discard-btn" variant="secondary" onClick={handleClose} disabled={loading}>
-            {CM.discard}
+          <Button data-testid="edit-host-cancel-btn" variant="secondary" onClick={handleClose} disabled={loading}>
+            {CM.cancel}
           </Button>
           <Button
             data-testid="edit-host-save-btn"
@@ -199,13 +200,14 @@ export default function EditHostModal() {
             placeholder={CM.friendlyNamePlaceholder}
             icon="label"
             disabled={loading}
+            required
           />
         </div>
 
         {/* Section 2: Host Connection */}
-        <SectionHeader 
-          title={CM.host} 
-          icon="lan" 
+        <SectionHeader
+          title={CM.host}
+          icon="lan"
           className="mt-8"
         />
         <div className="px-1">
@@ -220,6 +222,7 @@ export default function EditHostModal() {
                 placeholder={CM.hostAddressPlaceholder}
                 icon="dns"
                 disabled={loading}
+                required
               />
             </div>
             <div className="col-span-1">
@@ -232,6 +235,7 @@ export default function EditHostModal() {
                 error={errors.port}
                 placeholder={CM.hostPortPlaceholder}
                 disabled={loading}
+                required
               />
             </div>
           </div>
@@ -250,6 +254,7 @@ export default function EditHostModal() {
               placeholder={CM.hostUsernamePlaceholder}
               icon="person"
               disabled={loading}
+              required
             />
             <Input
               label={CM.newPassword}

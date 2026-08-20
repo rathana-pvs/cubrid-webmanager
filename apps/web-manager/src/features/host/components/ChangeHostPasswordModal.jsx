@@ -99,6 +99,7 @@ export default function ChangeHostPasswordModal() {
     <Modal
       isOpen={isChangePasswordModalOpen}
       onClose={handleClose}
+      onSubmit={!isSuccess ? handleSubmit : undefined}
       title={isSuccess ? CM.success : CM.changeManagerPasscode}
       icon={isSuccess ? "check_circle" : "lock"}
       loading={loading}
@@ -117,12 +118,12 @@ export default function ChangeHostPasswordModal() {
         ) : (
           <>
             <Button
-              data-testid="change-host-password-discard-btn"
+              data-testid="change-host-password-cancel-btn"
               variant="secondary"
               onClick={handleClose}
               disabled={loading}
             >
-              {CM.discard}
+              {CM.cancel}
             </Button>
             <Button
               data-testid="change-host-password-submit-btn"

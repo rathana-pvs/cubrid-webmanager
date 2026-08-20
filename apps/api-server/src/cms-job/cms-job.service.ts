@@ -14,6 +14,7 @@ import {
   LoadDatabaseRequest,
   OptimizeDatabaseRequest,
   RenameDatabaseRequest,
+  RestoreDbClientRequest,
   UnloadDatabaseRequest,
 } from '@api-interfaces';
 import { extractCmsLongJobFailureMessage, isCmsLongJobFailure } from '@common';
@@ -23,6 +24,7 @@ import { DatabaseManagementService } from '@database/management/database-managem
 import { DatabaseLifecycleService } from '@database/lifecycle/database-lifecycle.service';
 import { DatabaseBackupService } from '@database/backup/database-backup.service';
 import { EncryptionService } from '@security';
+import { HostService } from '@host';
 import { LockService } from '@lock/lock.service';
 import {
   buildOperationKey,
@@ -38,10 +40,16 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
   private readonly logger = new Logger(CmsJobService.name);
   private cleanupTimer: ReturnType<typeof setInterval> | null = null;
 
+  // Fixed name, not per-user — every user's createJob call serializes
+  // through this SAME lock file, since the operations it guards
+  // (readGlobalOperations/writeGlobalOperations) are shared across accounts.
+  private static readonly GLOBAL_OPS_LOCK_FILE = 'jobs-ops-global';
+
   constructor(
     private readonly store: CmsJobStore,
     private readonly lockService: LockService,
     private readonly encryptionService: EncryptionService,
+    private readonly hostService: HostService,
     private readonly managementService: DatabaseManagementService,
     private readonly lifecycleService: DatabaseLifecycleService,
     private readonly backupService: DatabaseBackupService
@@ -51,8 +59,12 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
     return this.encryptionService.getHashedValue(userId);
   }
 
-  private opsLockFile(userKey: string): string {
-    return `jobs-ops-${userKey}`;
+  // The physical CMS host, not the per-user hostUid (each user registers
+  // "the same" host under their own uid) — this is what actually identifies
+  // a shared target for the global operation lock.
+  private async hostKey(userId: string, hostUid: string): Promise<string> {
+    const host = await this.hostService.findHostInternal(userId, hostUid);
+    return `${host.address}:${host.port}`;
   }
 
   onModuleInit(): void {
@@ -117,33 +129,34 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
   ): Promise<CreateCmsJobResponse> {
     const uKey = this.userKey(userId);
     const lockDbname = resolveJobDbname(type, dbname, payload);
-    const operationKey = buildOperationKey(userId, hostUid, lockDbname);
+    const hKey = await this.hostKey(userId, hostUid);
+    const operationKey = buildOperationKey(hKey, lockDbname);
     const jobId = uuidv4();
 
-    await this.lockService.withLock(this.opsLockFile(uKey), async () => {
-      const ops = await this.store.readOperations(uKey);
-      const existingJobId = ops[operationKey];
-      if (existingJobId) {
+    await this.lockService.withLock(CmsJobService.GLOBAL_OPS_LOCK_FILE, async () => {
+      const ops = await this.store.readGlobalOperations();
+      const existing = ops[operationKey];
+      if (existing) {
         // Stale lock check: the referenced job may have finished or been deleted without
         // releasing the lock (e.g. server crash before finally block ran).
         // Without this check a dead lock blocks the same DB operation for up to 1 hour.
-        const existingJob = await this.store.getJob(uKey, existingJobId);
+        const existingJob = await this.store.getJob(existing.userKey, existing.jobId);
         const isStale = !existingJob || isTerminalJobStatus(existingJob.status);
         if (isStale) {
           this.logger.warn(
-            `Clearing stale operation lock for ${operationKey} (job ${existingJobId} is ${existingJob?.status ?? 'missing'})`
+            `Clearing stale operation lock for ${operationKey} (job ${existing.jobId} is ${existingJob?.status ?? 'missing'})`
           );
           delete ops[operationKey];
         } else {
           throw DatabaseError.OperationInProgress({
             hostUid,
             dbname: lockDbname,
-            existingJobId,
+            existingJobId: existing.jobId,
           });
         }
       }
-      ops[operationKey] = jobId;
-      await this.store.writeOperations(uKey, ops);
+      ops[operationKey] = { jobId, userKey: uKey };
+      await this.store.writeGlobalOperations(ops);
     });
 
     const record: CmsJobRecord = {
@@ -330,6 +343,13 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
           job.dbname,
           payload as BackupDbClientRequest
         );
+      case 'restore':
+        return this.backupService.restoreDb(
+          userId,
+          hostUid,
+          job.dbname,
+          payload as RestoreDbClientRequest
+        );
       default:
         throw new Error(`Unsupported job type: ${type}`);
     }
@@ -370,11 +390,11 @@ export class CmsJobService implements OnModuleInit, OnModuleDestroy {
     } finally {
       job.finishedAt = new Date().toISOString();
       await this.store.saveJob(uKey, job);
-      await this.lockService.withLock(this.opsLockFile(uKey), async () => {
-        const ops = await this.store.readOperations(uKey);
-        if (ops[operationKey] === jobId) {
+      await this.lockService.withLock(CmsJobService.GLOBAL_OPS_LOCK_FILE, async () => {
+        const ops = await this.store.readGlobalOperations();
+        if (ops[operationKey]?.jobId === jobId) {
           delete ops[operationKey];
-          await this.store.writeOperations(uKey, ops);
+          await this.store.writeGlobalOperations(ops);
         }
       });
     }

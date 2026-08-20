@@ -88,6 +88,10 @@ export default function UnloadDatabaseModal() {
   useEffect(() => {
     if (isUnloadDBModalOpen && selectedDatabase) {
       resetAction();
+      // databases can be stale/empty right after a host switch (resetDatabaseState
+      // clears it synchronously while the refetch is still in flight) — refetch
+      // so currentDb.dbdir resolves to the real path instead of falling through
+      // to a fabricated default that doesn't match this host's actual layout.
       if (selectedHostUid && !currentDb) {
         dispatch(fetchDatabaseStartInfo(selectedHostUid));
       }
@@ -206,6 +210,7 @@ export default function UnloadDatabaseModal() {
         <ModalStatusLoading
           title={CM.unloadDatabase}
           subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );

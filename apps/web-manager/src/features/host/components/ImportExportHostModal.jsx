@@ -12,6 +12,8 @@ import {
 import { showStatusModal } from '../../layout/layoutSlice';
 import {
   exportHostsToXml,
+  exportHostGroupsToNativeXml,
+  exportHostGroupsToJson,
   parseHostsImportFile,
   buildImportPreviewList,
   validateSelectedImportRows,
@@ -23,6 +25,7 @@ import { Button } from '../../../components/ds/foundation/Button';
 import { Table } from '../../../components/ds/layout/Table';
 import { Badge } from '../../../components/ds/foundation/Badge';
 import { Input } from '../../../components/ds/forms/Input';
+import { Select } from '../../../components/ds/forms/Select';
 import { FileUpload } from '../../../components/ds/forms/FileUpload';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Checkbox } from '../../../components/ds/forms/Checkbox';
@@ -32,7 +35,7 @@ import { useCM } from '../../../constants/useCM';
 export default function ImportExportHostModal() {
   const CM = useCM();
   const dispatch = useDispatch();
-  const { isImportExportModalOpen, importExportMode, hosts } = useSelector((state) => state.host, shallowEqual);
+  const { isImportExportModalOpen, importExportMode, hosts, hostGroups } = useSelector((state) => state.host, shallowEqual);
   const [selectedHosts, setSelectedHosts] = useState([]);
   const [importList, setImportList] = useState([]);
   const [pendingPasswordHosts, setPendingPasswordHosts] = useState([]);
@@ -40,6 +43,7 @@ export default function ImportExportHostModal() {
   const [showPasswordPrompt, setShowPasswordPrompt] = useState(false);
   const [isProcessing, setIsProcessing] = useState(false);
   const [fileName, setFileName] = useState('export_servers');
+  const [exportFormat, setExportFormat] = useState('nativeXml');
   const [importGroupName, setImportGroupName] = useState('Imported');
   const fileInputRef = useRef(null);
 
@@ -151,9 +155,15 @@ export default function ImportExportHostModal() {
     setIsProcessing(true);
     try {
       if (importExportMode === 'export') {
-        const hostsToExport = hosts.filter(h => selectedHosts.includes(h.uid));
-        const finalFileName = `${fileName || 'export_servers'}.xml`;
-        exportHostsToXml(hostsToExport, finalFileName);
+        const baseName = fileName || 'export_servers';
+        if (exportFormat === 'caXml') {
+          const hostsToExport = hosts.filter(h => selectedHosts.includes(h.uid));
+          exportHostsToXml(hostsToExport, `${baseName}.xml`);
+        } else if (exportFormat === 'nativeJson') {
+          exportHostGroupsToJson(hostGroups, selectedHosts, `${baseName}.json`);
+        } else {
+          exportHostGroupsToNativeXml(hostGroups, selectedHosts, `${baseName}.xml`);
+        }
         dispatch(closeImportExportModal());
       } else {
         const hostsToImport = importList.filter((h) => selectedHosts.includes(h.rowId));
@@ -464,6 +474,19 @@ export default function ImportExportHostModal() {
             )}
             {importExportMode === 'export' && !isPasswordStep && (
               <div className="flex items-center gap-2">
+                <Typography variant="caption" className="font-bold text-slate-400 uppercase tracking-tight">{CM.exportFormatLabel}</Typography>
+                <div className="w-44">
+                  <Select
+                    size="sm"
+                    value={exportFormat}
+                    onChange={(e) => setExportFormat(e.target.value)}
+                    options={[
+                      { value: 'nativeXml', label: CM.formatNativeXml },
+                      { value: 'nativeJson', label: CM.formatNativeJson },
+                      { value: 'caXml', label: CM.formatCaXml },
+                    ]}
+                  />
+                </div>
                 <Typography variant="caption" className="font-bold text-slate-400 uppercase tracking-tight">{CM.filenameLabel}</Typography>
                 <div className="w-48">
                   <Input
@@ -471,7 +494,7 @@ export default function ImportExportHostModal() {
                     value={fileName}
                     onChange={(e) => setFileName(e.target.value)}
                     placeholder={CM.exportFilenamePlaceholder}
-                    suffix=".XML"
+                    suffix={exportFormat === 'nativeJson' ? '.JSON' : '.XML'}
                   />
                 </div>
               </div>
@@ -508,7 +531,7 @@ export default function ImportExportHostModal() {
             ) : (
             <>
             <Button
-              data-testid="import-export-host-discard-btn"
+              data-testid="import-export-host-cancel-btn"
               variant="secondary"
               onClick={() => {
                 if (isPasswordStep) {
@@ -524,7 +547,7 @@ export default function ImportExportHostModal() {
               }}
               disabled={isProcessing}
             >
-              {isPasswordStep ? CM.skip : CM.discard}
+              {isPasswordStep ? CM.skip : CM.cancel}
             </Button>
             {isPasswordStep && (
               <Button
@@ -597,7 +620,7 @@ export default function ImportExportHostModal() {
             <div className="p-8">
               <FileUpload
                 label={CM.importHostsXml}
-                accept=".xml,.prefs,.properties,.txt"
+                accept=".xml,.json,.prefs,.properties,.txt"
                 onFileSelect={(file) => {
                   const event = { target: { files: [file] } };
                   handleFileChange(event);

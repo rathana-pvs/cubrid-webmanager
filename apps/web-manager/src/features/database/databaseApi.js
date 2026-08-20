@@ -138,7 +138,4 @@ export const databaseApi = {
   getBackupList: (hostUid, dbname) => {
     return apiClient.get(`/${hostUid}/database/backup-db-list/${encodeURIComponent(dbname)}`);
   },
-  restoreDatabase: (hostUid, dbname, payload) => {
-    return apiClient.post(`/${hostUid}/database/restore-db/${encodeURIComponent(dbname)}`, payload);
-  },
 };

@@ -55,7 +55,7 @@ test.describe('Feature: Database Rename & Copy', () => {
     await Then('the execute button is enabled and changes can be discarded', async () => {
       if (!modal) return;
       await expect(page.getByTestId('rename-database-execute-btn')).toBeEnabled();
-      await page.getByTestId('rename-database-discard-btn').click();
+      await page.getByTestId('rename-database-cancel-btn').click();
       await expect(modal).not.toBeVisible();
     });
   });

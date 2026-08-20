@@ -19,14 +19,10 @@ export class QueryPlanClientDto {
   @IsNotEmpty()
   username: string;
 
-  // Unlike DB-user login credentials (database-user-request.dto.ts), CMS's
-  // setautoexecquery task does not tolerate an empty userpass: it silently
-  // accepts one on the first write, then persists the entry with the
-  // userpass key missing entirely, which corrupts the whole list and makes
-  // every later append/edit for that database fail with "Parameter(userpass)
-  // missing" (setautoexecquery replaces the full list, not just one entry).
+  // Confirmed live against CMS (raw autoexecquery.conf inspection): an empty
+  // userpass encrypts to a fixed-length value like any other, so it doesn't
+  // shift/corrupt the space-delimited config line. Allowed to be empty.
   @IsString()
-  @IsNotEmpty()
   userpass: string;
 
   @IsString()

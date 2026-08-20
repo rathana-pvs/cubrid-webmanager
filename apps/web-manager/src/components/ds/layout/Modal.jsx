@@ -19,6 +19,10 @@ export const Modal = ({
   zIndexClass = 'z-2000',
   /** Stable e2e hook — renders data-testid="{testId}-modal" on the panel and "{testId}-modal-close" on the X button. */
   testId,
+  /** Optional: pressing Enter in a text input inside the modal calls this
+      (mirrors clicking the form's primary button). Skipped for textareas
+      (Enter should insert a newline there) and non-text form controls. */
+  onSubmit,
 }) => {
   const CM = useCM();
   const modalRef = useRef(null);
@@ -31,6 +35,21 @@ export const Modal = ({
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
   }, [isOpen, onClose, showCloseButton]);
+
+  useEffect(() => {
+    if (!onSubmit || !isOpen) return undefined;
+    const handleEnter = (e) => {
+      if (e.key !== 'Enter') return;
+      const tag = e.target?.tagName;
+      if (tag !== 'INPUT') return;
+      const type = (e.target.type || 'text').toLowerCase();
+      if (['button', 'submit', 'checkbox', 'radio', 'file'].includes(type)) return;
+      e.preventDefault();
+      onSubmit();
+    };
+    document.addEventListener('keydown', handleEnter);
+    return () => document.removeEventListener('keydown', handleEnter);
+  }, [isOpen, onSubmit]);
 
   useEffect(() => {
     if (isOpen) {

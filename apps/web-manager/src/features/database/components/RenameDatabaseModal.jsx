@@ -285,6 +285,7 @@ export default function RenameDatabaseModal() {
         <ModalStatusLoading
           title={CM.updatingIdentity}
           subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );
@@ -331,7 +332,7 @@ export default function RenameDatabaseModal() {
       testId="rename-database"
       footer={
         <div className="flex justify-end gap-3 w-full">
-          <Button data-testid="rename-database-discard-btn" variant="secondary" onClick={handleClose}>{CM.discard}</Button>
+          <Button data-testid="rename-database-cancel-btn" variant="secondary" onClick={handleClose}>{CM.cancel}</Button>
           <Button
             data-testid="rename-database-execute-btn"
             variant="primary"

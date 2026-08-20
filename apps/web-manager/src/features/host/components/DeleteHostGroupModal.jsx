@@ -49,7 +49,7 @@ export default function DeleteHostGroupModal() {
             {CM.cancel}
           </Button>
           <Button data-testid="delete-group-confirm-btn" variant="danger" onClick={handleDelete} loading={loading} icon="delete_forever">
-            {CM.executeDiscard}
+            {CM.confirmDelete}
           </Button>
         </div>
       }

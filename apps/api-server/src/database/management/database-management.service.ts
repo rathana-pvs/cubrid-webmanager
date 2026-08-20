@@ -25,6 +25,7 @@ import {
 } from '@api-interfaces';
 import { CmsHttpsClientService } from '@cms-https-client/cms-https-client.service';
 import { DatabaseInfoService } from '@database/info/database-info.service';
+import { DatabaseUserService } from '@database/user/database-user.service';
 import {
   BaseService,
   HandleCmsErrors,
@@ -76,9 +77,29 @@ export class DatabaseManagementService extends BaseService {
   constructor(
     hostService: HostService,
     cmsClient: CmsHttpsClientService,
-    private readonly databaseInfoService: DatabaseInfoService
+    private readonly databaseInfoService: DatabaseInfoService,
+    private readonly databaseUserService: DatabaseUserService
   ) {
     super(hostService, cmsClient);
+  }
+
+  /**
+   * CMS authorizes tasks like optimizedb/checkdb/compactdb against a
+   * per-connection credential cache ("conlist") on the CMS host, populated
+   * only by a prior dbmtuserlogin call — not from these tasks' own request
+   * fields. Log in first so the cache is populated before running the
+   * operation. Skipped when dbuser isn't provided (offline databases run
+   * through a CLI path on the CMS side that doesn't need this).
+   */
+  private async loginIfCredentialsProvided(
+    userId: string,
+    hostUid: string,
+    dbname: string,
+    dbuser?: string,
+    dbpasswd?: string
+  ): Promise<void> {
+    if (!dbuser) return;
+    await this.databaseUserService.loginDatabase(userId, hostUid, dbname, dbuser, dbpasswd);
   }
 
   /**
@@ -333,6 +354,8 @@ export class DatabaseManagementService extends BaseService {
     dbname: string,
     request: OptimizeDatabaseRequest
   ): Promise<OptimizeDatabaseCmsResponse> {
+    await this.loginIfCredentialsProvided(userId, hostUid, dbname, request.dbuser, request.dbpasswd);
+
     const cmsRequest: OptimizeDatabaseCmsRequest = {
       task: 'optimizedb',
       dbname: dbname,
@@ -376,6 +399,8 @@ export class DatabaseManagementService extends BaseService {
     dbname: string,
     request: CheckDatabaseRequest
   ): Promise<CheckDatabaseCmsResponse> {
+    await this.loginIfCredentialsProvided(userId, hostUid, dbname, request.dbuser, request.dbpasswd);
+
     const cmsRequest: CheckDatabaseCmsRequest = {
       task: 'checkdb',
       dbname: dbname,
@@ -422,6 +447,8 @@ export class DatabaseManagementService extends BaseService {
     dbname: string,
     request: CompactDatabaseRequest
   ): Promise<CompactDatabaseCmsResponse> {
+    await this.loginIfCredentialsProvided(userId, hostUid, dbname, request.dbuser, request.dbpasswd);
+
     const cmsRequest: CompactDatabaseCmsRequest = {
       task: 'compactdb',
       dbname: dbname,

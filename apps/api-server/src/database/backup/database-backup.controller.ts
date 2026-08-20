@@ -10,7 +10,6 @@ import {
   BackupDbListClientRequest,
   BackupDbListClientResponse,
   CreateCmsJobResponse,
-  RestoreDbClientResponse,
 } from '@api-interfaces';
 import { BackupScheduleDto, DeleteBackupScheduleDto, BackupDbDto, RestoreDbDto } from '@type/index';
 import { CmsJobService } from '@cms-job/cms-job.service';
@@ -215,22 +214,24 @@ export class DatabaseBackupController {
   }
 
   /**
-   * Restore database from backup.
-   * CMS task: restoredb.
+   * Restore database from backup. CMS task: restoredb.
+   * Long-running — enqueued as a CMS job (202 + jobId), polled via
+   * GET /:hostUid/jobs/:jobId like backup/unload/load/etc.
    *
    * @route POST /:hostUid/database/restore-db/:dbname
    */
   @Post('restore-db/:dbname')
+  @HttpCode(HttpStatus.ACCEPTED)
   async restoreDb(
     @Request() req,
     @Param('hostUid') hostUid: string,
     @Param('dbname') dbname: string,
     @Body() body: RestoreDbDto
-  ): Promise<RestoreDbClientResponse> {
+  ): Promise<CreateCmsJobResponse> {
     const userId = req.user.sub;
 
-    this.logger.log(`Restoring database: ${dbname} on host: ${hostUid}`);
-    return await this.backupService.restoreDb(userId, hostUid, dbname, body);
+    this.logger.log(`Enqueue restore job: ${dbname} on host: ${hostUid}`);
+    return await this.cmsJobService.createJob(userId, hostUid, 'restore', dbname, body);
   }
 
   /**

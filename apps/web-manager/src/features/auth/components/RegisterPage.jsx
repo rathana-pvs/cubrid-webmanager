@@ -80,20 +80,10 @@ export default function RegisterPage() {
     }
   };
 
-  const getPasswordStrength = () => {
-    if (!password) return { level: 0, label: '', color: '', text: '' };
-    let score = 0;
-    if (password.length >= 6) score++;
-    if (password.length >= 10) score++;
-    if (/[A-Z]/.test(password)) score++;
-    if (/[0-9]/.test(password)) score++;
-    if (/[^A-Za-z0-9]/.test(password)) score++;
-    if (score <= 1) return { level: 1, label: CM.weakPassword,    color: 'bg-rose-500',    text: 'text-rose-500' };
-    if (score <= 2) return { level: 2, label: CM.averagePassword,  color: 'bg-amber-500',   text: 'text-amber-500' };
-    if (score <= 3) return { level: 3, label: CM.goodPassword,     color: 'bg-blue-500',    text: 'text-blue-500' };
-    return             { level: 4, label: CM.strongPassword,    color: 'bg-emerald-500', text: 'text-emerald-500' };
-  };
-  const strength = getPasswordStrength();
+  // Mirrors validate()'s actual policy (>= 8 chars, at least one letter and
+  // one digit) — a live pass/fail signal instead of a cosmetic strength
+  // score that could disagree with what submitting the form would accept.
+  const isPasswordValid = password.trim().length >= 8 && /[A-Za-z]/.test(password) && /\d/.test(password);
 
   const inputBase  = 'w-full h-11 text-[13px] font-medium bg-slate-50 dark:bg-white/3 border border-slate-200 dark:border-white/10 rounded-xl outline-hidden transition-all placeholder:text-slate-400 dark:placeholder:text-slate-600 dark:text-white';
   const inputFocus = 'focus:border-amber-500/50 dark:focus:border-amber-500/40 focus:bg-amber-500/2 dark:focus:bg-amber-500/3';
@@ -141,7 +131,7 @@ export default function RegisterPage() {
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-emerald-500/40 via-amber-400 to-emerald-500/40 shadow-[0_1px_8px_rgba(16,185,129,0.25)]" />
 
         {/* Back navigation */}
-        <div className="flex justify-between items-center mb-5">
+        <div className="flex items-center mb-5">
           <Link
             to="/login"
             className="inline-flex items-center gap-1.5 text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-white transition-colors group text-[10px] font-bold uppercase tracking-wider"
@@ -149,7 +139,6 @@ export default function RegisterPage() {
             <Icon name="arrow_back" size="sm" weight={300} className="group-hover:-translate-x-0.5 transition-transform" />
             <span>{CM.backToLogin}</span>
           </Link>
-          <span className="font-mono text-[9px] text-slate-400 dark:text-slate-600 font-bold uppercase tracking-widest">v12.4.0</span>
         </div>
 
         {/* Brand header */}
@@ -182,7 +171,7 @@ export default function RegisterPage() {
           <Input
             data-testid="register-password-input"
             label={CM.password}
-            icon={strength.level >= 3 ? 'verified_user' : 'fingerprint'}
+            icon={isPasswordValid ? 'verified_user' : 'fingerprint'}
             type={showPassword ? 'text' : 'password'}
             placeholder={CM.createStrongPassword}
             value={password}
@@ -197,15 +186,20 @@ export default function RegisterPage() {
             }
           />
 
-          {/* Strength meter */}
-          {password && (
-            <div className="mt-[-8px] mb-1.5 animate-in fade-in duration-200">
-              <div className="flex gap-1 h-0.5 mb-1">
-                {[1, 2, 3, 4].map((i) => (
-                  <div key={i} className={`flex-1 rounded-full transition-all duration-300 ${i <= strength.level ? strength.color : 'bg-slate-200 dark:bg-white/6'}`} />
-                ))}
-              </div>
-              <p className={`text-[9px] font-bold uppercase tracking-widest font-mono ${strength.text}`}>{strength.label}</p>
+          {/* Live pass/fail hint against the actual password policy — hidden
+              once a failed submit attempt sets errors.password, since the
+              Input's own error slot then shows the identical text. */}
+          {password && !errors.password && (
+            <div className="mt-[-8px] mb-1.5 flex items-center gap-1.5 animate-in fade-in duration-200">
+              <Icon
+                name={isPasswordValid ? 'check_circle' : 'cancel'}
+                size="xs"
+                weight={300}
+                className={isPasswordValid ? 'text-emerald-500' : 'text-rose-500'}
+              />
+              <p className={`text-[9px] font-bold uppercase tracking-widest font-mono ${isPasswordValid ? 'text-emerald-500' : 'text-rose-500'}`}>
+                {isPasswordValid ? CM.passwordMeetsRequirements : CM.passwordPolicyHint}
+              </p>
             </div>
           )}
 

@@ -263,7 +263,10 @@ export class DatabaseLifecycleService extends BaseService {
     const startInfo = await this.databaseInfoService.startInfoInternal(userId, hostUid);
 
     if ('dblist' in startInfo && 'activelist' in startInfo) {
-      const dbExists = startInfo.dblist.some((el) => el.dbs.some((db) => db.dbname === dbname));
+      // CMS can return `dblist: null` itself (not just individual entries'
+      // `dbs: null`) — `'dblist' in startInfo` only checks key presence, not
+      // that the value is a non-null array.
+      const dbExists = (startInfo.dblist ?? []).some((el) => (el.dbs ?? []).some((db) => db.dbname === dbname));
 
       if (!dbExists) {
         throw DatabaseError.NoSuchDatabase({ dbname, hostUid });
@@ -323,11 +326,18 @@ export class DatabaseLifecycleService extends BaseService {
     const filesToCheck: string[] = [];
 
     // Add exvol volume paths (before parsing/converting)
+    // Check the actual volume FILE (directory + volume name), not the bare
+    // directory — matches CUBRID Admin's CreateDatabaseWizard, which builds
+    // `volumePath + separator + volumeName` before its own file-exists check.
+    // Checking the directory alone always reports "exists" (it's a real,
+    // already-present directory the user picked), which blocked every
+    // directory change with a false "File already exists" error.
     if (request.exvol && Array.isArray(request.exvol)) {
       for (const volumeObj of request.exvol) {
         for (const [volumeName, volumeInfo] of Object.entries(volumeObj)) {
           if (volumeInfo && typeof volumeInfo === 'object' && 'volpath' in volumeInfo) {
-            filesToCheck.push(volumeInfo.volpath);
+            const dir = volumeInfo.volpath.replace(/[\\/]+$/, '');
+            filesToCheck.push(`${dir}/${volumeName}`);
           }
         }
       }

@@ -76,18 +76,8 @@ export const addVolume = createAsyncThunk(
 );
 
 // Backup & Restore
-
-export const restoreDatabase = createAsyncThunk(
-  'database/restoreDatabase',
-  async ({ hostUid, dbname, payload }, { rejectWithValue }) => {
-    try {
-      const response = await databaseApi.restoreDatabase(hostUid, dbname, payload);
-      return response;
-    } catch (err) {
-      return rejectWithValue(err.response?.data?.message || `Failed to restore ${dbname}`);
-    }
-  }
-);
+// restoreDatabase moved to the CMS job queue (databaseJobApi.submitRestore +
+// useCmsJob) — restoredb is long-running, see RestoreDatabaseModal.jsx.
 
 export const fetchBackupSchedule = createAsyncThunk(
   'database/fetchBackupSchedule',
@@ -402,10 +392,6 @@ const databaseOperationSlice = createSlice({
       .addCase(addVolume.pending, (state) => { state.actionLoading = true; state.error = null; })
       .addCase(addVolume.fulfilled, (state) => { state.actionLoading = false; })
       .addCase(addVolume.rejected, (state, action) => { state.actionLoading = false; state.error = action.payload; })
-
-      .addCase(restoreDatabase.pending, (state) => { state.actionLoading = true; })
-      .addCase(restoreDatabase.fulfilled, (state) => { state.actionLoading = false; })
-      .addCase(restoreDatabase.rejected, (state, action) => { state.actionLoading = false; state.error = action.payload; })
 
       .addCase(fetchBackupSchedule.pending, (state, action) => {
         const { dbname } = action.meta.arg;

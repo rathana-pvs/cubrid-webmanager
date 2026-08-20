@@ -2,11 +2,12 @@ import { useState, useRef, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { Link, useNavigate } from 'react-router-dom';
 import { loginStart, loginSuccess, loginFailure } from '../authSlice';
+import { toggleTheme } from '../../layout/layoutSlice';
 import { authApi } from '../authApi';
 import { Icon } from '../../../components/ds/foundation/Icon';
-import { Toggle } from '../../../components/ds/forms/Toggle';
 import { Input } from '../../../components/ds/forms/Input';
 import { InfoBanner } from '../../../components/ds/foundation/InfoBanner';
+import LanguageToggle from '../../layout/components/LanguageToggle';
 import { useCM } from '../../../constants/useCM';
 
 export default function LoginPage() {
@@ -40,10 +41,10 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [errors, setErrors] = useState({});
   const [apiError, setApiError] = useState('');
-  const [remember, setRemember] = useState(false);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { loading } = useSelector((state) => state.auth, shallowEqual);
+  const { theme } = useSelector((state) => state.layout, shallowEqual);
 
   const validate = () => {
     const errs = {};
@@ -109,6 +110,20 @@ export default function LoginPage() {
         {/* Top Accent Gradient Border with Subtle Glow */}
         <div className="absolute top-0 left-0 right-0 h-[3px] bg-gradient-to-r from-amber-500/40 via-amber-400 to-amber-500/40 shadow-[0_1px_8px_rgba(245,158,11,0.25)]" />
 
+        {/* Language + theme toggles */}
+        <div className="flex items-center justify-end gap-2 mb-4">
+          <LanguageToggle />
+          <button
+            type="button"
+            data-testid="login-theme-toggle"
+            onClick={() => dispatch(toggleTheme())}
+            title={theme === 'light' ? CM.switchToDarkMode : CM.switchToLightMode}
+            className="p-1.5 rounded-sm border border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+          >
+            <Icon name={theme === 'light' ? 'dark_mode' : 'light_mode'} size="16px" weight={300} />
+          </button>
+        </div>
+
         {/* Brand header */}
         <div className="flex items-center gap-3 justify-center mb-6">
           <div className="w-9 h-9 bg-slate-900 dark:bg-white rounded-xl flex items-center justify-center shadow-md shrink-0">
@@ -154,14 +169,6 @@ export default function LoginPage() {
                 <Icon name={showPassword ? 'visibility_off' : 'visibility'} size="sm" weight={300} />
               </button>
             }
-          />
-
-          {/* Remember me */}
-          <Toggle
-            label={CM.rememberDevice}
-            checked={remember}
-            onChange={setRemember}
-            className="py-0.5"
           />
 
           {/* API error */}

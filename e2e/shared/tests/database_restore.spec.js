@@ -82,7 +82,7 @@ test.describe('Feature: Database Backup & Restore', () => {
 
     await Then('the execute button is visible and modal can be closed', async () => {
       await expect(page.getByTestId('restore-database-execute-btn')).toBeVisible();
-      await page.getByTestId('restore-database-discard-btn').click();
+      await page.getByTestId('restore-database-cancel-btn').click();
       await expect(modal).not.toBeVisible();
     });
   });
@@ -123,7 +123,7 @@ test.describe('Feature: Database Backup & Restore', () => {
     await Then('a path invalid validation message is displayed and execution is blocked', async () => {
       await expect(modal.getByText('The user-defined recovery path is not valid.')).toBeVisible();
       await expect(executeBtn).toBeDisabled();
-      await page.getByTestId('restore-database-discard-btn').click();
+      await page.getByTestId('restore-database-cancel-btn').click();
       await expect(modal).not.toBeVisible();
     });
   });

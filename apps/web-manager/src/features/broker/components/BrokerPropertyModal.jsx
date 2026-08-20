@@ -239,7 +239,7 @@ export default function BrokerPropertyModal() {
             <div className="mr-auto">
               {modifiedCount > 0 && <Button variant="ghost" onClick={handleReset} className="text-amber-600">{CM.resetLabel}</Button>}
             </div>
-            <Button variant="ghost" onClick={handleClose}>{CM.discard}</Button>
+            <Button variant="ghost" onClick={handleClose}>{CM.cancel}</Button>
             <Button variant="primary" onClick={handleSave} loading={viewStatus === ViewStatus.SAVING} icon="save" disabled={modifiedCount === 0}>{CM.applyLabel}</Button>
           </>
         ) : (

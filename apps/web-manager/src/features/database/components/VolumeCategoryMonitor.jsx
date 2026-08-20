@@ -141,6 +141,7 @@ const VolumeTableContainer = memo(({ volumes, pageSize }) => {
   return (
     <Card bodyClassName="p-0 overflow-hidden" className="border-slate-200 dark:border-white/5 shadow-xs bg-white dark:bg-white/1 rounded-sm">
       <Table
+        selectable
         columns={[
           {
             header: CM.volumeName,

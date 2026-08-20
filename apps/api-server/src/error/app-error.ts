@@ -260,6 +260,8 @@ export class AppError extends Error {
         switch (this.code) {
           case CmsErrorCode.INVALID_TOKEN:
             return 401; // Unauthorized
+          case CmsErrorCode.TLS_ERROR:
+            return 502; // Bad Gateway — CMS itself is unreachable/untrusted
           case CmsErrorCode.REQUEST_FAILED:
           case CmsErrorCode.NO_RESPONSE:
           case CmsErrorCode.UNKNOWN:

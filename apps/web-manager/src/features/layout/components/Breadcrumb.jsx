@@ -24,7 +24,7 @@ export default function Breadcrumb({
       onTabChange(tabId);
       setConfirmModal({
         isOpen: true,
-        title: `${CM.discardChanges}?`,
+        title: CM.unsavedChangesTitle,
         message: CM.unsavedChangesDesc(labels[tabId] || tabId),
         onConfirm: () => {
           onCloseTab(tabId);
@@ -186,7 +186,7 @@ export default function Breadcrumb({
         description={confirmModal.message}
         onConfirm={confirmModal.onConfirm}
         onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
-        confirmLabel={CM.discard}
+        confirmLabel={CM.ok}
         variant="danger"
         testId="close-dirty-tab"
       />

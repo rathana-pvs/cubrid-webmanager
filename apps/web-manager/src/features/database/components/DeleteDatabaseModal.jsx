@@ -198,7 +198,7 @@ export default function DeleteDatabaseModal() {
               icon={step === 1 ? 'arrow_forward' : 'delete_forever'}
               className="whitespace-nowrap"
             >
-              {step === 1 ? CM.proceedBtn : CM.executeDiscard}
+              {step === 1 ? CM.proceedBtn : CM.confirmDelete}
             </Button>
           </div>
         </div>

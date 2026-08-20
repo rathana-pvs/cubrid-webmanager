@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { hostApi } from '../../host/hostApi';
+import { brokerApi } from '../../broker/brokerApi';
 import { showStatusModal, setTabDirty } from '../../layout/layoutSlice';
 import { Typography } from '../../../components/ds/foundation/Typography';
 import { Icon } from '../../../components/ds/foundation/Icon';
@@ -29,7 +29,7 @@ export default function BrokerConfigEditor({ hostUid }) {
   const fetchConfig = useCallback(async () => {
     setLoading(true);
     try {
-      const response = await hostApi.getHostConfig(hostUid, 'cubrid_broker.conf');
+      const response = await brokerApi.getBrokerConfig(hostUid);
       const lines = response?.conflist?.[0]?.confdata || [];
       
       const content = lines.join('\n');
@@ -69,12 +69,8 @@ export default function BrokerConfigEditor({ hostUid }) {
     setSaving(true);
     try {
       const confdata = rawContent.split('\n');
-      const payload = {
-        confname: 'cubrid_broker.conf',
-        confdata: confdata
-      };
 
-      await hostApi.setHostConfig(hostUid, payload);
+      await brokerApi.updateBrokerConfig(hostUid, confdata);
       
       setOriginalRawContent(rawContent);
       setHasChanges(false);

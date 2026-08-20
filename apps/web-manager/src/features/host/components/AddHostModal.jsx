@@ -159,6 +159,7 @@ export default function AddHostModal({ isOpen, onClose }) {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
+      onSubmit={handleSave}
       title={CM.newConnection}
       icon="add_link"
       maxWidth="max-w-[500px]"
@@ -166,8 +167,8 @@ export default function AddHostModal({ isOpen, onClose }) {
       testId="add-host"
       footer={
         <>
-          <Button data-testid="add-host-discard-btn" variant="secondary" onClick={handleClose} disabled={loading}>
-            {CM.discard}
+          <Button data-testid="add-host-cancel-btn" variant="secondary" onClick={handleClose} disabled={loading}>
+            {CM.cancel}
           </Button>
           <Button
             data-testid="add-host-save-btn"
@@ -220,6 +221,7 @@ export default function AddHostModal({ isOpen, onClose }) {
             placeholder={CM.friendlyNamePlaceholder}
             icon="label"
             disabled={loading}
+            required
           />
           <Select
             label={CM.groupLabel}
@@ -249,6 +251,7 @@ export default function AddHostModal({ isOpen, onClose }) {
                 placeholder={CM.hostAddressPlaceholder}
                 icon="dns"
                 disabled={loading}
+                required
               />
             </div>
             <div className="col-span-1">
@@ -261,6 +264,7 @@ export default function AddHostModal({ isOpen, onClose }) {
                 error={errors.port}
                 placeholder={CM.hostPortPlaceholder}
                 disabled={loading}
+                required
               />
             </div>
           </div>
@@ -279,6 +283,7 @@ export default function AddHostModal({ isOpen, onClose }) {
               placeholder={CM.hostUsernamePlaceholder}
               icon="person"
               disabled={loading}
+              required
             />
             <Input
               label={CM.password}
@@ -290,6 +295,7 @@ export default function AddHostModal({ isOpen, onClose }) {
               placeholder="••••••••"
               icon="key"
               disabled={loading}
+              required
             />
           </div>
         </div>

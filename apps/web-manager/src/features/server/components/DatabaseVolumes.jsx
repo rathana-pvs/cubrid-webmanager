@@ -1,4 +1,4 @@
-import React, { useEffect, useCallback } from 'react';
+import React, { useEffect, useCallback, useState } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
 import { fetchDatabaseVolumes } from '../../database/databaseSlice';
 import { Card } from '../../../components/ds/layout/Card';
@@ -78,16 +78,24 @@ const BarCell = ({ val }) => {
   );
 };
 
-export default function DatabaseVolumes({ hostUid }) {
+export default function DatabaseVolumes({ hostUid, activeDatabases = [] }) {
   const CM = useCM();
   const dispatch = useDispatch();
   const { authorizedHosts } = useSelector((state) => state.host, shallowEqual);
-  const { activeDatabases } = useSelector((state) => state.database, shallowEqual);
-  const { volumes, volumesLoading: loading } = useSelector((state) => state.databaseMonitoring, shallowEqual);
+  // Fetched into local state (not the shared `state.databaseMonitoring.volumes`
+  // slice) so multiple simultaneously-open dashboard tabs don't clobber each other.
+  const [volumes, setVolumes] = useState([]);
+  const [loading, setLoading] = useState(false);
 
-  const fetchVolumes = useCallback(() => {
+  const fetchVolumes = useCallback(async () => {
     if (!hostUid || !authorizedHosts.includes(hostUid) || activeDatabases.length === 0) return;
-    dispatch(fetchDatabaseVolumes({ hostUid, activeDatabases }));
+    setLoading(true);
+    try {
+      const result = await dispatch(fetchDatabaseVolumes({ hostUid, activeDatabases })).unwrap();
+      setVolumes(result);
+    } finally {
+      setLoading(false);
+    }
   }, [hostUid, authorizedHosts, activeDatabases, dispatch]);
 
   useEffect(() => { fetchVolumes(); }, [fetchVolumes]);

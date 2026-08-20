@@ -128,7 +128,7 @@ export default function DatabaseTree({
     loggingInDatabases,
   } = useSelector(selectStatusStates, shallowEqual);
   
-  const { databaseUsers, databaseUsersLoading } = useSelector((state) => state.user, shallowEqual, shallowEqual);
+  const { databaseUsers, databaseUsersLoading, databaseUsersError } = useSelector((state) => state.user, shallowEqual, shallowEqual);
 
   // Expand/collapse only ever lazy-loads supplementary read-only data for an
   // already-logged-in database. It never attempts a login — that's a separate,
@@ -141,7 +141,18 @@ export default function DatabaseTree({
     // click sequences (like double-clicks) before we trigger state-changing
     // dispatches that could cause a reset-rendering of the tree node.
     setTimeout(() => {
-      if (!databaseUsers[db.dbname] && !databaseUsersLoading[db.dbname]) {
+      // databaseUsersError is checked (not just Loading) because userinfo
+      // re-logs into the target database on every call (see cm_ts_userinfo /
+      // _op_db_login in the CMS source) instead of reading cached state. A
+      // failed attempt against a database whose engine just went unreachable
+      // leaves that CMS worker thread's error context uninitialized on a
+      // known-buggy CUBRID build; an immediate second userinfo call on the
+      // same (CMS is single-threaded) connection then crashes cub_manager
+      // outright. Without this check, isActive/isLoggedIn being briefly
+      // stale right after a stop is enough to fire that first failing call,
+      // and any re-render (tree re-toggle, unrelated state update) would
+      // otherwise retry it immediately and reproduce the crash.
+      if (!databaseUsers[db.dbname] && !databaseUsersLoading[db.dbname] && !databaseUsersError[db.dbname]) {
         dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname: db.dbname }));
       }
       if (!backupSchedules[db.dbname] && !backupSchedulesLoading[db.dbname]) {
@@ -151,7 +162,7 @@ export default function DatabaseTree({
         dispatch(fetchQueryPlan({ hostUid: selectedHostUid, dbname: db.dbname }));
       }
     }, 50);
-  }, [selectedHostUid, databaseUsers, databaseUsersLoading, backupSchedules, backupSchedulesLoading, queryPlans, queryPlansLoading, dispatch]);
+  }, [selectedHostUid, databaseUsers, databaseUsersLoading, databaseUsersError, backupSchedules, backupSchedulesLoading, queryPlans, queryPlansLoading, dispatch]);
 
   // Double-click "activates" a database: log in if needed (or prompt for
   // credentials), then open its dashboard tab.
@@ -254,12 +265,15 @@ export default function DatabaseTree({
           >
             {/* Level 2 items */}
 
-            <UsersFolder 
+            <UsersFolder
               db={db}
+              isActive={isActive}
+              isLoggedIn={isLoggedIn}
               selectedDatabase={selectedDatabase}
               selectedDatabaseSubItem={selectedDatabaseSubItem}
               users={databaseUsers[db.dbname]}
               isLoading={databaseUsersLoading[db.dbname]}
+              error={databaseUsersError[db.dbname]}
               onUsersContextMenu={onUsersContextMenu}
               onUserContextMenu={onUserContextMenu}
               onSelect={handleSelectSubItem}
@@ -302,7 +316,7 @@ export default function DatabaseTree({
 }
 
 // Sub-components to isolate re-renders and logic
-const UsersFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem, users, isLoading, onUsersContextMenu, onUserContextMenu, onSelect, selectedHostUid }) => {
+const UsersFolder = React.memo(({ db, isActive, isLoggedIn, selectedDatabase, selectedDatabaseSubItem, users, isLoading, error, onUsersContextMenu, onUserContextMenu, onSelect, selectedHostUid }) => {
   const CM = useCM();
   const dispatch = useDispatch();
   const isSelected = selectedDatabase === db.dbname && selectedDatabaseSubItem === 'Users';
@@ -317,7 +331,12 @@ const UsersFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem,
       hasChildren={true}
       isLoading={isLoading}
       onToggle={() => {
-        if (selectedHostUid && !users && !isLoading) {
+        // isActive/isLoggedIn and !error mirror handleDbToggle's guard above
+        // (see its comment) — userinfo re-connects to the database on every
+        // call, and a failed attempt against an unreachable database can
+        // crash CMS outright on a known-buggy CUBRID build if retried
+        // immediately.
+        if (selectedHostUid && isActive && isLoggedIn && !users && !isLoading && !error) {
           dispatch(fetchDatabaseUsers({ hostUid: selectedHostUid, dbname: db.dbname }));
         }
       }}

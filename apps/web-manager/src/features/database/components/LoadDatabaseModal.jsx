@@ -62,18 +62,18 @@ export default function LoadDatabaseModal() {
       object: false,
       index: false,
       trigger: false,
-      checkoption: true,
+      checkoption: false,
       nolog: false,
       oiduse: false,
       statisticsuse: false,
       estimated: false,
-      period: false,
+      period: true,
       errorcontrolfile: false,
       ignoreclassfile: false,
     },
     values: {
       estimated: '',
-      period: '',
+      period: '10000',
       errorcontrolfile: '',
       ignoreclassfile: '',
     },
@@ -334,6 +334,7 @@ export default function LoadDatabaseModal() {
         <ModalStatusLoading
           title={CM.loadDatabase}
           subtitle={getCmsJobLoadingSubtitle(selectedDatabase, jobStatus, CM)}
+          onBackground={handleClose}
         />
       </Modal>
     );

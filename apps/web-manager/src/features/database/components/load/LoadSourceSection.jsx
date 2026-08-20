@@ -1,3 +1,4 @@
+import { useRef } from 'react';
 import { Select } from '../../../../components/ds/forms/Select';
 import { Checkbox } from '../../../../components/ds/forms/Checkbox';
 import { Input } from '../../../../components/ds/forms/Input';
@@ -13,6 +14,45 @@ import {
 } from '../../../../components/ds/layout/CaDialogLayout';
 
 const typeIcon = { schema: 'code', object: 'dataset', index: 'layers', trigger: 'bolt' };
+
+// Long paths get clipped by the column width — let the user click-and-drag
+// across the text to pan it sideways instead of only relying on the title tooltip.
+const DraggablePath = ({ value }) => {
+  const ref = useRef(null);
+  const drag = useRef(null);
+
+  const handleMouseDown = (e) => {
+    const el = ref.current;
+    if (!el) return;
+    drag.current = { startX: e.clientX, startScrollLeft: el.scrollLeft, moved: false };
+  };
+
+  const handleMouseMove = (e) => {
+    const el = ref.current;
+    if (!el || !drag.current) return;
+    const delta = e.clientX - drag.current.startX;
+    if (Math.abs(delta) > 3) drag.current.moved = true;
+    el.scrollLeft = drag.current.startScrollLeft - delta;
+  };
+
+  const stopDrag = () => {
+    drag.current = null;
+  };
+
+  return (
+    <span
+      ref={ref}
+      title={value}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
+      onMouseUp={stopDrag}
+      onMouseLeave={stopDrag}
+      className="font-mono text-[11px] text-slate-500 dark:text-slate-400 block max-w-[260px] overflow-x-auto whitespace-nowrap cursor-grab active:cursor-grabbing select-none [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+    >
+      {value}
+    </span>
+  );
+};
 
 const TypeBadge = ({ value }) => (
   <div className="flex items-center gap-2">
@@ -58,11 +98,7 @@ export default function LoadSourceSection({
     {
       header: CM.path,
       accessor: 'path',
-      render: (value) => (
-        <span className="font-mono text-[11px] text-slate-500 dark:text-slate-400 truncate block max-w-[260px]" title={value}>
-          {value}
-        </span>
-      )
+      render: (value) => <DraggablePath value={value} />
     },
     {
       header: CM.date,

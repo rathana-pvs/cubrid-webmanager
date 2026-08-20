@@ -99,7 +99,7 @@ export default function DatabaseInfoModal() {
   /* ─── LOADING view ─── */
   if (view === VIEW_LOADING) {
     return (
-      <Modal isOpen title={CM.usedParameterDump} icon="analytics" onClose={handleClose} maxWidth="500px" showCloseButton={false}>
+      <Modal isOpen title={CM.usedParameterDump} icon="analytics" onClose={handleClose} maxWidth="900px" showCloseButton={false}>
         <div className="flex flex-col items-center justify-center py-14 space-y-6 animate-in fade-in duration-200">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border-2 border-slate-100 dark:border-white/5" />
@@ -132,7 +132,7 @@ export default function DatabaseInfoModal() {
   /* ─── ERROR view ─── */
   if (view === VIEW_ERROR) {
     return (
-      <Modal isOpen title={CM.usedParameterDump} icon="analytics" iconVariant="danger" onClose={handleClose} maxWidth="500px">
+      <Modal isOpen title={CM.usedParameterDump} icon="analytics" iconVariant="danger" onClose={handleClose} maxWidth="900px">
         <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
           <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
             <Icon name="error" size="md" weight={300} className="text-white" />
@@ -217,7 +217,7 @@ export default function DatabaseInfoModal() {
       title={CM.usedParameterDump}
       subtitle={CM.parameterDumpSubtitle}
       icon="database"
-      maxWidth="500px"
+      maxWidth="900px"
       testId="database-info"
       footer={
         <div className="flex justify-end gap-3 w-full">

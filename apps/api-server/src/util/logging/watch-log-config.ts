@@ -53,6 +53,14 @@ export function startLogConfigWatcher(configService: ConfigService, logger: Logg
   let lastRaw: string | null = fs.existsSync(confPath) ? fs.readFileSync(confPath, 'utf8') : null;
 
   const applyChange = () => {
+    if (!fs.existsSync(confPath)) {
+      // No cwm.conf at all (e.g. local dev running off .env instead) is not
+      // an error — the POLL_INTERVAL_MS backstop below calls this every 5s
+      // regardless, so without this check it would warn forever.
+      lastRaw = null;
+      return;
+    }
+
     const conf = readCwmConfSafe(confPath);
     if (conf === null) {
       logger.warn(`cwm.conf changed but could not be read/parsed — keeping current log settings (${confPath})`, 'LogConfigWatcher');

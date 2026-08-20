@@ -45,6 +45,96 @@ export const exportHostsToXml = (hosts, fileName = 'export_servers.xml') => {
   URL.revokeObjectURL(url);
 };
 
+/** Native (web-manager-to-web-manager) export format marker, distinct from CA's XML/prefs. */
+export const NATIVE_FORMAT_ID = 'cubrid-webmanager-hosts';
+export const NATIVE_FORMAT_VERSION = 1;
+
+/** @returns {{ name: string, hosts: object[] }[]} groups (in hostGroups map order) filtered to selected host uids */
+function buildGroupedExportPayload(hostGroups, selectedUids) {
+  const selected = selectedUids ? new Set(selectedUids) : null;
+  const groups = [];
+
+  for (const group of Object.values(hostGroups || {})) {
+    const hostsInGroup = Object.values(group.hosts || {}).filter(
+      (host) => !selected || selected.has(host.uid)
+    );
+    if (hostsInGroup.length === 0) continue;
+
+    groups.push({
+      name: group.name || 'Imported',
+      hosts: hostsInGroup.map((host) => ({
+        alias: host.alias || '',
+        address: host.address || '',
+        port: host.port || DEFAULT_IMPORT_PORT,
+        id: host.id || '',
+      })),
+    });
+  }
+
+  return groups;
+}
+
+function triggerDownload(content, mimeType, fileName) {
+  const blob = new Blob([content], { type: mimeType });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+  link.href = url;
+  link.download = fileName;
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+  URL.revokeObjectURL(url);
+}
+
+/**
+ * Exports hosts (with their group structure) to the native web-manager XML format.
+ * Round-trips cleanly with another Web Manager instance's import. Passwords are NOT included.
+ */
+export const exportHostGroupsToNativeXml = (hostGroups, selectedUids, fileName = 'export_servers.xml') => {
+  const groups = buildGroupedExportPayload(hostGroups, selectedUids);
+  if (groups.length === 0) return;
+
+  const doc = document.implementation.createDocument(null, 'cwm-hosts', null);
+  const root = doc.documentElement;
+  root.setAttribute('version', String(NATIVE_FORMAT_VERSION));
+
+  groups.forEach((group) => {
+    const groupNode = doc.createElement('group');
+    groupNode.setAttribute('name', group.name);
+    group.hosts.forEach((host) => {
+      const hostNode = doc.createElement('host');
+      hostNode.setAttribute('alias', host.alias);
+      hostNode.setAttribute('address', host.address);
+      hostNode.setAttribute('port', String(host.port));
+      hostNode.setAttribute('user', host.id);
+      groupNode.appendChild(hostNode);
+    });
+    root.appendChild(groupNode);
+  });
+
+  const serializer = new XMLSerializer();
+  const xmlString = '<?xml version="1.0" encoding="UTF-8"?>\n' + serializer.serializeToString(doc);
+  triggerDownload(xmlString, 'application/xml', fileName);
+};
+
+/**
+ * Exports hosts (with their group structure) to the native web-manager JSON format.
+ * Round-trips cleanly with another Web Manager instance's import. Passwords are NOT included.
+ */
+export const exportHostGroupsToJson = (hostGroups, selectedUids, fileName = 'export_servers.json') => {
+  const groups = buildGroupedExportPayload(hostGroups, selectedUids);
+  if (groups.length === 0) return;
+
+  const payload = {
+    format: NATIVE_FORMAT_ID,
+    version: NATIVE_FORMAT_VERSION,
+    exportedAt: new Date().toISOString(),
+    groups,
+  };
+
+  triggerDownload(JSON.stringify(payload, null, 2), 'application/json', fileName);
+};
+
 function stripBom(text) {
   return String(text || '').replace(/^\uFEFF/, '');
 }
@@ -431,13 +521,112 @@ function parseHostGroupsFromXmlString(xmlString) {
 }
 
 /**
+ * Converts the native `{ groups: [{ name, hosts }] }` shape into the
+ * `{ hosts, groups }` shape `buildImportPreviewList` already understands —
+ * synthesizes a `legacyId` per host so the same name-to-hosts bridging
+ * logic used for CA .prefs host groups works unchanged here too.
+ */
+function groupedPayloadToHostsAndGroups(groupList) {
+  const hosts = [];
+  const groups = [];
+  let counter = 0;
+
+  for (const group of groupList || []) {
+    const groupName = String(group.name ?? '').trim();
+    const legacyHostIds = [];
+
+    for (const host of group.hosts || []) {
+      const address = String(host.address ?? '').trim();
+      if (!address) continue;
+
+      const legacyId = `native-${counter++}`;
+      hosts.push({
+        legacyId,
+        alias: String(host.alias ?? '').trim() || address,
+        address,
+        port: host.port != null ? String(host.port) : String(DEFAULT_IMPORT_PORT),
+        id: String(host.id ?? '').trim() || 'admin',
+        password: '',
+      });
+      if (groupName) legacyHostIds.push(legacyId);
+    }
+
+    if (groupName && legacyHostIds.length > 0) {
+      groups.push({ name: groupName, legacyHostIds });
+    }
+  }
+
+  return { hosts, groups };
+}
+
+/** @returns {{ hosts, groups }|null} parsed native JSON payload, or null if not our native format */
+function tryParseNativeJson(input) {
+  let data;
+  try {
+    data = JSON.parse(input);
+  } catch {
+    return null;
+  }
+
+  if (!data || data.format !== NATIVE_FORMAT_ID || !Array.isArray(data.groups)) {
+    return null;
+  }
+
+  const parsed = groupedPayloadToHostsAndGroups(data.groups);
+  if (parsed.hosts.length === 0) {
+    throw new Error('The selected file contains no valid host connections.');
+  }
+  return parsed;
+}
+
+/** @returns {{ hosts, groups }|null} parsed native XML payload, or null if not our native format */
+function tryParseNativeXml(input) {
+  const doc = parseXmlDocument(input, 'host list');
+  if (doc.documentElement.nodeName !== 'cwm-hosts') {
+    return null;
+  }
+
+  const groupNodes = doc.getElementsByTagName('group');
+  const groupList = [];
+  for (let i = 0; i < groupNodes.length; i++) {
+    const groupNode = groupNodes[i];
+    const name = (groupNode.getAttribute('name') || '').trim();
+    const hostNodes = groupNode.getElementsByTagName('host');
+    const hosts = [];
+    for (let j = 0; j < hostNodes.length; j++) {
+      const hostNode = hostNodes[j];
+      hosts.push({
+        alias: hostNode.getAttribute('alias') || '',
+        address: hostNode.getAttribute('address') || '',
+        port: hostNode.getAttribute('port') || String(DEFAULT_IMPORT_PORT),
+        id: hostNode.getAttribute('user') || 'admin',
+      });
+    }
+    groupList.push({ name, hosts });
+  }
+
+  const parsed = groupedPayloadToHostsAndGroups(groupList);
+  if (parsed.hosts.length === 0) {
+    throw new Error('The selected file contains no valid host connections.');
+  }
+  return parsed;
+}
+
+/**
  * Parses host XML or legacy CUBRID desktop .prefs / .properties (servers + host groups).
  * @returns {{ hosts: object[], groups: { name: string, legacyHostIds: string[] }[] }}
  */
 export function parseHostsImportFile(rawInput) {
   const input = stripBom(String(rawInput || '')).trim();
 
+  if (input.startsWith('{')) {
+    const native = tryParseNativeJson(input);
+    if (native) return native;
+  }
+
   if (input.startsWith('<')) {
+    const native = tryParseNativeXml(input);
+    if (native) return native;
     return { hosts: parseHostsFromXmlString(input), groups: [] };
   }
 

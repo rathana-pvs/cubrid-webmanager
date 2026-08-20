@@ -154,7 +154,7 @@ export default function EditCMSUserModal() {
 
   if (isSuccess) return (
     <Modal isOpen title={CM.success} icon="check_circle" iconVariant="success" onClose={handleClose} maxWidth="500px" testId="edit-cms-user">
-      <ModalStatusSuccess title={CM.synchronizedStatus} onConfirm={handleClose} />
+      <ModalStatusSuccess title={CM.operationComplete} onConfirm={handleClose} />
     </Modal>
   );
 
@@ -168,6 +168,7 @@ export default function EditCMSUserModal() {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
+      onSubmit={handleSave}
       title={isEditMode ? CM.editUser : CM.addUser}
       subtitle={isEditMode ? CM.editingUser(username) : CM.createManagementAccount}
       icon={isEditMode ? 'manage_accounts' : 'person_add'}

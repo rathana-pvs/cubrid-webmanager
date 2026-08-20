@@ -72,12 +72,12 @@ export default function DBJobAutomationSection({ pollingProps }) {
 
   const backupColumns = useMemo(() => [
     {
-      header: CM.planRegistryId,
+      header: CM.planIdLabel,
       accessor: 'backupid',
       render: (v) => <span className="font-mono text-[12px] font-semibold text-slate-700 dark:text-slate-200">{v}</span>,
     },
     {
-      header: CM.payloadPath,
+      header: CM.path,
       accessor: 'path',
       render: (v) => <span className="font-mono text-[11px] text-slate-500 truncate block max-w-[240px]">{v}</span>,
     },
@@ -86,7 +86,7 @@ export default function DBJobAutomationSection({ pollingProps }) {
       accessor: 'level',
       render: (v) => <span className="text-[11px] text-slate-600 dark:text-slate-300">{CM[BACKUP_LEVEL_TITLE_KEY[v]] || v}</span>,
     },
-    { header: CM.rotationLogic, accessor: 'period_type' },
+    { header: CM.rotationLabel, accessor: 'period_type' },
     {
       header: CM.targetTime,
       accessor: 'time',
