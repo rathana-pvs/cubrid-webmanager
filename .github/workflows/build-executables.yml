@@ -77,3 +77,4 @@ jobs:
           CI: true
           E2E_USERNAME: e2e_discovery
           E2E_PASSWORD: Password123!
+          E2E_HOST_PASSWORD: admin
