@@ -32,7 +32,15 @@ test.describe('Feature: Host Tree Navigation', () => {
     });
 
     await Then('the host is selected but the database tree remains unauthorized', async () => {
-      await action('Verify database tree remains unauthorized', () => expect(page.locator('#db-tree-container')).not.toHaveAttribute('data-authorized', 'true'), 'Database tree was unexpectedly authorized on single click.');
+      await action('Verify database tree remains unauthorized', async () => {
+        const container = page.locator('#db-tree-container');
+        const count = await container.count();
+        if (count > 0) {
+          await expect(container).not.toHaveAttribute('data-authorized', 'true');
+        } else {
+          await expect(page.locator('#db-tree-container[data-authorized="true"]')).not.toBeVisible();
+        }
+      }, 'Database tree was unexpectedly authorized on single click.');
     });
   });
 

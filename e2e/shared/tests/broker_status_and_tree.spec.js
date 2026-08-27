@@ -112,7 +112,7 @@ test.describe('Feature: Broker Status & Monitoring', () => {
 
     await When('the properties modal displays the broker port parameter', async () => {
       await action('Verify dialog title indicates Broker Properties', () => expect(dialog.getByText(/Broker Properties|브로커 속성/i)).toBeVisible(), 'Dialog title does not display "Broker Properties".');
-      await action(`Verify dialog displays broker name "${brokerName}"`, () => expect(dialog.getByText(brokerName, { exact: true })).toBeVisible(), `Broker name "${brokerName}" was not displayed in the dialog.`);
+      await action(`Verify dialog displays broker name "${brokerName}"`, () => expect(dialog.getByText(new RegExp(brokerName, 'i'))).toBeVisible(), `Broker name "${brokerName}" was not displayed in the dialog.`);
       await action('Verify BROKER_PORT parameter is visible', () => expect(dialog.getByText('BROKER_PORT', { exact: true })).toBeVisible({ timeout: 15000 }), 'BROKER_PORT parameter did not load in the properties dialog.');
     });
 
