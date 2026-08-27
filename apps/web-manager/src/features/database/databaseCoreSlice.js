@@ -33,6 +33,20 @@ export const stopDatabase = createAsyncThunk(
       const response = await databaseApi.stopDatabase(hostUid, dbname);
       return response;
     } catch (err) {
+      // CMS stopdb can time out (30s) even when the DB has actually stopped.
+      // Do a single immediate start-info check; if the DB is gone, treat stop as success.
+      try {
+        const info = await databaseApi.getStartInfo(hostUid);
+        const active = info?.activelist?.active;
+        const valid = Array.isArray(active) && active.every((a) =>
+          typeof a === 'string' ? a.length > 0 : typeof a?.dbname === 'string' && a.dbname.length > 0
+        );
+        if (valid && !active.some((a) => (typeof a === 'string' ? a : a.dbname) === dbname)) {
+          return info;
+        }
+      } catch (_) {
+        // ignore start-info failure, fall through to rejectWithValue
+      }
       return rejectWithValue(err.response?.data?.message || err.response?.data?.error || `Failed to stop database ${dbname}`);
     }
   }
@@ -66,18 +80,20 @@ export const registerDatabase = createAsyncThunk(
 
 // Helper to parse the shared response format
 const parseDbResponse = (state, payload) => {
+  if (!payload) return;
   const dbsFound = payload.dblist?.dbs;
   const activeFound = payload.activelist?.active;
 
-  if (dbsFound) {
-    const newDbs = dbsFound;
-    if (JSON.stringify(state.databases) !== JSON.stringify(newDbs)) {
-      state.databases = newDbs;
+  if (dbsFound !== undefined) {
+    const rawList = Array.isArray(dbsFound) ? dbsFound : dbsFound ? [dbsFound] : [];
+    if (JSON.stringify(state.databases) !== JSON.stringify(rawList)) {
+      state.databases = rawList;
     }
   }
 
-  if (activeFound) {
-    const newActive = activeFound.map(d => d.dbname);
+  if (payload.activelist !== undefined) {
+    const rawActive = Array.isArray(activeFound) ? activeFound : activeFound ? [activeFound] : [];
+    const newActive = rawActive.map(d => (typeof d === 'string' ? d : d?.dbname)).filter(Boolean);
     if (JSON.stringify(state.activeDatabases) !== JSON.stringify(newActive)) {
       state.activeDatabases = newActive;
     }

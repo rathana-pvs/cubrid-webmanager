@@ -47,6 +47,7 @@ class BrokerTreePage {
   // can overlap and block the next right-click, retrying forever until the
   // test times out looking like a browser crash. Dismiss defensively first.
   async openContextMenu(brokerName) {
+    await this.page.mouse.click(2, 2).catch(() => undefined);
     const broker = this.brokerNode(brokerName);
     await expect(broker).toBeVisible({ timeout: 10000 });
     await broker.locator('> summary').click({ button: 'right' });
@@ -65,16 +66,20 @@ class BrokerTreePage {
   async expandSqlLogFolder(brokerName) {
     await this.expandBroker(brokerName);
     const broker = this.brokerNode(brokerName);
-    const sqlLogSummary = broker.getByText(/SQL Log/i).first();
+    const sqlLogSummary = broker.getByText(/SQL Log|SQL 로그/i).first();
     await expect(sqlLogSummary).toBeVisible({ timeout: 10000 });
-    await sqlLogSummary.click();
+    const sqlLogDetails = sqlLogSummary.locator('..');
+    const isOpen = await sqlLogDetails.evaluate((el) => el.tagName === 'DETAILS' ? el.open : false).catch(() => false);
+    if (!isOpen) {
+      await sqlLogSummary.click();
+    }
   }
 
   async openSqlLogContextMenu(brokerName) {
     await this.page.mouse.click(2, 2).catch(() => undefined);
     await this.expandBroker(brokerName);
     const broker = this.brokerNode(brokerName);
-    const sqlLogSummary = broker.getByText(/SQL Log/i).first();
+    const sqlLogSummary = broker.getByText(/SQL Log|SQL 로그/i).first();
     await expect(sqlLogSummary).toBeVisible({ timeout: 10000 });
     await sqlLogSummary.click({ button: 'right' });
   }

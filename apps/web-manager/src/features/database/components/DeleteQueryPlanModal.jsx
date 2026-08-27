@@ -66,7 +66,7 @@ export default function DeleteQueryPlanModal() {
   /* ─── LOADING view ─── */
   if (view === VIEW_LOADING) {
     return (
-      <Modal isOpen title={CM.deletingQueryPlan} icon="delete_forever" onClose={handleClose} maxWidth="440px" showCloseButton={false}>
+      <Modal isOpen title={CM.deletingQueryPlan} icon="delete_forever" onClose={handleClose} maxWidth="440px" showCloseButton={false} testId="delete-query-plan">
         <div className="flex flex-col items-center justify-center py-12 space-y-6 animate-in fade-in duration-200">
           <div className="relative w-16 h-16">
             <div className="absolute inset-0 rounded-full border-2 border-rose-500/10" />
@@ -89,7 +89,7 @@ export default function DeleteQueryPlanModal() {
   /* ─── SUCCESS view ─── */
   if (view === VIEW_SUCCESS) {
     return (
-      <Modal isOpen title={CM.deletionSuccess} icon="verified" iconVariant="success" onClose={handleClose} maxWidth="440px">
+      <Modal isOpen title={CM.deletionSuccess} icon="verified" iconVariant="success" onClose={handleClose} maxWidth="440px" testId="delete-query-plan">
         <div className="flex flex-col items-center justify-center py-12 gap-7 text-center animate-in fade-in duration-200">
           <div className="w-16 h-16 bg-emerald-500 rounded-full flex items-center justify-center shadow-[0_0_24px_rgba(16,185,129,0.3)]">
             <Icon name="done_all" size="lg" weight={700} className="text-white" />
@@ -106,7 +106,7 @@ export default function DeleteQueryPlanModal() {
   /* ─── ERROR view ─── */
   if (view === VIEW_ERROR) {
     return (
-      <Modal isOpen title={CM.deletionFailed} icon="error" iconVariant="danger" onClose={handleClose} maxWidth="440px">
+      <Modal isOpen title={CM.deletionFailed} icon="error" iconVariant="danger" onClose={handleClose} maxWidth="440px" testId="delete-query-plan">
         <div className="flex flex-col items-center justify-center py-10 gap-6 text-center animate-in fade-in duration-200">
           <div className="relative w-14 h-14 bg-rose-500 rounded-full flex items-center justify-center shadow-[0_0_20px_rgba(244,63,94,0.3)]">
             <Icon name="emergency_home" size="md" weight={300} className="text-white" />

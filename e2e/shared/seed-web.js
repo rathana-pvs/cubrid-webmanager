@@ -50,6 +50,15 @@ async function main() {
   }
 
   const groups = hostList.body?.data?.host_groups || hostList.body?.host_groups || {};
+  for (const [groupName, groupData] of Object.entries(groups)) {
+    if (groupName !== 'Default Group' && groupName !== 'DEFAULT') {
+      await request(`/host/group/${encodeURIComponent(groupName)}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      }).catch(() => undefined);
+    }
+  }
+
   const matchingHosts = Object.values(groups).flatMap((group) =>
     Object.entries(group?.hosts || {})
       .filter(([, saved]) =>
@@ -95,6 +104,33 @@ async function main() {
     if (!updated.ok) {
       throw new Error(`Host repair failed (${updated.status}): ${JSON.stringify(updated.body)}`);
     }
+  }
+
+  const activeHostUid = matchingHosts.length > 0 ? matchingHosts[0].uid : (
+    (await request('/host', { headers: { Authorization: `Bearer ${token}` } }))
+      .body?.data?.host_groups?.['Default Group']?.hosts?.[0]?.uid
+  );
+
+  if (activeHostUid) {
+    await request(`/${activeHostUid}/cms-auth/login`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: host.id, password: host.password }),
+    }).catch(() => undefined);
+
+    const dbname = process.env.E2E_DB || 'demodb';
+    await request(`/${activeHostUid}/database/register/${encodeURIComponent(dbname)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: 'dba', password: '' }),
+    }).catch(() => undefined);
+
+    const offlineDb = process.env.E2E_OFFLINE_DB || 'db1';
+    await request(`/${activeHostUid}/database/register/${encodeURIComponent(offlineDb)}`, {
+      method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ id: 'dba', password: 'admin123' }),
+    }).catch(() => undefined);
   }
 
   console.log(

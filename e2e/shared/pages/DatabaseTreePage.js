@@ -1,6 +1,26 @@
 const { expect } = require('@playwright/test');
 const { dismissJobResultModal } = require('./dismissJobResultModal');
 
+// The app's login screen (and everything downstream of it) defaults to
+// Korean, with an EN/KO LanguageToggle the user can still switch. These
+// specs were ported from an English-only fixture, so "Manage Database"
+// submenu item labels (Rename/Copy/Restore/Delete/Load/... Database) must be
+// matched in both languages. Source of truth: cmLabels.js / cmLabels.ko.js
+// (apps/web-manager/src/constants) `manageDatabaseMenu` key, verbatim.
+const MANAGE_DATABASE_MENU_KO = {
+  'Unload Database': '데이터베이스 언로드',
+  'Load Database': '데이터베이스 로드',
+  'Create Database': '데이터베이스 생성',
+  'Check Database': '데이터베이스 검사',
+  'Compact Database': '데이터베이스 공간 정리',
+  'Optimize Database': '데이터베이스 최적화',
+  'Copy Database': '데이터베이스 복사',
+  'Rename Database': '데이터베이스 이름 변경',
+  'Restore Database': '데이터베이스 복구',
+  'Backup Database': '데이터베이스 백업',
+  'Delete Database': '데이터베이스 삭제',
+};
+
 /**
  * Page Object for the database tree in the sidebar (see DatabaseTree.jsx).
  *
@@ -64,25 +84,42 @@ class DatabaseTreePage {
     await this.activateDatabase(dbname);
 
     const loginModal = this.page.getByTestId('login-database-modal');
-    if (await loginModal.isVisible({ timeout: 3000 }).catch(() => false)) {
+    const tab = this.page.getByTestId(`tab-db:${hostUid}:${dbname}`);
+    // isVisible() is an immediate snapshot, not a wait. Saved-profile login
+    // also shares the CMS queue with monitoring reads, so allow the app's
+    // 60s API deadline before declaring that neither login outcome appeared.
+    await expect(tab.or(loginModal).first(),
+      `Database "${dbname}" activation did not finish: waiting for saved-profile login or the credential dialog (check CMS queue timings).`,
+    ).toBeVisible({ timeout: 65000 });
+    if (await loginModal.isVisible()) {
       await loginModal.locator('input').nth(1).fill(username);
       if (password) await loginModal.locator('input[type="password"]').fill(password);
-      await this.page.getByTestId('login-database-submit-btn').click();
-      await expect(loginModal).not.toBeVisible({ timeout: 15000 });
+      const [response] = await Promise.all([
+        this.page.waitForResponse(response => response.request().method() === 'POST'
+          && response.url().endsWith(`/${hostUid}/database/users/login/${encodeURIComponent(dbname)}`),
+        { timeout: 65000 }),
+        this.page.getByTestId('login-database-submit-btn').click(),
+      ]);
+      expect(response.ok(), `Database "${dbname}" login returned HTTP ${response.status()}`).toBe(true);
+      // The form disappears as soon as loading begins. Wait for the successful
+      // login dialog to auto-close, not merely for the form to disappear.
+      await expect(this.page.getByRole('dialog').filter({
+        has: this.page.getByRole('heading', { name: /^(Login Database|데이터베이스 로그인)$/i }),
+      }))
+        .not.toBeVisible({ timeout: 10000 });
       await this.activateDatabase(dbname);
     }
 
-    await expect(this.page.getByTestId(`tab-db:${hostUid}:${dbname}`)).toBeVisible({ timeout: 15000 });
+    await expect(tab).toBeVisible({ timeout: 15000 });
   }
 
   async openContextMenu(dbname, { timeout = 30000 } = {}) {
-    // Defensively dismiss any menu left open from a previous action first.
-    // This app's context menus (Sidebar.jsx's handleOutsideAction) only close
-    // on a mousedown outside `.context-menu-container` — Escape is a no-op.
-    // A leftover menu can physically overlap the tree row and make Playwright
-    // refuse the right-click below ("intercepts pointer events"), retrying
-    // forever until the whole test times out looking like a browser crash.
     await dismissJobResultModal(this.page);
+    const overlay = this.page.getByTestId('loading-overlay');
+    if (await overlay.isVisible({ timeout: 100 }).catch(() => false)) {
+      await overlay.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => undefined);
+    }
+    await this.page.keyboard.press('Escape').catch(() => undefined);
     await this.page.mouse.click(2, 2).catch(() => undefined);
 
     const db = this.dbNode(dbname);
@@ -95,23 +132,56 @@ class DatabaseTreePage {
     const deadline = Date.now() + timeout;
     let lastError;
 
+    // Allow in-flight state/overlay to trigger and resolve
+    await this.page.waitForTimeout(500);
+    const overlay = this.page.getByTestId('loading-overlay');
+    if (await overlay.isVisible({ timeout: 200 }).catch(() => false)) {
+      await overlay.waitFor({ state: 'hidden', timeout: 30000 }).catch(() => undefined);
+    }
+
     while (Date.now() < deadline) {
       try {
-        await this.openContextMenu(dbname, { timeout: 3000 });
+        await dismissJobResultModal(this.page);
+        await this.openContextMenu(dbname, { timeout: 8000 });
         const action = this.page.getByRole('button', { name: actionName });
         if (await action.isVisible().catch(() => false)) {
+          await this.page.keyboard.press('Escape').catch(() => undefined);
           await this.page.mouse.click(2, 2).catch(() => undefined);
           return;
         }
+        const refreshItem = this.page.getByRole('button', { name: /Refresh|새로고침/i });
+        if (await refreshItem.isVisible().catch(() => false)) {
+          await refreshItem.click().catch(() => undefined);
+        } else {
+          await this.page.keyboard.press('Escape').catch(() => undefined);
+          await this.page.mouse.click(2, 2).catch(() => undefined);
+        }
       } catch (error) {
         lastError = error;
+        await this.page.keyboard.press('Escape').catch(() => undefined);
+        await this.page.mouse.click(2, 2).catch(() => undefined);
       }
 
-      await this.page.mouse.click(2, 2).catch(() => undefined);
-      await this.page.waitForTimeout(1000);
+      await this.page.waitForTimeout(2000);
     }
 
     throw lastError || new Error(`Database action did not become available: ${String(actionName)}`);
+  }
+
+  async ensureDatabaseStarted(dbname) {
+    await this.openContextMenu(dbname);
+    const startBtn = this.page.getByRole('button', { name: /Start Database|데이터베이스 시작/i });
+    if (await startBtn.isVisible().catch(() => false)) {
+      await startBtn.click();
+      await this.page.waitForTimeout(1000);
+      const overlay = this.page.getByTestId('loading-overlay');
+      if (await overlay.isVisible({ timeout: 200 }).catch(() => false)) {
+        await overlay.waitFor({ state: 'hidden', timeout: 45000 }).catch(() => undefined);
+      }
+      await this.waitForContextAction(dbname, /Stop Database|데이터베이스 정지|데이터베이스 중지/i);
+    } else {
+      await this.page.mouse.click(2, 2).catch(() => undefined);
+    }
   }
 
   /** Sub-node scoped within a specific database's subtree, e.g. subNode('demodb', 'Users'). */
@@ -147,14 +217,20 @@ class DatabaseTreePage {
     // Anchor to a preceding start/whitespace so "Load Database" doesn't also
     // match "Unload Database" as a substring (the icon ligature text plus
     // label makes the accessible name e.g. "download Load Database...").
-    const item = this.page.getByRole('button', { name: new RegExp(`(?:^|\\s)${itemName}`, 'i') });
+    // The UI defaults to Korean, so also match the localized label
+    // (cmLabels.ko.js's manageDatabaseMenu) when one is known.
+    const koName = MANAGE_DATABASE_MENU_KO[itemName];
+    const namePattern = koName
+      ? new RegExp(`(?:^|\\s)(?:${itemName}|${koName})`, 'i')
+      : new RegExp(`(?:^|\\s)${itemName}`, 'i');
+    const item = this.page.getByRole('button', { name: namePattern });
     let lastErr;
     for (let i = 0; i < 5; i++) {
       try {
-        await this.openContextMenu(dbname, { timeout: 3000 });
-        await this.page.getByRole('button', { name: 'Manage Database' }).hover();
-        await item.waitFor({ state: 'visible', timeout: 3000 });
-        await item.click({ timeout: 3000 });
+        await this.openContextMenu(dbname, { timeout: 5000 });
+        await this.page.getByRole('button', { name: /Manage Database|데이터베이스 관리/i }).hover();
+        await item.waitFor({ state: 'visible', timeout: 5000 });
+        await item.click({ timeout: 5000 });
         return;
       } catch (err) {
         lastErr = err;

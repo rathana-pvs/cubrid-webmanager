@@ -1,5 +1,5 @@
 import { usePollingRefresh } from '../../../infrastructure/hooks/usePollingRefresh';
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useRef } from 'react';
 import { useSelector, useDispatch , shallowEqual } from 'react-redux';
 import { hostApi } from '../../host/hostApi';
 import { databaseApi } from '../../database/databaseApi';
@@ -33,6 +33,9 @@ const Component = function ServerContent({ hostUid }) {
   const { preferences } = useSelector((state) => state.user, shallowEqual);
   const { refreshCounter } = useSelector((state) => state.layout, shallowEqual);
   const [autoStartDBs, setAutoStartDBs] = useState([]);
+  const [autoStartReady, setAutoStartReady] = useState(false);
+  const autoStartReadVersion = useRef(0);
+  const autoStartWritePending = useRef(false);
   
   const currentHost = hosts.find(h => h.uid === hostUid);
   const hostHaInfo = haInfo[hostUid] || {};
@@ -63,7 +66,11 @@ const Component = function ServerContent({ hostUid }) {
     }
   });
 
-  const fetchAutoStartInfo = async () => {
+  const fetchAutoStartInfo = async (afterWrite = false) => {
+    // Background refreshes must not publish a pre-write configuration while
+    // the user is changing it. The write performs its own authoritative read.
+    if (autoStartWritePending.current && !afterWrite) return;
+    const version = ++autoStartReadVersion.current;
     try {
       const response = await hostApi.getHostConfig(hostUid, 'cubridconf');
       const lines = response?.conflist?.[0]?.confdata || [];
@@ -79,8 +86,12 @@ const Component = function ServerContent({ hostUid }) {
           servers = (trimmed.split('=')[1] || '').split(',').map(s => s.trim());
         }
       }
-      setAutoStartDBs(serviceEnabled ? servers : []);
+      if (version === autoStartReadVersion.current) {
+        setAutoStartDBs(serviceEnabled ? servers : []);
+        setAutoStartReady(true);
+      }
     } catch (err) {
+      if (version === autoStartReadVersion.current) setAutoStartReady(false);
       console.error('Failed to fetch auto-start info:', err);
     }
   };
@@ -89,14 +100,23 @@ const Component = function ServerContent({ hostUid }) {
   const isTabActive = activeMainTab === `host:${hostUid}`;
 
 
+  const [updatingAutoStart, setUpdatingAutoStart] = useState({});
+
   const handleAutoStartToggle = async (dbname, isCurrentlyAutoStart) => {
+    if (!autoStartReady || autoStartWritePending.current) return;
+    autoStartWritePending.current = true;
+    ++autoStartReadVersion.current;
+    setUpdatingAutoStart(prev => ({ ...prev, [dbname]: true }));
     try {
       const payload = { confname: 'cubridconf', dbname };
       if (isCurrentlyAutoStart) await databaseApi.removeAutoStart(hostUid, payload);
       else await databaseApi.setAutoStart(hostUid, payload);
-      fetchAutoStartInfo();
+      await fetchAutoStartInfo(true);
     } catch (err) {
       console.error('Failed to update auto-start:', err);
+    } finally {
+      autoStartWritePending.current = false;
+      setUpdatingAutoStart(prev => ({ ...prev, [dbname]: false }));
     }
   };
 
@@ -213,7 +233,8 @@ const Component = function ServerContent({ hostUid }) {
         <DatabaseVolumes hostUid={hostUid} activeDatabases={activeDatabases} />
         <Brokers hostUid={hostUid} isSection={true} />
         <SystemStatusSection hostUid={hostUid} isTabActive={isTabActive} />
-        <DatabaseListSection dbListDisplay={dbListDisplay} handleAutoStartToggle={handleAutoStartToggle} isHA={isHA} />
+        <DatabaseListSection dbListDisplay={dbListDisplay} handleAutoStartToggle={handleAutoStartToggle} isHA={isHA}
+          autoStartReady={autoStartReady} updatingAutoStart={Object.values(updatingAutoStart).some(Boolean)} />
         <SystemInfo hostUid={hostUid} />
       </div>
     </div>

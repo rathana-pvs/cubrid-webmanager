@@ -3,7 +3,7 @@ const { AuthPage } = require('../pages/AuthPage');
 const { HostTreePage } = require('../pages/HostTreePage');
 const { DatabaseTreePage } = require('../pages/DatabaseTreePage');
 const { BrokerTreePage } = require('../pages/BrokerTreePage');
-const { Given, When, Then, And, bddMeta } = require('../bdd');
+const { Given, When, Then, And, bddMeta, action } = require('../bdd');
 
 const E2E_HOST_ADDRESS = process.env.E2E_HOST_ADDRESS || 'localhost';
 const E2E_HOST_PORT = process.env.E2E_HOST_PORT || '8001';
@@ -38,16 +38,16 @@ test.describe('Feature: Broker Status & Monitoring', () => {
 
     await Given('the broker list is displayed in the tree', async () => {
       broker = brokerTree.firstBrokerNode();
-      await expect(broker).toBeVisible({ timeout: 10000 });
+      await action('Locate broker node in tree', () => expect(broker).toBeVisible({ timeout: 10000 }), 'Broker node did not appear in the tree.');
       brokerName = (await broker.getAttribute('data-testid')).replace('tree-node-', '');
     });
 
     await When('the user double-clicks the broker summary item', async () => {
-      await broker.locator('> summary').dblclick();
+      await action(`Double-click broker summary for "${brokerName}"`, () => broker.locator('> summary').dblclick(), `Could not double-click broker summary for "${brokerName}".`);
     });
 
     await Then('the broker status tab is rendered', async () => {
-      await expect(page.getByTestId(`tab-broker_status:${hostUid}:${brokerName}`)).toBeVisible({ timeout: 15000 });
+      await action(`Verify broker status tab is open for "${brokerName}"`, () => expect(page.getByTestId(`tab-broker_status:${hostUid}:${brokerName}`)).toBeVisible({ timeout: 15000 }), `Broker status tab for "${brokerName}" failed to open.`);
     });
   });
 
@@ -63,26 +63,28 @@ test.describe('Feature: Broker Status & Monitoring', () => {
 
     await Given('the broker item is present in the tree', async () => {
       broker = brokerTree.firstBrokerNode();
-      await expect(broker).toBeVisible({ timeout: 10000 });
+      await action('Locate broker node in tree', () => expect(broker).toBeVisible({ timeout: 10000 }), 'Broker node did not appear in the tree.');
       brokerName = (await broker.getAttribute('data-testid')).replace('tree-node-', '');
     });
 
     await When('the user opens the broker context menu', async () => {
-      await brokerTree.openContextMenu(brokerName);
+      await action(`Open context menu for broker "${brokerName}"`, () => brokerTree.openContextMenu(brokerName), `Could not open context menu for broker "${brokerName}".`);
     });
 
     await Then('exactly one of Start or Stop Broker is visible', async () => {
-      const stopBtn = page.getByRole('button', { name: 'Stop Broker' });
-      const startBtn = page.getByRole('button', { name: 'Start Broker' });
-      const stopVisible = await stopBtn.isVisible().catch(() => false);
-      const startVisible = await startBtn.isVisible().catch(() => false);
-      expect(stopVisible || startVisible).toBe(true);
-      expect(stopVisible && startVisible).toBe(false);
+      await action('Verify mutually exclusive Start or Stop Broker action is available', async () => {
+        const stopBtn = page.getByRole('button', { name: /Stop Broker|브로커 정지/i });
+        const startBtn = page.getByRole('button', { name: /Start Broker|브로커 시작/i });
+        const stopVisible = await stopBtn.isVisible().catch(() => false);
+        const startVisible = await startBtn.isVisible().catch(() => false);
+        expect(stopVisible || startVisible).toBe(true);
+        expect(stopVisible && startVisible).toBe(false);
+      }, 'Expected exactly one of Start Broker or Stop Broker buttons to be visible.');
     });
 
     await And('clicking Show Status opens the status tab', async () => {
-      await page.getByRole('button', { name: 'Show Status' }).click();
-      await expect(page.getByTestId(`tab-broker_status:${hostUid}:${brokerName}`)).toBeVisible({ timeout: 15000 });
+      await action('Click Show Status in context menu', () => page.getByRole('button', { name: /Show Status|상태 보기/i }).click(), 'Could not click Show Status button.');
+      await action(`Verify broker status tab is open for "${brokerName}"`, () => expect(page.getByTestId(`tab-broker_status:${hostUid}:${brokerName}`)).toBeVisible({ timeout: 15000 }), `Broker status tab for "${brokerName}" failed to open after clicking Show Status.`);
     });
   });
 
@@ -99,26 +101,26 @@ test.describe('Feature: Broker Status & Monitoring', () => {
 
     await Given('the user opens Properties from the broker context menu', async () => {
       broker = brokerTree.firstBrokerNode();
-      await expect(broker).toBeVisible({ timeout: 10000 });
+      await action('Locate broker node in tree', () => expect(broker).toBeVisible({ timeout: 10000 }), 'Broker node did not appear in the tree.');
       brokerName = (await broker.getAttribute('data-testid')).replace('tree-node-', '');
 
-      await brokerTree.openContextMenu(brokerName);
-      await page.getByRole('button', { name: /Properties/i }).click();
-      dialog = page.getByRole('dialog');
-      await expect(dialog).toBeVisible();
+      await action(`Open context menu for broker "${brokerName}"`, () => brokerTree.openContextMenu(brokerName), `Could not open context menu for broker "${brokerName}".`);
+      await action('Click Properties from context menu', () => page.locator('.context-menu-container').getByRole('button', { name: /Properties|속성/i }).click(), 'Could not click Properties menu item.');
+      dialog = page.getByTestId('broker-properties-modal');
+      await action('Verify Broker Properties dialog is visible', () => expect(dialog).toBeVisible({ timeout: 10000 }), 'Broker Properties dialog failed to display.');
     });
 
     await When('the properties modal displays the broker port parameter', async () => {
-      await expect(dialog.getByText('Broker Properties')).toBeVisible();
-      await expect(dialog.getByText(brokerName, { exact: true })).toBeVisible();
-      await expect(dialog.getByText('BROKER_PORT', { exact: true })).toBeVisible({ timeout: 15000 });
+      await action('Verify dialog title indicates Broker Properties', () => expect(dialog.getByText(/Broker Properties|브로커 속성/i)).toBeVisible(), 'Dialog title does not display "Broker Properties".');
+      await action(`Verify dialog displays broker name "${brokerName}"`, () => expect(dialog.getByText(brokerName, { exact: true })).toBeVisible(), `Broker name "${brokerName}" was not displayed in the dialog.`);
+      await action('Verify BROKER_PORT parameter is visible', () => expect(dialog.getByText('BROKER_PORT', { exact: true })).toBeVisible({ timeout: 15000 }), 'BROKER_PORT parameter did not load in the properties dialog.');
     });
 
     await Then('switching to Advanced displays LONG_QUERY_TIME and can be closed', async () => {
-      await dialog.getByRole('button', { name: /Advanced/i }).click();
-      await expect(dialog.getByText('LONG_QUERY_TIME', { exact: true })).toBeVisible();
-      await dialog.getByRole('button', { name: /Discard/i }).click();
-      await expect(dialog).not.toBeVisible();
+      await action('Switch to Advanced tab in dialog', () => dialog.getByRole('button', { name: /Advanced|고급/i }).click(), 'Could not switch to Advanced tab.');
+      await action('Verify LONG_QUERY_TIME parameter is visible', () => expect(dialog.getByText('LONG_QUERY_TIME', { exact: true })).toBeVisible(), 'LONG_QUERY_TIME parameter was not visible in Advanced tab.');
+      await action('Click Discard button to close dialog', () => dialog.getByRole('button', { name: /Cancel|Discard|취소/i }).click(), 'Could not click Discard button.');
+      await action('Verify Broker Properties dialog is closed', () => expect(dialog).not.toBeVisible(), 'Broker Properties dialog remained visible after clicking Discard.');
     });
   });
 });

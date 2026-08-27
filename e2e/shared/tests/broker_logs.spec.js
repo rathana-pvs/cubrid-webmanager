@@ -3,7 +3,7 @@ const { AuthPage } = require('../pages/AuthPage');
 const { HostTreePage } = require('../pages/HostTreePage');
 const { DatabaseTreePage } = require('../pages/DatabaseTreePage');
 const { BrokerTreePage } = require('../pages/BrokerTreePage');
-const { Given, When, Then, And, bddMeta } = require('../bdd');
+const { Given, When, Then, And, bddMeta, action } = require('../bdd');
 
 const E2E_HOST_ADDRESS = process.env.E2E_HOST_ADDRESS || 'localhost';
 const E2E_HOST_PORT = process.env.E2E_HOST_PORT || '8001';
@@ -44,20 +44,20 @@ test.describe('Feature: Broker Log Monitoring & Analysis', () => {
 
     await Given('the user locates a broker SQL log file in the tree', async () => {
       const logFile = brokerTree.firstLogFileNode(brokerName);
-      await expect(logFile).toBeVisible({ timeout: 10000 });
+      await action(`Locate first SQL log file node for broker "${brokerName}"`, () => expect(logFile).toBeVisible({ timeout: 10000 }), `SQL log file node for broker "${brokerName}" was not found in the tree.`);
       path = (await logFile.getAttribute('data-testid')).replace('tree-node-', '');
-      await logFile.dblclick();
+      await action(`Double-click log file "${path}"`, () => logFile.dblclick(), `Could not double-click log file "${path}".`);
     });
 
     await When('the log viewer tab opens', async () => {
-      await expect(page.getByTestId(`tab-log:${hostUid}:${path}`)).toBeVisible({ timeout: 15000 });
+      await action(`Verify log viewer tab is open for "${path}"`, () => expect(page.getByTestId(`tab-log:${hostUid}:${path}`)).toBeVisible({ timeout: 15000 }), `Log viewer tab for "${path}" did not open.`);
       viewer = page.getByTestId('log-viewer');
-      await expect(viewer).toBeVisible();
+      await action('Verify log viewer container is visible', () => expect(viewer).toBeVisible(), 'Log viewer container was not visible.');
     });
 
     await Then('clicking Refresh updates the log viewer content', async () => {
-      await page.getByTestId('log-viewer-refresh-btn').click();
-      await expect(viewer).toBeVisible();
+      await action('Click Refresh button in log viewer', () => page.getByTestId('log-viewer-refresh-btn').click(), 'Could not click log viewer Refresh button.');
+      await action('Verify log viewer remains visible after refresh', () => expect(viewer).toBeVisible(), 'Log viewer disappeared after clicking Refresh.');
     });
   });
 
@@ -72,24 +72,24 @@ test.describe('Feature: Broker Log Monitoring & Analysis', () => {
 
     await Given('the user has opened a broker log file viewer', async () => {
       const logFile = brokerTree.firstLogFileNode(brokerName);
-      await expect(logFile).toBeVisible({ timeout: 10000 });
-      await logFile.dblclick();
+      await action(`Locate first SQL log file node for broker "${brokerName}"`, () => expect(logFile).toBeVisible({ timeout: 10000 }), `SQL log file node for broker "${brokerName}" was not found in the tree.`);
+      await action('Double-click log file to open viewer', () => logFile.dblclick(), 'Could not double-click log file.');
       viewer = page.getByTestId('log-viewer');
-      await expect(viewer).toBeVisible({ timeout: 15000 });
+      await action('Verify log viewer is visible', () => expect(viewer).toBeVisible({ timeout: 15000 }), 'Log viewer did not open within timeout.');
     });
 
     await When('the user toggles display modes between SQL, Top SQL, and Raw', async () => {
       for (const mode of ['sql', 'top', 'raw']) {
         const modeBtn = page.getByTestId(`log-viewer-mode-${mode}`);
-        await expect(modeBtn).toBeVisible();
-        await modeBtn.click();
-        await expect(modeBtn).toHaveClass(/text-amber-600/);
-        await expect(viewer).toBeVisible();
+        await action(`Verify "${mode}" mode button is visible`, () => expect(modeBtn).toBeVisible(), `"${mode}" mode button is not visible.`);
+        await action(`Switch log viewer mode to "${mode}"`, () => modeBtn.click(), `Could not click "${mode}" mode button.`);
+        await action(`Verify "${mode}" mode button has active highlight`, () => expect(modeBtn).toHaveClass(/text-amber-600/), `"${mode}" mode button did not acquire active highlight class.`);
+        await action(`Verify log viewer is visible in "${mode}" mode`, () => expect(viewer).toBeVisible(), `Log viewer became invisible in "${mode}" mode.`);
       }
     });
 
     await Then('each mode applies its active styling and displays corresponding formatted logs', async () => {
-      await expect(viewer).toBeVisible();
+      await action('Verify log viewer is rendered', () => expect(viewer).toBeVisible(), 'Log viewer is not rendered.');
     });
   });
 
@@ -104,24 +104,24 @@ test.describe('Feature: Broker Log Monitoring & Analysis', () => {
     let sections;
 
     await Given('the user chooses View All Logs from SQL log folder context menu', async () => {
-      await brokerTree.openSqlLogContextMenu(brokerName);
-      await page.getByRole('button', { name: 'View All Logs' }).click();
+      await action(`Open SQL log context menu for broker "${brokerName}"`, () => brokerTree.openSqlLogContextMenu(brokerName), `Could not open SQL log context menu for broker "${brokerName}".`);
+      await action('Click View All Logs from context menu', () => page.getByRole('button', { name: 'View All Logs' }).click(), 'Could not click View All Logs context menu item.');
     });
 
     await When('the all logs viewer tab opens with multiple log sections', async () => {
-      await expect(page.getByTestId(`tab-all_logs:${hostUid}:${brokerName}`)).toBeVisible({ timeout: 15000 });
+      await action(`Verify all-logs tab is open for broker "${brokerName}"`, () => expect(page.getByTestId(`tab-all_logs:${hostUid}:${brokerName}`)).toBeVisible({ timeout: 15000 }), `All-logs tab for broker "${brokerName}" did not open.`);
       viewer = page.getByTestId('all-logs-viewer');
-      await expect(viewer).toBeVisible();
+      await action('Verify all-logs viewer container is visible', () => expect(viewer).toBeVisible(), 'All-logs viewer container is not visible.');
 
       sections = viewer.locator('[data-testid^="log-section-"]');
-      await expect(sections.first()).toBeVisible({ timeout: 10000 });
+      await action('Verify at least one log section is displayed', () => expect(sections.first()).toBeVisible({ timeout: 10000 }), 'No log sections were visible in all-logs viewer.');
     });
 
     await Then('the user can collapse all, expand all, and refresh all log sections', async () => {
-      await page.getByTestId('all-logs-collapse-all-btn').click();
-      await page.getByTestId('all-logs-expand-all-btn').click();
-      await page.getByTestId('all-logs-refresh-all-btn').click();
-      await expect(sections.first()).toBeVisible();
+      await action('Click Collapse All button', () => page.getByTestId('all-logs-collapse-all-btn').click(), 'Could not click Collapse All button.');
+      await action('Click Expand All button', () => page.getByTestId('all-logs-expand-all-btn').click(), 'Could not click Expand All button.');
+      await action('Click Refresh All button', () => page.getByTestId('all-logs-refresh-all-btn').click(), 'Could not click Refresh All button.');
+      await action('Verify log sections remain visible', () => expect(sections.first()).toBeVisible(), 'Log sections are not visible after refresh.');
     });
   });
 });

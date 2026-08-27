@@ -1,9 +1,3 @@
-import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { setSelectedHost } from '../../../host/hostSlice';
-import { fetchDatabaseStartInfo } from '../../../database/databaseSlice';
-import { fetchBrokerList } from '../../../broker/brokerSlice';
-import { setActiveMainTab } from '../../layoutSlice';
-import { Icon } from '../../../../components/ds/foundation/Icon';
 import { useCM } from '../../../../constants/useCM';
 
 const HA_ROLE_CONFIG = {
@@ -18,6 +12,7 @@ export default function ServerListItem({
   isAuthorized,
   haInfo,
   onContextMenu,
+  onSelect,
   onActivate,
   compact = false,
   draggable = false,
@@ -26,8 +21,6 @@ export default function ServerListItem({
   onDragEnd,
 }) {
   const CM = useCM();
-  const dispatch = useDispatch();
-  const { openTabs } = useSelector((state) => state.layout, shallowEqual);
 
   const getInferredHaInfo = () => {
     if (haInfo?.isHA) return haInfo;
@@ -64,19 +57,9 @@ export default function ServerListItem({
           ? 'bg-amber-500/8 dark:bg-amber-500/10'
           : 'hover:bg-slate-100/80 dark:hover:bg-white/[0.04]'
         }`}
-      onClick={() => {
-        dispatch(setSelectedHost(host.uid));
-        if (isAuthorized) {
-          dispatch(fetchDatabaseStartInfo(host.uid));
-          dispatch(fetchBrokerList(host.uid));
-        }
-        // Bring an already-open dashboard tab for this host to the front.
-        // Never opens/logs in on its own — that stays a double-click-only action.
-        const tabId = `host:${host.uid}`;
-        if (openTabs.includes(tabId)) {
-          dispatch(setActiveMainTab(tabId));
-        }
-      }}
+      // A click only moves the visual focus in the server list. The active
+      // host (and therefore Resources) changes exclusively on activation.
+      onClick={() => onSelect?.(host.uid)}
       onDoubleClick={() => {
         // Login (if needed) + open the dashboard — never on single click.
         // onActivate already handles the authorized/unauthorized branches.

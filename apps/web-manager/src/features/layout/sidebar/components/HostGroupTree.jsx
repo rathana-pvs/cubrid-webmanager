@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import { useDispatch } from 'react-redux';
 import { setSelectedGroup, openAddHostModal, moveHost } from '../../../host/hostSlice';
 import { orderedGroupEntries, sortHostUidsByHaRole, UNGROUPED_GROUP_ID, HOST_DRAG_MIME } from '../../../host/hostGroupUtils';
@@ -20,9 +20,16 @@ export default function HostGroupTree({
   const CM = useCM();
   const dispatch = useDispatch();
   const [expandedGroups, setExpandedGroups] = useState(() => new Set());
+  const [focusedHostUid, setFocusedHostUid] = useState(selectedHostUid);
   const [draggedHost, setDraggedHost] = useState(null);
   const [dropTargetGroupId, setDropTargetGroupId] = useState(null);
   const draggedHostRef = useRef(null);
+
+  // External activation (or host deletion) should bring list focus back in
+  // sync. Merely focusing another row does not change selectedHostUid.
+  useEffect(() => {
+    setFocusedHostUid(selectedHostUid);
+  }, [selectedHostUid]);
 
   const clearDragState = useCallback(() => {
     draggedHostRef.current = null;
@@ -152,10 +159,11 @@ export default function HostGroupTree({
                   <div key={uid} className="pl-2">
                     <ServerListItem
                       host={host}
-                      isSelected={selectedHostUid === uid}
+                      isSelected={focusedHostUid === uid}
                       isAuthorized={authorizedHosts.includes(uid)}
                       haInfo={haInfo[uid]}
                       onContextMenu={onContextMenu}
+                      onSelect={setFocusedHostUid}
                       onActivate={onHostActivate}
                       compact
                       draggable
@@ -196,10 +204,11 @@ export default function HostGroupTree({
             <ServerListItem
               key={uid}
               host={host}
-              isSelected={selectedHostUid === uid}
+              isSelected={focusedHostUid === uid}
               isAuthorized={authorizedHosts.includes(uid)}
               haInfo={haInfo[uid]}
               onContextMenu={onContextMenu}
+              onSelect={setFocusedHostUid}
               onActivate={onHostActivate}
               draggable
               isDragging={draggedHost?.hostUid === uid}

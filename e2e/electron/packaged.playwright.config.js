@@ -9,15 +9,10 @@ module.exports = defineConfig({
   timeout: 120000,
   outputDir: path.resolve(__dirname, '../artifacts/packaged-electron-results'),
   reporter: [
-    ['list'],
+    [path.resolve(__dirname, '../shared/clean-reporter.js')],
     ['html', {
       outputFolder: path.resolve(__dirname, '../artifacts/packaged-electron-report'),
       open: 'never',
-    }],
-    ['allure-playwright', {
-      outputFolder: path.resolve(__dirname, '../artifacts/allure-results'),
-      detail: true,
-      suiteTitle: true,
     }],
   ],
   use: { trace: 'on-first-retry', screenshot: 'only-on-failure' },

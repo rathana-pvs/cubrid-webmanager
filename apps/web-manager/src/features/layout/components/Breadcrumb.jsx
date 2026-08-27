@@ -27,10 +27,10 @@ export default function Breadcrumb({
         title: CM.unsavedChangesTitle,
         message: CM.unsavedChangesDesc(labels[tabId] || tabId),
         onConfirm: () => {
+          setConfirmModal(prev => ({ ...prev, isOpen: false }));
           onCloseTab(tabId);
           if (queue.length > 1) {
             const nextQueue = queue.slice(1);
-            setConfirmModal(prev => ({ ...prev, isOpen: false }));
             setTimeout(() => handleCloseTab(nextQueue[0], nextQueue), 100);
           }
         }

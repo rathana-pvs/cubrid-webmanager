@@ -3,9 +3,9 @@ import { setUiLocale } from '../../user/userSlice';
 import { useCM, getStoredLocale } from '../../../constants/useCM';
 
 const btn =
-  'px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider transition-colors rounded-sm';
+  'h-full px-2.5 flex items-center justify-center text-[10px] font-bold uppercase tracking-wider transition-colors rounded-sm';
 
-export default function LanguageToggle() {
+export default function LanguageToggle({ className = '' }) {
   const CM = useCM();
   const dispatch = useDispatch();
   const locale = useSelector(
@@ -20,7 +20,7 @@ export default function LanguageToggle() {
 
   return (
     <div
-      className="flex items-center rounded-sm border border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 p-0.5 gap-0.5"
+      className={`h-8 flex items-center rounded-sm border border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 p-0.5 gap-0.5 ${className}`}
       role="group"
       aria-label={CM.language}
     >

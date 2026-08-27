@@ -6,9 +6,9 @@ const { dismissJobResultModal } = require('./dismissJobResultModal');
  *
  * Current click semantics (see ServerListItem.jsx / HostGroupTree.jsx):
  * - Group: single click both selects AND toggles expand/collapse.
- * - Host: single click only selects (setSelectedHost). Double-click logs in
- *   (if needed) and opens the dashboard. Never assume a single click on a
- *   host activates it — that behavior was removed.
+ * - Host: single click only moves visual focus. It does not change the active
+ *   host, Resources, or dashboard. Double-click activates the focused host,
+ *   logs in if needed, refreshes Resources, and opens its dashboard tab.
  *
  * Selectors: group/host rows carry data-testid via TreeNode
  * (`tree-node-{groupId}`) and ServerListItem (`host-item-{hostUid}`).
@@ -61,7 +61,7 @@ class HostTreePage {
     }
   }
 
-  /** Selects a host (single click) without logging in / opening its dashboard. */
+  /** Focuses a host row without changing the active host or Resources. */
   async selectHost(hostUid) {
     const host = this.hostRow(hostUid);
     await expect(host).toBeVisible({ timeout: 10000 });
@@ -102,14 +102,17 @@ class HostTreePage {
           await pwdInput.fill('admin');
         }
         await this.page.getByTestId('edit-host-connect-save-btn').click().catch(() => undefined);
+        await editModal.waitFor({ state: 'hidden', timeout: 15000 }).catch(() => undefined);
       }
       const tryAgainBtn = this.page.getByRole('button', { name: /Try Again/i });
       if (await tryAgainBtn.isVisible().catch(() => false)) {
         await tryAgainBtn.click().catch(() => undefined);
       }
+      const isAuth = await this.page.locator('#db-tree-container[data-authorized="true"]').isVisible({ timeout: 3000 }).catch(() => false);
+      if (isAuth) return;
     }
 
-    await expect(this.page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 15000 });
+    await expect(this.page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 20000 });
   }
 
   // Context menus (Sidebar.jsx's ContextMenuWrapper) only close on a mousedown

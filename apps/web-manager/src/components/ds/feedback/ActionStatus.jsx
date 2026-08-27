@@ -69,7 +69,7 @@ export const ModalStatusSuccess = ({
       </div>
 
       {onConfirm && (
-        <Button variant="primary" onClick={onConfirm} icon="check_circle" className="px-10">{displayConfirmText}</Button>
+        <Button data-testid="modal-status-confirm-btn" variant="primary" onClick={onConfirm} icon="check_circle" className="px-10">{displayConfirmText}</Button>
       )}
     </div>
   );
@@ -115,8 +115,8 @@ export const ModalStatusError = ({
       )}
 
       <div className="flex items-center gap-3">
-        {onCancel && <Button variant="secondary" onClick={onCancel}>{displayCancelText}</Button>}
-        {onRetry && <Button variant="primary" icon="refresh" onClick={onRetry}>{displayRetryText}</Button>}
+        {onCancel && <Button data-testid="modal-status-cancel-btn" variant="secondary" onClick={onCancel}>{displayCancelText}</Button>}
+        {onRetry && <Button data-testid="modal-status-retry-btn" variant="primary" icon="refresh" onClick={onRetry}>{displayRetryText}</Button>}
       </div>
     </div>
   );

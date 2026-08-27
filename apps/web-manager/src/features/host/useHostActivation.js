@@ -1,6 +1,6 @@
 import { useCallback, useRef } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { loginToHostWithSideEffects, fetchHostEnv, openEditHostModal } from './hostSlice';
+import { loginToHostWithSideEffects, fetchHostEnv, openEditHostModal, setSelectedHost } from './hostSlice';
 import { resetDatabaseState, fetchDatabaseStartInfo } from '../database/databaseCoreSlice';
 import { resetBrokerState, fetchBrokerList } from '../broker/brokerSlice';
 import { setActiveMainTab } from '../layout/layoutSlice';
@@ -21,6 +21,7 @@ export function useHostActivation() {
     if (loginInProgressRef.current) return;
 
     if (authorizedHosts.includes(uid)) {
+      dispatch(setSelectedHost(uid));
       dispatch(resetDatabaseState());
       dispatch(resetBrokerState());
       dispatch(setActiveMainTab('host:' + uid));
@@ -34,6 +35,7 @@ export function useHostActivation() {
     dispatch(loginToHostWithSideEffects(uid))
       .unwrap()
       .then(() => {
+        dispatch(setSelectedHost(uid));
         dispatch(resetDatabaseState());
         dispatch(resetBrokerState());
         dispatch(setActiveMainTab('host:' + uid));

@@ -6,6 +6,7 @@ import { Icon } from '../../../components/ds/foundation/Icon';
 import { Spinner } from '../../../components/ds/foundation/Spinner';
 import { StatusBadge } from '../../../components/ds/foundation/StatusBadge';
 import { useCM } from '../../../constants/useCM';
+import { createSingleFlight } from '../../../infrastructure/utils/singleFlight';
 
 // ── Highlighted Source View ────────────────────────────────────────────────
 function renderHighlighted(content) {
@@ -40,9 +41,13 @@ export default function CubridConfigEditor({ hostUid, confname }) {
   const currentHost = hosts.find(h => h.uid === hostUid);
   const hostDisplayName = currentHost ? (currentHost.alias || currentHost.id) : CM.unknownHost;
 
+  const originalContentRef = useRef('');
+  const configReads = useRef(createSingleFlight());
+  const loadVersion = useRef(0);
   const [content, setContent] = useState('');
   const [originalContent, setOriginalContent] = useState('');
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [loaded, setLoaded] = useState(false);
   const [saving, setSaving] = useState(false);
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -51,34 +56,47 @@ export default function CubridConfigEditor({ hostUid, confname }) {
 
   const fetchConfig = useCallback(async () => {
     if (!hostUid || !confname) return;
+    const version = ++loadVersion.current;
     setLoading(true);
+    setLoaded(false);
     try {
-      const response = await hostApi.getHostConfig(hostUid, confname);
-      const lines = response?.conflist?.[0]?.confdata || [];
+      // React StrictMode may start the mount effect twice. Share only pending
+      // reads for this editor; a later explicit refresh still fetches anew.
+      const response = await configReads.current(JSON.stringify([hostUid, confname]),
+        () => hostApi.getHostConfig(hostUid, confname));
+      if (version !== loadVersion.current) return;
+      const lines = response?.conflist?.[0]?.confdata;
+      if (!Array.isArray(lines)) throw new Error('Configuration response has no confdata');
       const joined = lines.join('\n');
+      originalContentRef.current = joined;
       setContent(joined);
       setOriginalContent(joined);
       setHasChanges(false);
+      setLoaded(true);
       dispatch(setTabDirty({ tabId, isDirty: false }));
     } catch (err) {
+      if (version !== loadVersion.current) return;
       dispatch(showStatusModal({ type: 'error', title: CM.fetchFailed, message: CM.configFetchErrorMsg }));
     } finally {
-      setLoading(false);
+      if (version === loadVersion.current) setLoading(false);
     }
   }, [hostUid, confname, dispatch, tabId]);
 
-  useEffect(() => { fetchConfig(); }, [fetchConfig]);
+  useEffect(() => {
+    fetchConfig();
+    return () => { ++loadVersion.current; };
+  }, [fetchConfig]);
 
-  const markDirty = useCallback((newContent) => {
-    setContent(newContent);
-    setHasChanges(newContent !== originalContent);
-    dispatch(setTabDirty({ tabId, isDirty: newContent !== originalContent }));
-  }, [originalContent, dispatch, tabId]);
-
-  const handleSourceChange = (e) => markDirty(e.target.value);
+  const handleSourceChange = (e) => {
+    const val = e.target.value;
+    setContent(val);
+    const changed = val !== originalContentRef.current;
+    setHasChanges(changed);
+    dispatch(setTabDirty({ tabId, isDirty: changed }));
+  };
 
   const handleUndo = () => {
-    setContent(originalContent);
+    setContent(originalContentRef.current);
     setHasChanges(false);
     dispatch(setTabDirty({ tabId, isDirty: false }));
   };
@@ -88,6 +106,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
     try {
       const payload = { confname, confdata: content.split('\n') };
       await hostApi.setHostConfig(hostUid, payload);
+      originalContentRef.current = content;
       setOriginalContent(content);
       setHasChanges(false);
       dispatch(setTabDirty({ tabId, isDirty: false }));
@@ -160,7 +179,7 @@ export default function CubridConfigEditor({ hostUid, confname }) {
           <button
             data-testid="cubrid-config-save-btn"
             onClick={handleSave}
-            disabled={!hasChanges || saving || loading}
+            disabled={!hasChanges || saving || loading || !loaded}
             title={CM.saveChanges}
             className="flex items-center gap-1.5 px-4 py-1.5 rounded-lg text-[11px] font-bold text-white dark:text-slate-900 bg-slate-800 dark:bg-bk-yellow hover:brightness-110 active:scale-95 disabled:opacity-40 disabled:cursor-not-allowed transition-all"
           >
@@ -171,67 +190,67 @@ export default function CubridConfigEditor({ hostUid, confname }) {
       </div>
 
       {/* ── Content ──────────────────────────────────────────────────────────── */}
-      <div className="flex-1 flex flex-col overflow-hidden bg-slate-100 dark:bg-black/20">
+      <div className="flex-1 flex flex-col overflow-hidden relative bg-slate-100 dark:bg-black/20">
+        {/* ══ SOURCE VIEW ═════════════════════════════════════════════════════ */}
+        <div className="flex-1 flex flex-col overflow-hidden">
+          {/* Inner Header */}
+          <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800">
+            <div className="flex items-center gap-2 text-slate-400">
+              <Icon name="description" size="sm" weight={300} />
+              <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-mono">{confname}</span>
+            </div>
+            <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 font-mono uppercase tracking-widest">
+              {lineCount} lines
+            </span>
+          </div>
 
-        {loading ? (
-          <div className="flex-1 flex flex-col items-center justify-center gap-4">
+          {/* Editor Container */}
+          <div className="flex-1 relative overflow-hidden bg-white dark:bg-[#0D1117]">
+            {/* Line Numbers */}
+            <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-50 dark:bg-white/3 border-r border-slate-100 dark:border-white/5 overflow-hidden pointer-events-none z-10">
+              <div className="p-0 pt-6 flex flex-col items-end pr-3">
+                {content.split('\n').map((_, i) => (
+                  <span key={i} className="text-[12px] font-mono text-slate-300 dark:text-slate-700 leading-relaxed select-none h-[25.2px]">
+                    {i + 1}
+                  </span>
+                ))}
+              </div>
+            </div>
+
+            {/* Highlight layer */}
+            <pre
+              ref={preRef}
+              className="absolute inset-0 left-12 p-6 font-mono text-[12.5px] leading-relaxed text-slate-800 dark:text-slate-300 pointer-events-none whitespace-pre-wrap break-all overflow-hidden"
+              aria-hidden="true"
+            >
+              {renderHighlighted(content)}
+            </pre>
+
+            {/* Edit layer */}
+            <textarea
+              data-testid="cubrid-config-textarea"
+              ref={textareaRef}
+              value={content}
+              readOnly={loading || saving || !loaded}
+              onChange={handleSourceChange}
+              onScroll={syncScroll}
+              spellCheck="false"
+              className="absolute inset-0 left-12 w-[calc(100%-3rem)] h-full bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-transparent caret-slate-800 dark:caret-bk-yellow outline-none resize-none whitespace-pre-wrap break-all overflow-auto"
+              placeholder={CM.configPlaceholder}
+            />
+          </div>
+
+          {/* Source Footer */}
+          <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
+            <span>UTF-8 | LF</span>
+            <StatusBadge label={CM.sourceEditor} variant="sky" className="border-none bg-transparent" />
+          </div>
+        </div>
+
+        {loading && (
+          <div className="absolute inset-0 z-20 flex flex-col items-center justify-center gap-4 bg-white/80 dark:bg-bk-side/80 backdrop-blur-xs">
             <Spinner size="lg" />
             <span className="text-[10px] uppercase font-bold tracking-widest text-slate-400 animate-pulse">{CM.loadingConfiguration}</span>
-          </div>
-        ) : (
-          /* ══ SOURCE VIEW ═════════════════════════════════════════════════════ */
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Inner Header */}
-            <div className="shrink-0 flex items-center justify-between px-4 py-2 bg-white dark:bg-bk-side border-b border-slate-200 dark:border-slate-800">
-              <div className="flex items-center gap-2 text-slate-400">
-                <Icon name="description" size="sm" weight={300} />
-                <span className="text-[11px] font-semibold text-slate-500 dark:text-slate-400 font-mono">{confname}</span>
-              </div>
-              <span className="text-[10px] font-medium text-slate-400 dark:text-slate-500 font-mono uppercase tracking-widest">
-                {lineCount} lines
-              </span>
-            </div>
-
-            {/* Editor Container */}
-            <div className="flex-1 relative overflow-hidden bg-white dark:bg-[#0D1117]">
-              {/* Line Numbers */}
-              <div className="absolute left-0 top-0 bottom-0 w-12 bg-slate-50 dark:bg-white/3 border-r border-slate-100 dark:border-white/5 overflow-hidden pointer-events-none z-10">
-                <div className="p-0 pt-6 flex flex-col items-end pr-3">
-                  {content.split('\n').map((_, i) => (
-                    <span key={i} className="text-[12px] font-mono text-slate-300 dark:text-slate-700 leading-relaxed select-none h-[25.2px]">
-                      {i + 1}
-                    </span>
-                  ))}
-                </div>
-              </div>
-
-              {/* Highlight layer */}
-              <pre
-                ref={preRef}
-                className="absolute inset-0 left-12 p-6 font-mono text-[12.5px] leading-relaxed text-slate-800 dark:text-slate-300 pointer-events-none whitespace-pre-wrap break-all overflow-hidden"
-                aria-hidden="true"
-              >
-                {renderHighlighted(content)}
-              </pre>
-
-              {/* Edit layer */}
-              <textarea
-                data-testid="cubrid-config-textarea"
-                ref={textareaRef}
-                value={content}
-                onChange={handleSourceChange}
-                onScroll={syncScroll}
-                spellCheck="false"
-                className="absolute inset-0 left-12 w-[calc(100%-3rem)] h-full bg-transparent p-6 font-mono text-[12.5px] leading-relaxed text-transparent caret-slate-800 dark:caret-bk-yellow outline-none resize-none whitespace-pre-wrap break-all overflow-auto"
-                placeholder={CM.configPlaceholder}
-              />
-            </div>
-
-            {/* Source Footer */}
-            <div className="shrink-0 px-4 py-2 bg-white dark:bg-bk-side border-t border-slate-200 dark:border-slate-800 flex items-center justify-between text-[10px] text-slate-400 dark:text-slate-500 font-medium uppercase tracking-wider">
-              <span>UTF-8 | LF</span>
-              <StatusBadge label={CM.sourceEditor} variant="sky" className="border-none bg-transparent" />
-            </div>
           </div>
         )}
       </div>

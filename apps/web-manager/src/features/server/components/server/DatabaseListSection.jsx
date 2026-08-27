@@ -6,7 +6,7 @@ import { Typography } from '../../../../components/ds/foundation/Typography';
 import { StatusBadge } from '../../../../components/ds/foundation/StatusBadge';
 import { useCM } from '../../../../constants/useCM';
 
-export default function DatabaseListSection({ dbListDisplay, handleAutoStartToggle, isHA }) {
+export default function DatabaseListSection({ dbListDisplay, handleAutoStartToggle, isHA, autoStartReady = false, updatingAutoStart = false }) {
   const CM = useCM();
   const columns = [
     {
@@ -33,8 +33,11 @@ export default function DatabaseListSection({ dbListDisplay, handleAutoStartTogg
           type="button"
           role="switch"
           aria-checked={val}
+          aria-label={`${CM.autoStartup}: ${row.db}`}
+          aria-busy={updatingAutoStart}
+          disabled={!autoStartReady || updatingAutoStart}
           onClick={() => handleAutoStartToggle(row.db, val)}
-          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50
+          className={`relative inline-flex h-4 w-7 shrink-0 cursor-pointer items-center rounded-full border transition-colors duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-amber-500/50 disabled:cursor-wait disabled:opacity-50
             ${val
               ? 'bg-amber-500 border-amber-500'
               : 'bg-slate-200 dark:bg-white/10 border-slate-300 dark:border-white/15'

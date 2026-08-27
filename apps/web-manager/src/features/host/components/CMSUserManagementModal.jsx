@@ -58,11 +58,11 @@ export default function CMSUserManagementModal() {
 
   const adminUsers = userlist.filter(u => {
     const name = typeof u === 'string' ? u : (u.name || u.id || u['@id'] || u.targetid || '');
-    return name === 'admin';
+    return name.toLowerCase() === 'admin';
   });
   const regularUsers = userlist.filter(u => {
     const name = typeof u === 'string' ? u : (u.name || u.id || u['@id'] || u.targetid || '');
-    return name !== 'admin' && name !== '';
+    return name.toLowerCase() !== 'admin' && name !== '';
   });
 
   const renderUser = (user) => {
@@ -70,7 +70,7 @@ export default function CMSUserManagementModal() {
     const username = typeof user === 'string' 
       ? user 
       : (user.name || user.id || user['@id'] || user.targetid || 'Unknown');
-    const isAdmin = username === 'admin';
+    const isAdmin = username.toLowerCase() === 'admin';
     const casauth = user?.casauth || user?.['@casauth'] || 'none';
     const dbcreate = user?.dbcreate || user?.['@dbcreate'] || 'none';
     const statusmonitorauth = user?.statusmonitorauth || user?.['@statusmonitorauth'] || 'none';
@@ -78,7 +78,7 @@ export default function CMSUserManagementModal() {
     return (
       <div
         key={username}
-        data-testid={`cms-user-${username}`}
+        data-testid={`cms-user-${username.toLowerCase() === 'admin' ? 'admin' : username}`}
         className={`group relative flex items-center gap-4 px-4 py-3.5 rounded-2xl border transition-all duration-200 cursor-default ${
           isAdmin
             ? 'bg-amber-500/4 border-amber-500/20 hover:border-amber-500/40'

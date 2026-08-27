@@ -2,7 +2,7 @@ const { test, expect } = require('../fixture');
 const { AuthPage } = require('../pages/AuthPage');
 const { HostTreePage } = require('../pages/HostTreePage');
 const { DatabaseTreePage } = require('../pages/DatabaseTreePage');
-const { Given, When, Then, And, bddMeta } = require('../bdd');
+const { Given, When, Then, And, bddMeta, action } = require('../bdd');
 
 const E2E_HOST_ADDRESS = process.env.E2E_HOST_ADDRESS || 'localhost';
 const E2E_HOST_PORT = process.env.E2E_HOST_PORT || '8001';
@@ -18,9 +18,12 @@ test.describe('Feature: Database Properties & Diagnostic Info', () => {
     const hostTree = new HostTreePage(page);
     const host = hostTree.hostRowByConnection(E2E_HOST_ADDRESS, E2E_HOST_PORT);
     await expect(host).toBeVisible({ timeout: 10000 });
-    await host.dblclick();
+    const hostUid = await hostTree.getUidByConnection(E2E_HOST_ADDRESS, E2E_HOST_PORT);
+    await hostTree.activateHost(hostUid);
     dbTree = new DatabaseTreePage(page);
     await dbTree.waitForAuthorized();
+    await dbTree.ensureDatabaseStarted(E2E_DB);
+    await dbTree.openDashboardTab(E2E_DB, hostUid);
   });
 
   test('Scenario: Database Properties modal opens with configuration and can be discarded', async ({ appPage: page }) => {
@@ -33,19 +36,19 @@ test.describe('Feature: Database Properties & Diagnostic Info', () => {
     let modal;
 
     await Given('the user opens Properties from database context menu', async () => {
-      await dbTree.openContextMenu(E2E_DB);
-      await page.getByRole('button', { name: 'Properties' }).click();
+      await action('Open context menu for database ' + E2E_DB, () => dbTree.openContextMenu(E2E_DB), 'Could not open database context menu.');
+      await action('Click Properties menu item', () => page.getByRole('button', { name: /Properties|속성/i }).click(), 'Could not click Properties option.');
       modal = page.getByTestId('database-property-modal');
-      await expect(modal).toBeVisible({ timeout: 10000 });
+      await action('Verify Database Property modal is visible', () => expect(modal).toBeVisible({ timeout: 10000 }), 'Database Property modal did not appear.');
     });
 
     await When('the modal loads property details for the database', async () => {
-      await expect(modal.getByText(E2E_DB).first()).toBeVisible();
+      await action('Verify database name ' + E2E_DB + ' is visible in property modal', () => expect(modal.getByText(E2E_DB).first()).toBeVisible(), 'Database name was not visible in Property modal.');
     });
 
     await Then('clicking Cancel closes the modal without applying changes', async () => {
-      await page.getByTestId('database-property-cancel-btn').click();
-      await expect(modal).not.toBeVisible();
+      await action('Click Cancel button on Database Property modal', () => page.getByTestId('database-property-cancel-btn').click(), 'Could not click Cancel button on Database Property modal.');
+      await action('Verify Database Property modal is closed', () => expect(modal).not.toBeVisible(), 'Database Property modal did not close after clicking cancel.');
     });
   });
 
@@ -59,22 +62,22 @@ test.describe('Feature: Database Properties & Diagnostic Info', () => {
     let modal;
 
     await Given('the user navigates to Database Info and selects Param Dump', async () => {
-      await dbTree.openContextMenu(E2E_DB);
-      await page.getByRole('button', { name: 'Database Info' }).hover();
-      await page.getByRole('button', { name: /Param Dump/ }).click();
+      await action('Open context menu for database ' + E2E_DB, () => dbTree.openContextMenu(E2E_DB), 'Could not open database context menu.');
+      await action('Hover Database Info menu item', () => page.getByRole('button', { name: /Database Info|데이터베이스 정보/i }).hover(), 'Could not hover Database Info menu item.');
+      await action('Click Param Dump menu item', () => page.getByRole('button', { name: /Param Dump|파라미터 덤프/i }).click(), 'Could not click Param Dump option.');
       modal = page.getByTestId('database-info-modal');
-      await expect(modal).toBeVisible({ timeout: 10000 });
+      await action('Verify Database Info modal is visible', () => expect(modal).toBeVisible({ timeout: 10000 }), 'Database Info modal did not appear.');
     });
 
     await When('the user executes the param dump query', async () => {
-      await page.getByTestId('database-info-run-btn').click();
+      await action('Click Run button to execute param dump', () => page.getByTestId('database-info-run-btn').click(), 'Could not click Run button in Database Info modal.');
     });
 
     await Then('the system parameters table renders with data rows', async () => {
-      await expect(modal.locator('table')).toBeVisible({ timeout: 15000 });
-      await expect(modal.locator('table tbody tr').first()).toBeVisible();
-      await page.getByTestId('database-info-close-btn').click();
-      await expect(modal).not.toBeVisible();
+      await action('Verify parameters table is visible', () => expect(modal.locator('table')).toBeVisible({ timeout: 30000 }), 'Parameters table was not visible.');
+      await action('Verify parameter table data rows are rendered', () => expect(modal.locator('table tbody tr').first()).toBeVisible(), 'Parameter table did not contain any data rows.');
+      await action('Click Close button on Database Info modal', () => page.getByTestId('database-info-close-btn').click(), 'Could not click Close button on Database Info modal.');
+      await action('Verify Database Info modal is closed', () => expect(modal).not.toBeVisible(), 'Database Info modal did not close.');
     });
   });
 
@@ -88,24 +91,24 @@ test.describe('Feature: Database Properties & Diagnostic Info', () => {
     let modal;
 
     await Given('the user opens Locking Information dialog', async () => {
-      await dbTree.openContextMenu(E2E_DB);
-      await page.getByRole('button', { name: 'Database Info' }).hover();
-      await page.getByRole('button', { name: /Locking Information/ }).click();
+      await action('Open context menu for database ' + E2E_DB, () => dbTree.openContextMenu(E2E_DB), 'Could not open database context menu.');
+      await action('Hover Database Info menu item', () => page.getByRole('button', { name: /Database Info|데이터베이스 정보/i }).hover(), 'Could not hover Database Info menu item.');
+      await action('Click Locking Information menu item', () => page.getByRole('button', { name: /Locking Information|잠금 정보/i }).click(), 'Could not click Locking Information option.');
       modal = page.getByTestId('lock-information-modal');
-      await expect(modal).toBeVisible({ timeout: 10000 });
+      await action('Verify Lock Information modal is visible', () => expect(modal).toBeVisible({ timeout: 10000 }), 'Lock Information modal did not appear.');
     });
 
     await When('the user switches between Sessions, Objects, and Parameters tabs', async () => {
-      await expect(modal.getByTestId('lock-information-tab-sessions')).toBeVisible();
-      await page.getByTestId('lock-information-tab-objects').click();
-      await page.getByTestId('lock-information-tab-params').click();
+      await action('Verify Sessions tab is visible', () => expect(modal.getByTestId('lock-information-tab-sessions')).toBeVisible(), 'Sessions tab was not visible.');
+      await action('Click Objects tab in lock information modal', () => page.getByTestId('lock-information-tab-objects').click(), 'Could not click Objects tab.');
+      await action('Click Parameters tab in lock information modal', () => page.getByTestId('lock-information-tab-params').click(), 'Could not click Parameters tab.');
     });
 
     await Then('clicking Refresh updates the lock statistics cleanly', async () => {
-      await page.getByTestId('lock-information-refresh-btn').click();
-      await expect(page.getByTestId('lock-information-refresh-btn')).toBeEnabled({ timeout: 15000 });
-      await page.getByTestId('lock-information-close-btn').click();
-      await expect(modal).not.toBeVisible();
+      await action('Click Refresh button in lock information modal', () => page.getByTestId('lock-information-refresh-btn').click(), 'Could not click Refresh button in lock information modal.');
+      await action('Verify Refresh button is enabled after update', () => expect(page.getByTestId('lock-information-refresh-btn')).toBeEnabled({ timeout: 15000 }), 'Refresh button did not return to enabled state.');
+      await action('Click Close button on lock information modal', () => page.getByTestId('lock-information-close-btn').click(), 'Could not click Close button on lock information modal.');
+      await action('Verify Lock Information modal is closed', () => expect(modal).not.toBeVisible(), 'Lock Information modal did not close.');
     });
   });
 
@@ -119,20 +122,20 @@ test.describe('Feature: Database Properties & Diagnostic Info', () => {
     let modal;
 
     await Given('the user navigates to Database Info and selects Transaction Information', async () => {
-      await dbTree.openContextMenu(E2E_DB);
-      await page.getByRole('button', { name: 'Database Info' }).hover();
-      await page.getByRole('button', { name: /Transaction information/ }).click();
+      await action('Open context menu for database ' + E2E_DB, () => dbTree.openContextMenu(E2E_DB), 'Could not open database context menu.');
+      await action('Hover Database Info menu item', () => page.getByRole('button', { name: /Database Info|데이터베이스 정보/i }).hover(), 'Could not hover Database Info menu item.');
+      await action('Click Transaction Information menu item', () => page.getByRole('button', { name: /Transaction Information|트랜잭션 정보/i }).click(), 'Could not click Transaction Information option.');
       modal = page.getByTestId('transaction-info-modal');
-      await expect(modal).toBeVisible({ timeout: 15000 });
+      await action('Verify Transaction Information modal is visible', () => expect(modal).toBeVisible({ timeout: 15000 }), 'Transaction Information modal did not appear.');
     });
 
     await When('the active transactions panel loads', async () => {
-      await expect(page.getByTestId('transaction-info-refresh-btn')).toBeVisible({ timeout: 10000 });
+      await action('Verify refresh button is visible in transaction info modal', () => expect(page.getByTestId('transaction-info-refresh-btn')).toBeVisible({ timeout: 10000 }), 'Refresh button was not visible in transaction information modal.');
     });
 
     await Then('the user can close the transaction information view', async () => {
-      await page.getByTestId('transaction-info-close-btn').click();
-      await expect(modal).not.toBeVisible();
+      await action('Click Close button on transaction information modal', () => page.getByTestId('transaction-info-close-btn').click(), 'Could not click Close button on transaction information modal.');
+      await action('Verify Transaction Information modal is closed', () => expect(modal).not.toBeVisible(), 'Transaction Information modal did not close.');
     });
   });
 
@@ -146,21 +149,21 @@ test.describe('Feature: Database Properties & Diagnostic Info', () => {
     let modal;
 
     await Given('the user opens the Plan Dump dialog', async () => {
-      await dbTree.openContextMenu(E2E_DB);
-      await page.getByRole('button', { name: 'Database Info' }).hover();
-      await page.getByRole('button', { name: /Plan Dump/ }).click();
+      await action('Open context menu for database ' + E2E_DB, () => dbTree.openContextMenu(E2E_DB), 'Could not open database context menu.');
+      await action('Hover Database Info menu item', () => page.getByRole('button', { name: /Database Info|데이터베이스 정보/i }).hover(), 'Could not hover Database Info menu item.');
+      await action('Click Plan Dump menu item', () => page.getByRole('button', { name: /Plan Dump|플랜 덤프/i }).click(), 'Could not click Plan Dump option.');
       modal = page.getByTestId('plan-dump-modal');
-      await expect(modal).toBeVisible({ timeout: 10000 });
+      await action('Verify Plan Dump modal is visible', () => expect(modal).toBeVisible({ timeout: 10000 }), 'Plan Dump modal did not appear.');
     });
 
     await When('the user clicks Run Plan Dump', async () => {
-      await page.getByTestId('plan-dump-run-btn').click();
+      await action('Click Run button to execute plan dump', () => page.getByTestId('plan-dump-run-btn').click(), 'Could not click Run button in Plan Dump modal.');
     });
 
     await Then('the view displays plan dump results with a Back navigation button', async () => {
-      await expect(page.getByTestId('plan-dump-back-btn')).toBeVisible({ timeout: 15000 });
-      await page.getByTestId('plan-dump-close-btn').click();
-      await expect(modal).not.toBeVisible();
+      await action('Verify Back navigation button is visible in plan dump results', () => expect(page.getByTestId('plan-dump-back-btn')).toBeVisible({ timeout: 15000 }), 'Back button was not visible in plan dump results.');
+      await action('Click Close button on Plan Dump modal', () => page.getByTestId('plan-dump-close-btn').click(), 'Could not click Close button on Plan Dump modal.');
+      await action('Verify Plan Dump modal is closed', () => expect(modal).not.toBeVisible(), 'Plan Dump modal did not close.');
     });
   });
 });

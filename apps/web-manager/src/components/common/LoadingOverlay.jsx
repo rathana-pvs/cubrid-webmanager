@@ -48,7 +48,7 @@ const LoadingOverlay = ({
   }
 
   return (
-    <div className={`absolute inset-0 z-[10001] flex flex-col items-center justify-center bg-white/80 dark:bg-bk-side/95 backdrop-blur-[4px] animate-in fade-in duration-300 rounded-xl overflow-hidden ${className}`}>
+    <div data-testid="loading-overlay" className={`absolute inset-0 z-[10001] flex flex-col items-center justify-center bg-white/80 dark:bg-bk-side/95 backdrop-blur-[4px] animate-in fade-in duration-300 rounded-xl overflow-hidden ${className}`}>
 
       {/* Soft ambient glow */}
       <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[280px] h-[280px] bg-amber-500/10 rounded-full blur-[100px] pointer-events-none opacity-50" />

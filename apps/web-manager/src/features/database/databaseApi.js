@@ -1,4 +1,7 @@
 import apiClient from '../../api/apiClient';
+import { createSingleFlight } from '../../infrastructure/utils/singleFlight';
+
+const volumeReads = createSingleFlight();
 
 export const databaseApi = {
   getStartInfo: (hostUid) => {
@@ -11,7 +14,10 @@ export const databaseApi = {
     return apiClient.post(`/${hostUid}/database/stop/${encodeURIComponent(dbname)}`, {});
   },
   getVolumeInfo: (hostUid, dbname) => {
-    return apiClient.get(`/${hostUid}/database/volume-info/${dbname}`);
+    const url = `/${hostUid}/database/volume-info/${encodeURIComponent(dbname)}`;
+    // Do not share a response across login sessions.
+    const key = JSON.stringify([apiClient.defaults.headers.common.Authorization, url]);
+    return volumeReads(key, () => apiClient.get(url));
   },
   getClassInfo: (hostUid, dbname, dbstatus) => {
     return apiClient.post(`/${hostUid}/database/class-info/${dbname}`, { dbstatus });

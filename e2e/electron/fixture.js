@@ -97,6 +97,7 @@ async function seedRenderer(window) {
 
     localStorage.removeItem('token');
     localStorage.removeItem('refreshToken');
+    localStorage.setItem('cwm-ui-locale', 'en');
     window.location.hash = '#/login';
     return { stage: 'complete' };
   }, { credentials, host });

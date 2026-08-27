@@ -32,10 +32,13 @@ class AuthPage {
 
   async gotoRoute(route) {
     if (this.page.url().startsWith('app://')) {
-      await this.page.evaluate((nextRoute) => {
-        window.location.hash = `#/${nextRoute}`;
-      }, route);
-      await this.page.waitForURL(new RegExp(`#/${route}$`));
+      const currentHash = await this.page.evaluate(() => window.location.hash);
+      if (currentHash !== `#/${route}`) {
+        await this.page.evaluate((nextRoute) => {
+          window.location.hash = `#/${nextRoute}`;
+        }, route);
+        await this.page.waitForURL(new RegExp(`#/${route}$`), { timeout: 10000 });
+      }
       return;
     }
     await this.page.goto(`/${route}`);

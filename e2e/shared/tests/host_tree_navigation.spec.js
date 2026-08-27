@@ -1,7 +1,7 @@
 const { test, expect } = require('../fixture');
 const { AuthPage } = require('../pages/AuthPage');
 const { HostTreePage } = require('../pages/HostTreePage');
-const { Given, When, Then, And, bddMeta } = require('../bdd');
+const { Given, When, Then, And, bddMeta, action } = require('../bdd');
 
 const E2E_HOST_ADDRESS = process.env.E2E_HOST_ADDRESS || 'localhost';
 const E2E_HOST_PORT = process.env.E2E_HOST_PORT || '8001';
@@ -24,15 +24,15 @@ test.describe('Feature: Host Tree Navigation', () => {
 
     await Given('a registered host is visible in the tree', async () => {
       host = hostTree.hostRowByConnection(E2E_HOST_ADDRESS, E2E_HOST_PORT);
-      await expect(host).toBeVisible({ timeout: 10000 });
+      await action('Verify host is visible in tree: ' + E2E_HOST_ADDRESS + ':' + E2E_HOST_PORT, () => expect(host).toBeVisible({ timeout: 10000 }), 'Host was not found in host tree.');
     });
 
     await When('the user performs a single click on the host item', async () => {
-      await host.click();
+      await action('Single click host item', () => host.click(), 'Host item was not clickable.');
     });
 
     await Then('the host is selected but the database tree remains unauthorized', async () => {
-      await expect(page.locator('#db-tree-container')).not.toHaveAttribute('data-authorized', 'true');
+      await action('Verify database tree remains unauthorized', () => expect(page.locator('#db-tree-container')).not.toHaveAttribute('data-authorized', 'true'), 'Database tree was unexpectedly authorized on single click.');
     });
   });
 
@@ -47,21 +47,21 @@ test.describe('Feature: Host Tree Navigation', () => {
     let group;
 
     await Given('a host group is created in the tree', async () => {
-      await page.getByTestId('new-group-toolbar-btn').click();
-      await page.locator('input[name="groupName"]').fill(groupName);
-      await page.getByRole('button', { name: /Create Group/i }).click();
-      await expect(page.locator('div[role="dialog"]')).not.toBeVisible({ timeout: 10000 });
+      await action('Click New Group toolbar button', () => page.getByTestId('new-group-toolbar-btn').click(), 'New Group button was not clickable.');
+      await action('Fill group name: ' + groupName, () => page.locator('input[name="groupName"]').fill(groupName), 'Could not type into group name input field.');
+      await action('Click Create Group button', () => page.getByRole('button', { name: /Create Group/i }).click(), 'Create Group button was not clickable.');
+      await action('Verify Create Group dialog is closed', () => expect(page.locator('div[role="dialog"]')).not.toBeVisible({ timeout: 10000 }), 'Create Group dialog did not close.');
 
       group = page.locator('#host-section').locator('details').filter({ hasText: groupName }).first();
-      await expect(group).toBeVisible({ timeout: 10000 });
+      await action('Verify created group is visible in host tree: ' + groupName, () => expect(group).toBeVisible({ timeout: 10000 }), 'Created group was not found in host tree.');
     });
 
     await When('the user clicks the group summary accordion', async () => {
-      await group.locator('> summary').click();
+      await action('Click group accordion summary', () => group.locator('> summary').click(), 'Group accordion summary was not clickable.');
     });
 
     await Then('the group expands to show its contents', async () => {
-      await expect(group).toHaveJSProperty('open', true);
+      await action('Verify group accordion expands (open=true)', () => expect(group).toHaveJSProperty('open', true), 'Group accordion did not expand.');
     });
   });
 
@@ -77,17 +77,17 @@ test.describe('Feature: Host Tree Navigation', () => {
 
     await Given('a host item is displayed in the tree', async () => {
       host = hostTree.hostRowByConnection(E2E_HOST_ADDRESS, E2E_HOST_PORT);
-      await expect(host).toBeVisible({ timeout: 10000 });
+      await action('Verify host is visible in tree: ' + E2E_HOST_ADDRESS + ':' + E2E_HOST_PORT, () => expect(host).toBeVisible({ timeout: 10000 }), 'Host was not found in host tree.');
     });
 
     await When('the user right-clicks the host item', async () => {
-      await host.click({ button: 'right' });
+      await action('Right-click host item', () => host.click({ button: 'right' }), 'Could not right-click host item.');
     });
 
     await Then('the context menu options for Edit Host and Delete Host are displayed', async () => {
-      await expect(page.getByRole('button', { name: /Edit Host/i })).toBeVisible();
-      await expect(page.getByRole('button', { name: /Delete Host/i })).toBeVisible();
-      await page.keyboard.press('Escape');
+      await action('Verify Edit Host option is visible in context menu', () => expect(page.getByRole('button', { name: /Edit Host/i })).toBeVisible(), 'Edit Host menu option was not visible.');
+      await action('Verify Delete Host option is visible in context menu', () => expect(page.getByRole('button', { name: /Delete Host/i })).toBeVisible(), 'Delete Host menu option was not visible.');
+      await action('Close context menu with Escape key', () => page.keyboard.press('Escape'), 'Could not send Escape key to close context menu.');
     });
   });
 });

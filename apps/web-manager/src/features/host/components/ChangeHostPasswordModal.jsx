@@ -60,33 +60,34 @@ export default function ChangeHostPasswordModal() {
     
     if (!currentHost) return;
 
-    // 1. Change the passcode on the remote host (CUBRID CMS)
-    // Aligned with api-server SetDbmtPasswdRequest structure: targetid, newpassword
-    const payload = {
-      targetid: currentHost.id,
-      newpassword: formData.password,
-    };
-    
-    dispatch(setHostPassword({ hostUid: changePasswordHostUid, payload }))
-      .unwrap()
-      .then(() => {
-        // 2. Synchronize local connection settings in the manager without modifying api-server code
-        const localPayload = {
-          id: currentHost.id,
-          address: currentHost.address,
-          port: Number(currentHost.port),
-          alias: currentHost.alias,
-          password: formData.password, // Update with the new passcode
-        };
-        
-        dispatch(editHost({ hostUid: changePasswordHostUid, payload: localPayload }))
-          .unwrap()
-          .then(() => {
-            setIsSuccess(true);
-            // 3. Finally revalidate host login so the session picks up the new credentials
-            dispatch(loginToHostWithSideEffects(changePasswordHostUid));
-          });
-      });
+    try {
+      // 1. Change the passcode on the remote host (CUBRID CMS)
+      // Aligned with api-server SetDbmtPasswdRequest structure: targetid, newpassword
+      const payload = {
+        targetid: currentHost.id,
+        newpassword: formData.password,
+      };
+      
+      await dispatch(setHostPassword({ hostUid: changePasswordHostUid, payload })).unwrap();
+
+      // 2. Synchronize local connection settings in the manager without modifying api-server code
+      const localPayload = {
+        id: currentHost.id,
+        address: currentHost.address,
+        port: Number(currentHost.port),
+        alias: currentHost.alias,
+        password: formData.password, // Update with the new passcode
+      };
+      
+      await dispatch(editHost({ hostUid: changePasswordHostUid, payload: localPayload })).unwrap();
+
+      // 3. Finally revalidate host login so the session picks up the new credentials
+      await dispatch(loginToHostWithSideEffects(changePasswordHostUid)).unwrap().catch(() => {});
+
+      setIsSuccess(true);
+    } catch (err) {
+      console.error('Failed to update host password:', err);
+    }
   };
   
   const handleClose = () => {

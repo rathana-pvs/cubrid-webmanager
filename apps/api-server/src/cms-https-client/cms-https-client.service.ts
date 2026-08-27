@@ -59,17 +59,28 @@ export class CmsHttpsClientService {
   // already tried that once (withCmsRetry, removed in #113 / 3abf005) and
   // reverted it because a retry applied broadly to CMS calls also re-submits
   // non-idempotent long-job requests on a hang-up/timeout, duplicating the
-  // actual server-side operation. Any future retry here would need to be
-  // scoped to known-idempotent read tasks only, not added blanket.
-  private async withHostQueue<T>(key: string, fn: () => Promise<T>): Promise<T> {
+  // actual server-side operation. The sole retry below is getautoexecquery
+  // after CMS explicitly returns a timeout; it never resubmits a mutation.
+  private async withHostQueue<T>(key: string, fn: () => Promise<T>, task?: string): Promise<T> {
+    const queuedAt = Date.now();
     const pending = this.hostRequestQueue.get(key) ?? Promise.resolve();
     let resolve!: () => void;
     const next = new Promise<void>((r) => (resolve = r));
     this.hostRequestQueue.set(key, next);
+    let startedAt: number | undefined;
     try {
       await pending;
+      startedAt = Date.now();
+      this.logger.debug(formatAuditLog('cms_queue_start', {
+        address: key, task, queueWaitMs: startedAt - queuedAt,
+      }));
       return await fn();
     } finally {
+      this.logger.debug(formatAuditLog('cms_queue_finish', {
+        address: key, task,
+        queueWaitMs: (startedAt ?? Date.now()) - queuedAt,
+        executionMs: startedAt === undefined ? 0 : Date.now() - startedAt,
+      }));
       resolve();
       if (this.hostRequestQueue.get(key) === next) {
         this.hostRequestQueue.delete(key);
@@ -107,7 +118,7 @@ export class CmsHttpsClientService {
       const response = await firstValueFrom(this.httpService.post<P>(url, data, config));
       this.logCmsResponse('public', url, data, response.data, Date.now() - startedAt);
       return response.data;
-    });
+    }, this.extractTask(data));
   }
 
   /**
@@ -128,14 +139,28 @@ export class CmsHttpsClientService {
       const config = {
         headers: { 'Content-Type': 'application/json' },
         httpsAgent: this.getHttpsAgent(),
+        // Only bound this diagnostic read. Never retry it here, and do not
+        // impose a short deadline on mutations or long-running database jobs.
+        ...(data.task === 'dbspaceinfo' ? { timeout: 30_000 } : {}),
         ...(options?.timeoutMs !== undefined ? { timeout: options.timeoutMs } : {}),
       };
-      const startedAt = Date.now();
-      this.logCmsRequest('authenticated', url, data);
-      const response = await firstValueFrom(this.httpService.post<P>(url, data, config));
-      this.logCmsResponse('authenticated', url, data, response.data, Date.now() - startedAt);
-      return response.data;
-    });
+      for (let attempt = 0; ; attempt++) {
+        const startedAt = Date.now();
+        this.logCmsRequest('authenticated', url, data);
+        const response = await firstValueFrom(this.httpService.post<P>(url, data, config));
+        this.logCmsResponse('authenticated', url, data, response.data, Date.now() - startedAt);
+        const cmsResponse = response.data as { status?: string; note?: string };
+        if (attempt === 0 && data.task === 'getautoexecquery'
+          && ['fail', 'failure'].includes(cmsResponse.status ?? '')
+          && /^timeout$/i.test(cmsResponse.note?.trim() ?? '')) {
+          this.logger.warn(formatAuditLog('cms_read_retry', {
+            address: url, task: data.task, reason: 'CMS timeout', attempt: 1,
+          }));
+          continue;
+        }
+        return response.data;
+      }
+    }, this.extractTask(data));
   }
 
   /**

@@ -15,13 +15,8 @@ module.exports = defineConfig({
   timeout: 60000,
   outputDir: path.resolve(__dirname, '../artifacts/web-results'),
   reporter: [
-    ['list'],
+    [path.resolve(__dirname, '../shared/clean-reporter.js')],
     ['html', { outputFolder: path.resolve(__dirname, '../artifacts/web-report'), open: 'never' }],
-    ['allure-playwright', {
-      outputFolder: path.resolve(__dirname, '../artifacts/allure-results'),
-      detail: true,
-      suiteTitle: true,
-    }],
   ],
   use: {
     baseURL: process.env.BASE_URL || 'https://localhost:8080',

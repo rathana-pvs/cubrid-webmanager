@@ -261,7 +261,7 @@ export default function DatabaseTree({
               dispatch(setSelectedDatabaseSubItem(null));
             }}
             onDoubleClick={() => handleDbActivate(db, isLoggedIn)}
-            onContextMenu={(e) => onContextMenu(e, db.dbname, isActive)}
+            onContextMenu={(e) => onContextMenu(e, db.dbname, isActive, isLoggedIn)}
           >
             {/* Level 2 items */}
 
@@ -282,6 +282,8 @@ export default function DatabaseTree({
 
             <JobAutomationFolder 
               db={db}
+              isActive={isActive}
+              isLoggedIn={isLoggedIn}
               selectedDatabase={selectedDatabase}
               selectedDatabaseSubItem={selectedDatabaseSubItem}
               backupSchedules={backupSchedules[db.dbname]}
@@ -299,6 +301,8 @@ export default function DatabaseTree({
 
             <SpaceFolder 
               db={db}
+              isActive={isActive}
+              isLoggedIn={isLoggedIn}
               selectedDatabase={selectedDatabase}
               selectedDatabaseSubItem={selectedDatabaseSubItem}
               spaceInfo={spaceInfo[db.dbname]}
@@ -341,7 +345,7 @@ const UsersFolder = React.memo(({ db, isActive, isLoggedIn, selectedDatabase, se
         }
       }}
       onSelect={() => onSelect(db.dbname, 'Users')}
-      onContextMenu={(e) => onUsersContextMenu(e, db.dbname)}
+      onContextMenu={(e) => onUsersContextMenu(e, db.dbname, isActive, isLoggedIn)}
     >
       {!isLoading && users?.length === 0 ? (
         <div className="px-10 py-3 opacity-30 flex items-center gap-2">
@@ -361,7 +365,7 @@ const UsersFolder = React.memo(({ db, isActive, isLoggedIn, selectedDatabase, se
               level={3}
               isActive={isUSelected}
               onSelect={() => onSelect(db.dbname, uName)}
-              onContextMenu={(e) => onUserContextMenu(e, db.dbname, uName)}
+              onContextMenu={(e) => onUserContextMenu(e, db.dbname, uName, isActive, isLoggedIn)}
             />
           );
         })
@@ -370,7 +374,7 @@ const UsersFolder = React.memo(({ db, isActive, isLoggedIn, selectedDatabase, se
   );
 });
 
-const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem, backupSchedules, backupSchedulesLoading, queryPlans, queryPlansLoading, onJobAutomationContextMenu, onBackupPlanContextMenu, onQueryPlanContextMenu, onQueryItemContextMenu, onBackupItemContextMenu, onSelect, selectedHostUid }) => {
+const JobAutomationFolder = React.memo(({ db, isActive, isLoggedIn, selectedDatabase, selectedDatabaseSubItem, backupSchedules, backupSchedulesLoading, queryPlans, queryPlansLoading, onJobAutomationContextMenu, onBackupPlanContextMenu, onQueryPlanContextMenu, onQueryItemContextMenu, onBackupItemContextMenu, onSelect, selectedHostUid }) => {
   const CM = useCM();
   const dispatch = useDispatch();
   const isSelected = selectedDatabase === db.dbname && selectedDatabaseSubItem === 'Job automation';
@@ -394,7 +398,7 @@ const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabase
         }
       }}
       onSelect={() => onSelect(db.dbname, 'Job automation')}
-      onContextMenu={(e) => onJobAutomationContextMenu?.(e, db.dbname)}
+      onContextMenu={(e) => onJobAutomationContextMenu?.(e, db.dbname, isActive, isLoggedIn)}
     >
        <TreeNode
           id="Backup Plan"
@@ -405,7 +409,7 @@ const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabase
           hasChildren={true}
           isLoading={backupSchedulesLoading}
           onSelect={() => onSelect(db.dbname, 'Backup Plan')}
-          onContextMenu={(e) => onBackupPlanContextMenu(e, db.dbname)}
+          onContextMenu={(e) => onBackupPlanContextMenu(e, db.dbname, isActive, isLoggedIn)}
         >
           {backupSchedules?.map(plan => {
             const planId = plan.backupid;
@@ -424,7 +428,7 @@ const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabase
                   dispatch(setSelectedBackupId(planId));
                   dispatch(openEditBackupPlanModal());
                 }}
-                onContextMenu={(e) => onBackupItemContextMenu(e, db.dbname, planId)}
+                onContextMenu={(e) => onBackupItemContextMenu(e, db.dbname, planId, isActive, isLoggedIn)}
               />
             );
           })}
@@ -439,7 +443,7 @@ const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabase
           hasChildren={true}
           isLoading={queryPlansLoading}
           onSelect={() => onSelect(db.dbname, 'Query Plan')}
-          onContextMenu={(e) => onQueryPlanContextMenu(e, db.dbname)}
+          onContextMenu={(e) => onQueryPlanContextMenu(e, db.dbname, isActive, isLoggedIn)}
         >
           {queryPlans?.map(plan => {
             const qId = plan.query_id;
@@ -456,7 +460,7 @@ const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabase
                   dispatch(setSelectedDatabase(db.dbname));
                   dispatch(openEditQueryPlanModal(qId));
                 }}
-                onContextMenu={(e) => onQueryItemContextMenu?.(e, db.dbname, qId)}
+                onContextMenu={(e) => onQueryItemContextMenu?.(e, db.dbname, qId, isActive, isLoggedIn)}
               />
             );
           })}
@@ -465,7 +469,7 @@ const JobAutomationFolder = React.memo(({ db, selectedDatabase, selectedDatabase
   );
 });
 
-const SpaceFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem, spaceInfo, spaceInfoLoading, onSpaceContextMenu, onSelect, onTabOpen, selectedHostUid }) => {
+const SpaceFolder = React.memo(({ db, isActive, isLoggedIn, selectedDatabase, selectedDatabaseSubItem, spaceInfo, spaceInfoLoading, onSpaceContextMenu, onSelect, onTabOpen, selectedHostUid }) => {
   const CM = useCM();
   const dispatch = useDispatch();
   const isSelected = selectedDatabase === db.dbname && selectedDatabaseSubItem === 'Space';
@@ -516,7 +520,7 @@ const SpaceFolder = React.memo(({ db, selectedDatabase, selectedDatabaseSubItem,
       hasChildren={true}
       onSelect={() => onSelect(db.dbname, 'Space')}
       onDoubleClick={() => onTabOpen(`db_space:${selectedHostUid}:${db.dbname}`)}
-      onContextMenu={(e) => onSpaceContextMenu(e, db.dbname)}
+      onContextMenu={(e) => onSpaceContextMenu(e, db.dbname, isActive, isLoggedIn)}
       onToggle={() => {
         // Only fetch if we have a host, aren't already loading, AND the data is genuinely missing
         if (selectedHostUid && !spaceInfoLoading && !spaceInfo) {

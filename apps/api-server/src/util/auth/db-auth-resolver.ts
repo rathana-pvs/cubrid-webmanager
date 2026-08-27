@@ -45,6 +45,14 @@ export class DBAuthResolver {
     clientId?: string,
     clientPassword?: string
   ): ResolvedDBAuth {
+    if (clientId != null && clientPassword != null) {
+      return {
+        dbname,
+        id: clientId,
+        password: clientPassword,
+      };
+    }
+
     const dbProfiles = host.dbProfiles || {};
     const profile = dbProfiles[dbname];
 
@@ -56,19 +64,11 @@ export class DBAuthResolver {
       };
     }
 
-    if (clientId == null || clientPassword == null) {
-      const missingFields: string[] = [];
-      if (clientId == null) missingFields.push('id');
-      if (clientPassword == null) missingFields.push('password');
+    const missingFields: string[] = [];
+    if (clientId == null) missingFields.push('id');
+    if (clientPassword == null) missingFields.push('password');
 
-      throw ValidationError.MissingDBCredentials(dbname, missingFields);
-    }
-
-    return {
-      dbname,
-      id: clientId,
-      password: clientPassword,
-    };
+    throw ValidationError.MissingDBCredentials(dbname, missingFields);
   }
 
   /**

@@ -12,24 +12,25 @@ import { Icon } from '../foundation/Icon';
  */
 export function TabGroup({ tabs = [], active, onChange, className = '', fullWidth = true, testId }) {
   return (
-    <div className={`flex gap-1 p-1 bg-slate-100 dark:bg-white/4 rounded-xl ${fullWidth ? 'w-full' : 'w-fit'} ${className}`}>
+    <div className={`flex gap-1 p-0.5 bg-slate-100 dark:bg-white/5 rounded-sm border border-slate-200/60 dark:border-white/6 ${fullWidth ? 'w-full' : 'w-fit'} ${className}`}>
       {tabs.map(tab => {
         const isActive = active === tab.id;
         return (
           <button
             key={tab.id}
+            type="button"
             data-testid={testId ? `${testId}-${tab.id}` : undefined}
             onClick={() => onChange(tab.id)}
-            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-3 rounded-lg text-[11px] font-bold uppercase tracking-widest transition-all duration-200
+            className={`flex-1 flex items-center justify-center gap-2 py-1.5 px-3 rounded-sm text-[11px] font-bold uppercase tracking-wider transition-colors
               ${isActive
-                ? 'bg-white dark:bg-bk-side text-amber-500 shadow-md shadow-black/5 dark:shadow-white/5 border border-slate-200 dark:border-white/10'
-                : 'text-slate-400 hover:text-slate-600 dark:hover:text-slate-200 hover:bg-slate-50/50 dark:hover:bg-white/3'
+                ? 'bg-white dark:bg-white/10 text-amber-600 dark:text-amber-400 shadow-xs border border-slate-200/80 dark:border-white/10'
+                : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
               }`}
           >
             {tab.icon && <Icon name={tab.icon} size="sm" weight={300} className="shrink-0" />}
             <span className="truncate">{tab.label}</span>
             {tab.badge !== undefined && tab.badge !== null && (
-              <span className={`text-[9px] font-black px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors
+              <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none transition-colors
                 ${isActive ? 'bg-amber-500 text-white' : 'bg-slate-200 dark:bg-white/10 text-slate-500 dark:text-slate-400'}`}>
                 {tab.badge}
               </span>

@@ -352,7 +352,7 @@ export default function OptimizeDatabaseModal() {
             variant="primary"
             onClick={handleOptimize}
             icon="play_circle"
-            disabled={isLoadingClasses}
+            disabled={isActive || isLoadingClasses}
             className="min-w-[140px]"
           >
             {CM.ok}
@@ -361,6 +361,12 @@ export default function OptimizeDatabaseModal() {
       }
     >
       <div className="space-y-4">
+        {isActive && (
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-2.5 text-amber-700 dark:text-amber-400 text-xs">
+            <Icon name="warning" size="sm" />
+            <span>Database optimization can only be performed when the database is stopped.</span>
+          </div>
+        )}
         <CaDialogGroup>
           <CaDialogFieldGrid labelWidth="130px">
             <CaDialogField label={CM.lblOptimizeDbName}>
@@ -378,16 +384,6 @@ export default function OptimizeDatabaseModal() {
                  isLoading={isLoadingClasses}
                />
             </CaDialogField>
-            {isActive && (
-              <>
-                <CaDialogField label={CM.userName}>
-                  <Input data-testid="optimize-database-dbuser-input" value={dbuser} onChange={(e) => setDbuser(e.target.value)} icon="account_circle" />
-                </CaDialogField>
-                <CaDialogField label={CM.password}>
-                  <Input data-testid="optimize-database-dbpasswd-input" type="password" value={dbpasswd} onChange={(e) => setDbpasswd(e.target.value)} icon="password" placeholder={CM.emptyAllowedPlaceholder} />
-                </CaDialogField>
-              </>
-            )}
           </CaDialogFieldGrid>
         </CaDialogGroup>
 

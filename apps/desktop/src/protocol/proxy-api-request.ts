@@ -39,6 +39,10 @@ export async function proxyApiRequest(
       ? undefined
       : Buffer.from(await request.arrayBuffer());
 
+  if (body && body.length > 0) {
+    headers['content-length'] = String(body.length);
+  }
+
   try {
     return await new Promise<Response>((resolve, reject) => {
       const upstream = https.request(

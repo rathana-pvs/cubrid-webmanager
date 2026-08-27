@@ -118,9 +118,9 @@ export default function LoginPage() {
             data-testid="login-theme-toggle"
             onClick={() => dispatch(toggleTheme())}
             title={theme === 'light' ? CM.switchToDarkMode : CM.switchToLightMode}
-            className="p-1.5 rounded-sm border border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
+            className="h-8 w-8 flex items-center justify-center rounded-sm border border-slate-200 dark:border-white/10 bg-slate-100/80 dark:bg-white/5 text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-colors"
           >
-            <Icon name={theme === 'light' ? 'dark_mode' : 'light_mode'} size="16px" weight={300} />
+            <Icon name={theme === 'light' ? 'dark_mode' : 'light_mode'} size="18px" weight={300} />
           </button>
         </div>
 

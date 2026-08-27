@@ -306,9 +306,12 @@ describe('DatabaseLifecycleService', () => {
     };
 
     beforeEach(() => {
+      jest.useFakeTimers();
       jest.spyOn(databaseInfoService, 'startInfo').mockResolvedValue(mockStartInfoResponse as any);
       jest.spyOn(databaseInfoService as any, 'effectiveHaDbForDbname').mockResolvedValue(false);
     });
+
+    afterEach(() => jest.useRealTimers());
 
     it('should successfully stop database', async () => {
       cmsClient.postAuthenticated.mockResolvedValue(mockBaseResponse);
@@ -343,17 +346,59 @@ describe('DatabaseLifecycleService', () => {
       );
     });
 
-    it('should throw CmsError when CMS status is fail', async () => {
+    it('should throw CmsError when stop fails and the database remains active', async () => {
       const failedResponse = {
         ...mockBaseResponse,
         status: 'fail',
         note: 'Database stop failed',
       };
       cmsClient.postAuthenticated.mockResolvedValue(failedResponse);
+      jest.mocked(databaseInfoService.startInfo).mockResolvedValue({
+        ...mockStartInfoResponse, activelist: { active: [{ dbname: mockDbname }] },
+      } as any);
 
-      await expect(service.stopDatabase(mockUserId, mockHostUid, mockDbname)).rejects.toThrow(
+      const assertion = expect(service.stopDatabase(mockUserId, mockHostUid, mockDbname)).rejects.toThrow(
         CmsError
       );
+      await jest.runAllTimersAsync();
+      await assertion;
+      expect(databaseInfoService.startInfo).toHaveBeenCalledTimes(6);
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledTimes(1);
+    });
+
+    it('accepts recovery only after a valid read confirms the database stopped', async () => {
+      cmsClient.postAuthenticated.mockRejectedValue(CmsError.RequestFailed({ message: 'timeout' }));
+      jest.mocked(databaseInfoService.startInfo)
+        .mockRejectedValueOnce(new Error('status unavailable'))
+        .mockResolvedValueOnce({ ...mockStartInfoResponse, activelist: { active: [mockDbname] } } as any)
+        .mockResolvedValueOnce(mockStartInfoResponse as any);
+      const result = service.stopDatabase(mockUserId, mockHostUid, mockDbname);
+      await jest.runAllTimersAsync();
+      await expect(result).resolves.toEqual(mockStartInfoResponse);
+      expect(databaseInfoService.startInfo).toHaveBeenCalledTimes(3);
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledTimes(1);
+    });
+
+    it.each([undefined, {}, { activelist: {} }, { activelist: { active: [null] } },
+      { activelist: { active: [{}] } }, { activelist: { active: 'invalid' } },
+    ])('does not treat malformed status %j as stopped', async status => {
+      const original = CmsError.RequestFailed({ message: 'timeout' });
+      cmsClient.postAuthenticated.mockRejectedValue(original);
+      jest.mocked(databaseInfoService.startInfo).mockResolvedValue(status as any);
+      const assertion = expect(service.stopDatabase(mockUserId, mockHostUid, mockDbname)).rejects.toBe(original);
+      await jest.runAllTimersAsync();
+      await assertion;
+      expect(databaseInfoService.startInfo).toHaveBeenCalledTimes(6);
+    });
+
+    it('preserves the stop error when every recovery status read fails', async () => {
+      const original = CmsError.RequestFailed({ message: 'timeout' });
+      cmsClient.postAuthenticated.mockRejectedValue(original);
+      jest.mocked(databaseInfoService.startInfo).mockRejectedValue(new Error('status unavailable'));
+      const assertion = expect(service.stopDatabase(mockUserId, mockHostUid, mockDbname)).rejects.toBe(original);
+      await jest.runAllTimersAsync();
+      await assertion;
+      expect(databaseInfoService.startInfo).toHaveBeenCalledTimes(6);
     });
   });
 

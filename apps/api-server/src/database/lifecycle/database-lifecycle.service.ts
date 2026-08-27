@@ -153,7 +153,26 @@ export class DatabaseLifecycleService extends BaseService {
     if (useHa) {
       await this.haService.haStop(userId, hostUid, dbname);
     } else {
-      await this.stopNonHaDatabase(userId, hostUid, dbname);
+      try {
+        await this.stopNonHaDatabase(userId, hostUid, dbname);
+      } catch (error) {
+        for (let i = 0; i < 6; i++) {
+          await new Promise((res) => setTimeout(res, 2500));
+          const latestInfo = await this.databaseInfoService.startInfo(userId, hostUid).catch(() => null);
+          const active = latestInfo?.activelist?.active;
+          // A failed/malformed status read means unknown, not stopped. Only a
+          // valid active list can confirm that a timed-out stop actually worked.
+          if (!Array.isArray(active) || !active.every((a) =>
+            typeof a === 'string' ? a.length > 0 : typeof a?.dbname === 'string' && a.dbname.length > 0
+          )) continue;
+          const stillActive = active.some(
+            (a) => (typeof a === 'string' ? a : a.dbname) === dbname
+          );
+          if (!stillActive) return latestInfo!;
+        }
+        // Preserve the original stop error; never retry the stop command.
+        throw error;
+      }
     }
 
     return await this.databaseInfoService.startInfo(userId, hostUid);

@@ -38,8 +38,10 @@ export default function LockInformationModal() {
   const CM = useCM();
   const dispatch = useDispatch();
   const { isLockInformationModalOpen: isLockInfoModalOpen } = useSelector((s) => s.databaseUI);
-  const { selectedDatabase } = useSelector((s) => s.database);
+  const { selectedDatabase, activeDatabases } = useSelector((s) => s.database);
   const { selectedHostUid } = useSelector((s) => s.host);
+
+  const isActive = selectedDatabase && activeDatabases?.includes(selectedDatabase);
 
   const [activeTab, setActiveTab] = useState('sessions');
   const [settings, setSettings] = useState({});
@@ -50,6 +52,10 @@ export default function LockInformationModal() {
 
   const fetchLockInfo = useCallback(async () => {
     if (!selectedHostUid || !selectedDatabase) return;
+    if (!isActive) {
+      setError('Database is stopped. Locking information is only available when the database is running.');
+      return;
+    }
     setLoading(true);
     setError(null);
     try {

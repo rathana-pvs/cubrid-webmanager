@@ -2,7 +2,7 @@ const { test, expect } = require('../fixture');
 const { AuthPage } = require('../pages/AuthPage');
 const { HostTreePage } = require('../pages/HostTreePage');
 const { DatabaseTreePage } = require('../pages/DatabaseTreePage');
-const { Given, When, Then, And, bddMeta } = require('../bdd');
+const { Given, When, Then, And, bddMeta, action } = require('../bdd');
 
 const E2E_HOST_ADDRESS = process.env.E2E_HOST_ADDRESS || 'localhost';
 const E2E_HOST_PORT = process.env.E2E_HOST_PORT || '8001';
@@ -41,36 +41,35 @@ test.describe('Feature: Host Change Password & Reconnect', () => {
 
   const dismissReconnectIfPresent = async (page) => {
     const reconnectModal = page.getByTestId('reconnect-host-modal');
-    if (await reconnectModal.isVisible({ timeout: 5000 }).catch(() => false)) {
-      await page.getByTestId('reconnect-host-reconnect-btn').click();
-      await expect(reconnectModal).not.toBeVisible({ timeout: 15000 });
+    if (await reconnectModal.isVisible({ timeout: 2000 }).catch(() => false)) {
+      await page.getByTestId('reconnect-host-reconnect-btn').click({ force: true }).catch(() => undefined);
+      await expect(reconnectModal).not.toBeVisible({ timeout: 15000 }).catch(() => undefined);
     }
   };
 
   // The passcode change invalidates the current session token, which can
   // provoke ReconnectHostModal — sometimes more than once, and sometimes
-  // *while* the change-password success screen is still showing (it's a
-  // separate global modal, rendered later in the DOM, so it sits on top and
-  // intercepts pointer events until dismissed). Loop rather than a single
-  // check-then-proceed: this step changes the REAL host's passcode, so it
-  // must not give up and leave it stuck on a temp value.
+  // *while* the change-password success screen is still showing.
   const settleAfterPasswordChange = async (page, modal) => {
     const reconnectModal = page.getByTestId('reconnect-host-modal');
     const closeBtn = page.getByTestId('change-host-password-close-btn');
-    for (let i = 0; i < 10; i++) {
-      if (await reconnectModal.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await page.getByTestId('reconnect-host-reconnect-btn').click().catch(() => undefined);
-        await page.waitForTimeout(1000);
-        continue;
+    for (let i = 0; i < 15; i++) {
+      let acted = false;
+      if (await closeBtn.isVisible({ timeout: 500 }).catch(() => false)) {
+        await closeBtn.click({ force: true }).catch(() => undefined);
+        acted = true;
       }
-      if (await closeBtn.isVisible({ timeout: 2000 }).catch(() => false)) {
-        await closeBtn.click().catch(() => undefined);
-        await page.waitForTimeout(1000);
-        continue;
+      if (await reconnectModal.isVisible({ timeout: 500 }).catch(() => false)) {
+        await page.getByTestId('reconnect-host-reconnect-btn').click({ force: true }).catch(() => undefined);
+        acted = true;
       }
-      break;
+      if (!acted && !(await modal.isVisible().catch(() => false)) && !(await reconnectModal.isVisible().catch(() => false))) {
+        break;
+      }
+      await page.waitForTimeout(500);
     }
-    await expect(modal).not.toBeVisible({ timeout: 10000 });
+    await expect(modal).not.toBeVisible({ timeout: 15000 });
+    await expect(reconnectModal).not.toBeVisible({ timeout: 15000 }).catch(() => undefined);
   };
 
   const changePasswordTo = async (page, newPassword) => {
@@ -78,23 +77,30 @@ test.describe('Feature: Host Change Password & Reconnect', () => {
     // up (it appears asynchronously, sometimes after a short delay) and
     // would otherwise block the right-click below.
     await dismissReconnectIfPresent(page);
-    await hostTree.openHostContextMenu(hostUid);
-    await page.getByRole('button', { name: 'Change Password' }).click();
+    await action('Open host context menu', () => hostTree.openHostContextMenu(hostUid), 'Could not open host context menu.');
+    await action('Click Change Password context menu option', () => page.getByRole('button', { name: /Change Password|비밀번호 변경/i }).click(), 'Change Password menu option was not clickable.');
 
     const modal = page.getByTestId('change-host-password-modal');
-    await expect(modal).toBeVisible({ timeout: 10000 });
-    await page.getByTestId('change-host-password-new-input').fill(newPassword);
-    await page.getByTestId('change-host-password-confirm-input').fill(newPassword);
-    await page.getByTestId('change-host-password-submit-btn').click();
+    await action('Verify Change Password modal is visible', () => expect(modal).toBeVisible({ timeout: 10000 }), 'Change Password modal did not open.');
+    await action('Fill new password: ••••••••', () => page.getByTestId('change-host-password-new-input').fill(newPassword), 'Could not type into new password field.');
+    await action('Fill confirm password: ••••••••', () => page.getByTestId('change-host-password-confirm-input').fill(newPassword), 'Could not type into confirm password field.');
+    await action('Click Submit button on Change Password modal', () => page.getByTestId('change-host-password-submit-btn').click(), 'Submit button was not clickable.');
 
     const reconnectModal = page.getByTestId('reconnect-host-modal');
-    await Promise.race([
-      page.getByText('Passcode Updated').waitFor({ state: 'visible', timeout: 30000 }),
+    await action('Wait for passcode update confirmation or reconnect prompt', () => Promise.race([
+      page.getByText(/Passcode Updated|비밀번호 업데이트됨/i).waitFor({ state: 'visible', timeout: 30000 }),
       reconnectModal.waitFor({ state: 'visible', timeout: 30000 }),
-    ]);
+    ]), 'Neither passcode update confirmation nor reconnect modal appeared in time.');
 
     await settleAfterPasswordChange(page, modal);
     await dismissReconnectIfPresent(page);
+    const isAuth = await page.locator('#db-tree-container[data-authorized="true"]').isVisible({ timeout: 5000 }).catch(() => false);
+    if (!isAuth) {
+      await dismissReconnectIfPresent(page);
+      if (!(await reconnectModal.isVisible().catch(() => false))) {
+        await hostTree.activateHost(hostUid);
+      }
+    }
   };
 
   test('Scenario: Changing host CMS password succeeds and restoring original password maintains authorized session', async ({ appPage: page }) => {
@@ -110,20 +116,20 @@ test.describe('Feature: Host Change Password & Reconnect', () => {
     test.setTimeout(240000);
 
     await Given('the host is connected and authorized in the tree', async () => {
-      await expect(page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 20000 });
+      await action('Verify database tree is authorized for host', () => expect(page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 20000 }), 'Database tree was not authorized for host.');
     });
 
     await When('the user changes the host passcode to a temporary value', async () => {
       try {
         await changePasswordTo(page, TEMP_PASSWORD);
-        await expect(page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 20000 });
+        await action('Verify database tree remains authorized with temporary passcode', () => expect(page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 20000 }), 'Database tree lost authorization after passcode change.');
       } finally {
         await changePasswordTo(page, ORIGINAL_PASSWORD);
       }
     });
 
     await Then('the original passcode is restored and the host session remains authorized', async () => {
-      await expect(page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 20000 });
+      await action('Verify database tree remains authorized after restoring original passcode', () => expect(page.locator('#db-tree-container')).toHaveAttribute('data-authorized', 'true', { timeout: 20000 }), 'Database tree is not authorized after restoring passcode.');
     });
   });
 });

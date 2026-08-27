@@ -26,8 +26,11 @@ export default function LoadDatabaseModal() {
   const CM = useCM();
   const dispatch = useDispatch();
   const { isLoadDatabaseModalOpen: isLoadDBModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
-  const { selectedDatabase } = useSelector((state) => state.database, shallowEqual);
+  const { selectedDatabase, activeDatabases, loggedInDatabases } = useSelector((state) => state.database, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
+
+  const isActive = selectedDatabase && activeDatabases?.includes(selectedDatabase);
+  const isLoggedIn = selectedDatabase && loggedInDatabases?.includes(selectedDatabase);
 
   const {
     error: actionError,
@@ -326,7 +329,7 @@ export default function LoadDatabaseModal() {
   };
 
   const validationError = getValidationError();
-  const isFormValid = !!formData.dbUsername && !validationError;
+  const isFormValid = !isActive && !!formData.dbUsername && !validationError;
 
   if (isLoading) {
     return (
@@ -395,6 +398,12 @@ export default function LoadDatabaseModal() {
       }
     >
       <div className="space-y-6">
+        {isActive && (
+          <div className="p-3 bg-amber-500/10 border border-amber-500/20 rounded-xl flex items-center gap-2.5 text-amber-700 dark:text-amber-400 text-xs">
+            <Icon name="warning" size="sm" />
+            <span>Database loading can only be performed when the database is stopped.</span>
+          </div>
+        )}
         <LoadConfigSection formData={formData} handleInputChange={handleInputChange} />
         <LoadSourceSection
           radio={radio}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useDispatch, useSelector, shallowEqual } from 'react-redux';
-import { closeAddBackupPlanModal, addBackupSchedule, fetchBackupSchedule } from '../databaseSlice';
+import { closeAddBackupPlanModal, addBackupSchedule, fetchBackupSchedule, fetchBackupDbInfo } from '../databaseSlice';
 import { deriveBackupDir } from '../backupPathUtils';
 import { useCM } from '../../../constants/useCM';
 
@@ -37,6 +37,7 @@ export default function AddBackupPlanModal() {
   const dispatch = useDispatch();
   const { isAddBackupPlanModalOpen } = useSelector((state) => state.databaseUI, shallowEqual);
   const { selectedDatabase, databases } = useSelector((state) => state.database, shallowEqual);
+  const { backupDbInfo: databaseBackupInfo } = useSelector((state) => state.databaseOperation, shallowEqual);
   const { selectedHostUid } = useSelector((state) => state.host, shallowEqual);
   const currentDb = databases?.find((db) => db.dbname === selectedDatabase);
 
@@ -73,9 +74,10 @@ export default function AddBackupPlanModal() {
     if (isAddBackupPlanModalOpen && selectedDatabase) {
       resetAction();
       setErrors({});
+      const initialPath = deriveBackupDir(currentDb?.dbdir || databaseBackupInfo?.[selectedDatabase]?.dbdir);
       setFormData({
         backupLevel: '0',
-        backupPath: deriveBackupDir(currentDb?.dbdir),
+        backupPath: initialPath,
         backupId: `backup_${selectedDatabase}_${Date.now().toString().slice(-4)}`,
         periodType: 'Monthly',
         periodDetail: [1],
@@ -88,8 +90,19 @@ export default function AddBackupPlanModal() {
         backupsToKeep: 0,
         onlineType: 'offline'
       });
+
+      if (selectedHostUid && !initialPath) {
+        dispatch(fetchBackupDbInfo({ hostUid: selectedHostUid, dbname: selectedDatabase }))
+          .unwrap()
+          .then((info) => {
+            if (info?.dbdir) {
+              setFormData(prev => prev.backupPath ? prev : { ...prev, backupPath: deriveBackupDir(info.dbdir) });
+            }
+          })
+          .catch(() => {});
+      }
     }
-  }, [isAddBackupPlanModalOpen, selectedDatabase, currentDb, resetAction]);
+  }, [isAddBackupPlanModalOpen, selectedDatabase, currentDb, selectedHostUid, databaseBackupInfo, dispatch, resetAction]);
 
   if (!isAddBackupPlanModalOpen) return null;
 

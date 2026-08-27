@@ -230,9 +230,11 @@ export default function BrokerPropertyModal() {
     <Modal
       isOpen={isOpen}
       onClose={handleClose}
-      title={CM.brokerProperties}
+      title={brokerName ? `${brokerName} · ${CM.brokerProperties}` : CM.brokerProperties}
+      subtitle={CM.runtimeConfiguration}
       icon="hub"
       maxWidth="max-w-[620px]"
+      testId="broker-properties"
       footer={
         viewStatus === ViewStatus.FORM ? (
           <>
@@ -247,28 +249,16 @@ export default function BrokerPropertyModal() {
         )
       }
     >
-      <div className="relative p-6 border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-white/[0.02]">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500 flex items-center justify-center shadow-lg shadow-amber-500/20 shrink-0 text-white">
-            <Icon name="hub" size="lg" weight={300} />
-          </div>
-          <div className="flex-1 min-w-0">
-            <h2 className="text-lg font-black text-slate-800 dark:text-slate-100 tracking-tight leading-tight truncate">{brokerName}</h2>
-            <p className="text-[10px] text-slate-400 uppercase font-black tracking-widest mt-1">{CM.runtimeConfiguration}</p>
-          </div>
-          {modifiedCount > 0 && (
-            <div className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-amber-500 animate-pulse" />
-              <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">{CM.pendingCountLabel(modifiedCount)}</span>
-            </div>
-          )}
-        </div>
-      </div>
-
       {viewStatus === ViewStatus.FORM && (
-        <div className="flex flex-col h-[520px]">
-          <div className="p-4 border-b border-slate-100 dark:border-white/5">
+        <div className="flex flex-col h-[520px] -m-5">
+          <div className="px-5 py-3 border-b border-slate-100 dark:border-white/5 flex items-center justify-between gap-3 bg-slate-50/50 dark:bg-white/[0.01]">
             <TabGroup tabs={tabs} active={activeTab} onChange={setActiveTab} />
+            {modifiedCount > 0 && (
+              <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-sm bg-amber-500/10 border border-amber-500/20 shrink-0">
+                <div className="w-1.5 h-1.5 rounded-full bg-amber-500" />
+                <span className="text-[10px] font-bold text-amber-700 dark:text-amber-400 uppercase">{CM.pendingCountLabel(modifiedCount)}</span>
+              </div>
+            )}
           </div>
           <div className="flex-1 overflow-y-auto bg-white dark:bg-bk-main">
             {config.loading ? (

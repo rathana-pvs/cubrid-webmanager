@@ -127,6 +127,7 @@ export const TreeNode = React.memo(({
     <details
       id={id}
       data-testid={id != null ? `tree-node-${id}` : undefined}
+      data-status={status}
       className="group/details block"
       onToggle={isControlled ? undefined : handleToggle}
       open={displayOpen}

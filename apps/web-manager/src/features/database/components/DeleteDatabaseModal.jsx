@@ -129,7 +129,7 @@ export default function DeleteDatabaseModal() {
   /* ─── LOADING view ─── */
   if (isLoading) {
     return (
-      <Modal isOpen title={CM.dbaConfirm} icon="delete_forever" onClose={handleClose} maxWidth="440px" showCloseButton={false}>
+      <Modal isOpen title={CM.dbaConfirm} icon="delete_forever" onClose={handleClose} maxWidth="440px" showCloseButton={false} testId="delete-database">
         <ModalStatusLoading
           title={CM.deletingDatabase}
           subtitle={selectedDatabase}
@@ -142,7 +142,7 @@ export default function DeleteDatabaseModal() {
   /* ─── SUCCESS view ─── */
   if (isSuccess) {
     return (
-      <Modal isOpen title={CM.deleteSuccessful} icon="delete_forever" iconVariant="success" onClose={handleClose} maxWidth="440px">
+      <Modal isOpen title={CM.deleteSuccessful} icon="delete_forever" iconVariant="success" onClose={handleClose} maxWidth="440px" testId="delete-database">
         <ModalStatusSuccess
           title={CM.success}
           message={selectedDatabase}
@@ -156,7 +156,7 @@ export default function DeleteDatabaseModal() {
   /* ─── ERROR view ─── */
   if (isError) {
     return (
-      <Modal isOpen title={CM.executionError} icon="delete_forever" iconVariant="danger" onClose={resetAction} maxWidth="440px">
+      <Modal isOpen title={CM.executionError} icon="delete_forever" iconVariant="danger" onClose={resetAction} maxWidth="440px" testId="delete-database">
         <ModalStatusError 
           title={CM.failure}
           error={error}

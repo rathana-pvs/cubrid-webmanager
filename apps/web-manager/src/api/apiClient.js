@@ -220,12 +220,18 @@ apiClient.interceptors.response.use(
     // Priority: our StandardResponse.note → nested data.message → data.detail
     // → data.title → existing message (e.g. NestJS default "Internal Server Error")
     if (apiData && typeof apiData === 'object' && !Array.isArray(apiData)) {
-      apiData.message = apiData.note
+      const normalizedMessage = apiData.note
         || apiData.data?.message
         || apiData.data?.detail
         || apiData.data?.title
         || apiData.message
         || 'An unexpected error occurred';
+
+      apiData.message = normalizedMessage;
+      // Also overwrite error.message so every catch(err) block that reads
+      // err.message directly gets the meaningful server message instead of
+      // Axios's generic "Request failed with status code NNN".
+      error.message = normalizedMessage;
     }
 
     if (statusCode === 401 && !originalRequest._retry) {

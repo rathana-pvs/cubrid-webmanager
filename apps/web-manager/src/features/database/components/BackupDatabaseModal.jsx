@@ -83,6 +83,7 @@ export default function BackupDatabaseModal() {
   // synchronously without adding it to its own dependency array.
   const backupInfoRef = useRef(null);
   useEffect(() => { backupInfoRef.current = backupInfo; }, [backupInfo]);
+  const hasUserEditedDirRef = useRef(false);
   const backupHistory = useMemo(() => {
     if (!backupInfo) return [];
     return [0, 1, 2].flatMap((level) => {
@@ -136,7 +137,7 @@ export default function BackupDatabaseModal() {
   // When backupInfo loads (fetch completes after modal open), fill backupDir only if still empty.
   // Uses functional updater so prev.backupDir is always current — no stale-closure race.
   useEffect(() => {
-    if (!isBackupDatabaseModalOpen || !backupInfo?.dbdir) return;
+    if (!isBackupDatabaseModalOpen || !backupInfo?.dbdir || hasUserEditedDirRef.current) return;
     setFormData(prev => {
       if (prev.backupDir) return prev;
       return { ...prev, backupDir: deriveBackupDir(backupInfo.dbdir) };
@@ -155,6 +156,7 @@ export default function BackupDatabaseModal() {
     resetAction();
     setActiveTab(TAB_INFO);
     setBackupInfoFetchError(false);
+    hasUserEditedDirRef.current = false;
     // Init backupDir immediately from cached backupInfo so the field is never
     // blank when reopening the same DB. If no cache, stays '' until fetch returns.
     setFormData(prev => ({ ...prev, backupDir: deriveBackupDir(backupInfoRef.current?.dbdir) }));
@@ -167,7 +169,10 @@ export default function BackupDatabaseModal() {
 
   if (!isBackupDatabaseModalOpen) return null;
 
-  const handleInputChange = (field, value) => setFormData(prev => ({ ...prev, [field]: value }));
+  const handleInputChange = (field, value) => {
+    if (field === 'backupDir') hasUserEditedDirRef.current = true;
+    setFormData(prev => ({ ...prev, [field]: value }));
+  };
 
   const handleLevelChange = (level) => {
     setFormData(prev => ({ ...prev, backupLevel: level }));

@@ -9,6 +9,7 @@ import { Spinner } from '../../../../components/ds/foundation/Spinner';
 import { Typography } from '../../../../components/ds/foundation/Typography';
 import { InfoBanner } from '../../../../components/ds/foundation/InfoBanner';
 import { useCM } from '../../../../constants/useCM';
+import { startSerialPolling } from '../../../../infrastructure/utils/serialPolling';
 
 const getStatusColor = (p) => {
   if (p > 85) return 'bg-rose-500 shadow-[0_0_8px_rgba(244,63,94,0.4)]';
@@ -34,56 +35,33 @@ export default function SystemStatusSection({ hostUid, isTabActive = true }) {
 
   const [isStopped, setIsStopped] = useState(false);
   const [isExpanded, setIsExpanded] = useState(true); // Default to expanded
-  const pollTimer     = useRef(null);
-  const fetchCountRef = useRef(0);
+  const inFlight = useRef(null);
+  const [pollGeneration, setPollGeneration] = useState(0);
   
   // Monitoring is active only if tab is visible AND section is expanded
   const isEffectivelyActive = isTabActive && isExpanded;
-  const isActiveRef = useRef(isEffectivelyActive);
-
-  // Sync ref with prop to avoid stale closures in timeouts
-  useEffect(() => {
-    isActiveRef.current = isEffectivelyActive;
-    if (!isEffectivelyActive && pollTimer.current) {
-      clearTimeout(pollTimer.current);
-    }
-  }, [isEffectivelyActive]);
-
-  const scheduleNext = (delay) => {
-    if (!isActiveRef.current) return;
-    
-    pollTimer.current = setTimeout(() => {
-      if (!isAuthorized || !isActiveRef.current) { setIsStopped(true); return; }
-      dispatch(fetchMonitoringData(hostUid));
-      fetchCountRef.current += 1;
-      const nextDelay = fetchCountRef.current < 15 ? 1000 : 30000;
-      if (fetchCountRef.current < 30) scheduleNext(nextDelay);
-      else setIsStopped(true);
-    }, delay);
-  };
-
   const startPolling = () => {
-    if (pollTimer.current) clearTimeout(pollTimer.current);
-    if (!isAuthorized || !isActiveRef.current) return;
-    setIsStopped(false);
-    fetchCountRef.current = 0;
-    dispatch(clearMonitoring());
-    dispatch(fetchMonitoringData(hostUid));
-    scheduleNext(1000);
+    dispatch(clearMonitoring(hostUid));
+    setPollGeneration(value => value + 1);
   };
 
   useEffect(() => {
-    if (!hostUid || !isAuthorized || !isEffectivelyActive) {
-      if (pollTimer.current) clearTimeout(pollTimer.current);
-      return;
-    }
-    
-    fetchCountRef.current = 0; 
-    dispatch(fetchMonitoringData(hostUid));
-    scheduleNext(1000);
-    
-    return () => { if (pollTimer.current) clearTimeout(pollTimer.current); };
-  }, [hostUid, isAuthorized, isEffectivelyActive, dispatch]);
+    if (!hostUid || !isAuthorized || !isEffectivelyActive) return;
+    setIsStopped(false);
+    return startSerialPolling(() => {
+      // Reuse a pending read when a tab is quickly collapsed/reopened, including
+      // React StrictMode's effect restart. An old loop cannot restart its timer.
+      if (!inFlight.current || inFlight.current.hostUid !== hostUid) {
+        const entry = { hostUid };
+        entry.promise = dispatch(fetchMonitoringData(hostUid)).finally(() => {
+          if (inFlight.current === entry) inFlight.current = null;
+        });
+        inFlight.current = entry;
+      }
+      return inFlight.current.promise;
+    }, count => count >= 31 ? null : count < 16 ? 1000 : 30000,
+    () => setIsStopped(true));
+  }, [hostUid, isAuthorized, isEffectivelyActive, dispatch, pollGeneration]);
 
   const formatBytes = (bytes) => {
     if (bytes === undefined || bytes === null || isNaN(bytes)) return '-';

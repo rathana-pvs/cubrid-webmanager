@@ -718,6 +718,7 @@ const hostSlice = createSlice({
         if (!state.authorizedHosts.includes(hostUid)) {
           state.authorizedHosts.push(hostUid);
         }
+        state.reconnectQueue = state.reconnectQueue.filter((uid) => uid !== hostUid);
         state.haInfo[hostUid] = haInfo;
         localStorage.setItem('cubrid_ha_info', JSON.stringify(state.haInfo));
 

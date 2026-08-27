@@ -95,7 +95,7 @@ export default function EditBackupPlanModal() {
 
               setFormData({
                 backupId: info.backupid || '',
-                backupLevel: info.level || '0',
+                backupLevel: String(info.level ?? '0'),
                 backupPath: info.path || '',
                 periodType: info.period_type === 'Special' ? 'Specific days' : info.period_type,
                 periodDetail: periodDetail,
@@ -265,13 +265,13 @@ export default function EditBackupPlanModal() {
                 key={item.value}
                 onClick={() => handleInputChange('backupLevel', item.value)}
                 className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border transition-all duration-200 ${
-                  formData.backupLevel === item.value
+                  String(formData.backupLevel) === String(item.value)
                     ? 'bg-amber-500/10 border-amber-500/40 shadow-xs'
                     : 'bg-white dark:bg-white/1 border-slate-100 dark:border-white/5 hover:border-slate-200 dark:hover:border-white/10'
                 }`}
               >
                 <div className={`w-7 h-7 rounded-lg flex items-center justify-center shrink-0 border ${
-                  formData.backupLevel === item.value ? 'bg-amber-500 text-slate-900 border-amber-500/50' : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent'
+                  String(formData.backupLevel) === String(item.value) ? 'bg-amber-500 text-slate-900 border-amber-500/50' : 'bg-slate-50 dark:bg-white/5 text-slate-400 border-transparent'
                 }`}>
                   <Icon name={item.icon} size="14px" weight={300} />
                 </div>
