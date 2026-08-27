@@ -346,11 +346,36 @@ describe('DatabaseLifecycleService', () => {
       );
     });
 
-    it('should throw CmsError when stop fails and the database remains active', async () => {
+    it('immediately throws deterministic errors without polling', async () => {
       const failedResponse = {
         ...mockBaseResponse,
         status: 'fail',
         note: 'Database stop failed',
+      };
+      cmsClient.postAuthenticated.mockResolvedValue(failedResponse);
+
+      await expect(service.stopDatabase(mockUserId, mockHostUid, mockDbname)).rejects.toThrow(
+        CmsError
+      );
+      expect(databaseInfoService.startInfo).not.toHaveBeenCalled();
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledTimes(1);
+    });
+
+    it('immediately throws InvalidToken error without polling', async () => {
+      cmsClient.postAuthenticated.mockRejectedValue(CmsError.InvalidToken());
+
+      await expect(service.stopDatabase(mockUserId, mockHostUid, mockDbname)).rejects.toThrow(
+        CmsError
+      );
+      expect(databaseInfoService.startInfo).not.toHaveBeenCalled();
+      expect(cmsClient.postAuthenticated).toHaveBeenCalledTimes(1);
+    });
+
+    it('should throw CmsError when stop times out and the database remains active', async () => {
+      const failedResponse = {
+        ...mockBaseResponse,
+        status: 'fail',
+        note: 'timeout',
       };
       cmsClient.postAuthenticated.mockResolvedValue(failedResponse);
       jest.mocked(databaseInfoService.startInfo).mockResolvedValue({

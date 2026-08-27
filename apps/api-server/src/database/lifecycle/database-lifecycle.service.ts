@@ -14,7 +14,7 @@ import { BaseService, HandleCmsErrors } from '@common';
 import { ConfigError } from '@error/config/config-error';
 import { ConfigErrorCode } from '@error/config/config-error-code';
 import { DatabaseError } from '@error/database/database-error';
-import { HostError } from '@error/index';
+import { CmsError, CmsErrorCode, HostError } from '@error/index';
 import { getHost } from '@host/host-group.util';
 import { ValidationError } from '@error/validation/validation-error';
 import { FileService } from '@file/file.service';
@@ -156,6 +156,9 @@ export class DatabaseLifecycleService extends BaseService {
       try {
         await this.stopNonHaDatabase(userId, hostUid, dbname);
       } catch (error) {
+        if (!this.isAmbiguousStopError(error)) {
+          throw error;
+        }
         for (let i = 0; i < 6; i++) {
           await new Promise((res) => setTimeout(res, 2500));
           const latestInfo = await this.databaseInfoService.startInfo(userId, hostUid).catch(() => null);
@@ -176,6 +179,46 @@ export class DatabaseLifecycleService extends BaseService {
     }
 
     return await this.databaseInfoService.startInfo(userId, hostUid);
+  }
+
+  /**
+   * Determines whether an error encountered during database stop is an ambiguous
+   * failure (such as a timeout or network drop) where the command may have actually
+   * reached the server and executed in the background.
+   * Deterministic failures (e.g. invalid tokens, permission errors, bad requests)
+   * return false so they fail immediately without wasteful polling.
+   */
+  private isAmbiguousStopError(error: unknown): boolean {
+    if (!error) return false;
+
+    if (error instanceof CmsError) {
+      if (error.code === CmsErrorCode.NO_RESPONSE) {
+        return true;
+      }
+      const message = String(error.additionalData?.message ?? error.message ?? '');
+      const note = String(error.additionalData?.response?.note ?? '');
+      if (/timeout/i.test(message) || /timeout/i.test(note)) {
+        return true;
+      }
+      const orig = error.originalError as { code?: string; message?: string } | undefined;
+      if (orig) {
+        if (orig.code === 'ECONNABORTED' || orig.code === 'ETIMEDOUT' || orig.code === 'ECONNRESET') {
+          return true;
+        }
+        if (/timeout/i.test(orig.message ?? '')) return true;
+      }
+      return false;
+    }
+
+    const err = error as { code?: string; message?: string; name?: string };
+    if (err.code === 'ECONNABORTED' || err.code === 'ETIMEDOUT' || err.code === 'ECONNRESET') {
+      return true;
+    }
+    if (typeof err.message === 'string' && /timeout/i.test(err.message)) {
+      return true;
+    }
+
+    return false;
   }
 
   /**
