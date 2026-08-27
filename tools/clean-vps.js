@@ -1,4 +1,4 @@
-const { execSync } = require('child_process');
+const { spawnSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
@@ -38,7 +38,7 @@ loadEnv();
 
 // 2. Resolve parameters from environment variables
 const VPS_HOST = process.env.VPS_HOST || process.env.E2E_HOST_ADDRESS || 'localhost';
-const VPS_PORT = process.env.VPS_PORT || process.env.VPS_SSH_PORT || '22';
+const VPS_PORT = String(process.env.VPS_PORT || process.env.VPS_SSH_PORT || '22');
 const VPS_USER = process.env.VPS_USER || process.env.USER || 'cubrid';
 const VPS_PASS = process.env.VPS_PASS || process.env.VPS_PASSWORD || '';
 const VPS_KEY = process.env.VPS_KEY || process.env.VPS_SSH_KEY || '';
@@ -46,6 +46,16 @@ const DOCKER_CONTAINER = process.env.CUBRID_CONTAINER || process.env.DOCKER_CONT
 const CUBRID_DIR = process.env.CUBRID_DIR || '/home/cubrid/CUBRID';
 const E2E_DB = process.env.E2E_DB || 'demodb';
 const E2E_OFFLINE_DB = process.env.E2E_OFFLINE_DB || 'db1';
+
+// Validate inputs to prevent injection
+if (DOCKER_CONTAINER && !/^[a-zA-Z0-9_.-]+$/.test(DOCKER_CONTAINER)) {
+  console.error('❌ Invalid container name:', DOCKER_CONTAINER);
+  process.exit(1);
+}
+if (!/^\d+$/.test(VPS_PORT)) {
+  console.error('❌ Invalid VPS_PORT:', VPS_PORT);
+  process.exit(1);
+}
 
 const isLocal = VPS_HOST === 'localhost' || VPS_HOST === '127.0.0.1';
 
@@ -59,47 +69,75 @@ const cleanupCommands = [
   `[ -f "${CUBRID_DIR}/conf/autoaddvoldb.conf" ] && truncate -s 0 "${CUBRID_DIR}/conf/autoaddvoldb.conf" || true`,
   `[ -f "${CUBRID_DIR}/conf/autobackupdb.conf" ] && truncate -s 0 "${CUBRID_DIR}/conf/autobackupdb.conf" || true`,
   `[ -f "${CUBRID_DIR}/conf/autoexecquery.conf" ] && truncate -s 0 "${CUBRID_DIR}/conf/autoexecquery.conf" || true`,
-  `gosu cubrid cubrid server stop ${E2E_OFFLINE_DB} 2>/dev/null || cubrid server stop ${E2E_OFFLINE_DB} 2>/dev/null || true`,
-  `gosu cubrid cubrid server start ${E2E_DB} 2>/dev/null || cubrid server start ${E2E_DB} 2>/dev/null || true`,
+  `gosu cubrid cubrid server stop "${E2E_OFFLINE_DB}" 2>/dev/null || cubrid server stop "${E2E_OFFLINE_DB}" 2>/dev/null || true`,
+  `gosu cubrid cubrid server start "${E2E_DB}" 2>/dev/null || cubrid server start "${E2E_DB}" 2>/dev/null || true`,
   `gosu cubrid cubrid server status 2>/dev/null || cubrid server status 2>/dev/null || true`,
-].join('; ');
+].join('\n') + '\n';
 
-// 4. Wrap with docker / sudo if needed
-let innerCommand;
-if (DOCKER_CONTAINER) {
-  const sudoPrefix = VPS_PASS ? `echo ${VPS_PASS} | sudo -S ` : (process.env.USE_SUDO === 'true' ? 'sudo ' : '');
-  innerCommand = `${sudoPrefix}docker exec ${DOCKER_CONTAINER} bash -c '${cleanupCommands}'`;
-} else {
-  innerCommand = `bash -c '${cleanupCommands}'`;
-}
+// 4. Build process execution with argv array (no shell interpolation)
+let executable = '';
+let args = [];
+const spawnEnv = { ...process.env };
 
-// 5. Wrap with SSH if remote
-let fullCommand;
 if (isLocal && !process.env.FORCE_SSH) {
-  fullCommand = innerCommand;
-} else {
-  let sshPrefix = '';
-  const baseOpts = '-o StrictHostKeyChecking=no -o ConnectTimeout=10';
-  if (VPS_KEY) {
-    sshPrefix = `ssh -i '${VPS_KEY}' -p ${VPS_PORT} ${baseOpts} ${VPS_USER}@${VPS_HOST}`;
-  } else if (VPS_PASS) {
-    sshPrefix = `sshpass -p '${VPS_PASS}' ssh -p ${VPS_PORT} ${baseOpts} ${VPS_USER}@${VPS_HOST}`;
+  if (DOCKER_CONTAINER) {
+    if (process.env.USE_SUDO === 'true') {
+      executable = 'sudo';
+      args = ['docker', 'exec', '-i', DOCKER_CONTAINER, 'bash'];
+    } else {
+      executable = 'docker';
+      args = ['exec', '-i', DOCKER_CONTAINER, 'bash'];
+    }
   } else {
-    sshPrefix = `ssh -p ${VPS_PORT} ${baseOpts} -o BatchMode=yes ${VPS_USER}@${VPS_HOST}`;
+    executable = 'bash';
+    args = [];
   }
-  fullCommand = `${sshPrefix} "${innerCommand.replace(/"/g, '\\"')}"`;
+} else {
+  const remoteCmd = DOCKER_CONTAINER
+    ? (process.env.USE_SUDO === 'true'
+        ? `sudo docker exec -i ${DOCKER_CONTAINER} bash`
+        : `docker exec -i ${DOCKER_CONTAINER} bash`)
+    : 'bash';
+
+  const sshBaseOpts = [
+    '-p', VPS_PORT,
+    '-o', 'StrictHostKeyChecking=no',
+    '-o', 'ConnectTimeout=10',
+  ];
+
+  if (VPS_KEY) {
+    executable = 'ssh';
+    args = ['-i', VPS_KEY, ...sshBaseOpts, `${VPS_USER}@${VPS_HOST}`, remoteCmd];
+  } else if (VPS_PASS) {
+    executable = 'sshpass';
+    spawnEnv.SSHPASS = VPS_PASS;
+    args = ['-e', 'ssh', ...sshBaseOpts, `${VPS_USER}@${VPS_HOST}`, remoteCmd];
+  } else {
+    executable = 'ssh';
+    args = [...sshBaseOpts, '-o', 'BatchMode=yes', `${VPS_USER}@${VPS_HOST}`, remoteCmd];
+  }
 }
 
-// 6. Execute cleanup
-try {
-  const output = execSync(fullCommand, { encoding: 'utf8', stdio: 'pipe' });
-  if (output && output.trim()) {
-    console.log(output.trim());
+// 5. Execute cleanup safely via spawnSync with stdin
+const result = spawnSync(executable, args, {
+  input: cleanupCommands,
+  encoding: 'utf8',
+  env: spawnEnv,
+});
+
+if (result.error) {
+  console.error('❌ Failed to execute cleanup process:', result.error.message);
+  process.exit(1);
+}
+
+if (result.status !== 0) {
+  console.error(`❌ Cleanup failed with exit code ${result.status}`);
+  if (result.stderr && result.stderr.trim()) {
+    console.error(result.stderr.trim());
   }
-  console.log('✅ VPS / test environment cleaned successfully.');
-} catch (err) {
-  console.error('❌ Failed to clean target environment:', err.message);
-  if (err.stderr) console.error(err.stderr.toString());
+  if (result.stdout && result.stdout.trim()) {
+    console.log(result.stdout.trim());
+  }
   console.error('\nTip: You can configure connection parameters via environment variables or e2e/.env:');
   console.error('  - VPS_HOST (or E2E_HOST_ADDRESS)');
   console.error('  - VPS_PORT (default: 22)');
@@ -108,4 +146,9 @@ try {
   console.error('  - CUBRID_CONTAINER (if using Docker)');
   process.exit(1);
 }
+
+if (result.stdout && result.stdout.trim()) {
+  console.log(result.stdout.trim());
+}
+console.log('✅ VPS / test environment cleaned successfully.');
 
